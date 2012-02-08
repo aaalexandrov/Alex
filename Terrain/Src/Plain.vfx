@@ -1,0 +1,19 @@
+Technique = Plain
+
+HLSLFile = Plain.hlsl
+VertexShader = PlainVS
+PixelShader = PlainPS
+
+States = {
+  CullMode = None
+  FillMode = Solid
+  DepthEnable = 0
+  
+  BlendEnable0 = 1
+  SrcBlend0 = SrcAlpha
+  SrcBlendAlpha0 = One
+  DestBlend0 = InvSrcAlpha
+  DestBlendAlpha0 = Zero
+  BlendOp0 = Add
+  BlendOpAlpha0 = Add
+}

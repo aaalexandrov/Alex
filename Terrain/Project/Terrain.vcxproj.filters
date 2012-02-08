@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Base">
+      <UniqueIdentifier>{ce837eb2-3ef6-4aec-be3a-d95e78eb6631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3D">
+      <UniqueIdentifier>{aeb1023c-20a2-4583-80b8-8d4f8f334b81}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Src\Main.cpp" />
+    <ClCompile Include="..\Src\stdafx.cpp" />
+    <ClCompile Include="..\Src\Terrain.cpp" />
+    <ClCompile Include="..\Src\TerrainCamera.cpp" />
+    <ClCompile Include="..\..\Base\Array.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\AVLTree.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Base.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Debug.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\File.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Hash.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\List.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Matrix.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Parse.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Rect.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Str.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Util.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Var.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\VarUtil.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Vector.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Shape.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Transform.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Convex.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Random.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Base\Bits.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Src\TerrainPatch.cpp" />
+    <ClCompile Include="..\Src\TerrainGeometry.cpp" />
+    <ClCompile Include="..\..\3D\Model.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Shader.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\State.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Texture.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Threads.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Timing.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Buffer.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Camera.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Font.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\FrameSorter.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\GeomUtil.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Graphics.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Input.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3D\Mesh.cpp">
+      <Filter>3D</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Src\stdafx.h" />
+    <ClInclude Include="..\Src\Terrain.h" />
+    <ClInclude Include="..\Src\TerrainCamera.h" />
+    <ClInclude Include="..\..\Base\Array.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\AVLTree.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Base.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Debug.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\File.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Hash.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\List.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Matrix.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Parse.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Rect.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Str.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Util.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Var.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\VarUtil.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Vector.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Shape.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Transform.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Convex.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Random.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\Bits.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Model.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Shader.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\State.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Texture.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Threads.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Timing.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Buffer.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Camera.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Font.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\FrameSorter.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\GeomUtil.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Graphics.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Input.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3D\Mesh.h">
+      <Filter>3D</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Src\Terrain.hlsl" />
+    <None Include="..\Src\Terrain.vfx" />
+    <None Include="..\Src\TerrainLOD.vfx" />
+    <None Include="..\Src\Plain.hlsl">
+      <Filter>3D</Filter>
+    </None>
+    <None Include="..\Src\Plain.vfx">
+      <Filter>3D</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,99 @@
+#ifndef __VARUTIL_H
+#define __VARUTIL_H
+
+#include "Var.h"
+
+class CVarMerge: public CVarValueObj {
+  DEFRTTI_NOCREATE
+public:
+  class CIter: public CVarObj::CIter {
+    DEFRTTI_NOCREATE
+  public:
+    CVarMerge const *m_pMerge;
+    int              m_iVar;
+    CVarObj::CIter  *m_pIt;
+
+    CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, int iDirection = 1);
+    virtual ~CIter() { delete m_pIt; }
+
+    virtual CIter &Next();
+    virtual CIter &Prev();
+    virtual operator bool () const            { return m_pIt && *m_pIt;     }
+
+    virtual const CStrConst GetName()         { return m_pIt->GetName();    }
+    virtual bool GetVar(CBaseVar &vDst) const { return m_pIt->GetVar(vDst); }
+    virtual bool SetVar(CBaseVar const &vSrc) { return m_pIt->SetVar(vSrc); }
+    virtual CBaseVar *GetValue()              { return m_pIt->GetValue();     }
+    virtual bool SetValue(CBaseVar *pVar)     { return m_pIt->SetValue(pVar); }
+
+    bool IsValidPos();
+  };
+
+  struct TVarInfo {
+    CVarObj *m_pVar;
+    bool     m_bOwned;
+  };
+public:
+  CArray<TVarInfo> m_Vars;
+
+  CVarMerge() {}
+  CVarMerge(CVarObj *pInherited, CVarObj *pBase, bool bOwnInherited, bool bOwnBase);
+  virtual ~CVarMerge();
+
+  virtual int AppendBaseVar(CVarObj *pVar, bool bOwn);
+  virtual void RemoveLastBaseVar();
+  virtual void ClearBaseVars();
+
+	virtual CVarObj::CIter *GetIter(const CStrBase &sVar = CStrPart()) const;
+	virtual CBaseVar *FindVar(const CStrBase &sVar) const;
+  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false);
+};
+
+class CVarTemplate: public CObject {
+  DEFRTTI
+public:
+  CVarObj *m_pVars;
+
+  CVarTemplate()             { m_pVars = 0; }
+  virtual ~CVarTemplate()    {}
+
+  virtual bool Init()        { return true; }
+  virtual void Done()        { SAFE_DELETE(m_pVars); }
+
+  virtual void Remap(BYTE *pNewBufBase, BYTE *pOldBufBase, CVarObj *pDstVars = 0);
+  virtual void MakeVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, BYTE *pSrcBufBase, bool bAddVars);
+  virtual void ClearVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, int iDstBufSize);
+
+  virtual void CopyValues(CVarObj *pSrcVars);
+};
+
+class CFileBase;
+
+class CVarFile {
+public:
+  CFileBase *m_pFile;
+
+  CVarFile(CFileBase *pFile);
+  ~CVarFile();
+
+  bool Read(CVarObj *pVars);
+  bool Write(CVarObj *pVars, int iIndent = 0);
+
+  bool ReadVarStrings(CStrConst &sName, CStr &sVal, const CRTTI *pVarRTTI);
+
+  bool WriteIndent(int iIndent);
+};
+
+// Var contexts
+
+inline bool Set(CVarObj *dst, int const *src) { ASSERT(0); return false; } 
+inline bool Set(CVarObj *dst, float const *src) { ASSERT(0); return false; } 
+inline bool Set(int *dst,  CVarObj const *src) { ASSERT(0); return false; } 
+inline bool Set(float *dst, CVarObj const *src) { ASSERT(0); return false; } 
+
+bool Set(CStrBase *dst, CVarObj const *src);
+bool Set(CVarObj *dst, CStrBase const *src);
+bool Set(CVarObj *dst, CVarObj const *src);
+bool SetValue(CVarObj *val, CBaseVar const *vSrc);
+
+#endif

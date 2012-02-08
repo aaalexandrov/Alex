@@ -1,0 +1,22 @@
+Technique = Terrain
+
+HLSLFile = Terrain.hlsl
+VertexShader = TerrainVS
+PixelShader = TerrainPS
+
+States = {
+  RasterizerState = Technique
+  BlendState = Model
+
+  CullMode = Back
+  DepthEnable = 1
+  DepthFunc = LessEqual
+
+  BlendEnable0 = 0
+  SrcBlend0 = SrcAlpha
+  SrcBlendAlpha0 = One
+  DestBlend0 = InvSrcAlpha
+  DestBlendAlpha0 = Zero
+  BlendOp0 = Add
+  BlendOpAlpha0 = Add
+}
