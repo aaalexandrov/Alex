@@ -1,0 +1,545 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1251">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 3.1  (Win32)">
+	<META NAME="AUTHOR" CONTENT="Alexander Alexandrov">
+	<META NAME="CREATED" CONTENT="20120209;2021000">
+	<META NAME="CHANGEDBY" CONTENT="Alexander Alexandrov">
+	<META NAME="CHANGED" CONTENT="20120209;2354300">
+</HEAD>
+<BODY LANG="bg-BG" DIR="LTR">
+<TABLE WIDTH=800 BORDER=0 CELLPADDING=4 CELLSPACING=0  ALIGN=CENTER STYLE="page-break-before: always">
+	<COL WIDTH=256*>
+	<TR>
+		<TD WIDTH=100% VALIGN=TOP>
+			<P ALIGN=CENTER STYLE="margin-bottom: 0cm"><FONT SIZE=4>Of Small
+			Mammals And Beer,</FONT></P>
+			<P ALIGN=CENTER STYLE="margin-bottom: 0cm">A Terrain Rendering
+			Story</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Suppose you are making a computer game. Let's further suppose -
+			just to be particular - that it's a game with hedgehogs. Or
+			badgers. Yes, badgers are better.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Anyway, back to the game. Making games is easy. You just have to
+			know what you want to do, see what prevents you from doing it, and
+			fix the bugger. Do that long enough, and you've got your game
+			ready to play.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Take, for example, this</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: The badgers (and the hedgehogs too) are falling
+			down, infinitely tumbling into the void because your game is still
+			empty and they have nothing to step on.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			There's the obvious</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Add some ground below their feet. Implement
+			terrain for your game.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			See? I told you it was easy!</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Now, if you're making an RTS or something else with a view that
+			only shows a small patch of the ground, your work is done and you
+			can go drink beer at your game's launch party and tell solemn
+			tales about how difficult developing that terrain was.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			If, however, you tried to peek towards the horizon (to take a
+			picture of the hedgehogs framed against the setting sun) you
+			likely realized you have a</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: Your game slows down to a crawl whenever you try
+			to look at a sizeable portion of terrain. The further away you
+			allow your terrain to be seen, the morer* your frame rate drops.
+			(* morer = more x more, since the area of terrain you need to
+			render grows with the square of your view distance). The more
+			terrain that's visible, the more vertices and triangles on screen,
+			and the more chunks of terrain need to be rendered on the same
+			frame (you did remember to divide your terrain into chunks, didn't
+			you?).</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Luckily, there's a well known</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Add level of detail (LOD) to the terrain.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Now, your run-of-the-mill quadtree LOD thing goes something like
+			this &ndash; if your terrain is normally rendered with vertices
+			that are 1 meter apart, you only do that with terrain that's right
+			under your badger's nose. Terrain that's twice further away looks
+			two times smaller, so in order to render it with the same size
+			triangles on the screen as the closer terrain, you only need it to
+			have vertices that are 2 meters apart instead of 1. And you can
+			make the chunks with which you render to be 4 times more spacious
+			(i.e. twice as wide and twice as long). If you keep increasing the
+			vertex distance and the chunk size to 4, 8, 16, and 65636
+			eventually as camera distance increases, suddenly you are able to
+			render terrain indefinitely far, because the decrease of vertices,
+			triangles and draw calls (or chunks, if you prefer) as terrain
+			gets further away is just enough to compensate for the rendered
+			area growth. More or less.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			This terrain's quite good. It's quick and relatively simple to
+			write, and runs as fast as a badger with a fox on its tail. Before
+			you head to the launch party, you only need to put food for the
+			badgers and hedgehogs in the game. As it happens, badgers eat
+			carrots, and hedgehogs like potatoes (let's not get technical
+			here, remember - game design is an art form). So &ndash; brown
+			soil for potatoes, and orange carrot fields and we're gone off to
+			drink that beer.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			When you have different types of surface, you're likely going to
+			render it with different materials on separate passes, each one
+			consisting of the triangles that have a vertex with this
+			particular surface type in them. This is called texture splatting
+			and is commonly used to display terrain.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Funny thing though, again a</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: Now that the carrots and potatoes are in, suddenly
+			the moment when terrain geometry switches its LOD level becomes
+			quite noticeable. When vertices change their spacing from 1 to 2
+			to 4 to 8 meters apart, the boundaries between the contrasting
+			materials can't help but shift abruptly.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			This is because material information is contained in the vertices,
+			and the successively more sparse vertices allow for coarser
+			grained material areas. If for example the original surface
+			changes from potatoes to carrots at the 6<SUP>th</SUP> meter, when
+			you get up to 4 meters vertex resolution, you can only switch at
+			the 4<SUP>th</SUP> or the 8<SUP>th</SUP> meter and the boundary
+			will shift from its original position.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			That's not all that's wrong with the terrain though. Even if you
+			were to take care not to put contrasting surfaces next to each
+			other so that it does not show as much when mesh resolution
+			switches, the moment of LOD level change is still noticeable. The
+			human eye is particularly perceptive to edge movement and to
+			changes in shade and color of large areas. Carrots next to
+			potatoes is just one kind of edge that changes position when LOD
+			switches, the other one is terrain outline. The edges between
+			foreground and background terrain, or between terrain and sky will
+			shift too and there's nothing you can do about it.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			If you are using vertices to encode surface normals, you'll get
+			the other kind of noticeable change too, because the lighting will
+			change across the whole area that just switched LOD.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			The third problematic aspect of using this LOD scheme is not
+			directly perceivable, but real nonetheless. Uniform meshes are
+			generally a wasteful way to represent a surface. A given level of
+			detail of our terrain places a vertex for example every 4 meters
+			without any regard if one's needed at that exact spot and not a
+			meter to the left, or even if it can be skipped altogether because
+			the surface there is flat as a badger's forehead.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Ship the game and go drink beer already. Just
+			about every title out there seems to use a variation of this
+			technique and nobody ever complained about it.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			As much as problems are in the eye of the beholder, and the
+			typical beholder really seems not to mind most of the time, that's
+			probably fine. But you won't do it, will you? Because things can
+			get better. Also, because beer has the funny habit of tasting
+			better if you really deserve it.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Better</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Move surface normal and surface type information
+			out of the vertices and into textures. This will minimize surface
+			edge popping and shading changes. It will not eliminate them
+			however, because the geometry on which the surface materials and
+			lighting are mapped will change and some parts of their projection
+			on screen will move. Also, this method does nothing about outline
+			popping and is even more wasteful in terms of resources, because
+			now surface type and normal information are always used at full
+			resolution instead at a pace of 2, 4, and 65536 meters. However,
+			image quality will improve.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Do you deserve your beer aready?</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			No, because there's an even better 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Use a real LOD generation technique instead of
+			just skipping vertices at regular intervals.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			So we want our LODs to:</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			a) encode effectively the original mesh, i.e. preserve mesh detail
+			where it is needed and remove it from where it can be skipped</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			b) minimize geometry popping, which is best achieved if there are
+			no sudden changes at all</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			c) preserve surface type information</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			d) run as fast as a badger with a fox at its tail.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			The above list yields a likely candidate, scoring 3 out of 4 right
+			away &ndash; view independent progressive meshes (VIPM). A VIPM is
+			progressive, meaning changes are gradual and controllably
+			(un)noticeable. It preserves detail where it is needed most by
+			removing it first from where it is needed the least. And it's fast
+			because all computation work is done at preprocessing time.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			A quick refresher on VIPM &ndash; it takes a mesh and locates that
+			edge which, if removed, will change the mesh the least. Then it
+			collapses that edge by moving one of its vertices on top of the
+			other, effectively removing both the edge, the moved vertex, and
+			the triangles adjacent to the edge. And it keeps repeating the
+			same step until it can't modify the mesh any more without breaking
+			it, or until it exceeds a given threshold for the magnitude of the
+			change caused by removing an edge.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			The output is a regular mesh with the vertices and triangles
+			sorted with those collapsed first at the end, along with some data
+			about which vertex is collapsed to what other vertex and with what
+			error. Attaining a LOD with a desired error (or vertex count) is a
+			matter of walking the triangles at the end of the index buffer in
+			reverse order and collapsing them until we're reached the target
+			error / vertex count.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			But now, we're left with a 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: VIPM does not preserve surface type information.
+			In fact, it does with it the same thing that the fox does with the
+			badger when it overtakes its tail.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			When you do splatting, you have a separate mesh for every material
+			in the terrain chunk. These meshes share triangles where materials
+			fade one into the other. If you just make a VIPM from each of the
+			splatting meshes, you'll likely end up with them optimizing the
+			border triangles in different order. The geometry at the borders
+			however needs to coincide perfectly at every LOD, or you'll create
+			visual artifacts that will make a hedgehog gnaw at its own back.
+			Plus if you made separate VIPMs, they would need each to have
+			differently sorted vertices, duplicating the vertex buffer and
+			wasting a lot of memory.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			This hints at the</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Make a single VIPM and extract each material's
+			LOD mesh from it.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			First, we need to give our VIPM generator a notion of material
+			types, and make it respect certain rules about them. More
+			specifically, when it considers an edge to evaluate how suitable
+			it is to use as the next collapse, we make sure the following
+			conditions are met:</P>
+			<OL>
+				<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+				It's not connecting vertices of different materials.</P>
+				<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+				We're not collapsing a vertex on the material boundary to one
+				that's in the inner part of the material area.</P>
+				<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+				The interpolated material at the position of the vertex being
+				removed has to remain the same before and after the collapse.</P>
+			</OL>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			These rules make sure collapses will preserve the outline of
+			boundaries between materials while still allowing vertices to be
+			collapsed along the boundaries.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Now we have the ability to create a single VIPM that encodes all
+			edge collapses in all material meshes. What's left to do is
+			extract separate index buffers for the triangles of each
+			material's progressive mesh, generate the subset of collapse data
+			that concerns this material, and make them all use the same vertex
+			buffer.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			A little care must be taken when setting LOD levels &ndash; the
+			separate material meshes need to have matching sets of active and
+			inactive vertices at all times. The simplest way to ensure this is
+			to set the LOD level of every mesh as the lower (or upper, if you
+			so prefer) bound of the desired error threshold. Meaning that if
+			the mesh has collapses with errors of 0.05 and 0.06, and you
+			request it to set itself to 0.054, it should always pick 0.05 no
+			matter its previous state.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			And, we're ready, right? We now have a LOD algorithm that's better
+			than our previous one in every respect, can we go drink the beer?</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Turns out &ndash; no, because now we have a new 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: Our terrain chunks do not stitch together smoothly
+			any more. This is because the VIPMs of the separate chunks decide
+			to collapse the common vertices on the chunk boundaries
+			independently and typically at different times.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: I have two propositions, take a pick.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			One, the simple &ndash; mesh flanges. These are like skirts at the
+			chunk edges that extend far enough below the surface to cover any
+			hole that would appear as a the neighbouring chunk's boundary
+			vertices collapse in a different order. They're quick to
+			implement, but wasteful in terms of both added geometry and extra
+			fill rate. The latter might be significant in case your terrain
+			has a high typical curvature and / or amplitude. Such terrain can
+			produce quite large gaps that need to be covered with equally
+			large area flanges. This might be significant or not at all,
+			depending what's the bottleneck in your game's renderer.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Two, the perfect &ndash; make triangle fans to connect vertices
+			that are active in the neighbouring chunk to the ones the local
+			VIPM has activated. In order to do that efficently, you need to
+			track vertex collapses and keep an index of triangles that are
+			active on the edges, so that you can replace those triangles with
+			fans to add extra active edge vertices from the neighbouring
+			chunks. This gives you perfectly matching edges at the cost of a
+			little extra CPU time every time LOD changes collapse or
+			uncollapse edge vertices. And possibly a white hair or two until
+			you make the software that does the stitching handle all the
+			special cases. This is the approach I went for.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Ideally you'd choose which approach you prefer depending on
+			whether your game's performance is CPU or GPU bound. Or you can
+			toss a coin.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Intermission</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Question</B>: How large should my terrain chunks be?</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Answer</B>: The larger they are, the more accurate mesh
+			representation you will get for the same number of active
+			vertices. 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			On the other hand, the larger they are, the larger the introduced
+			view-dependent error. These are View Independent PM, meaning they
+			are optimized with an error metric based solely on the mesh
+			properties. Minimizing that error across the entire mesh does not
+			mean the visible error from the particular camera position is
+			minimized too. The mesh will remove vertices nearer the camera
+			(thus removing more prominent detail), even if there's another
+			edge on the other side of the mesh with a slightly larger
+			absolute, but least view-dependent error. 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			The balance between the above tendencies seems to gravitate
+			towards the number 64. Make your chunks 64 x 64 vertices.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			And now, another 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: Badgers and hedgehogs now only go out at night and
+			refuse to leave their burrows by day. An inquiry shows the
+			constantly changing vertex lighting under the sun makes them
+			dizzy. As edges collapse and triangles disappear all over the mesh
+			as its LOD changes, the interpolated normals across the touched
+			area shift and the lighting changes abruptly and visibly.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Move the normals to a texture, no way around that
+			at this point. Bilinear filtering looks nicer than interpolation
+			across triangles anyway.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Now, if your game's bottleneck was vertex processing, you can go
+			on to that party. You've got a nice continuous LOD terrain with
+			better image quality for the same vertex count than anybody out
+			there. 
+			</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Chances are however at this point you realize you have yet another</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: When you look towards the horizon, your game slows
+			to the pace of a badger that stepped on a hedgehog with all for
+			paws. The terrain makes an ungodly amount of draw primitive calls,
+			owing to the fact our fine LOD system does nothing to reduce their
+			number below the visible chunk number times the number of
+			materials per chunk.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: It was a badger who first made the observation
+			that from a certain point on you can't really discern any features
+			on the ground and everything in the distance seems like large
+			blots of paint with the average color of potato dirt and carrots
+			respectively. He missed the irony when the next Monday his burrow
+			was demolished by a short-sighted construction worker in a steam
+			roller.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Armed with his observation however, we can literally start drawing
+			large blots of average surface color. Instead of making passes for
+			each material, we start drawing chunks that are far enough from
+			the camera in one fell swoop using a texture where each pixel
+			corresponds to a vertex in the highest LOD mesh and is colored
+			according to the surface type of the vertex. This saves a bunch of
+			draw calls, since there are far more distant terrain chunks
+			visible than there are close ones, and we just optimized their
+			rendering. Of course, we need to make sure there's smooth
+			transition between the area where we draw actual materials, and
+			the blot zone. We can arrange that by making the actual materials
+			fade to their average color when they reach a certain distance.
+			This can be done either by a simple lerp() in the material shader,
+			or through overwriting some of the smaller MIP levels of the
+			material diffuse textures with their average color. The lerp()
+			thing is simpler and not dependent on screen resolution though.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Now there's a catch here. In order to draw a terrain chunk with a
+			single draw primitive call, we need to have a single mesh for the
+			whole chunk, and we don't. The good news is we can make one
+			easily. Remember how our VIPM generator started out by making a
+			single VIPM for the chunk, and we then split it between materials?
+			We'll take the whole VIPM too now, thank you very much! It uses
+			the same vertex buffer as the others.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Since we're clever, at this point we realize that our VIPM
+			contains extra detail to preserve the boundaries between
+			materials, and we don't need those if we're not going to render
+			materials separately. This can amount to quite a number of
+			vertices too, depending how frequently our level designer changed
+			surface types there. We can now continue running the VIPM
+			optimization from the point it finished when we created the
+			material meshes, only this time we will run it without any notion
+			of materials whatsoever. This will optimize away the
+			material-specific detail. Note however that we need to somehow
+			compensate for the fact the error estimations of the newly
+			generated collapses will be lower than the errors generated when
+			materials were accounted for.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			If we're really clever, we'll realize we don't need to take the
+			whole of it though. We only need to take the part that corresponds
+			to LOD levels that are far enough for us to actually need to draw
+			with blots. This is typically far enough away where the mesh is
+			shrunk to only a few percent of its original size so it's not a
+			big deal at all.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			If we're cleverer than really clever however, we might realize
+			that the whole VIPM is useful on its own up to the highest LOD,
+			for things like early Z passes, shadowmap rendering or partial
+			G-buffer output in a deferred renderer. The possibilities are
+			endless and it's up to you to decide if you will use any of them.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			At this point you're either already gone do drink the party beer
+			without asking any more, or you're pulling at your beard, because
+			there's this same</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: The terrain still makes too many draw calls,
+			aargh!</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			If you stop to think about it though that's hardly a surprise,
+			since the draw calls we now make are actually more than what our
+			very first no-LOD terrain was doing. And it ran horribly, if you
+			remember.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: You need to do some kind of hierarchical
+			mumbo-jumbo to unite chunks together so you can compress several
+			draw calls into one. Theoretically you can use a quad tree again,
+			uniting the minimal LODs of neighbouring chunks, and optimizing
+			them further into a single VIPM with larger maximum error to
+			render them together. I would only do that if I'm dealing with
+			really large terrain and huge view distance, since it's quite the
+			hassle and will create problems we'll get to in a bit. Just hold
+			out on that beer.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			I'd rather create a single hierarchical level above the chunks, a
+			super-chunk that's composed of 4 x 4 normal chunks. It has static
+			geometry, produced by stitching together the minimum permissible
+			LOD of all its contained chunks. In case you chose to stitch
+			chunks perfectly, you may be wondering how to stitch this static
+			super-chunk to its neighbours. With a bit of trickery &ndash; you
+			will generate the static geometry with the added vertices to
+			stitch it to the minimum LOD geometry of all its neighbours, and
+			will only allow the super-chunk to start rendering as one in case
+			it is surrounded on all sides by other super-chunks or chunks that
+			are already at minimum LOD. This will take care of the seams.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			One level of super-chunks reduces the required draw calls by a
+			factor of 16, which means that (assuming a 64 x 64 meter chunk
+			size) a whole square kilometer of terrain reduces down to 16 draw
+			calls total, if they are all at super-patch LOD level. That's
+			quite good, in case you were wondering.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			And now, finally, we have the best terrain in the world! Off you
+			go, launch that game and drink the beer.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Well, no. There's this small</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: This terrain runs nice, if you have a gigabyte of
+			RAM to dedicate to it alone. Just as the sheer number of chunks to
+			draw is too great to draw separately, the same number multiplied
+			by several hundred KB to a MB of data per chunk is cannibalizing
+			your RAM like a hedgehog destroys potatoes.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Streaming. For most of the map, only keep a
+			static variant of its minimum LOD geometry that you can use to
+			generate its super-chunk mesh with, or can draw with as a fallback
+			while VIPM geometry streams in and gets prepared. Start streaming
+			in VIPMs for all chunks that aren't united in super-chunks, and
+			forget the VIPM meshes for all that are.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Which, sadly, is far easier said than done, because, as I am sure
+			you are used to by now, there is a</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: The VIPMs are too big not only to sit in memory &ndash;
+			they are too big to store in raw form on DVD too. Like 1GB per 2km
+			x 2km of map big.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Don't store them raw then. Store the minimum
+			amount of data that allows you to reconstruct the whole mesh. A
+			VIPM is simply the encoding of the order of collapsed edges in the
+			original mesh, so you only need to store that order and you're
+			done. To save time on reconstruction, you can also save the order
+			of removal of triangles. That's it, you're done.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Well, almost.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: Reconstruction is O(n) where n is the number of
+			vertices, but still it is not instant. It visibly stalls the game
+			when meshes are created, and that's more or less every 64 meters
+			of distance the camera moves. Too often to ignore.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Reconstruct VIPMs in parallel. Run a worker
+			thread or pack your mesh data to an SPU, and just go on with your
+			game using low resolution fallback meshes where VIPMs are still
+			streaming and reconstructing. With the appropriate distance to
+			start fetching meshes, the target chunk will still need to use
+			minimum LOD by the time its actual geometry arrives.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			And now you finally have it, that terrain. The hedgehogs will be
+			happy.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Not the badgers though, since it will fall on them to dig the
+			levels through, and that's a</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Problem</B>: VIPM generation from scratch is painfully slow,
+			like several tens of seconds per chunk. And as we noted many times
+			already, chunks are too numerous in a map for us to care.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			<B>Solution</B>: Have an editing tool that uses classic quad tree
+			LOD to edit the terrain, then preprocess it before using it
+			in-game. Or, if you do not feel like creating a separate terrain
+			renderer just for the tool, enhance the worker threads you already
+			have to not only reconstruct VIPMs from collapse order data, but
+			also generate that data when it's not available, building the VIPM
+			from scratch. In the mean time, use full resolution geometry to
+			render the chunk up close, and 4 meters between vertices for the
+			minimum LOD mesh in the distance and when part of a super-chunk.
+			Then swap with the real VIPM (and save it to disk) when it is
+			available. The good thing is that along with a way to edit your
+			levels, this enables you to have terrain deformation in-game. This
+			works decently in practice, except for the initial LOD generation
+			of a whole map, which can take upwards of an hour for a 2km x 2km
+			area, leading to reduced framerates in the mean time.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			Speaking of saving data, there's one last thing that needs to be
+			saved along with the collapse order reconstruction data, and that
+			is the minimum LOD level static mesh for the chunk in its
+			entirety. It is typically tiny, but you probably remember how we
+			were going to use it as a fallback when no other mesh was
+			available? Well, it has to come from somewhere if we are to use
+			it, and that place is your map data directory.</P>
+			<P ALIGN=JUSTIFY STYLE="margin-bottom: 0cm; background: transparent">
+			And now even the badgers can be happy.</P>
+			<P ALIGN=JUSTIFY STYLE="background: transparent"><FONT SIZE=3>So
+			your terrain is ready, and now you only have the rest of your game
+			to make before you drink that beer. Good work!</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P ALIGN=CENTER STYLE="margin-bottom: 0cm"><BR>
+</P>
+</BODY>
+</HTML>

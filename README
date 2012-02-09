@@ -1,7 +1,7 @@
 Terrain
 
 An implementation of view independent progressive mesh terrain.
-To see it, run 
+To see it, run
 
 	Terrain/Terrain.exe [size_in_patches]
 
@@ -9,18 +9,18 @@ size_in_patches is the number of patches (1 patch = 64 meters) you want your ter
 to have in each dimension. Default is 16, which equals 1km x 1km terrain chunk.
 
 For navigation use W, S, A, D, R, F, T, G, and right-click / drag mouse.
-V toggles wireframe, K toggles terrain follow camera mode, X return the camera to 
+V toggles wireframe, K toggles terrain follow camera mode, X returns the camera to
 the origin. Other random keys do random things.
 
-New terrain generation takes some time to complete. It will start rendering pretty 
+New terrain generation takes some time to complete. It will start rendering pretty
 much immediately, but will need time to generate the progressive meshes. Each patch
-is saved when it's optimized, so generation will only take place if you generate a 
-terrain with a different size. The mesh generation progress is kindof obvious when 
-you view the terrain in wireframe. Rendering will be slow until all terrain has 
+is saved when it's optimized, so generation will only take place if you generate a
+terrain with a different size. The mesh generation progress is kindof obvious when
+you view the terrain in wireframe. Rendering will be slow until all terrain has
 been optimized.
 
-For a not-very-serious explanation what the hell this is and how to make your own, 
-you can check Terrain/VIPMTerrain.doc
+For a not-very-serious explanation what the hell this is and how to make your own,
+you can check Terrain/VIPMTerrain.html
 
-I wrote this thing when I was bored between jobs. You're welcome to lift any part 
+I wrote this thing when I was bored between jobs. You're welcome to lift any part
 of it in case you think it might be useful to you in any way.
