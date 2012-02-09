@@ -232,3 +232,18 @@ CStrPart Parse::MatchDelimiters(CStrPart &s, TDelimiterBlock *pDelimiters, int i
   s += sRes;
   return CStrPart();
 }
+
+bool Parse::Str2Int(int &iResult, CStrBase const &sInt, int iRadix)
+{
+  int i, iPos;
+  CStrPart sNumerals(g_chNumerals, iRadix);
+
+  iResult = 0;
+  for (i = 0; !sInt.EndsAt(i); i++) {
+    iPos = sNumerals.IFind(sInt[i]);
+    if (iPos < 0) 
+      return false;
+    iResult = iResult * iRadix + iPos;
+  }
+  return true;
+}

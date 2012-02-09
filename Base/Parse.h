@@ -39,6 +39,8 @@ namespace Parse {
   };
 
   CStrPart MatchDelimiters(CStrPart &s, TDelimiterBlock *pDelimiters, int iDelimiters, int *pIndexFound = 0);
+
+  bool Str2Int(int &iResult, CStrBase const &sInt, int iRadix = 10);
 };
 
 #endif

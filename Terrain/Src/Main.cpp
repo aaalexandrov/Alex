@@ -361,9 +361,7 @@ bool Init(char const *pCmdLine)
   CStrPart sSize, sCmdLine(pCmdLine);
 
   sSize = Parse::ReadInt(sCmdLine);
-  if (!!sSize)
-    iTerrainSize = atoi(sSize);
-  else
+  if (!sSize || !Parse::Str2Int(iTerrainSize, sSize))
     iTerrainSize = -1;
 
   if (!InitTerrain(iTerrainSize))
