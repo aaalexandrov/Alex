@@ -85,6 +85,7 @@ class CStr: public CStrBase {
 public:
   CStr(const char *pStr = 0, int iLen = -1);
   CStr(int i);
+  CStr(char c, int iRepeatCount = 1);
   CStr(const CStrBase &s) { Construct(s); }
   CStr(const CStr &s)     { Construct(s); }
   virtual ~CStr();
@@ -148,8 +149,8 @@ class CStrConst: public CStr {
 public:
 	CStrConst(const char *pStr = 0, int iLen = -1);
 	CStrConst(int i);
-  CStrConst(const CStrBase &s)  : CStr(0, 0) { Construct(s); }
-  CStrConst(const CStrConst &s) : CStr(0, 0) { Construct(s); }
+  CStrConst(const CStrBase &s)  : CStr((const char *) 0, 0) { Construct(s); }
+  CStrConst(const CStrConst &s) : CStr((const char *) 0, 0) { Construct(s); }
 
   virtual ~CStrConst();
 

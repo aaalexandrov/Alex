@@ -147,6 +147,16 @@ CStr::CStr(int i)
   m_pBuf = (const char *) (pHeader + 1);
 }
 
+CStr::CStr(char c, int iRepeatCount)
+{
+  int iLen = iRepeatCount + 1;
+  THeader *pHeader = THeader::Alloc(iLen);
+  pHeader->Init(iLen, 0);
+  m_pBuf = (const char *) (pHeader + 1);
+  memset((char *) m_pBuf, c, iRepeatCount);
+  ((char *) m_pBuf)[iRepeatCount] = 0;
+}
+
 CStr::~CStr()
 {
   const THeader *pHeader = GetHeader();
@@ -332,13 +342,13 @@ CStrPart CStrPart::operator +(const CStrPart s) const
 CStrConst::THash CStrConst::m_sRepository;
 
 CStrConst::CStrConst(const char *pStr, int iLen)
-  : CStr(0, 0)
+  : CStr((const char *) 0, 0)
 {
   Init(pStr, iLen);
 }
 
 CStrConst::CStrConst(int i)
-  : CStr(0, 0)
+  : CStr((const char *) 0, 0)
 {
   static char buf[96];
   _itoa(i, buf, 10);
