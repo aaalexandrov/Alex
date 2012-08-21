@@ -20,7 +20,7 @@ public:
     virtual CIter &Prev();
     virtual operator bool () const            { return m_pIt && *m_pIt;     }
 
-    virtual const CStrConst GetName()         { return m_pIt->GetName();    }
+    virtual CStrAny GetName() const           { return m_pIt->GetName();    }
     virtual bool GetVar(CBaseVar &vDst) const { return m_pIt->GetVar(vDst); }
     virtual bool SetVar(CBaseVar const &vSrc) { return m_pIt->SetVar(vSrc); }
     virtual CBaseVar *GetValue()              { return m_pIt->GetValue();     }
@@ -44,9 +44,9 @@ public:
   virtual void RemoveLastBaseVar();
   virtual void ClearBaseVars();
 
-	virtual CVarObj::CIter *GetIter(const CStrBase &sVar = CStrPart()) const;
-	virtual CBaseVar *FindVar(const CStrBase &sVar) const;
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false);
+	virtual CVarObj::CIter *GetIter(CStrAny const &sVar = CStrAny()) const;
+	virtual CBaseVar *FindVar(CStrAny const &sVar) const;
+  virtual bool ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding = false);
 };
 
 class CVarTemplate: public CObject {
@@ -79,7 +79,7 @@ public:
   bool Read(CVarObj *pVars);
   bool Write(CVarObj *pVars, int iIndent = 0);
 
-  bool ReadVarStrings(CStrConst &sName, CStr &sVal, const CRTTI *pVarRTTI);
+  bool ReadVarStrings(CStrAny &sName, CStrAny &sVal, const CRTTI *pVarRTTI);
 
   bool WriteIndent(int iIndent);
 };
@@ -91,8 +91,8 @@ inline bool Set(CVarObj *dst, float const *src) { ASSERT(0); return false; }
 inline bool Set(int *dst,  CVarObj const *src) { ASSERT(0); return false; } 
 inline bool Set(float *dst, CVarObj const *src) { ASSERT(0); return false; } 
 
-bool Set(CStrBase *dst, CVarObj const *src);
-bool Set(CVarObj *dst, CStrBase const *src);
+bool Set(CStrAny *dst, CVarObj const *src);
+bool Set(CVarObj *dst, CStrAny const *src);
 bool Set(CVarObj *dst, CVarObj const *src);
 bool SetValue(CVarObj *val, CBaseVar const *vSrc);
 

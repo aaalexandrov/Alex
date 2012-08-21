@@ -61,6 +61,7 @@ class CHashKV: public CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V
 public:
   CHashKV(int iSize = 0): CHash(iSize) {}
 };
+
 // Implementation ------------------------------------------------------------------
 
 // CHash ---------------------------------------------------------------------------
@@ -230,12 +231,20 @@ void CHash<T, K, H, P>::Resize(int iSize)
   Util::Swap(hash.m_arrLists.m_iCount, m_arrLists.m_iCount);
   Util::Swap(hash.m_arrLists.m_iMaxCount, m_arrLists.m_iMaxCount);
   Util::Swap(hash.m_iCount, m_iCount);
-  TIter it(&hash), it1;
-  while (it) {
-    it1 = it;
-    ++it;
-    Add(*it1);
-    hash.Remove(it1);
+
+  for (int i = 0; i < hash.m_iCount; ++i) {
+    CList<T, K, P> *&pLstOld = hash.m_arrLists[i];
+    if (!pLstOld)
+      continue;
+    CList<T, K, P>::TNode *pNode;
+    while (pNode = pLstOld->PopNode()) {
+      size_t uiHash = H::Hash(pNode->Data);
+      uiHash %= m_arrLists.m_iCount;
+      CList<T, K, P> *&pLstNew = m_arrLists[(int) uiHash];
+      if (!pLstNew)
+        pLstNew = new CList<T, K, P>();
+      pLstNew->PushNodeTail(pNode);
+    }
   }
 }
 

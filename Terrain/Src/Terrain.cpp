@@ -46,7 +46,7 @@ bool CTerrain::CPatchModelBuilder::InitMesh()
     m_uiMaterialCollapses = m_pPatch->m_uiMaterialCollapses;
     return false;
   } else {
-   static CStrConst sTEXCOORD("TEXCOORD");
+   static CStrAny sTEXCOORD(ST_CONST, "TEXCOORD");
 
    m_pMesh->Init(m_pOrgModel->m_pGeometry, sTEXCOORD, 1);
    return true;
@@ -320,9 +320,9 @@ bool CTerrain::CLODPatch::InitModel()
 //  CMatrixVar *pTexVar;
   CModel *pModel;
 
-  static const CStrConst sPOSITION("POSITION");
-  static const CStrConst sTEXCOORD("TEXCOORD");
-  static const CStrConst sg_mNormTransform("g_mNormTransform");
+  static const CStrAny sPOSITION(ST_CONST, "POSITION");
+  static const CStrAny sTEXCOORD(ST_CONST, "TEXCOORD");
+  static const CStrAny sg_mNormTransform(ST_CONST, "g_mNormTransform");
 
   vLODOrigin.Set(m_pPatches[0][0]->m_vWorldOrigin);
   vLODOrigin.z() = 0;
@@ -513,7 +513,7 @@ bool CTerrain::CLODPatch::Render()
 
 // CTerrain -------------------------------------------------------------------
 
-CTerrain::CTerrain(int iGridWidth, int iGridHeight, float fGrid2World, CMaterial *pBaseMat, CStr sSaveFileRoot): m_Lock(4000)
+CTerrain::CTerrain(int iGridWidth, int iGridHeight, float fGrid2World, CMaterial *pBaseMat, CStrAny sSaveFileRoot): m_Lock(4000)
 {
   m_fMaxLODError = 8.0f;
   m_fLODDistance = 300.0f;
@@ -639,10 +639,10 @@ float CTerrain::GetHeight(float fX, float fY)
 
 int CTerrain::AddMaterial(CMaterial *pMaterial)
 {
-  static CStrConst sg_cMaterialAverageColor("g_cMaterialAverageColor");
-  static const CStrConst sg_fLODDistance("g_fLODDistance");
-  static CStrConst sg_txDiffuse("g_txDiffuse");
-  static const CStrConst sg_fMaterialID("g_fMaterialID");
+  static const CStrAny sg_cMaterialAverageColor(ST_CONST, "g_cMaterialAverageColor");
+  static const CStrAny sg_fLODDistance(ST_CONST, "g_fLODDistance");
+  static const CStrAny sg_txDiffuse(ST_CONST, "g_txDiffuse");
+  static const CStrAny sg_fMaterialID(ST_CONST, "g_fMaterialID");
 
   int iInd = m_arrMaterials.m_iCount;
   m_arrMaterials.SetCount(iInd + 1);
@@ -716,8 +716,8 @@ bool CTerrain::Save(CFileBase *pFile)
   CAutoDeletePtr<CFileBase> pPatchFile;
 
   if (!pFile) {
-    CStr sName = GetSaveFileName();
-    if (sName) 
+    CStrAny sName = GetSaveFileName();
+    if (!!sName) 
       pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ | CFileBase::FOF_WRITE | CFileBase::FOF_CREATE | CFileBase::FOF_TRUNCATE);
     if (!pFile)
       return false;
@@ -746,8 +746,8 @@ bool CTerrain::Load(CFileBase *pFile)
   CAutoDeletePtr<CFileBase> pPatchFile;
 
   if (!pFile) {
-    CStr sName = GetSaveFileName();
-    if (sName) 
+    CStrAny sName = GetSaveFileName();
+    if (!!sName) 
       pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ);
     if (!pFile)
       return false;
@@ -801,11 +801,11 @@ bool CTerrain::Load(CFileBase *pFile)
   return true;
 }
 
-CStr CTerrain::GetSaveFileName()
+CStrAny CTerrain::GetSaveFileName()
 {
   if (!m_sSaveFileRoot) 
-    return "";
-  return m_sSaveFileRoot + CStrPart("/Terrain.ter");
+    return CStrAny(ST_WHOLE, "");
+  return m_sSaveFileRoot + CStrAny(ST_WHOLE, "/Terrain.ter");
 }
 
 void CTerrain::PatchInitDone(CPatch *pPatch)
@@ -845,7 +845,7 @@ void CTerrain::UpdateLOD(CCamera *pCamera)
     m_Lock.Unlock();
     bool bSavePatch = !pBuilder->m_pPatch->HasMeshData() || !pBuilder->m_pPatch->m_pMinLODModel;
     pBuilder->m_pPatch->SetMaterialModels(pBuilder);
-    if (bSavePatch && m_sSaveFileRoot) {
+    if (bSavePatch && !!m_sSaveFileRoot) {
       ASSERT(pBuilder->m_pPatch->HasMeshData());
       pBuilder->m_pPatch->Save(0);
     }
@@ -868,7 +868,7 @@ bool CTerrain::Render()
 
 bool CTerrain::InitLODMaterial(CMaterial *pSrcMat)
 {
-  static CStrConst sTerrainLOD("TerrainLOD");
+  static CStrAny sTerrainLOD(ST_CONST, "TerrainLOD");
 
   m_pLODMaterial = new CMaterial();
   CTechnique *pTech = CGraphics::Get()->GetTechnique(sTerrainLOD);

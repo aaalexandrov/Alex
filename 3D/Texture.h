@@ -83,7 +83,7 @@ public:
   CTexture();
   virtual ~CTexture() { Done(); }
 
-  virtual bool Init(CStrConst sFilename, int iMipLevels, UINT uiFlags);
+  virtual bool Init(CStrAny sFilename, int iMipLevels, UINT uiFlags);
   virtual bool Init(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, BYTE *pData, int iRowPitch, UINT uiFlags);
   virtual void Done();
   virtual void RecordMemory(bool bAdd);

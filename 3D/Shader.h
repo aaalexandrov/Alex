@@ -20,7 +20,7 @@ public:
   };
   
   struct TInputElement {
-    CStrConst m_sSemantic;
+    CStrAny   m_sSemantic;
     EElemType m_Type;
     BYTE      m_btIndex, m_btElements;
 
@@ -41,13 +41,13 @@ public:
   CInputDesc &operator =(const CInputDesc &id);
   bool operator ==(const CInputDesc &id) const;
 
-  int AddElement(CStrConst sSem, EElemType kType, BYTE btSemIndex, BYTE btElements);
+  int AddElement(CStrAny sSem, EElemType kType, BYTE btSemIndex, BYTE btElements);
 
   int GetElementCount() { return m_Elements.m_iCount; }
   int GetElementOffset(int iElement);
   int GetSize() { return GetElementOffset(m_Elements.m_iCount); }
 
-  TInputElement *GetElementInfo(CStrConst sSemantic, BYTE btSemIndex = 0, int *pInfoIndex = 0);
+  TInputElement *GetElementInfo(CStrAny sSemantic, BYTE btSemIndex = 0, int *pInfoIndex = 0);
   
   bool IsSuperSet(CInputDesc *pInputDesc);
 
@@ -59,8 +59,8 @@ public:
 class CConstantTemplate: public CVarTemplate {
   DEFRTTI
 public:
-  CStrConst m_sName, m_sCacheName;
-  int       m_iSize;
+  CStrAny m_sName, m_sCacheName;
+  int     m_iSize;
 
   CConstantTemplate();
   virtual ~CConstantTemplate();
@@ -106,7 +106,7 @@ public:
 
   bool SetFrom(const CVarObj &kVars);
   bool SetFrom(CConstantCache *pCache);
-  static bool SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CStrPart sSuffix);
+  static bool SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CStrAny sSuffix);
 };
 
 class CModel;
@@ -131,7 +131,7 @@ public:
   };
 
   struct TResourceBind {
-    CStrConst     m_sName;
+    CStrAny       m_sName;
     EResourceType m_eType;
     UINT          m_uiBindPoint, m_uiBindCount;
     EShaderType   m_eShader;
@@ -156,7 +156,7 @@ public:
 
   typedef CHash<TInputDescLayout *, CInputDesc *, TInputDescLayout, TInputDescLayout> THashInputLayout;
 public:
-  CStrConst m_sSrcFile, m_sVSEntry, m_sPSEntry, m_sName;
+  CStrAny m_sSrcFile, m_sVSEntry, m_sPSEntry, m_sName;
   ID3D10Blob *m_pVSBlob, *m_pPSBlob;
   ID3D11VertexShader *m_pVS;
   ID3D11PixelShader *m_pPS;
@@ -170,8 +170,8 @@ public:
   CVarObj *m_pDefStates, *m_pInitVars;
   THashInputLayout m_hashLayouts;
 
-  CTechnique(CStrConst sSrcFile, CStrConst sVSEntry, CStrConst sPSEntry, CStrConst sName);
-  CTechnique(CStr sVarFile);
+  CTechnique(CStrAny sSrcFile, CStrAny sVSEntry, CStrAny sPSEntry, CStrAny sName);
+  CTechnique(CStrAny sVarFile);
   ~CTechnique();
 
   bool Init();
@@ -184,10 +184,10 @@ public:
 
   bool IsValid();
 
-  CConstantTemplate *GetConstantTemplate(CStrConst sName);
-  CConstantBuffer *GetConstantBuffer(CStrConst sName);
+  CConstantTemplate *GetConstantTemplate(CStrAny sName);
+  CConstantBuffer *GetConstantBuffer(CStrAny sName);
   ID3D11InputLayout *GetInputLayout(CInputDesc *pDesc);
-  bool SetMatrixVar(CVarObj *pVars, CStrConst sVarMatrix, CMatrixVar const *pMatVar);
+  bool SetMatrixVar(CVarObj *pVars, CStrAny sVarMatrix, CMatrixVar const *pMatVar);
 
   ECacheLocation GetStateLocation(CStateCache::EStateType eStateType);
   bool ApplyStateType(CStateCache::EStateType eStateType, CStateCache *pStateCache, CVarObj *pVars);
@@ -196,10 +196,10 @@ public:
   bool ApplyConstants(CVarObj *pModelVars);
   bool Apply(CVarObj *pModelVars, CStateCache *pStateCache);
 
-  static inline size_t Hash(const CTechnique *pTech) { return CStrConst::Hash(pTech->m_sName); }
-  static inline size_t Hash(CStrConst sTech) { return CStrConst::Hash(sTech); }
+  static inline size_t Hash(const CTechnique *pTech) { return CStrAny::Hash(pTech->m_sName); }
+  static inline size_t Hash(CStrAny sTech) { return CStrAny::Hash(sTech); }
   static inline bool Eq(const CTechnique *pTech1, const CTechnique *pTech2) { return pTech1 == pTech2; }
-  static inline bool Eq(CStrConst sName, const CTechnique *pTech) { return sName == pTech->m_sName; }
+  static inline bool Eq(CStrAny sName, const CTechnique *pTech) { return sName == pTech->m_sName; }
 };
 
 /*

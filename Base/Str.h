@@ -6,171 +6,151 @@
 
 inline size_t GetHash(const char *pStr, int iLen);
 
-class CStr;
-class CStrPart;
-class CStrBase {
+class CStrAny;
+class CStrHeader {
 public:
-  class THeader {
-  public:
-    static const int ALLOC_GRANULARITY = 16;
+  static const int ALLOC_GRANULARITY = 16;
 
-    mutable CRefCount m_RefCount;        
-    struct {
-      int m_iLen: 30;
-      int m_bInRepository : 1;
-      int m_bHashInitialized : 1;
-    };
-    size_t m_uiHash;
-
-    inline DWORD GetRef() const { return m_RefCount.Get(); } 
-    inline void  Acquire() const { m_RefCount.Inc(); }        
-    inline void  Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
-
-    static inline int GetMaxLen(int iLen);
-    static inline THeader *Alloc(int iLen)            { return (THeader *) new char[sizeof(THeader) + GetMaxLen(iLen) + 1]; }
-    static inline void Delete(const THeader *pHeader);
-
-    inline void Init(int iLen, const char *pSrc) { m_iLen = iLen; m_bInRepository = false; m_bHashInitialized = false; if (pSrc) memcpy(this + 1, pSrc, iLen); ((char *) (this + 1))[pSrc ? iLen : 0] = 0; m_RefCount.m_dwCount = 1; }
-    
-    inline size_t GetHash() { if (!m_bHashInitialized) { m_uiHash = ::GetHash((const char *) (this + 1), m_iLen); m_bHashInitialized = true; } return m_uiHash; }
+  mutable CRefCount m_RefCount;        
+  struct {
+    int m_iLen: 30;
+    int m_bInRepository : 1;
+    mutable int m_bHashInitialized : 1;
   };
+  mutable size_t m_uiHash;
 
-public:
-  const char *m_pBuf;
+  inline DWORD GetRef() const  { return m_RefCount.Get(); } 
+  inline void  Acquire() const { m_RefCount.Inc(); }        
+  inline void  Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
 
-  CStrBase()                  {}
-  virtual ~CStrBase()         {}
+  static CStrHeader *Get(const char *pSrc, int iLen, bool bInRepository);
 
-  operator const char *() const             { return m_pBuf;     }
-  bool operator !() const                   { return EndsAt(0);  }
-  bool operator ==(const CStrBase &s) const { return !Cmp(s);    }
-  bool operator <(const CStrBase &s) const  { return Cmp(s) < 0; }
-  bool operator >(const CStrBase &s) const  { return Cmp(s) > 0; }
+  static inline int GetMaxLen(int iLen);
+  static inline CStrHeader *Alloc(int iLen)    { return (CStrHeader *) new char[sizeof(CStrHeader) + GetMaxLen(iLen) + 1]; }
+  static inline void Delete(const CStrHeader *pHeader);
 
-  virtual int Length() const = 0;
-  virtual bool EndsAt(int iOffset) const = 0;
+  CStrHeader const *GetUnique() const;
+  inline CStrHeader *AssureInRepository();
 
-  virtual bool ZeroTerminated() const = 0;
-  virtual const THeader *GetHeader() const = 0;
-
-  virtual CStrBase &Assign(const CStrBase &s) = 0;
-
-  virtual size_t GetHash() const = 0;
-
-  char operator[](int i) const { return m_pBuf[i]; }
-
-  CStrPart SubStr(int iStart, int iEnd) const;
-  int Find(const CStrBase &s, int iStartPos = 0) const;
-  int IFind(const CStrBase &s, int iStartPos = 0) const;
-  int Find(char ch, int iStartPos = 0) const;
-  int IFind(char ch, int iStartPos = 0) const;
-  int Cmp(const CStrBase &s) const;
-  int ICmp(const CStrBase &s) const;
-
-  inline bool StartsWith(const CStrBase &s) const;
-  inline bool EndsWith(const CStrBase &s) const;
-  inline bool HasSubStrAt(const CStrBase &s, int iStart) const;
+  inline void Init(int iLen, const char *pSrc) { m_iLen = iLen; m_bInRepository = false; m_bHashInitialized = false; if (pSrc) memcpy(this + 1, pSrc, iLen); ((char *) (this + 1))[pSrc ? iLen : 0] = 0; m_RefCount.m_dwCount = 0; }
+    
+  inline size_t GetHash() const { if (!m_bHashInitialized) { m_uiHash = ::GetHash((const char *) (this + 1), m_iLen); m_bHashInitialized = true; } return m_uiHash; }
 
   // Hash functions
-  static inline size_t Hash(const CStrBase &s) { return s.GetHash(); }
-  static inline size_t Hash(CStrBase::THeader *pHeader)  { return pHeader->GetHash(); }
-  static inline size_t Hash(const char *pStr) { return ::GetHash(pStr, (int) strlen(pStr)); }
+  static inline size_t Hash(CStrHeader const *pHeader)  { return pHeader->GetHash(); }
+  static inline size_t Hash(char const *pStr)           { return ::GetHash(pStr, (int) strlen(pStr)); }
+  static inline size_t Hash(CStrAny const &s);//           { return s.GetHash(); }
 	// Equality predicate
-  static inline bool Eq(const char *pKey, CStrBase::THeader *pHeader) { return !strcmp(pKey, (const char *) (pHeader + 1)); }
-  static inline bool Eq(CStrBase const &s, CStrBase::THeader *pHeader) { THeader *pHeaderS = const_cast<THeader*>(s.GetHeader()); if (pHeaderS) return Eq(pHeaderS, pHeader); if (s.Length() != pHeader->m_iLen) return false; return !memcmp(s.m_pBuf, (pHeader + 1), pHeader->m_iLen * sizeof(char)); }
-  static inline bool Eq(CStrBase::THeader *pHeader1, CStrBase::THeader *pHeader2) { if (pHeader1 == pHeader2) return true; if (pHeader1->m_iLen != pHeader2->m_iLen) return false; return !memcmp(pHeader1 + 1, pHeader2 + 1, pHeader1->m_iLen * sizeof(char)); }
-};
+  static inline bool Eq(const char *pKey, CStrHeader const *pHeader)            { return !strcmp(pKey, (const char *) (pHeader + 1)); }
+  static inline bool Eq(CStrHeader const *pHeader1, CStrHeader const *pHeader2) { if (pHeader1 == pHeader2) return true; if (pHeader1->m_bInRepository && pHeader2->m_bInRepository || pHeader1->m_iLen != pHeader2->m_iLen) return false; return !memcmp(pHeader1 + 1, pHeader2 + 1, pHeader1->m_iLen * sizeof(char)); }
+  static inline bool Eq(CStrAny const &s, CStrHeader const *pHeader);//            { CStrHeader *pHeaderS = const_cast<CStrHeader*>(s.GetHeader()); if (pHeaderS) return Eq(pHeaderS, pHeader); if (s.Length() != pHeader->m_iLen) return false; return !memcmp(s.m_pBuf, (pHeader + 1), pHeader->m_iLen * sizeof(char)); }
 
-class CStr: public CStrBase {
 public:
-  CStr(const char *pStr = 0, int iLen = -1);
-  CStr(int i);
-  CStr(char c, int iRepeatCount = 1);
-  CStr(const CStrBase &s) { Construct(s); }
-  CStr(const CStr &s)     { Construct(s); }
-  virtual ~CStr();
+  typedef CHash<CStrHeader *, const char *, CStrHeader, CStrHeader> THash;
 
-  void Construct(const CStrBase &s);
-
-  virtual CStr &operator =(const CStrBase &s);
-  CStr &operator =(const char *pStr);
-
-  CStr &operator =(const CStr &s) { return operator =(*(CStrBase *) &s); }
-
-  virtual CStrBase &Assign(const CStrBase &s) { return *this = s; }
-
-  CStr operator +(const CStrBase &s) const;
-  CStr &operator +=(const CStrBase &s);
-
-  virtual int Length() const               { const THeader *pHeader = GetHeader(); return pHeader ? pHeader->m_iLen : 0; }
-  virtual bool EndsAt(int iOffset) const   { return !m_pBuf || !m_pBuf[iOffset];          }
-
-  virtual bool ZeroTerminated() const      { return true;                                 }
-  virtual const THeader *GetHeader() const { return m_pBuf ? (const THeader *) m_pBuf - 1 : 0; }
-
-  virtual size_t GetHash() const           { THeader *pHeader = (THeader *) GetHeader(); return pHeader ? pHeader->GetHash() : 0; }
-
-  virtual void Init(const char *pStr, int iLen = -1);
-  void MakeUnique();
-
-  CStr &ToUpper();
-  CStr &ToLower();
-};
-
-class CStrPart: public CStrBase {
-public:
-  int m_iLen;
-
-  explicit CStrPart(const char *pStr = 0, int iLen = -1);
-           CStrPart(const CStrPart &s) { m_pBuf = s.m_pBuf; m_iLen = s.m_iLen; }
-  explicit CStrPart(const CStrBase &s) { m_pBuf = s.m_pBuf; m_iLen = s.Length(); }
-
-  CStrPart &operator =(const CStrBase &s) { m_pBuf = s.m_pBuf; m_iLen = s.Length(); return *this; }
-//  CStrPart &operator =(const char *pStr)  { return Set(pStr);                                     }
-
-  CStrPart &Set(const char *pStr, int iLen = -1);
-
-  virtual CStrBase &Assign(const CStrBase &s) { ASSERT(!"CStrPart cannot be assigned to!"); return *this; }
-
-  virtual size_t GetHash() const { return ::GetHash(m_pBuf, m_iLen); }
-
-  CStrPart &operator +=(int i);
-  CStrPart &operator +=(const CStrPart s);
-  CStrPart operator +(const CStrPart s) const;
-
-  virtual int Length() const              { return m_iLen;            }
-  virtual bool EndsAt(int iOffset) const  { return iOffset >= m_iLen; }
-
-  virtual bool ZeroTerminated() const     { return false;             }
-  virtual const THeader *GetHeader() const { return 0; }
-};
-
-class CStrConst: public CStr {
-public:
-	CStrConst(const char *pStr = 0, int iLen = -1);
-	CStrConst(int i);
-  CStrConst(const CStrBase &s)  : CStr((const char *) 0, 0) { Construct(s); }
-  CStrConst(const CStrConst &s) : CStr((const char *) 0, 0) { Construct(s); }
-
-  virtual ~CStrConst();
-
-  void Construct(const CStrBase &s);
-
-  virtual CStrConst &operator =(const CStrBase &s);
-  CStrConst &operator =(const CStrConst &s) { return operator =((const CStrBase &) s); }
-
-  virtual void Init(const char *pStr, int iLen = -1);
-public:
-  typedef CHash<CStrBase::THeader *, const char *, CStrConst, CStrConst> THash;
-
-	static THash m_sRepository;
+	static THash s_Repository;
 
   static bool CheckRepository();
 };
 
+enum EStrType {
+  ST_HASHEADER = 1,
+  ST_INREPOSITORY = 2,
+  ST_ZEROTERMINATED = 4,
+  ST_PRESERVETYPE = 16,
+
+  ST_PART = 0,
+  ST_WHOLE = ST_ZEROTERMINATED,
+
+  ST_STR = ST_HASHEADER,
+  ST_CONST = ST_HASHEADER | ST_INREPOSITORY,
+  ST_SAME = ST_PRESERVETYPE,
+};
+
+class CStrAny {
+public:
+  char const *m_pBuf;
+  struct {
+    int m_iLen: 30;
+    int m_bHasHeader: 1;
+    int m_bZeroTerminated: 1;
+  };
+
+public:
+  CStrAny(EStrType eType = ST_STR, char const *pStr = 0, int iLen = -1);
+  CStrAny(EStrType eType, int i);
+  CStrAny(EStrType eType, float f);
+  CStrAny(EStrType eType, char c, int iRepeatCount = 1);
+  CStrAny(CStrAny const &s, EStrType eType = ST_SAME);
+  explicit CStrAny(CStrHeader const *pHeader);
+  ~CStrAny();
+
+  void Init(EStrType eType, char const *pStr, int iLen);
+  void Init(EStrType eType, CStrAny const &s);
+  void Init(CStrHeader const *pHeader);
+  void Done();
+
+  void MakeUnique();
+  void AssureHasHeader();
+  void AssureInRepository();
+
+  bool operator !() const                  { return EndsAt(0);  }
+  bool operator ==(CStrAny const &s) const { return !Cmp(s);    }
+  bool operator <(CStrAny const &s) const  { return Cmp(s) < 0; }
+  bool operator >(CStrAny const &s) const  { return Cmp(s) > 0; }
+
+  CStrAny &operator =(CStrAny const &s);
+  CStrAny &operator =(const char *pStr);
+
+  CStrAny operator +(CStrAny const &s) const;
+  CStrAny &operator +=(CStrAny const &s);
+
+  CStrAny operator >>(CStrAny const &s) const;
+  CStrAny &operator >>=(CStrAny const &s);
+
+  CStrAny operator >>(int i) const;
+  CStrAny &operator >>=(int i);
+
+  void Clear() { Done(); Init(ST_PART, 0, -1); }
+
+  int Length() const { return m_iLen; }
+  bool Empty() const { return !m_iLen; }
+  bool EndsAt(int iOffset) const { return iOffset >= m_iLen; }
+
+  bool ZeroTerminated() const { return !!m_bZeroTerminated; }
+  CStrHeader const *GetHeader() const { return m_bHasHeader ? (CStrHeader const *) m_pBuf - 1 : 0; }
+  CStrHeader const *GetHeaderForContents(bool bCreateInRepository) const { return m_bHasHeader ? (CStrHeader const *) m_pBuf - 1 : CStrHeader::Get(m_pBuf, m_iLen, bCreateInRepository); }
+
+  size_t GetHash() const { return m_bHasHeader ? GetHeader()->GetHash() : ::GetHash(m_pBuf, m_iLen); }
+
+  char operator[](int i) const { ASSERT(i >= 0 && i < m_iLen); return m_pBuf[i]; }
+
+  CStrAny SubStr(int iStart, int iEnd, EStrType eType = ST_PART) const;
+  int Find(CStrAny const &s, int iStartPos = 0) const;
+  int IFind(CStrAny const &s, int iStartPos = 0) const;
+  int Find(char ch, int iStartPos = 0) const;
+  int IFind(char ch, int iStartPos = 0) const;
+  int Cmp(CStrAny const &s) const;
+  int ICmp(CStrAny const &s) const;
+
+  inline bool StartsWith(CStrAny const &s) const              { return !SubStr(0, s.Length(), ST_PART).Cmp(s); }
+  inline bool EndsWith(CStrAny const &s) const                { return !SubStr(Length() - s.Length(), Length(), ST_PART).Cmp(s); }
+  inline bool HasSubStrAt(CStrAny const &s, int iStart) const { return !SubStr(iStart, iStart + s.Length(), ST_PART).Cmp(s); }
+
+  // Hash functions
+  static inline size_t Hash(CStrAny const &s) { return s.GetHash(); }
+  static inline size_t Hash(const char *pStr) { return ::GetHash(pStr, (int) strlen(pStr)); }
+
+  static inline bool Eq(CStrHeader const *pHeader, CStrAny const &s) { if (s.GetHeader()) return CStrHeader::Eq(pHeader, s.GetHeader()); if (pHeader->m_iLen != s.m_iLen) return false; return !memcmp(pHeader + 1, s.m_pBuf, pHeader->m_iLen); }
+
+protected:
+  CStrHeader *GetConcatenationHeader(CStrAny const &s, bool bForceNew) const;
+  void GetUnionBeginEnd(CStrAny const &s, char const *&pStart, char const *&pEnd, bool &bZeroTerminated) const;
+};
+
 // ------------------------------------------
 
-inline int CStrBase::THeader::GetMaxLen(int iLen)             
+inline int CStrHeader::GetMaxLen(int iLen)             
 { 
   int iMod = iLen % ALLOC_GRANULARITY;
   if (iMod)
@@ -178,16 +158,24 @@ inline int CStrBase::THeader::GetMaxLen(int iLen)
   return iLen;
 } 
 
-inline void CStrBase::THeader::Delete(const THeader *pHeader)
+inline void CStrHeader::Delete(const CStrHeader *pHeader)
 {
   if (pHeader->m_bInRepository) 
-    CStrConst::m_sRepository.RemoveValue(const_cast<THeader *>(pHeader)); 
+    s_Repository.RemoveValue(const_cast<CStrHeader *>(pHeader)); 
   delete [] (char *) pHeader; 
 }
 
-inline bool CStrBase::StartsWith(const CStrBase &s) const              { return !SubStr(0, s.Length()).Cmp(s); }
-inline bool CStrBase::EndsWith(const CStrBase &s) const                { return !SubStr(Length() - s.Length(), Length()).Cmp(s); }
-inline bool CStrBase::HasSubStrAt(const CStrBase &s, int iStart) const { return !SubStr(iStart, iStart + s.Length()).Cmp(s); }
+inline CStrHeader *CStrHeader::AssureInRepository()
+{
+  if (m_bInRepository)
+    return this;
+  THash::TIter it = s_Repository.Find(this);
+  if (it)
+    return *it;
+  m_bInRepository = true;
+  s_Repository.Add(this);
+  return this;
+}
 
 inline size_t GetHash(const char *pStr, int iLen)
 {
@@ -217,5 +205,9 @@ inline size_t GetHash(const char *pStr, int iLen)
   }
   return uiRes + uiTemp;
 }
+
+inline size_t CStrHeader::Hash(CStrAny const &s)                        { return s.GetHash(); }
+inline bool CStrHeader::Eq(CStrAny const &s, CStrHeader const *pHeader) { CStrHeader *pHeaderS = const_cast<CStrHeader*>(s.GetHeader()); if (pHeaderS) return Eq(pHeaderS, pHeader); if (s.Length() != pHeader->m_iLen) return false; return !memcmp(s.m_pBuf, (pHeader + 1), pHeader->m_iLen * sizeof(char)); }
+
 
 #endif

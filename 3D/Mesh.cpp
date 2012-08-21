@@ -220,7 +220,7 @@ CMesh::~CMesh()
   DoneInputs();
 }
 
-bool CMesh::Init(CGeometry *pOrgGeom, CStrConst sMatSemantic, BYTE btMatSemanticIndex)
+bool CMesh::Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIndex)
 {
   ASSERT(pOrgGeom && pOrgGeom->m_ePrimitiveType == CGeometry::PT_TRIANGLELIST);
   UINT uiVertices, uiIndices, i;
@@ -232,7 +232,7 @@ bool CMesh::Init(CGeometry *pOrgGeom, CStrConst sMatSemantic, BYTE btMatSemantic
   ASSERT(uiVertices && uiIndices);
   CAutoDeleteArrayPtr<TVertex *> pVertices(new TVertex *[uiVertices]);
 
-  static CStrConst sPOSITION("POSITION");
+  static CStrAny sPOSITION(ST_CONST, "POSITION");
 
   int iPosIndex, iPosOffset, iVertSize;
   int iMatIndex, iMatOffset;

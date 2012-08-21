@@ -4,24 +4,341 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-// CStrBase -----------------------------------------------------------
+// CStrHeader ---------------------------------------------------------
 
-CStrPart CStrBase::SubStr(int iStart, int iEnd) const
+CStrHeader::THash CStrHeader::s_Repository;
+
+CStrHeader *CStrHeader::Get(const char *pSrc, int iLen, bool bInRepository)
 {
-  int iLen = Length();
-  if (iStart < 0)
-    iStart = 0;
-  if (iStart > iLen)
-    iStart = iLen;
-  if (iEnd > iLen || iEnd < 0)
-    iEnd = iLen;
-  if (iStart > iEnd)
-    iEnd = iStart;
-  iLen = iEnd - iStart;
-  return CStrPart(m_pBuf + iStart, iLen);
+  if (!pSrc) {
+    if (iLen < 0)
+      return 0;
+    bInRepository = bInRepository && iLen == 0;
+  }
+  if (iLen < 0)
+    iLen = (int) strlen(pSrc);
+  if (bInRepository) {
+    THash::TIter it = s_Repository.Find(CStrAny(ST_PART, pSrc, iLen));
+    if (it) 
+      return *it;
+  } 
+  CStrHeader *pHeader = CStrHeader::Alloc(iLen);
+  pHeader->Init(iLen, pSrc);
+  if (bInRepository) {
+    pHeader->m_bInRepository = true;
+    s_Repository.Add(pHeader);
+  }
+  return pHeader;
 }
 
-int CStrBase::Find(const CStrBase &s, int iStartPos) const
+CStrHeader const *CStrHeader::GetUnique() const
+{
+  if (GetRef() <= 1)
+    return this;
+  CStrHeader *pNewHeader = CStrHeader::Alloc(m_iLen);
+  pNewHeader->Init(m_iLen, (const char *) (this + 1));
+  if (m_bHashInitialized) {
+    pNewHeader->m_bHashInitialized = true;
+    pNewHeader->m_uiHash = m_uiHash;
+  }
+  return pNewHeader;
+}
+
+bool CStrHeader::CheckRepository()
+{
+  bool bRes;
+  THash::TIter it;
+
+  bRes = true;
+  for (it = s_Repository; it; ++it) {
+    ASSERT(it->m_bInRepository && it->m_bHashInitialized);
+    bRes &= it->m_bInRepository && it->m_bHashInitialized;
+  }
+  return bRes;
+}
+
+// CStrAny --------------------------------------------------------------------
+
+CStrAny::CStrAny(EStrType eType, char const *pStr, int iLen)
+{
+  Init(eType, pStr, iLen);
+}
+
+CStrAny::CStrAny(EStrType eType, int i)
+{
+  char chBuf[32];
+  Parse::Int2Str(i, chBuf, ARRSIZE(chBuf), 10);
+  eType = (EStrType) (eType | ST_HASHEADER | ST_ZEROTERMINATED);
+  Init(eType, chBuf, -1);
+}
+
+CStrAny::CStrAny(EStrType eType, float f)
+{
+  char chBuf[32];
+  Parse::Float2Str(f, chBuf, ARRSIZE(chBuf), 10);
+  eType = (EStrType) (eType | ST_HASHEADER | ST_ZEROTERMINATED);
+  Init(eType, chBuf, -1);
+}
+
+CStrAny::CStrAny(EStrType eType, char c, int iRepeatCount)
+{
+  Init(eType, "", iRepeatCount);
+  memset((char *) m_pBuf, c, iRepeatCount * sizeof(char));
+  if (m_bZeroTerminated)
+    ((char *) m_pBuf)[iRepeatCount] = 0;
+}
+
+CStrAny::CStrAny(CStrAny const &s, EStrType eType)
+{
+  Init(eType, s);
+}
+
+CStrAny::CStrAny(CStrHeader const *pHeader)
+{
+  Init(pHeader);
+}
+
+CStrAny::~CStrAny()
+{
+  Done();
+}
+
+void CStrAny::Init(EStrType eType, char const *pStr, int iLen)
+{
+  if (!pStr) {
+    if (iLen <= 0) {
+      m_pBuf = 0;
+      m_iLen = 0;
+      m_bHasHeader = false;
+      m_bZeroTerminated = false;
+      return;
+    }
+    eType = (EStrType) (eType & ~ST_INREPOSITORY);
+  }
+  if (iLen < 0) {
+    eType = (EStrType) (eType | ST_ZEROTERMINATED);
+    iLen = strlen(pStr);
+  }
+  m_bZeroTerminated = !!(eType & (ST_ZEROTERMINATED | ST_HASHEADER));
+  m_bHasHeader = !!(eType & ST_HASHEADER);
+  m_iLen = iLen;
+  if (m_bHasHeader) {
+    CStrHeader *pHeader = CStrHeader::Get(pStr, iLen, !!(eType & ST_INREPOSITORY));
+    pHeader->Acquire();
+    m_pBuf = (char const *) (pHeader + 1);
+  } else 
+    m_pBuf = pStr;
+}
+
+void CStrAny::Init(EStrType eType, CStrAny const &s)
+{
+  if (eType & ST_PRESERVETYPE) {
+    m_pBuf = s.m_pBuf;
+    m_iLen = s.m_iLen;
+    m_bHasHeader = s.m_bHasHeader;
+    m_bZeroTerminated = s.m_bZeroTerminated;
+    if (m_bHasHeader)
+      GetHeader()->Acquire();
+  } else 
+    Init(eType, s.m_pBuf, s.m_iLen);
+}
+
+void CStrAny::Init(CStrHeader const *pHeader)
+{
+  ASSERT(pHeader);
+  pHeader->Acquire();
+  m_pBuf = (char const *) (pHeader + 1);
+  m_iLen = pHeader->m_iLen;
+  m_bHasHeader = true;
+  m_bZeroTerminated = true;
+}
+
+void CStrAny::Done()
+{
+  if (m_bHasHeader)
+    GetHeader()->Release();
+}
+
+void CStrAny::MakeUnique()
+{
+  if (m_bHasHeader) {
+    CStrHeader const *pHeader, *pNewHeader;
+    pHeader = GetHeader();
+    pNewHeader = pHeader->GetUnique();
+    pNewHeader->Acquire();
+    pHeader->Release();
+    m_pBuf = (char const *) (pNewHeader + 1);
+  } else 
+    Init(ST_STR, m_pBuf, m_iLen);
+}
+
+void CStrAny::AssureHasHeader()
+{
+  if (m_bHasHeader)
+    return;
+  ASSERT(m_pBuf || !m_iLen);
+  if (!m_pBuf) 
+    m_pBuf = "";
+  Init(ST_STR, m_pBuf, m_iLen);
+}
+
+void CStrAny::AssureInRepository()
+{
+  if (!m_pBuf)
+    return;
+  if (m_bHasHeader) {
+    CStrHeader *pHeader = (CStrHeader*) GetHeader();
+    CStrHeader *pRepoHeader = pHeader->AssureInRepository();
+    pRepoHeader->Acquire();
+    pHeader->Release();
+    m_pBuf = (char const *) (pRepoHeader + 1);
+  } else
+    Init(ST_CONST, m_pBuf, m_iLen);
+}
+
+CStrAny &CStrAny::operator =(CStrAny const &s)
+{
+  CStrHeader const *pHeader = GetHeader();
+  Init(ST_SAME, s);
+  if (pHeader)
+    pHeader->Release();
+  return *this;
+}
+
+CStrAny &CStrAny::operator =(const char *pStr)
+{
+  Done();
+  Init(ST_STR, pStr, -1);
+  return *this;
+}
+
+CStrHeader *CStrAny::GetConcatenationHeader(CStrAny const &s, bool bForceNew) const
+{
+  ASSERT((m_pBuf || m_iLen) && s.m_iLen);
+  CStrHeader *pHeader = (CStrHeader *) GetHeader();
+  ASSERT(!pHeader || pHeader->m_iLen == m_iLen);
+  if (bForceNew || !pHeader || pHeader->GetRef() > 1 || pHeader->m_bInRepository || CStrHeader::GetMaxLen(m_iLen) < m_iLen + s.m_iLen) {
+    pHeader = CStrHeader::Alloc(m_iLen + s.m_iLen);
+    pHeader->Init(m_iLen + s.m_iLen, 0);
+    memcpy(pHeader + 1, m_pBuf, m_iLen * sizeof(char));
+  } else {
+    pHeader->m_iLen += s.m_iLen;
+    pHeader->m_bHashInitialized = false;
+  }
+  memcpy((char *) (pHeader + 1) + m_iLen * sizeof(char), s.m_pBuf, s.m_iLen * sizeof(char));
+  ((char *) (pHeader + 1)) [pHeader->m_iLen] = 0;
+  return pHeader;
+}
+
+CStrAny CStrAny::operator +(CStrAny const &s) const
+{
+  if (m_iLen == 0)
+    return s;
+  if (s.m_iLen == 0)
+    return *this;
+  CStrHeader *pHeader = GetConcatenationHeader(s, true);
+  return CStrAny(pHeader);
+}
+
+CStrAny &CStrAny::operator +=(CStrAny const &s)
+{
+  if (!s.m_iLen)
+    return *this;
+  if (!m_pBuf) {
+    *this = s;
+    return *this;
+  }
+  CStrHeader *pOrgHeader = (CStrHeader *) GetHeader();
+  CStrHeader *pHeader = GetConcatenationHeader(s, false);
+  if (pHeader != pOrgHeader) {
+    Init(pHeader);
+    if (pOrgHeader)
+      pOrgHeader->Release();
+  } else {
+    m_iLen = pHeader->m_iLen;
+  }
+  return *this;
+}
+
+void CStrAny::GetUnionBeginEnd(CStrAny const &s, char const *&pStart, char const *&pEnd, bool &bZeroTerminated) const
+{
+  if (!m_pBuf) {
+    pStart = s.m_pBuf;
+    pEnd = s.m_pBuf + s.m_iLen;
+    bZeroTerminated = !!s.m_bZeroTerminated;
+  } else
+    if (!s.m_pBuf) {
+      pStart = m_pBuf;
+      pEnd = m_pBuf + m_iLen;
+      bZeroTerminated = !!m_bZeroTerminated;
+    } else {
+      pStart = Util::Min(m_pBuf, s.m_pBuf);
+      if (m_pBuf + m_iLen >= s.m_pBuf + s.m_iLen) {
+        pEnd = m_pBuf + m_iLen;
+        bZeroTerminated = m_bZeroTerminated || m_pBuf + m_iLen == s.m_pBuf + s.m_iLen && s.m_bZeroTerminated;
+      } else {
+        pEnd = s.m_pBuf + s.m_iLen;
+        bZeroTerminated = !!s.m_bZeroTerminated;
+      }
+    }
+}
+
+CStrAny CStrAny::operator >>(CStrAny const &s) const
+{
+  char const *pStart, *pEnd;
+  bool bZeroTerminated;
+  GetUnionBeginEnd(s, pStart, pEnd, bZeroTerminated);
+  return CStrAny(bZeroTerminated ? ST_WHOLE : ST_PART, pStart, pEnd - pStart);
+}
+
+CStrAny &CStrAny::operator >>=(CStrAny const &s)
+{
+  ASSERT(!m_bHasHeader);
+  if (m_bHasHeader)
+    return *this;
+  char const *pStart, *pEnd;
+  bool bZeroTerminated;
+  GetUnionBeginEnd(s, pStart, pEnd, bZeroTerminated);
+  m_pBuf = pStart;
+  m_iLen = pEnd - pStart;
+  m_bZeroTerminated = bZeroTerminated;
+  return *this;
+}
+
+CStrAny CStrAny::operator >>(int i) const
+{
+  if (i > m_iLen)
+    i = m_iLen;
+  return SubStr(i, m_iLen);
+}
+
+CStrAny &CStrAny::operator >>=(int i)
+{
+  ASSERT(!m_bHasHeader);
+  if (m_bHasHeader)
+    return *this;
+  if (i > m_iLen)
+    i = m_iLen;
+  m_pBuf += i;
+  m_iLen -= i;
+  return *this;
+}
+
+CStrAny CStrAny::SubStr(int iStart, int iEnd, EStrType eType) const
+{
+  iStart = Util::Bound(iStart, 0, m_iLen);
+  if (iEnd < 0)
+    iEnd = m_iLen;
+  else
+    iEnd = Util::Bound(iEnd, iStart, m_iLen);
+  if (iStart == 0 && iEnd == m_iLen && eType & ST_SAME)
+    return *this;
+  if (iEnd == m_iLen && m_bZeroTerminated)
+    eType = (EStrType) (eType | ST_ZEROTERMINATED);
+  return CStrAny(eType, m_pBuf + iStart, iEnd - iStart);
+}
+
+int CStrAny::Find(CStrAny const &s, int iStartPos) const
 {
   int iLen, iLen1, iMatch, iStart;
   iLen = Length();
@@ -35,7 +352,7 @@ int CStrBase::Find(const CStrBase &s, int iStartPos) const
   return -1;
 }
 
-int CStrBase::IFind(const CStrBase &s, int iStartPos) const
+int CStrAny::IFind(CStrAny const &s, int iStartPos) const
 {
   int iLen, iLen1, iMatch, iStart;
   iLen = Length();
@@ -49,8 +366,7 @@ int CStrBase::IFind(const CStrBase &s, int iStartPos) const
   return -1;
 }
 
-
-int CStrBase::Find(char ch, int iStartPos) const
+int CStrAny::Find(char ch, int iStartPos) const
 {
   while (!EndsAt(iStartPos) && m_pBuf[iStartPos] != ch)
     iStartPos++;
@@ -59,7 +375,7 @@ int CStrBase::Find(char ch, int iStartPos) const
   return iStartPos;
 }
 
-int CStrBase::IFind(char ch, int iStartPos) const
+int CStrAny::IFind(char ch, int iStartPos) const
 {
   ch = tolower(ch);
   while (!EndsAt(iStartPos) && tolower(m_pBuf[iStartPos]) != ch)
@@ -69,22 +385,10 @@ int CStrBase::IFind(char ch, int iStartPos) const
   return iStartPos;
 }
 
-int CStrBase::Cmp(const CStrBase &s) const
+int CStrAny::Cmp(CStrAny const &s) const
 {
-  if (EndsAt(0)) 
-    if (s.EndsAt(0))
-      return 0;
-    else
-      return -1;
-  if (s.EndsAt(0))
-    return 1;
-
-  const THeader *pHeader, *pHeaderS;
-  pHeader = GetHeader();
-  pHeaderS = s.GetHeader();
-  if (pHeader && pHeaderS) 
-    if (pHeader && pHeaderS && pHeader->m_bInRepository && pHeaderS->m_bInRepository && pHeader == pHeaderS)
-      return 0;
+  if (m_pBuf == s.m_pBuf || !m_iLen || !s.m_iLen)
+    return m_iLen - s.m_iLen;
 
   int i = 0;
   while (!EndsAt(i) && !s.EndsAt(i) && m_pBuf[i] == s.m_pBuf[i])
@@ -99,22 +403,10 @@ int CStrBase::Cmp(const CStrBase &s) const
   return (int) m_pBuf[i] - (int) s.m_pBuf[i];
 }
 
-int CStrBase::ICmp(const CStrBase &s) const
+int CStrAny::ICmp(CStrAny const &s) const
 {
-  if (EndsAt(0)) 
-    if (s.EndsAt(0))
-      return 0;
-    else
-      return -1;
-  if (s.EndsAt(0))
-    return 1;
-
-  const THeader *pHeader, *pHeaderS;
-  pHeader = GetHeader();
-  pHeaderS = s.GetHeader();
-  if (pHeader && pHeaderS) 
-    if (pHeader && pHeaderS && pHeader->m_bInRepository && pHeaderS->m_bInRepository && pHeader == pHeaderS)
-      return 0;
+  if (m_pBuf == s.m_pBuf || !m_iLen || !s.m_iLen)
+    return m_iLen - s.m_iLen;
 
   int i = 0;
   char ch1, ch2;
@@ -130,314 +422,3 @@ int CStrBase::ICmp(const CStrBase &s) const
   return (int) ch1 - (int) ch2;
 }
 
-// CStr ---------------------------------------------------------------
-
-CStr::CStr(const char *pStr, int iLen)
-{
-  Init(pStr, iLen);
-}
-
-CStr::CStr(int i)
-{
-  static char buf[96];
-  _itoa(i, buf, 10);
-  int iLen = (int) strlen(buf);
-  THeader *pHeader = THeader::Alloc(iLen);
-  pHeader->Init(iLen, buf);
-  m_pBuf = (const char *) (pHeader + 1);
-}
-
-CStr::CStr(char c, int iRepeatCount)
-{
-  int iLen = iRepeatCount + 1;
-  THeader *pHeader = THeader::Alloc(iLen);
-  pHeader->Init(iLen, 0);
-  m_pBuf = (const char *) (pHeader + 1);
-  memset((char *) m_pBuf, c, iRepeatCount);
-  ((char *) m_pBuf)[iRepeatCount] = 0;
-}
-
-CStr::~CStr()
-{
-  const THeader *pHeader = GetHeader();
-  if (pHeader)
-    pHeader->Release();
-}
-
-void CStr::Construct(const CStrBase &s)
-{
-  const THeader *pHeader = s.GetHeader();
-  if (pHeader) {
-    pHeader->Acquire();
-    m_pBuf = (const char *) (pHeader + 1);
-  } else 
-    Init(s.m_pBuf, s.Length());
-}
-
-
-void CStr::Init(const char *pStr, int iLen)
-{
-  ASSERT(pStr || iLen <= 0);
-  if (iLen < 0)
-    iLen = pStr ? (int) strlen(pStr) : 0;
-  if (pStr) {
-    THeader *pHeader = THeader::Alloc(iLen);
-    pHeader->Init(iLen, pStr);
-    m_pBuf = (const char *) (pHeader + 1);
-  } else
-    m_pBuf = 0;
-}
-
-CStr &CStr::operator =(const CStrBase &s)
-{
-  const THeader *pHeader = GetHeader();
-  const THeader *pHeaderS = s.GetHeader();
-  if (pHeaderS) {
-    pHeaderS->Acquire();
-    m_pBuf = s.m_pBuf;
-  } else
-    Init(s.m_pBuf, s.Length());
-  if (pHeader)
-    pHeader->Release();
-  return *this;
-}
-
-CStr &CStr::operator =(const char *pStr)
-{
-  const THeader *pHeader = GetHeader();
-  if (pHeader)
-    pHeader->Release();
-  Init(pStr);
-  return *this;
-}
-
-CStr CStr::operator +(const CStrBase &s) const
-{
-  int iLen, iLen1;
-  THeader *pHeader;
-  iLen = Length();
-  iLen1 = s.Length();
-  pHeader = THeader::Alloc(iLen + iLen1);
-  pHeader->Init(iLen + iLen1, 0);
-  memcpy(pHeader + 1, m_pBuf, iLen * sizeof(char));
-  memcpy((char *) (pHeader + 1) + iLen, s.m_pBuf, iLen1 * sizeof(char));
-  ((char *) (pHeader + 1))[iLen + iLen1] = 0;
-  CStr sRes;
-  sRes.m_pBuf = (const char *) (pHeader + 1);
-  return sRes;
-}
-
-CStr &CStr::operator +=(const CStrBase &s)    
-{ 
-  int iLen, iLen1;
-  THeader *pHeader;
-  iLen1 = s.Length();
-  if (!iLen1)
-    return *this;
-  pHeader = (THeader *) GetHeader();
-  iLen = Length();
-  if (!pHeader || THeader::GetMaxLen(iLen) < iLen + iLen1) {
-    THeader *pNewHeader = THeader::Alloc(iLen + iLen1);
-    pNewHeader->Init(iLen + iLen1, 0);
-    memcpy(pNewHeader + 1, pHeader + 1, iLen * sizeof(char));
-    if (pHeader)
-      pHeader->Release();
-    pHeader = pNewHeader;
-    m_pBuf = (const char *) (pHeader + 1);
-  } else
-    pHeader->m_iLen += iLen1;
-  memcpy((char *) (pHeader + 1) + iLen, s.m_pBuf, iLen1 * sizeof(char));
-  ((char *) m_pBuf)[iLen + iLen1] = 0;
-  return *this; 
-}
-
-void CStr::MakeUnique()
-{
-  const THeader *pHeader = GetHeader();
-  if (!pHeader || pHeader->GetRef() <= 1)
-    return;
-  THeader *pNewHeader = THeader::Alloc(pHeader->m_iLen);
-  pNewHeader->Init(pHeader->m_iLen, (const char *) (pHeader + 1));
-  if (pHeader->m_bHashInitialized) {
-    pNewHeader->m_bHashInitialized = true;
-    pNewHeader->m_uiHash = pHeader->m_uiHash;
-  }
-  pHeader->Release();
-  m_pBuf = (const char *) (pNewHeader + 1);
-}
-
-CStr &CStr::ToUpper()
-{
-  MakeUnique();
-  int i;
-  for (i = 0; !EndsAt(i); i++)
-    ((char *) m_pBuf)[i] = toupper(m_pBuf[i]);
-  return *this;
-}
-
-CStr &CStr::ToLower()
-{
-  MakeUnique();
-  int i;
-  for (i = 0; !EndsAt(i); i++)
-    ((char *) m_pBuf)[i] = tolower(m_pBuf[i]);
-  return *this;
-}
-
-// CStrPart -----------------------------------------------------------
-
-CStrPart::CStrPart(const char *pStr, int iLen)
-{
-  Set(pStr, iLen);
-}
-
-CStrPart &CStrPart::Set(const char *pStr, int iLen)
-{
-  ASSERT(pStr || iLen <= 0);
-  if (iLen < 0)
-    iLen = pStr ? (int) strlen(pStr) : 0;
-  m_pBuf = (char *) pStr;
-  m_iLen = iLen;
-  return *this;
-}
-
-CStrPart &CStrPart::operator +=(int i)
-{
-  if (i > m_iLen)
-    i = m_iLen;
-  m_pBuf += i;
-  m_iLen -= i;
-  return *this;
-}
-
-CStrPart &CStrPart::operator +=(const CStrPart s)
-{
-  ASSERT(m_iLen >= 0 && s.m_iLen >= 0);
-  if (s.EndsAt(0))
-    return *this;
-  if (EndsAt(0)) {
-    *this = s;
-    return *this;
-  }
-  const char *pEnd = Util::Max(m_pBuf + m_iLen, s.m_pBuf + s.m_iLen);
-  m_pBuf = Util::Min(m_pBuf, s.m_pBuf);
-  m_iLen = (int) (pEnd - m_pBuf);
-  return *this;
-}
-
-CStrPart CStrPart::operator +(const CStrPart s) const
-{
-  ASSERT(m_iLen >= 0 && s.m_iLen >= 0);
-  if (s.EndsAt(0))
-    return *this;
-  if (EndsAt(0))
-    return s;
-  const char *pStart = Util::Min(m_pBuf, s.m_pBuf);
-  const char *pEnd = Util::Max(m_pBuf + m_iLen, s.m_pBuf + s.m_iLen);
-  return CStrPart(pStart, (int) (pEnd - pStart));
-}
-
-// CStrConst ----------------------------------------------------------
-
-CStrConst::THash CStrConst::m_sRepository;
-
-CStrConst::CStrConst(const char *pStr, int iLen)
-  : CStr((const char *) 0, 0)
-{
-  Init(pStr, iLen);
-}
-
-CStrConst::CStrConst(int i)
-  : CStr((const char *) 0, 0)
-{
-  static char buf[96];
-  _itoa(i, buf, 10);
-  int iLen = (int) strlen(buf);
-  Init(buf, iLen);
-}
-
-CStrConst::~CStrConst()
-{
-  const THeader *pHeader = GetHeader();
-  if (pHeader)
-    pHeader->Release();
-  m_pBuf = 0;
-}
-
-void CStrConst::Construct(const CStrBase &s)
-{
-  if (s.EndsAt(0))
-    return;
-  THeader *pHeader = const_cast<THeader*>(s.GetHeader());
-  if (pHeader) {
-    if (!pHeader->m_bInRepository) {
-      THash::TIter it = m_sRepository.Find(pHeader);
-      if (it)
-        pHeader = *it;
-      else {
-        pHeader->m_bInRepository = true;
-        m_sRepository.Add(pHeader);
-      }
-    }
-    m_pBuf = (const char *) (pHeader + 1);
-    pHeader->Acquire();
-  } else 
-    Init(s.m_pBuf, s.Length());
-}
-
-CStrConst &CStrConst::operator =(const CStrBase &s)
-{
-  const THeader *pHeader = GetHeader();
-  THeader *pHeaderS = const_cast<THeader *>(s.GetHeader());
-  if (pHeaderS) {
-    if (!pHeaderS->m_bInRepository) {
-      THash::TIter it = m_sRepository.Find(pHeaderS);
-      if (it) 
-        pHeaderS = *it;
-      else {
-        pHeaderS->m_bInRepository = true;
-        m_sRepository.Add(pHeaderS);
-      }
-    }
-    pHeaderS->Acquire();
-    m_pBuf = (const char *) (pHeaderS + 1);
-  } else
-    Init(s.m_pBuf, s.Length());
-  if (pHeader)
-    pHeader->Release();
-  return *this;
-}
-
-void CStrConst::Init(const char *pStr, int iLen)
-{
-  if (!pStr) {
-    m_pBuf = 0;
-    return;
-  }
-  CStrConst::THash::TIter it = m_sRepository.Find(CStrPart(pStr, iLen));
-  THeader *pHeader;
-  if (it) {
-    pHeader = *it;
-    ASSERT(pHeader->m_bInRepository);
-    m_pBuf = (const char *) (pHeader + 1);
-    pHeader->Acquire();
-  } else {
-    CStr::Init(pStr, iLen);
-    pHeader = const_cast<THeader *>(GetHeader());
-    pHeader->m_bInRepository = true;
-    m_sRepository.Add(pHeader);
-  }
-}
-
-bool CStrConst::CheckRepository()
-{
-  bool bRes;
-  THash::TIter it;
-
-  bRes = true;
-  for (it = m_sRepository; it; ++it) {
-    ASSERT(it->m_bInRepository && it->m_bHashInitialized);
-    bRes &= it->m_bInRepository && it->m_bHashInitialized;
-  }
-  return bRes;
-}

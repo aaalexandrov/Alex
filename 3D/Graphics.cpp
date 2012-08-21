@@ -18,11 +18,11 @@
 
 void ShowDXError(HRESULT res)
 {
-  CStr sError, sDesc, sMsg;
+  CStrAny sError, sDesc, sMsg;
   sError = DXGetErrorString(res);
   sDesc = DXGetErrorDescription(res);
-  sMsg = sError + CStrPart(": ") + sDesc;
-  MessageBox(0, sMsg, "DX Error", MB_OK);
+  sMsg = sError + CStrAny(ST_WHOLE, ": ") + sDesc;
+  MessageBox(0, sMsg.m_pBuf, "DX Error", MB_OK);
 }
 
 // CGraphics -------------------------------------------------------------------------
@@ -293,7 +293,7 @@ bool CGraphics::Resize(UINT uiWidth, UINT uiHeight, bool bFullscreen)
   return bRes;
 }
 
-bool CGraphics::LoadTechnique(CStr sVarFile)
+bool CGraphics::LoadTechnique(CStrAny sVarFile)
 {
   CTechnique *pTech = new CTechnique(sVarFile);
   if (!pTech->IsValid()) {
@@ -306,7 +306,7 @@ bool CGraphics::LoadTechnique(CStr sVarFile)
   return true;
 }
 
-CTechnique *CGraphics::GetTechnique(CStrConst sName)
+CTechnique *CGraphics::GetTechnique(CStrAny sName)
 {
   TTechHash::TIter it;
   it = m_Techniques.Find(sName);

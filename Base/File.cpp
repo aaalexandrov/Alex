@@ -42,7 +42,7 @@ CFileBase::ERRCODE CFileBase::ReadBuf(void *&pBuf, int &iBytes)
 // CFile -------------------------------------------------------------
 IMPRTTI_NOCREATE(CFile, CFileBase)
 
-CFile::CFile(const CStrBase &sName, unsigned int uiFlags)
+CFile::CFile(CStrAny const &sName, unsigned int uiFlags)
 {
   int iOpenFlags = 0, iCreate = 0;
   m_sFileName = sName;
@@ -68,7 +68,7 @@ CFile::CFile(const CStrBase &sName, unsigned int uiFlags)
     iOpenFlags |= _O_TEXT;
   else
     iOpenFlags |= _O_BINARY;
-  m_hFile = _open(sName, iOpenFlags, iCreate);
+  m_hFile = _open(sName.m_pBuf, iOpenFlags, iCreate);
 }
 
 CFile::~CFile()
@@ -143,16 +143,16 @@ CFileSystem::CFileIter &CFileSystem::CFileIter::operator ++()
   return *this;
 }
 
-CFileSystem::CFileIter &CFileSystem::CFileIter::operator =(const CStrBase &sPath)
+CFileSystem::CFileIter &CFileSystem::CFileIter::operator =(CStrAny const &sPath)
 {
   _findclose(m_hFind);
-  m_hFind = _findfirst64(sPath, &m_FindData);
+  m_hFind = _findfirst64(sPath.m_pBuf, &m_FindData);
   return *this;
 }
 
-CStrPart CFileSystem::CFileIter::GetName() const
+CStrAny CFileSystem::CFileIter::GetName() const
 {
-  return CStrPart(m_FindData.name);
+  return CStrAny(ST_WHOLE, m_FindData.name);
 }
 
 CFileBase::FILESIZE CFileSystem::CFileIter::GetSize() const
@@ -173,16 +173,16 @@ CFileSystem::CFileSystem()
 {
   s_pFileSystem = this;
   GetCurrentDirectory(m_sRootPath);
-  m_sRootPath += CStrPart("/");
+  m_sRootPath += CStrAny(ST_WHOLE, "/");
 }
 
 CFileSystem::~CFileSystem()
 {
 }
 
-CFileBase *CFileSystem::OpenFile(const CStrBase &sFile, unsigned int uiFlags)
+CFileBase *CFileSystem::OpenFile(CStrAny const &sFile, unsigned int uiFlags)
 {
-  CStr sPath = ResolvePath(sFile);
+  CStrAny sPath = ResolvePath(sFile);
   CFileBase *pFile = new CFile(sPath, uiFlags);
   if (!pFile->IsValid()) {
     delete pFile;
@@ -191,64 +191,63 @@ CFileBase *CFileSystem::OpenFile(const CStrBase &sFile, unsigned int uiFlags)
   return pFile;
 }
 
-CFileBase::ERRCODE CFileSystem::DeleteFile(const CStrBase &sFile)
+CFileBase::ERRCODE CFileSystem::DeleteFile(CStrAny const &sFile)
 {
-  CStr sPath = ResolvePath(sFile);
-  int iRes = _unlink(sPath);
+  CStrAny sPath = ResolvePath(sFile);
+  int iRes = _unlink(sPath.m_pBuf);
   return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
 }
 
-CFileBase::ERRCODE CFileSystem::GetCurrentDirectory(CStrBase &sDir)
+CFileBase::ERRCODE CFileSystem::GetCurrentDirectory(CStrAny &sDir)
 {
   char *pPath = _getcwd(0, 0);
   if (!pPath) {
-    sDir = CStrPart();
+    sDir.Clear();
     return (CFileBase::ERRCODE) errno;
   }
-  sDir.Assign(CStr(pPath));
-  sDir.Assign(ResolvePath(sDir));
+  sDir = ResolvePath(CStrAny(ST_WHOLE, pPath));
   free(pPath);
   return 0;
 }
 
-CFileBase::ERRCODE CFileSystem::SetCurrentDirectory(const CStrBase &sDir)
+CFileBase::ERRCODE CFileSystem::SetCurrentDirectory(CStrAny const &sDir)
 {
-  CStr sPath = ResolvePath(sDir);
-  int iRes = _chdir(sPath);
+  CStrAny sPath = ResolvePath(sDir);
+  int iRes = _chdir(sPath.m_pBuf);
   return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
 }
 
-CFileBase::ERRCODE CFileSystem::CreateDirectory(const CStrBase &sDir)
+CFileBase::ERRCODE CFileSystem::CreateDirectory(CStrAny const &sDir)
 {
-  CStr sPath = ResolvePath(sDir);
-  int iRes = _mkdir(sPath);
+  CStrAny sPath = ResolvePath(sDir);
+  int iRes = _mkdir(sPath.m_pBuf);
   return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
 }
 
-CFileBase::ERRCODE CFileSystem::DeleteDirectory(const CStrBase &sDir)
+CFileBase::ERRCODE CFileSystem::DeleteDirectory(CStrAny const &sDir)
 {
-  CStr sPath = ResolvePath(sDir);
-  int iRes = _rmdir(sPath);
+  CStrAny sPath = ResolvePath(sDir);
+  int iRes = _rmdir(sPath.m_pBuf);
   return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
 }
 
-CStr CFileSystem::ResolvePath(const CStrBase &sFile)
+CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
 {
-  CStr sPath, sTempDir, sRes;
+  CStrAny sPath(ST_WHOLE, ""), sTempDir, sRes;
   int i;
   bool bSkipSlash = false;
   for (i = 0; i < sFile.Length(); i++) {
     char ch = sFile[i];
     if (ch == '\\')
       ch = '/';
-    if (ch != '/' || !bSkipSlash)
-      sPath += CStrPart(&ch, 1);
+    if (ch != '/' || !bSkipSlash) 
+      sPath += CStrAny(ST_PART, &ch, 1);
     bSkipSlash = (ch == '/');
   }
-  CStrPart sDrive, sDir, sName, sExt;
+  CStrAny sDrive, sDir, sName, sExt;
   ParsePath(sPath, &sDrive, &sDir, &sName, &sExt);
 
-  CStrPart sRootDrive, sRootDir, sRootName, sRootExt;
+  CStrAny sRootDrive, sRootDir, sRootName, sRootExt;
 
   if (!sDrive || !sDir) {
     ParsePath(m_sRootPath, &sRootDrive, &sRootDir, &sRootName, &sRootExt);
@@ -268,11 +267,11 @@ CStr CFileSystem::ResolvePath(const CStrBase &sFile)
     sTempDir += sName + sExt;
     int iPos, iPrev;
     while (1) {
-      iPos = sTempDir.Find(CStrPart("/.."));
+      iPos = sTempDir.Find(CStrAny(ST_WHOLE, "/.."));
       if (iPos < 0)
         break;
       if (!iPos) 
-        sTempDir = CStrPart("/") + sTempDir.SubStr(3, sTempDir.Length());
+        sTempDir = CStrAny(ST_WHOLE, "/") + sTempDir.SubStr(3, sTempDir.Length());
       else {
         for (iPrev = iPos - 1; iPrev >= 0; iPrev--)
           if (sTempDir[iPrev] == '/')
@@ -291,39 +290,39 @@ CStr CFileSystem::ResolvePath(const CStrBase &sFile)
   return sRes;
 }
 
-CStr CFileSystem::GetCurrentRoot()
+CStrAny CFileSystem::GetCurrentRoot()
 {
   return m_sRootPath;
 }
 
-void CFileSystem::SetCurrentRoot(const CStrBase &sPath)
+void CFileSystem::SetCurrentRoot(CStrAny const &sPath)
 {
-  m_sRootPath = CStrPart();
-  CStr sPath1 = sPath;
-  sPath1 += CStrPart("/");
+  m_sRootPath.Clear();
+  CStrAny sPath1 = sPath;
+  sPath1 += CStrAny(ST_WHOLE, "/");
   m_sRootPath = ResolvePath(sPath1);
 }
 
-bool CFileSystem::ParsePath(const CStrBase &sFile, CStrPart *pDrive, CStrPart *pPath, CStrPart *pName, CStrPart *pExtension)
+bool CFileSystem::ParsePath(CStrAny const &sFile, CStrAny *pDrive, CStrAny *pPath, CStrAny *pName, CStrAny *pExtension)
 {
-  CStrPart sDrive, sPath, sName, sExt;
+  CStrAny sDrive, sPath, sName, sExt;
   int i;
   if (!pDrive)
     pDrive = &sDrive;
   else
-    *pDrive = CStrPart();
+    pDrive->Clear();
   if (!pPath)
     pPath = &sPath;
   else
-    *pPath = CStrPart();
+    pPath->Clear();
   if (!pName)
     pName = &sName;
   else
-    *pName = CStrPart();
+    pName->Clear();
   if (!pExtension)
     pExtension = &sExt;
   else
-    *pExtension = CStrPart();
+    pExtension->Clear();
   if (sFile.Length() >= 2 && sFile[1] == ':' && isalpha(sFile[0])) 
     *pDrive = sFile.SubStr(0, 2);
   for (i = sFile.Length() - 1; i >= pDrive->Length(); i--) {

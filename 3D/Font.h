@@ -33,7 +33,7 @@ public:
   static const float INVALID_LENGTH;
 public:
   CSmartPtr<CTexture> m_pTexture;
-  CStrConst m_sTypeface;
+  CStrAny m_sTypeface;
   int m_iSizePt;
   int m_iAscent, m_iDescent, m_iHeight, m_iExternalLead, m_iInternalLead, m_iAverageWidth, m_iMaxWidth;
   int m_iCellRows, m_iCellCols, m_iFirstChar;
@@ -42,7 +42,7 @@ public:
 
   CSmartPtr<CModel> m_pTextModel;
 
-  CFont(CStrConst sTypeface, int iSizePt);
+  CFont(CStrAny sTypeface, int iSizePt);
   ~CFont();
 
   bool Init();
@@ -57,7 +57,7 @@ public:
   // Position is in pixels and indicates the starting position along the baseline from which to start placing the letters
   // Return value indicates the distance the position has shifted along the baseline
   // chPrevious is used to shift the starting position according to the kerning value
-  float AddStr(CStrBase &sStr, const CVector<2> &vPos, char chPrevious = 0); 
+  float AddStr(CStrAny &sStr, const CVector<2> &vPos, char chPrevious = 0); 
 
   bool RenderModel();
   void ResetModel();

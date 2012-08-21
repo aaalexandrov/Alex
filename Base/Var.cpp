@@ -10,7 +10,7 @@ IMPRTTI(CDummyVar, CBaseVar)
 
 IMP_VAR_RTTI(int)
 IMP_VAR_RTTI(float)
-IMP_VAR_RTTI(CStr)
+IMP_VAR_RTTI(CStrAny)
 IMP_VAR_RTTI(BYTE)
 
 IMPRTTI_NOCREATE_T(CVarValueBase<CVarObj>, CBaseVar) 
@@ -20,25 +20,25 @@ IMPRTTI_T(CVarRef<CVarObj>, CVarValueBase<CVarObj>)
 IMPRTTI_NOCREATE(CVarObj, CObject)
 IMPRTTI_NOCREATE(CVarObj::CIter, CObject)
 
-bool CVarObj::GetStr(CStrBase const &sVar, CStrBase &s) const
+bool CVarObj::GetStr(CStrAny const &sVar, CStrAny &s) const
 {
   bool bRes;
-  CVar<CStr> vStr;
+  CVar<CStrAny> vStr;
   bRes = GetVar(sVar, vStr);
   s = vStr.Val();
   return bRes;
 }
 
-bool CVarObj::SetStr(CStrBase const &sVar, const CStrBase &s)
+bool CVarObj::SetStr(CStrAny const &sVar, const CStrAny &s)
 {
   bool bRes;
-  CVar<CStr> vStr;
+  CVar<CStrAny> vStr;
   vStr.Val() = s;
   bRes = SetVar(sVar, vStr);
   return bRes;
 }
 
-bool CVarObj::GetInt(CStrBase const &sVar, int &i) const
+bool CVarObj::GetInt(CStrAny const &sVar, int &i) const
 {
   bool bRes;
   CVar<int> vInt;
@@ -47,7 +47,7 @@ bool CVarObj::GetInt(CStrBase const &sVar, int &i) const
   return bRes;
 }
 
-bool CVarObj::SetInt(CStrBase const &sVar, int i)
+bool CVarObj::SetInt(CStrAny const &sVar, int i)
 {
   bool bRes;
   CVar<int> vInt;
@@ -56,7 +56,7 @@ bool CVarObj::SetInt(CStrBase const &sVar, int i)
   return bRes;
 }
 
-bool CVarObj::GetFloat(CStrBase const &sVar, float &f) const
+bool CVarObj::GetFloat(CStrAny const &sVar, float &f) const
 {
   bool bRes;
   CVar<float> vFloat;
@@ -65,7 +65,7 @@ bool CVarObj::GetFloat(CStrBase const &sVar, float &f) const
   return bRes;
 }
 
-bool CVarObj::SetFloat(CStrBase const &sVar, float f)
+bool CVarObj::SetFloat(CStrAny const &sVar, float f)
 {
   bool bRes;
   CVar<float> vFloat;
@@ -74,7 +74,7 @@ bool CVarObj::SetFloat(CStrBase const &sVar, float f)
   return bRes;
 }
 
-CVarObj *CVarObj::GetContext(CStrBase const &sVar)
+CVarObj *CVarObj::GetContext(CStrAny const &sVar)
 {
   bool bRes;
   CVarRef<CVarObj> vContext;
@@ -84,7 +84,7 @@ CVarObj *CVarObj::GetContext(CStrBase const &sVar)
   return 0;
 }
 
-bool CVarObj::GetVar(CStrBase const &sVar, CBaseVar &vDst) const
+bool CVarObj::GetVar(CStrAny const &sVar, CBaseVar &vDst) const
 {
   CIter *pIt = GetIter(sVar);
   if (!pIt)
@@ -94,7 +94,7 @@ bool CVarObj::GetVar(CStrBase const &sVar, CBaseVar &vDst) const
   return bRes;
 }
 
-bool CVarObj::SetVar(CStrBase const &sVar, const CBaseVar &vSrc)
+bool CVarObj::SetVar(CStrAny const &sVar, const CBaseVar &vSrc)
 {
   CIter *pIt = GetIter(sVar);
   if (!pIt)
@@ -107,7 +107,7 @@ bool CVarObj::SetVar(CStrBase const &sVar, const CBaseVar &vSrc)
 // CVarValueObj ---------------------------------------------------------------
 IMPRTTI_NOCREATE(CVarValueObj, CVarObj)
 
-bool CVarValueObj::GetStr(CStrBase const &sVar, CStrBase &s) const
+bool CVarValueObj::GetStr(CStrAny const &sVar, CStrAny &s) const
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar)
@@ -116,18 +116,18 @@ bool CVarValueObj::GetStr(CStrBase const &sVar, CStrBase &s) const
   return true;
 }
 
-bool CVarValueObj::SetStr(CStrBase const &sVar, const CStrBase &s)
+bool CVarValueObj::SetStr(CStrAny const &sVar, const CStrAny &s)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
-    pVar = new CVar<CStr>();
+    pVar = new CVar<CStrAny>();
     ReplaceVar(sVar, pVar, true);
   }
   pVar->SetStr(s);
   return true;
 }
 
-bool CVarValueObj::GetInt(CStrBase const &sVar, int &i) const
+bool CVarValueObj::GetInt(CStrAny const &sVar, int &i) const
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar)
@@ -136,7 +136,7 @@ bool CVarValueObj::GetInt(CStrBase const &sVar, int &i) const
   return true;
 }
 
-bool CVarValueObj::SetInt(CStrBase const &sVar, int i)
+bool CVarValueObj::SetInt(CStrAny const &sVar, int i)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
@@ -147,7 +147,7 @@ bool CVarValueObj::SetInt(CStrBase const &sVar, int i)
   return true;
 }
 
-bool CVarValueObj::GetFloat(CStrBase const &sVar, float &f) const
+bool CVarValueObj::GetFloat(CStrAny const &sVar, float &f) const
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar)
@@ -156,7 +156,7 @@ bool CVarValueObj::GetFloat(CStrBase const &sVar, float &f) const
   return true;
 }
 
-bool CVarValueObj::SetFloat(CStrBase const &sVar, float f)
+bool CVarValueObj::SetFloat(CStrAny const &sVar, float f)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
@@ -167,7 +167,7 @@ bool CVarValueObj::SetFloat(CStrBase const &sVar, float f)
   return true;
 }
 
-CVarObj *CVarValueObj::GetContext(CStrBase const &sVar)
+CVarObj *CVarValueObj::GetContext(CStrAny const &sVar)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar || !pVar->ValueHasRTTI())
@@ -175,7 +175,7 @@ CVarObj *CVarValueObj::GetContext(CStrBase const &sVar)
   return Cast<CVarObj>((CObject *) pVar->GetRef());
 }
 
-bool CVarValueObj::GetVar(CStrBase const &sVar, CBaseVar &vDst) const
+bool CVarValueObj::GetVar(CStrAny const &sVar, CBaseVar &vDst) const
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar)
@@ -184,7 +184,7 @@ bool CVarValueObj::GetVar(CStrBase const &sVar, CBaseVar &vDst) const
   return true;
 }
 
-bool CVarValueObj::SetVar(CStrBase const &sVar, const CBaseVar &vSrc)
+bool CVarValueObj::SetVar(CStrAny const &sVar, const CBaseVar &vSrc)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
@@ -198,41 +198,41 @@ bool CVarValueObj::SetVar(CStrBase const &sVar, const CBaseVar &vSrc)
 
 // Type conversion ------------------------------------------------------
 
-bool Set(CStrBase *dst, const int *src)
+bool Set(CStrAny *dst, const int *src)
 {
   char chBuf[96];
   _itoa(*src, chBuf, 10);
-  dst->Assign(CStrPart(chBuf));
+  *dst = CStrAny(ST_WHOLE, chBuf);
   return true;
 }
 
-bool Set(int *dst, const CStrBase *src)
+bool Set(int *dst, const CStrAny *src)
 {
   if (src->ZeroTerminated())
-    *dst = atoi(*src);
+    *dst = atoi(src->m_pBuf);
   else {
-    CStr s = *src;
-    *dst = atoi(s);
+    CStrAny s = *src;
+    *dst = atoi(s.m_pBuf);
   }
   return true;
 }
 
-bool Set(CStrBase *dst, const float *src)
+bool Set(CStrAny *dst, const float *src)
 {
   char chBuf[96];
   sprintf(chBuf, "%g", *src);
-  dst->Assign(CStrPart(chBuf));
+  *dst = CStrAny(ST_WHOLE, chBuf);
   return true;
 }
 
-bool Set(float *dst, const CStrBase *src)
+bool Set(float *dst, const CStrAny *src)
 {
   int iRes;
   if (src->ZeroTerminated())
-    iRes = sscanf(*src, "%f", dst);
+    iRes = sscanf(src->m_pBuf, "%f", dst);
   else {
-    CStr s = *src;
-    iRes = sscanf(s, "%f", dst);
+    CStrAny s = *src;
+    iRes = sscanf(s.m_pBuf, "%f", dst);
   }
   if (iRes < 1) {
     *dst = 0;
@@ -254,7 +254,7 @@ CVarHash::~CVarHash()
   m_Vars.DeleteAll();
 }
 
-CVarObj::CIter *CVarHash::GetIter(const CStrBase &sVar) const
+CVarObj::CIter *CVarHash::GetIter(CStrAny const &sVar) const
 {
   THash::TIter it;
   if (!!sVar) {
@@ -270,7 +270,7 @@ CVarObj::CIter *CVarHash::GetIter(const CStrBase &sVar) const
   return new CIter(it);
 }
 
-CBaseVar *CVarHash::FindVar(const CStrBase &sVar) const
+CBaseVar *CVarHash::FindVar(CStrAny const &sVar) const
 {
   THash::TIter it;
   it = m_Vars.Find(sVar);
@@ -279,7 +279,7 @@ CBaseVar *CVarHash::FindVar(const CStrBase &sVar) const
   return it->pVar;
 }
 
-bool CVarHash::ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding)
+bool CVarHash::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
 {
   TVarName *pVarName;
   THash::TIter it;

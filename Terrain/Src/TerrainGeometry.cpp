@@ -565,7 +565,7 @@ bool CTerrain::CPatch::CFullGeom::IsMinLOD()
   return m_bUseLODModel;
 }
 
-void CTerrain::CPatch::CFullGeom::SetModelVar(CStrConst sVar, CBaseVar const &vSrc)
+void CTerrain::CPatch::CFullGeom::SetModelVar(CStrAny sVar, CBaseVar const &vSrc)
 {
   int i;
   for (i = 0; i < m_arrMaterialModels.m_iCount; i++)
@@ -879,7 +879,7 @@ bool CTerrain::CPatch::CProgGeom::IsMinLOD()
   return m_bUseLODModel && m_uiActiveVertices == m_uiMinLODVertices;
 }
 
-void CTerrain::CPatch::CProgGeom::SetModelVar(CStrConst sVar, CBaseVar const &vSrc)
+void CTerrain::CPatch::CProgGeom::SetModelVar(CStrAny sVar, CBaseVar const &vSrc)
 {
   int i;
   for (i = 0; i < m_arrMaterialModels.m_iCount; i++)

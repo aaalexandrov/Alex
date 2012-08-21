@@ -6,7 +6,7 @@
 
 const float CFont::INVALID_LENGTH = -100000.0f;
 
-CFont::CFont(CStrConst sTypeface, int iSizePt)
+CFont::CFont(CStrAny sTypeface, int iSizePt)
 {
   m_sTypeface = sTypeface;
   m_iSizePt = iSizePt;
@@ -39,7 +39,7 @@ bool CFont::Init()
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
   lf.lfQuality = ANTIALIASED_QUALITY;
   lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-  strcpy(lf.lfFaceName, m_sTypeface);
+  strcpy(lf.lfFaceName, m_sTypeface.m_pBuf);
 
   HFONT hFont = CreateFontIndirect(&lf);
   SelectObject(hDC, hFont);
@@ -189,14 +189,14 @@ bool CFont::Init()
 
 bool CFont::InitModel()
 {
-  static CStrConst sPlain("Plain");
-  static CStrConst sg_mWorld("g_mWorld");
-  static CStrConst sg_mView("g_mView");
-  static CStrConst sg_mProj("g_mProj");
-  static CStrConst sg_mTexTransform("g_mTexTransform");
-  static CStrConst sg_cMaterialDiffuse("g_cMaterialDiffuse");
-  static CStrConst sg_txDiffuse("g_txDiffuse");
-  static CStrConst sg_sDiffuse("g_sDiffuse");
+  static CStrAny sPlain(ST_CONST, "Plain");
+  static CStrAny sg_mWorld(ST_CONST, "g_mWorld");
+  static CStrAny sg_mView(ST_CONST, "g_mView");
+  static CStrAny sg_mProj(ST_CONST, "g_mProj");
+  static CStrAny sg_mTexTransform(ST_CONST, "g_mTexTransform");
+  static CStrAny sg_cMaterialDiffuse(ST_CONST, "g_cMaterialDiffuse");
+  static CStrAny sg_txDiffuse(ST_CONST, "g_txDiffuse");
+  static CStrAny sg_sDiffuse(ST_CONST, "g_sDiffuse");
 
   ASSERT(!m_pTextModel);
   bool bRes;
@@ -284,7 +284,7 @@ struct TPlainVertex {
   CVector<2> vTex;
 };
 
-float CFont::AddStr(CStrBase &sStr, const CVector<2> &vPos, char chPrevious)
+float CFont::AddStr(CStrAny &sStr, const CVector<2> &vPos, char chPrevious)
 {
   ASSERT(IsValid());
   if (!sStr.Length())
@@ -355,7 +355,7 @@ float CFont::AddStr(CStrBase &sStr, const CVector<2> &vPos, char chPrevious)
 
 bool CFont::RenderModel()
 {
-  static CStrConst sg_mProj("g_mProj");
+  static CStrAny sg_mProj(ST_CONST, "g_mProj");
   bool bRes;
 
   if (!m_pTextModel->m_pGeometry->m_uiIndices)

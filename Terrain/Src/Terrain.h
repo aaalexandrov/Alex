@@ -118,7 +118,7 @@ public:
       virtual void SetMinLOD(bool bSetAdjacent) = 0;
       virtual bool IsMinLOD() = 0;
       virtual CModel *GetMinLODModel() = 0;
-      virtual void SetModelVar(CStrConst sVar, CBaseVar const &vSrc) = 0;
+      virtual void SetModelVar(CStrAny sVar, CBaseVar const &vSrc) = 0;
 
       virtual bool Render() = 0;
 
@@ -160,7 +160,7 @@ public:
       virtual void SetMinLOD(bool bSetAdjacent);
       virtual bool IsMinLOD();
       virtual CModel *GetMinLODModel() { ASSERT(m_pPatch->m_pMinLODModel == m_pLODModel); return m_pLODModel; }
-      virtual void SetModelVar(CStrConst sVar, CBaseVar const &vSrc);
+      virtual void SetModelVar(CStrAny sVar, CBaseVar const &vSrc);
 
       virtual bool Render();
 
@@ -197,7 +197,7 @@ public:
       virtual void SetMinLOD(bool bSetAdjacent);
       virtual bool IsMinLOD();
       virtual CModel *GetMinLODModel() { return m_pLODMaterialModel->m_pModel; }
-      virtual void SetModelVar(CStrConst sVar, CBaseVar const &vSrc);
+      virtual void SetModelVar(CStrAny sVar, CBaseVar const &vSrc);
 
       virtual void SetActiveVertices(int iVertices);
 
@@ -269,7 +269,7 @@ public:
     bool LoadMeshData(CFileBase *pFile);
     bool SaveMinLODMesh(CFileBase *pFile);
     bool LoadMinLODMesh(CFileBase *pFile);
-    CStr GetSaveFileName();
+    CStrAny GetSaveFileName();
     bool HasMeshData() { return !!m_arrCollapses.m_iCount; }
 
     bool InitModel(UINT uiReservedVertices);
@@ -355,10 +355,10 @@ public:
   float                 m_fMaxLODError, m_fLODDistance;
   CSmartPtr<CMaterial>  m_pLODMaterial;
   int                   m_iForceModel;
-  CStr                  m_sSaveFileRoot;
+  CStrAny               m_sSaveFileRoot;
   CCamera              *m_pCamera;
 
-  CTerrain(int iGridWidth, int iGridHeight, float fGrid2World, CMaterial *pBaseMat, CStr sSaveFileRoot);
+  CTerrain(int iGridWidth, int iGridHeight, float fGrid2World, CMaterial *pBaseMat, CStrAny sSaveFileRoot);
   ~CTerrain();
 
   CPatch *GetPatchByIndex(int iXPatch, int iYPatch);
@@ -381,7 +381,7 @@ public:
 
   bool Save(CFileBase *pFile);
   bool Load(CFileBase *pFile);
-  CStr GetSaveFileName();
+  CStrAny GetSaveFileName();
 
   void PatchInitDone(CPatch *pPatch);
   void UpdateLOD(CCamera *pCamera = 0);

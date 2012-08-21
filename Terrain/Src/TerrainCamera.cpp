@@ -131,7 +131,7 @@ void CFreeCamera::Update(CTime kTime)
 
   bPressed = HasBeenPressed('V');
   if (bPressed) {
-    static CStrConst sFillMode("FillMode");
+    static CStrAny sFillMode(ST_CONST, "FillMode");
     int iMode = D3D11_FILL_SOLID;
     CGraphics::Get()->m_Globals.GetInt(sFillMode, iMode);
     if (iMode == D3D11_FILL_SOLID)

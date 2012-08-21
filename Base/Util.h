@@ -163,6 +163,10 @@ namespace Util {
     static inline bool Lt(TKeyValue const &kKeyVal0, TKeyValue const &kKeyVal1) { return L::Lt(kKeyVal0.m_Key, kKeyVal1.m_Key); }
     static inline bool Lt(K const &key, TKeyValue const &kKeyVal)               { return L::Lt(key, kKeyVal.m_Key);             }
     static inline bool Lt(TKeyValue const &kKeyVal, K const &key)               { return L::Lt(kKeyVal.m_Key, key);             }
+    template <class K1>
+    static inline size_t Hash(K1 key)                                           { return H::Hash(key);                          }
+    template <class K1>
+    static inline size_t Eq(K1 key, TKeyValue const &kKeyVal)                   { return E::Eq(key, kKeyVal.m_Key);             }
   };
 };
 

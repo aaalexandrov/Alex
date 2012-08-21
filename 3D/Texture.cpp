@@ -60,7 +60,7 @@ CTexture::CTexture()
   m_iWidth = m_iHeight = m_iMipLevels = 0;
 }
 
-bool CTexture::Init(CStrConst sFilename, int iMipLevels, UINT uiFlags)
+bool CTexture::Init(CStrAny sFilename, int iMipLevels, UINT uiFlags)
 {
   Done();
 

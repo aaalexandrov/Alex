@@ -1,0 +1,223 @@
+#include "stdafx.h"
+#include "Token.h"
+
+using namespace Parse;
+
+// Parsing helpers -------------------------------------------------------------
+
+CStrAny g_sWhitespace(ST_WHOLE, " \t\n\r");
+CStrAny g_sNumber(ST_WHOLE, "0123456789.");
+CStrAny g_sStringDelimiter(ST_WHOLE, "\"'");
+
+// CValue2String ---------------------------------------------------------------
+
+CStrAny CValue2String::GetStr(int iVal)
+{
+  if (iVal >= 0 && iVal < m_iCount && m_pTable[iVal].m_iVal == iVal)
+    return m_pTable[iVal].m_sStr;
+  for (int i = 0; i < m_iCount; ++i) 
+    if (m_pTable[i].m_iVal == iVal)
+      return m_pTable[i].m_sStr;
+  ASSERT(!"String not found for value");
+  return CStrAny(ST_WHOLE, "<Unrecognized>");
+}
+
+// CToken ----------------------------------------------------------------------
+
+CValue2String::TValueString CToken::s_arrTC2Str[TC_LAST] = {
+  VAL2STR(TC_UNKNOWN),
+  VAL2STR(TC_IDENTIFIER),
+  VAL2STR(TC_KEYWORD),
+  VAL2STR(TC_LITERAL),
+  VAL2STR(TC_OPERATOR),
+  VAL2STR(TC_SEPARATOR),
+};
+
+CValue2String CToken::s_kTC2Str(s_arrTC2Str, ARRSIZE(s_arrTC2Str));
+
+CValue2String::TValueString CToken::s_arrTT2Str[TT_LAST] = {
+  VAL2STR(TT_UNKNOWN),
+  VAL2STR(TT_VARIABLE),
+  VAL2STR(TT_KEYWORD),
+  VAL2STR(TT_NUMBER),
+  VAL2STR(TT_STRING),
+  VAL2STR(TT_PLUS),
+  VAL2STR(TT_MINUS),
+  VAL2STR(TT_MULTIPLY),
+  VAL2STR(TT_DIVIDE),
+	VAL2STR(TT_POWER),
+	VAL2STR(TT_NEGATE),
+  VAL2STR(TT_ASSIGN),
+  VAL2STR(TT_OPENBRACE),
+  VAL2STR(TT_CLOSEBRACE),
+};
+
+CValue2String CToken::s_kTT2Str(s_arrTT2Str, ARRSIZE(s_arrTT2Str));
+
+CToken::CToken(CStrAny const &sToken, ETokenClass eClass, ETokenType eType)
+{
+  m_sToken = sToken;
+  m_eClass = eClass;
+  m_eType = eType;
+}
+
+CToken::~CToken()
+{
+}
+
+CStrAny CToken::ToString()
+{
+  CStrAny s(ST_WHOLE, "Token: ");
+  s += m_sToken;
+  s += CStrAny(ST_WHOLE, " Class: ");
+  s += ClassToString(m_eClass);
+  s += CStrAny(ST_WHOLE, " Type: ");
+  s += TypeToString(m_eType);
+  return s;
+}
+
+CStrAny CToken::ClassToString(ETokenClass eClass)
+{
+  return s_kTC2Str.GetStr(eClass);
+}
+
+CStrAny CToken::TypeToString(ETokenType eType)
+{
+  return s_kTT2Str.GetStr(eType);
+}
+
+// CTokenizer ------------------------------------------------------------------
+
+CTokenizer::CTokenizer()
+{
+}
+
+CTokenizer::~CTokenizer()
+{
+	Clear();
+}
+
+void CTokenizer::Clear()
+{
+  m_sInput.Clear();
+  m_lstTokens.DeleteAll();
+}
+
+EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
+{
+  CStrAny sInp(sInput, ST_PART);
+  CStrAny sToken;
+  CToken *pToken;
+  CToken const *pTemplate;
+	EInterpretError err = IERR_OK;
+
+  Clear();
+  m_sInput = sInput;
+  while (!!sInp) {
+    ReadChars(sInp, g_sWhitespace);
+    if (!sInp)
+      break;
+    sToken = ReadIdentifier(sInp);
+    if (!!sToken) { // Identifier
+      pTemplate = GetTemplateToken(sToken);
+      if (pTemplate)
+        pToken = new CToken(sToken, pTemplate->m_eClass, pTemplate->m_eType); // Keyword
+      else
+        pToken = new CToken(sToken, CToken::TC_IDENTIFIER, CToken::TT_VARIABLE);
+      m_lstTokens.PushTail(pToken);
+      continue;
+    }
+		pTemplate = GetTemplateToken(CStrAny(ST_PART, sInp.m_pBuf, 1));
+    if (pTemplate) { // Operator or separator
+			if (pTemplate->m_eType == CToken::TT_MINUS) {
+				if (!m_lstTokens.m_iCount || m_lstTokens.Tail()->m_eClass != CToken::TC_IDENTIFIER &&
+					  m_lstTokens.Tail()->m_eClass != CToken::TC_LITERAL && m_lstTokens.Tail()->m_eType != CToken::TT_CLOSEBRACE)
+					// Also should check for uniary postfix operators here if there are such
+					pTemplate = GetTemplateToken(CToken::TT_NEGATE);
+			}
+      sToken.m_pBuf = sInp.m_pBuf;
+      sToken.m_iLen = 1;
+      sInp >>= 1;
+      pToken = new CToken(sToken, pTemplate->m_eClass, pTemplate->m_eType);
+      m_lstTokens.PushTail(pToken);
+      continue;
+    }
+    if (g_sNumber.Find(sInp[0]) >= 0) { // Number literal
+      sToken = ReadFloat(sInp);
+      ASSERT(!!sToken);
+      pToken = new CToken(sToken, CToken::TC_LITERAL, CToken::TT_NUMBER);
+      m_lstTokens.PushTail(pToken);
+      continue;
+    }
+    if (g_sStringDelimiter.Find(sInp[0]) >= 0) { // String literal
+      char chDelimiter = sInp[0];
+      sInp >>= 1;
+      sToken = ReadUntilChar(sInp, chDelimiter);
+      ASSERT(!!sInp && sInp[0] == chDelimiter);
+      sInp >>= 1;
+      pToken = new CToken(sToken, CToken::TC_LITERAL, CToken::TT_STRING);
+      m_lstTokens.PushTail(pToken);
+      continue;
+    }
+    sToken.m_pBuf = sInp.m_pBuf;
+    sToken.m_iLen = 1;
+    sInp >>= 1;
+    pToken = new CToken(sToken, CToken::TC_UNKNOWN, CToken::TT_UNKNOWN);
+		err = IERR_UNKNOWN_TOKEN;
+  }
+
+  return err;
+}
+
+bool CTokenizer::Valid() const
+{
+  return !!m_sInput && m_lstTokens.m_iCount > 0;
+}
+
+void CTokenizer::Dump(CList<CToken *> *pList)
+{
+	if (!pList) {
+		printf("Tokens: ");
+		Dump(&m_lstTokens);
+		return;
+	}
+  CList<CToken*>::TNode *pNode;
+  printf("<start of token list>\n");
+  for (pNode = pList->m_pHead; pNode; pNode = pNode->pNext) {
+    CStrAny s = pNode->Data->ToString();
+    s += CStrAny(ST_WHOLE, "\n");
+    printf(s.m_pBuf);
+  }
+  printf("<end of token list>\n");
+}
+
+CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = { 
+  CToken(CStrAny(ST_WHOLE, ""),  CToken::TC_UNKNOWN,    CToken::TT_UNKNOWN),
+  CToken(CStrAny(ST_WHOLE, ""),  CToken::TC_IDENTIFIER, CToken::TT_VARIABLE),
+  CToken(CStrAny(ST_WHOLE, ""),  CToken::TC_KEYWORD,    CToken::TT_KEYWORD),
+  CToken(CStrAny(ST_WHOLE, ""),  CToken::TC_LITERAL,    CToken::TT_NUMBER),
+  CToken(CStrAny(ST_WHOLE, ""),  CToken::TC_LITERAL,    CToken::TT_STRING),
+  CToken(CStrAny(ST_WHOLE, "+"), CToken::TC_OPERATOR,   CToken::TT_PLUS),
+  CToken(CStrAny(ST_WHOLE, "-"), CToken::TC_OPERATOR,   CToken::TT_MINUS),
+  CToken(CStrAny(ST_WHOLE, "*"), CToken::TC_OPERATOR,   CToken::TT_MULTIPLY),
+  CToken(CStrAny(ST_WHOLE, "/"), CToken::TC_OPERATOR,   CToken::TT_DIVIDE),
+	CToken(CStrAny(ST_WHOLE, "^"), CToken::TC_OPERATOR,   CToken::TT_POWER),
+	CToken(CStrAny(ST_WHOLE, "-"), CToken::TC_OPERATOR,   CToken::TT_NEGATE),
+  CToken(CStrAny(ST_WHOLE, "="), CToken::TC_OPERATOR,   CToken::TT_ASSIGN),
+  CToken(CStrAny(ST_WHOLE, "("), CToken::TC_SEPARATOR,  CToken::TT_OPENBRACE),
+  CToken(CStrAny(ST_WHOLE, ")"), CToken::TC_SEPARATOR,  CToken::TT_CLOSEBRACE),
+};
+
+CToken const *CTokenizer::GetTemplateToken(CStrAny const &sToken)
+{
+  for (int i = 0; i < CToken::TT_LAST; i++) 
+    if (sToken == s_TemplateTokens[i].m_sToken)
+      return &s_TemplateTokens[i];
+  return 0;
+}
+
+CToken const *CTokenizer::GetTemplateToken(CToken::ETokenType eType)
+{
+  ASSERT(eType >= 0 && eType < CToken::TT_LAST);
+  return &s_TemplateTokens[eType];
+}

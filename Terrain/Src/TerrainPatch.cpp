@@ -180,8 +180,8 @@ bool CTerrain::CPatch::Save(CFileBase *pFile)
   CAutoDeletePtr<CFileBase> pPatchFile;
 
   if (!pFile) {
-    CStr sName = GetSaveFileName();
-    if (sName) 
+    CStrAny sName = GetSaveFileName();
+    if (!!sName) 
       pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ | CFileBase::FOF_WRITE | CFileBase::FOF_CREATE | CFileBase::FOF_TRUNCATE);
     if (!pFile)
       return false;
@@ -212,8 +212,8 @@ bool CTerrain::CPatch::Load(CFileBase *pFile)
   CAutoDeletePtr<CFileBase> pPatchFile;
 
   if (!pFile) {
-    CStr sName = GetSaveFileName();
-    if (sName) 
+    CStrAny sName = GetSaveFileName();
+    if (!!sName) 
       pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ);
     if (!pFile)
       return false;
@@ -359,11 +359,11 @@ bool CTerrain::CPatch::LoadMinLODMesh(CFileBase *pFile)
   return true;
 }
 
-CStr CTerrain::CPatch::GetSaveFileName()
+CStrAny CTerrain::CPatch::GetSaveFileName()
 {
   if (!m_pTerrain->m_sSaveFileRoot)
-    return "";
-  return m_pTerrain->m_sSaveFileRoot + CStrPart("/Patch(") + CStr(m_vPatchIndex.x()) + CStrPart(",") + CStr(m_vPatchIndex.y()) + CStrPart(").ter");
+    return CStrAny(ST_WHOLE, "");
+  return m_pTerrain->m_sSaveFileRoot + CStrAny(ST_WHOLE, "/Patch(") + CStrAny(ST_STR, m_vPatchIndex.x()) + CStrAny(ST_WHOLE, ",") + CStrAny(ST_STR, m_vPatchIndex.y()) + CStrAny(ST_WHOLE, ").ter");
 }
 
 bool CTerrain::CPatch::InitModel(UINT uiReservedVertices)
@@ -577,21 +577,21 @@ CVector<2, int> CTerrain::CPatch::EdgeIndex2Grid(UINT uiIndex)
 
 bool CTerrain::CPatch::InitParams(CModel *pModel, int iMaterial, int iMaterialInd)
 {
-  static const CStrConst sg_mWorld("g_mWorld");
-  static const CStrConst sg_mDiffTransform("g_mDiffTransform");
-  static const CStrConst sg_mNormTransform("g_mNormTransform");
-  static const CStrConst sg_cMaterialSpecular("g_cMaterialSpecular");
-  static const CStrConst sg_cMaterialDiffuse("g_cMaterialDiffuse");
-  static const CStrConst sg_cMaterialAmbient("g_cMaterialAmbient");
-  static const CStrConst sg_fLODDistance("g_fLODDistance");
-  static const CStrConst sg_txDiffuse("g_txDiffuse");
-  static const CStrConst sg_txFar("g_txFar");
-  static const CStrConst sg_txNormals("g_txNormals");
-  static const CStrConst sg_sDiffuse("g_sDiffuse");
-  static const CStrConst sg_sNormals("g_sNormals");
-  static const CStrConst sg_fMaterialID("g_fMaterialID");
-  static const CStrConst sBlendEnable0("BlendEnable0");
-  static const CStrConst sBlendState("BlendState");
+  static const CStrAny sg_mWorld(ST_CONST, "g_mWorld");
+  static const CStrAny sg_mDiffTransform(ST_CONST, "g_mDiffTransform");
+  static const CStrAny sg_mNormTransform(ST_CONST, "g_mNormTransform");
+  static const CStrAny sg_cMaterialSpecular(ST_CONST, "g_cMaterialSpecular");
+  static const CStrAny sg_cMaterialDiffuse(ST_CONST, "g_cMaterialDiffuse");
+  static const CStrAny sg_cMaterialAmbient(ST_CONST, "g_cMaterialAmbient");
+  static const CStrAny sg_fLODDistance(ST_CONST, "g_fLODDistance");
+  static const CStrAny sg_txDiffuse(ST_CONST, "g_txDiffuse");
+  static const CStrAny sg_txFar(ST_CONST, "g_txFar");
+  static const CStrAny sg_txNormals(ST_CONST, "g_txNormals");
+  static const CStrAny sg_sDiffuse(ST_CONST, "g_sDiffuse");
+  static const CStrAny sg_sNormals(ST_CONST, "g_sNormals");
+  static const CStrAny sg_fMaterialID(ST_CONST, "g_fMaterialID");
+  static const CStrAny sBlendEnable0(ST_CONST, "BlendEnable0");
+  static const CStrAny sBlendState(ST_CONST, "BlendState");
 
   CMatrixVar vWorld(4, 4);
   CMatrix<4, 4> *pWorld = (CMatrix<4, 4> *) vWorld.m_pVal;
@@ -674,7 +674,7 @@ bool CTerrain::CPatch::InitNormalsTexture()
 
   m_pTexNormals->Unmap();
 
-  static const CStrConst sg_txNormals("g_txNormals");
+  static const CStrAny sg_txNormals(ST_CONST, "g_txNormals");
   CVar<CTexture *> vTexNorm(m_pTexNormals);
   if (m_pMinLODModel)
     m_pMinLODModel->SetVar(sg_txNormals, vTexNorm);
@@ -709,7 +709,7 @@ bool CTerrain::CPatch::InitFarTexture()
 
   m_pTexFar->Unmap();
 
-  static const CStrConst sg_txFar("g_txFar");
+  static const CStrAny sg_txFar(ST_CONST, "g_txFar");
 
   if (m_pMinLODModel)
     m_pMinLODModel->SetVar(sg_txFar, CVar<CTexture *>(m_pTexFar));

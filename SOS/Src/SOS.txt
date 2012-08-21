@@ -1,0 +1,72 @@
+def IF(#c, #op): if (#c) #op [
+       bool cond() {
+               return #c
+       }
+       ret block() {
+               return #op
+       }
+       ret execute() {
+               if (cond())
+                       return block()
+               return false
+       }
+]
+
+def EXECIFPRESENT(#op) [
+       if (present(#op)) return (#op | true)
+       else return false
+]
+
+def BLOCK(#op1, #rest): { #op1; #rest } [
+       if (EXECIFPRESENT(#op1)) BLOCK(#rest)
+]
+
+def IFELSE(#c, #op1, #op2): if(#c) #op1 else #op2 [
+       {
+               var c
+               if (c = #c) #op1
+               if (!c) #op2
+       }
+]
+
+def WHILE(#c, #op): while(#c) #op [
+       if (#c) { #op; WHILE(#c, #op) }
+]
+
+def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
+       {
+               #init;
+               while(#c) {
+                       #op;
+                       #inc
+               }
+       }
+]
+
+-------------------------------------------------------------------------------
+
+Operand ::= Number
+Operand ::= Variable
+Operand ::= ( Expression )
+Operand ::= Negation
+
+Negation ::= - Operand
+
+Power ::= Operand ^ Power
+Power ::= Operand
+
+Multiplication ::= Power MultSuffix
+MultSuffix ::= * Power MultSuffix
+MultSuffix ::= Nothing
+
+Sum ::= Multiplication SumSuffix
+SumSuffix ::= + Multiplication SumSuffix
+SumSuffix ::= Nothing
+
+Lvalue ::= Variable
+Lvalue ::= (Lvalue)
+
+Assignment ::= Lvalue = Expression
+
+Expression ::= Assignment
+Expression ::= Sum

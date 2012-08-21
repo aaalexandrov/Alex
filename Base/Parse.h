@@ -6,41 +6,49 @@
 namespace Parse {
   static const int MAX_CHARS = 0x7fffffff;
 
-  CStrPart ReadChar(CStrPart &s, char ch, int iNumber = MAX_CHARS);
-  CStrPart ReadIChar(CStrPart &s, char ch, int iNumber = MAX_CHARS);
+  CStrAny ReadChar(CStrAny &s, char ch, int iNumber = MAX_CHARS);
+  CStrAny ReadIChar(CStrAny &s, char ch, int iNumber = MAX_CHARS);
 
-  CStrPart ReadChars(CStrPart &s, const CStrBase &sChars, int iNumber = MAX_CHARS);
-  CStrPart ReadIChars(CStrPart &s, const CStrBase &sChars, int iNumber = MAX_CHARS);
+  CStrAny ReadChars(CStrAny &s, const CStrAny &sChars, int iNumber = MAX_CHARS);
+  CStrAny ReadIChars(CStrAny &s, const CStrAny &sChars, int iNumber = MAX_CHARS);
 
-  CStrPart ReadUntilChar(CStrPart &s, char ch, int iNumber = MAX_CHARS);
-  CStrPart ReadUntilIChar(CStrPart &s, char ch, int iNumber = MAX_CHARS);
+  CStrAny ReadUntilChar(CStrAny &s, char ch, int iNumber = MAX_CHARS);
+  CStrAny ReadUntilIChar(CStrAny &s, char ch, int iNumber = MAX_CHARS);
 
-  CStrPart ReadUntilChars(CStrPart &s, const CStrBase &sChars, int iNumber = MAX_CHARS);
-  CStrPart ReadUntilIChars(CStrPart &s, const CStrBase &sChars, int iNumber = MAX_CHARS);
+  CStrAny ReadUntilChars(CStrAny &s, const CStrAny &sChars, int iNumber = MAX_CHARS);
+  CStrAny ReadUntilIChars(CStrAny &s, const CStrAny &sChars, int iNumber = MAX_CHARS);
 
-  CStrPart ReadNewLine(CStrPart &s);
-  CStrPart ReadToNewLine(CStrPart &s);
-  CStrPart ReadLine(CStrPart &s);
+  CStrAny ReadNewLine(CStrAny &s);
+  CStrAny ReadToNewLine(CStrAny &s);
+  CStrAny ReadLine(CStrAny &s);
 
-  CStrPart ReadInt(CStrPart &s, int iRadix = 10);
-  CStrPart ReadFloat(CStrPart &s, int iRadix = 10);
-  CStrPart ReadIdentifier(CStrPart &s);
+  CStrAny ReadSign(CStrAny &s);
+  CStrAny ReadNumerals(CStrAny &s, int iRadix = 10, int iNumber = MAX_CHARS);
 
-  CStrPart ReadWhitespace(CStrPart &s);
-  CStrPart ReadUntilWhitespace(CStrPart &s);
-  CStrPart TrimWhitespace(const CStrBase &s);
+  CStrAny ReadInt(CStrAny &s, int iRadix = 10, bool bSigned = true);
+  CStrAny ReadFloat(CStrAny &s, int iRadix = 10, bool bSigned = true);
+  CStrAny ReadIdentifier(CStrAny &s);
 
-  CStrPart ReadStr(CStrPart &s, const CStrBase &sStr);
-  CStrPart ReadIStr(CStrPart &s, const CStrBase &sStr);
+  CStrAny ReadWhitespace(CStrAny &s);
+  CStrAny ReadUntilWhitespace(CStrAny &s);
+  CStrAny TrimWhitespace(const CStrAny &s);
+
+  CStrAny ReadStr(CStrAny &s, const CStrAny &sStr);
+  CStrAny ReadIStr(CStrAny &s, const CStrAny &sStr);
 
   struct TDelimiterBlock {
-    CStr sStart, sEnd;
+    CStrAny sStart, sEnd;
     bool bRecursive;
   };
 
-  CStrPart MatchDelimiters(CStrPart &s, TDelimiterBlock *pDelimiters, int iDelimiters, int *pIndexFound = 0);
+  CStrAny MatchDelimiters(CStrAny &s, TDelimiterBlock *pDelimiters, int iDelimiters, int *pIndexFound = 0);
 
-  bool Str2Int(int &iResult, CStrBase const &sInt, int iRadix = 10);
+  int Numeral2Value(char ch);
+  char Value2Numeral(int i);
+  bool Str2Int(int &iResult, CStrAny const &sInt, int iRadix = 10, bool bSign = true);
+  bool Str2Float(float &fResult, CStrAny const &sFloat, int iRadix = 10, bool bSign = true);
+  char *Int2Str(int i, char *pBuf, int iBufLen, int iRadix = 10);
+  char *Float2Str(float f, char *pBuf, int iBufLen, int iRadix = 10);
 };
 
 #endif

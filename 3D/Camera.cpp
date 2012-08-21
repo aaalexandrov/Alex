@@ -104,8 +104,8 @@ void CCamera::UpdateFrustum()
 
 void CCamera::SetVars(CVarObj *pTargetVars)
 {
-  static CStrConst sg_mView("g_mView");
-  static CStrConst sg_mProj("g_mProj");
+  static CStrAny sg_mView(ST_CONST, "g_mView");
+  static CStrAny sg_mProj(ST_CONST, "g_mProj");
 
   if (!pTargetVars)
     pTargetVars = &CGraphics::Get()->m_Globals;
@@ -119,8 +119,8 @@ void CCamera::SetVars(CVarObj *pTargetVars)
 
 void CCamera::UnsetVars(CVarObj *pTargetVars)
 {
-  static CStrConst sg_mView("g_mView");
-  static CStrConst sg_mProj("g_mProj");
+  static CStrAny sg_mView(ST_CONST, "g_mView");
+  static CStrAny sg_mProj(ST_CONST, "g_mProj");
 
   if (!pTargetVars)
     pTargetVars = &CGraphics::Get()->m_Globals;

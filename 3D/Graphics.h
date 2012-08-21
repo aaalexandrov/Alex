@@ -19,7 +19,7 @@ public:
   static CGraphics *s_pGraphics;
   static inline CGraphics *Get() { return s_pGraphics; }
 
-  typedef CHash<CTechnique *, CStrConst, CTechnique, CTechnique> TTechHash;
+  typedef CHash<CTechnique *, CStrAny, CTechnique, CTechnique> TTechHash;
   typedef CHash<CSampler *, const CSampler::TDesc &, CSampler, CSampler> TSamplerHash;
 
   CLock                   m_Lock;
@@ -62,8 +62,8 @@ public:
 
   bool SetSorter(CFrameSorter *pSorter);
 
-  bool LoadTechnique(CStr sVarFile);
-  CTechnique *GetTechnique(CStrConst sName);
+  bool LoadTechnique(CStrAny sVarFile);
+  CTechnique *GetTechnique(CStrAny sName);
 
   CSampler *GetSampler(const CSampler::TDesc &kDesc);
 

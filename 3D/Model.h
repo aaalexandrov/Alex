@@ -29,18 +29,18 @@ public:
 
   virtual bool IsValid();
 
-  virtual bool SetMatrixVar(CStrConst sVarMatrix, CMatrixVar const *pMatVar, CVarObj *pModelParams = 0);
+  virtual bool SetMatrixVar(CStrAny sVarMatrix, CMatrixVar const *pMatVar, CVarObj *pModelParams = 0);
   virtual void SetVarUpdated();
   virtual CVarObj *GetApplyVars(CVarObj *pModelParams);
   virtual bool Apply(CVarObj *pModelParams, CStateCache *pStateCache);
 
-  virtual CIter *GetIter(const CStrBase &sVar = CStrPart()) const                     { ASSERT(0); return 0;     }
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny()) const                      { ASSERT(0); return 0;     }
 
-  virtual CBaseVar *FindVar(const CStrBase &sVar) const                               { ASSERT(0); return 0;     }
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
+  virtual CBaseVar *FindVar(const CStrAny &sVar) const                               { ASSERT(0); return 0;     }
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
 
-  virtual bool GetVar(const CStrBase &sVar, CBaseVar &vDst) const { return m_pParams->GetVar(sVar, vDst); }
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const { return m_pParams->GetVar(sVar, vDst); }
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 };
 
 class CGeometry: public CObject {
@@ -152,7 +152,7 @@ public:
 
   virtual bool IsValid();
 
-  virtual bool SetMatrixVar(CStrConst sVarMatrix, CMatrixVar const *pMatVar);
+  virtual bool SetMatrixVar(CStrAny sVarMatrix, CMatrixVar const *pMatVar);
   virtual void SetVarUpdated(bool bMaterialUpdated);
   virtual CVarObj *GetApplyVars() { return m_pMaterial->GetApplyVars(m_pParams); }
   virtual bool UpdateBound();
@@ -160,13 +160,13 @@ public:
   virtual bool DoRender();
   virtual bool Render();
 
-  virtual CIter *GetIter(const CStrBase &sVar = CStrPart()) const                     { ASSERT(0); return 0;     }
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny()) const                      { ASSERT(0); return 0;     }
 
-  virtual CBaseVar *FindVar(const CStrBase &sVar) const                               { ASSERT(0); return 0;     }
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
+  virtual CBaseVar *FindVar(const CStrAny &sVar) const                               { ASSERT(0); return 0;     }
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
 
-  virtual bool GetVar(const CStrBase &sVar, CBaseVar &vDst) const { return m_pParams->GetVar(sVar, vDst); }
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const { return m_pParams->GetVar(sVar, vDst); }
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 };
 
 #endif

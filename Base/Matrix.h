@@ -589,8 +589,8 @@ public:
   virtual void *GetPtr()  const { return m_pVal; }
   virtual int   GetSize() const { return m_iRows * m_iCols * sizeof(Num); }
 
-  virtual bool GetStr(CStrBase &s) const { ASSERT(0); return false; }
-  virtual bool SetStr(const CStrBase &s) { ASSERT(0); return false; }
+  virtual bool GetStr(CStrAny &s) const  { ASSERT(0); return false; }
+  virtual bool SetStr(CStrAny const &s)  { ASSERT(0); return false; }
 
   virtual bool GetInt(int &i) const      { ASSERT(0); return false; }
   virtual bool SetInt(int i)             { ASSERT(0); return false; }
@@ -649,13 +649,13 @@ inline bool Set(int *dst, const CMatrix<R, C, T> *src) { ASSERT(0); return false
 template <int R, int C, class T>
 inline bool Set(float *dst, const CMatrix<R, C, T> *src) { ASSERT(0); return false; }
 template <int R, int C, class T>
-inline bool Set(CStrBase *dst, const CMatrix<R, C, T> *src) { ASSERT(0); return false; }
+inline bool Set(CStrAny *dst, const CMatrix<R, C, T> *src) { ASSERT(0); return false; }
 template <int R, int C, class T>
 inline bool Set(CMatrix<R, C, T> *dst, const int *src) { ASSERT(0); return false; }
 template <int R, int C, class T>
 inline bool Set(CMatrix<R, C, T> *dst, const float *src) { ASSERT(0); return false; }
 template <int R, int C, class T>
-inline bool Set(CMatrix<R, C, T> *dst, const CStrBase *src) { ASSERT(0); return false; }
+inline bool Set(CMatrix<R, C, T> *dst, const CStrAny *src) { ASSERT(0); return false; }
 
 template <int R, int C, class T>
 static inline bool SetValue(CMatrix<R, C, T> *val, const CBaseVar *vSrc)

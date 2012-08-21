@@ -34,7 +34,7 @@ struct TSortPriority {
   CModel *m_pModel;
   int     m_iPriority;
 
-  inline void Init(CModel *pModel, CStrConst sPriorityVar);
+  inline void Init(CModel *pModel, CStrAny sPriorityVar);
 
   static inline bool Lt(TSortPriority const &kP0, TSortPriority const &kP1) { return kP0.m_iPriority < kP1.m_iPriority; }
 };
@@ -44,7 +44,7 @@ struct TSortDistancePriority {
   float   m_fDistance;
   int     m_iPriority;
 
-  inline void Init(CModel *pModel, CStrConst sPriorityVar);
+  inline void Init(CModel *pModel, CStrAny sPriorityVar);
 
   static inline bool Lt(TSortDistancePriority const &kDP0, TSortDistancePriority const &kDP1) { if (kDP0.m_fDistance == kDP1.m_fDistance) return kDP0.m_iPriority < kDP1.m_iPriority; return kDP0.m_fDistance < kDP1.m_fDistance; }
 };
@@ -60,9 +60,9 @@ public:
 
 public:
   CArray<TModelData> m_arrModels;
-  CStrConst m_sPriorityVar;
+  CStrAny m_sPriorityVar;
 
-  CPrioritySorter(CStrConst sPriorityVar);
+  CPrioritySorter(CStrAny sPriorityVar);
   virtual ~CPrioritySorter();
 
   virtual void Clear();
@@ -99,7 +99,7 @@ public:
 
 // TSortPriority
 
-void TSortPriority::Init(CModel *pModel, CStrConst sPriorityVar)
+void TSortPriority::Init(CModel *pModel, CStrAny sPriorityVar)
 {
   m_pModel = pModel;
   if (!pModel->GetApplyVars()->GetInt(sPriorityVar, m_iPriority))
@@ -107,7 +107,7 @@ void TSortPriority::Init(CModel *pModel, CStrConst sPriorityVar)
 }
  
 // TSortDistancePriority 
-void TSortDistancePriority::Init(CModel *pModel, CStrConst sPriorityVar)
+void TSortDistancePriority::Init(CModel *pModel, CStrAny sPriorityVar)
 {
   m_pModel = pModel;
   if (pModel->m_pBound && CGraphics::Get()->m_pCamera) {
@@ -123,7 +123,7 @@ void TSortDistancePriority::Init(CModel *pModel, CStrConst sPriorityVar)
 // CPrioritySorter
 
 template<class T>
-CPrioritySorter<T>::CPrioritySorter(CStrConst sPriorityVar)
+CPrioritySorter<T>::CPrioritySorter(CStrAny sPriorityVar)
 {
   m_sPriorityVar = sPriorityVar;
 }

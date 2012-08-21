@@ -47,7 +47,7 @@ int CInputDesc::GetElementOffset(int iElement)
   return iOffset;
 }
 
-CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrConst sSemantic, BYTE btSemIndex, int *pInfoIndex)
+CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrAny sSemantic, BYTE btSemIndex, int *pInfoIndex)
 {
   int iIndex;
   if (!pInfoIndex)
@@ -61,7 +61,7 @@ CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrConst sSemantic, BYTE 
   return 0;
 }
 
-int CInputDesc::AddElement(CStrConst sSem, EElemType kType, BYTE btSemIndex, BYTE btElements)
+int CInputDesc::AddElement(CStrAny sSem, EElemType kType, BYTE btSemIndex, BYTE btElements)
 {
   int iInd = m_Elements.m_iCount;
   m_Elements.SetCount(iInd + 1);
@@ -98,7 +98,7 @@ ID3D11InputLayout *CInputDesc::CreateLayout(CTechnique *pTech)
   UINT uiOffset = 0;
 
   for (int i = 0; i < m_Elements.m_iCount; i++) {
-    pLayout[i].SemanticName = m_Elements[i].m_sSemantic;
+    pLayout[i].SemanticName = m_Elements[i].m_sSemantic.m_pBuf;
     pLayout[i].SemanticIndex = m_Elements[i].m_btIndex;
     static DXGI_FORMAT arrFormats[4][3] = {
       { DXGI_FORMAT_R32_UINT,          DXGI_FORMAT_R32_SINT,          DXGI_FORMAT_R32_FLOAT          },
@@ -219,21 +219,21 @@ bool CConstantTemplate::Init(CTechnique *pTechnique, ID3D11ShaderReflectionConst
       pVar->SetRef((void *) svd.StartOffset);
       if (!m_pVars)
         m_pVars = new CVarHash();
-      m_pVars->ReplaceVar(CStrPart(svd.Name), pVar);
+      m_pVars->ReplaceVar(CStrAny(ST_WHOLE, svd.Name), pVar);
       if (svd.DefaultValue) {
         ASSERT(!"Default values not implemented");
       }
     }
   }
 
-  m_sCacheName = pTechnique->m_sName + CStrPart("@") + m_sName;
+  m_sCacheName = pTechnique->m_sName + CStrAny(ST_WHOLE, "@") + m_sName;
 
   return true;
 }
 
 void CConstantTemplate::Done()
 {
-  m_sName = CStrConst();
+  m_sName = CStrAny();
   m_iSize = 0;
   CVarTemplate::Done();
 }
@@ -301,7 +301,7 @@ void CConstantBuffer::Unmap()
 
 bool CConstantBuffer::SetFrom(const CVarObj &kVars)
 {
-  static const CStrConst scbPerFrame("cbPerFrame");
+  static const CStrAny scbPerFrame(ST_CONST, "cbPerFrame");
   if (m_pTemplate->m_sName == scbPerFrame && !m_pLastCache && m_uiFrameUpdated >= CGraphics::Get()->m_uiFrameID)
     return true;
 
@@ -325,12 +325,12 @@ bool CConstantBuffer::SetFrom(const CVarObj &kVars)
           i--;
         if (i > 0 && pIt->GetName()[i] == '_')
           i--;
-        CStrPart sSuffix = pIt->GetName().SubStr(i + 1, -1);
+        CStrAny sSuffix = pIt->GetName().SubStr(i + 1, -1);
         bSet = false;
         if (!!sSuffix && sSuffix[0] == '_')
-          sSuffix += 1;
+          sSuffix >>= 1;
         if (!!sSuffix) {
-          CStrConst sName(pIt->GetName().SubStr(0, i + 1));
+          CStrAny sName(pIt->GetName().SubStr(0, i + 1));
           pSrcMat = Cast<CMatrixVar>(kVars.FindVar(sName));
           if (pSrcMat) 
             bSet = SetMatrixVar(pDstMat, pSrcMat, sSuffix);
@@ -367,7 +367,7 @@ bool CConstantBuffer::SetFrom(CConstantCache *pCache)
   return true;
 }
 
-bool CConstantBuffer::SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CStrPart sSuffix)
+bool CConstantBuffer::SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CStrAny sSuffix)
 {
   CMatrix<4, 4> m[2];
   int r, c, iNext = 1;
@@ -393,7 +393,7 @@ bool CConstantBuffer::SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CSt
         m[!iNext].GetInverse(m[iNext]);
         break;
     }
-    sSuffix += 1;
+    sSuffix >>= 1;
     iNext = !iNext;
   }
 
@@ -464,7 +464,7 @@ CTechnique::TInputDescLayout::~TInputDescLayout()
   SAFE_RELEASE(m_pLayout); 
 }
 
-CTechnique::CTechnique(CStrConst sSrcFile, CStrConst sVSEntry, CStrConst sPSEntry, CStrConst sName)
+CTechnique::CTechnique(CStrAny sSrcFile, CStrAny sVSEntry, CStrAny sPSEntry, CStrAny sName)
 {
   m_sSrcFile = sSrcFile;
   m_sVSEntry = sVSEntry;
@@ -479,13 +479,13 @@ CTechnique::CTechnique(CStrConst sSrcFile, CStrConst sVSEntry, CStrConst sPSEntr
   Init();
 }
 
-CTechnique::CTechnique(CStr sVarFile)
+CTechnique::CTechnique(CStrAny sVarFile)
 {
-  static CStrConst sHLSLFile("HLSLFile");
-  static CStrConst sVS("VertexShader");
-  static CStrConst sPS("PixelShader");
-  static CStrConst sTech("Technique");
-  static CStrConst sStates("States");
+  static CStrAny sHLSLFile(ST_CONST, "HLSLFile");
+  static CStrAny sVS(ST_CONST, "VertexShader");
+  static CStrAny sPS(ST_CONST, "PixelShader");
+  static CStrAny sTech(ST_CONST, "Technique");
+  static CStrAny sStates(ST_CONST, "States");
 
   CFileBase *pFile = CFileSystem::Get()->OpenFile(sVarFile, CFileBase::FOF_READ);
   CVarHash *pVars = new CVarHash();
@@ -497,11 +497,11 @@ CTechnique::CTechnique(CStr sVarFile)
   }
 
   pVars->GetStr(sHLSLFile, m_sSrcFile);
-  CStrPart sDrive, sDir;
+  CStrAny sDrive, sDir;
   CFileSystem::ParsePath(m_sSrcFile, &sDrive, &sDir, 0, 0);
   if (!sDrive && !sDir) {
     CFileSystem::ParsePath(sVarFile, &sDrive, &sDir, 0, 0);
-    m_sSrcFile = CStr(sDrive + sDir) + m_sSrcFile;
+    m_sSrcFile = sDrive + sDir + m_sSrcFile;
   }
   pVars->GetStr(sVS, m_sVSEntry);
   pVars->GetStr(sPS, m_sPSEntry);
@@ -574,7 +574,7 @@ bool CTechnique::InitShaders()
     return false;
 
   CAutoReleasePtr<ID3D10Blob> pErrBlob;
-  res = D3DCompile(pBuf, iSize, m_sSrcFile, 0, 0, m_sVSEntry, "vs_4_0", 
+  res = D3DCompile(pBuf, iSize, m_sSrcFile.m_pBuf, 0, 0, m_sVSEntry.m_pBuf, "vs_4_0", 
                    D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY, 0, 
                    &m_pVSBlob, &pErrBlob.m_pPtr);
 
@@ -593,7 +593,7 @@ bool CTechnique::InitShaders()
 
   SAFE_RELEASE(pErrBlob.m_pPtr);
 
-  res = D3DCompile(pBuf, iSize, m_sSrcFile, 0, 0, m_sPSEntry, "ps_4_0", 
+  res = D3DCompile(pBuf, iSize, m_sSrcFile.m_pBuf, 0, 0, m_sPSEntry.m_pBuf, "ps_4_0", 
                    D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY, 0, 
                    &m_pPSBlob, &pErrBlob.m_pPtr);
 
@@ -642,7 +642,7 @@ bool CTechnique::InitInputLayout(ID3D11ShaderReflection *pVSReflect)
         if (pd.Mask & 2)
           iMSBSet = 1;
     static CInputDesc::EElemType arrTypes[3] = { CInputDesc::T_UINT, CInputDesc::T_INT, CInputDesc::T_FLOAT };
-    m_pInputDesc->AddElement(pd.SemanticName, arrTypes[pd.ComponentType - D3D10_REGISTER_COMPONENT_UINT32], pd.SemanticIndex, iMSBSet + 1);
+    m_pInputDesc->AddElement(CStrAny(ST_CONST, pd.SemanticName), arrTypes[pd.ComponentType - D3D10_REGISTER_COMPONENT_UINT32], pd.SemanticIndex, iMSBSet + 1);
   }
 
   return true;
@@ -666,7 +666,7 @@ bool CTechnique::InitConstantBuffers(ID3D11ShaderReflection *pSReflect)
     res = pCBReflect->GetDesc(&sbd);
     if (FAILED(res))
       return false;
-    if (GetConstantBuffer(sbd.Name))
+    if (GetConstantBuffer(CStrAny(ST_WHOLE, sbd.Name)))
       continue;
     CConstantTemplate *pCT = new CConstantTemplate();
     if (!pCT->Init(this, pCBReflect)) {
@@ -772,7 +772,7 @@ bool CTechnique::IsValid()
   return m_pVSBlob && m_pPSBlob && m_pVS && m_pPS;
 }
 
-CConstantTemplate *CTechnique::GetConstantTemplate(CStrConst sName)
+CConstantTemplate *CTechnique::GetConstantTemplate(CStrAny sName)
 {
   for (int i = 0; i < m_arrConstantTemplates.m_iCount; i++)
     if (m_arrConstantTemplates[i]->m_sName == sName)
@@ -780,7 +780,7 @@ CConstantTemplate *CTechnique::GetConstantTemplate(CStrConst sName)
   return 0;
 }
 
-CConstantBuffer *CTechnique::GetConstantBuffer(CStrConst sName)
+CConstantBuffer *CTechnique::GetConstantBuffer(CStrAny sName)
 {
   for (int i = 0; i < m_arrConstantBuffers.m_iCount; i++)
     if (m_arrConstantBuffers[i]->m_pTemplate->m_sName == sName)
@@ -799,25 +799,26 @@ ID3D11InputLayout *CTechnique::GetInputLayout(CInputDesc *pDesc)
   return pIDL->m_pLayout;
 }
 
-bool CTechnique::SetMatrixVar(CVarObj *pVars, CStrConst sVarMatrix, CMatrixVar const *pMatVar)
+bool CTechnique::SetMatrixVar(CVarObj *pVars, CStrAny sVarMatrix, CMatrixVar const *pMatVar)
 {
   int i;
   bool bRes;
 
   bRes = pVars->SetVar(sVarMatrix, *pMatVar);
 
-  CStrConst sAlias;
-  static const CStrPart sSuffixes[] = { CStrPart("_I"), CStrPart("_T"), CStrPart("_IT"), CStrPart("_TI"), };
+  CStrAny sAlias;
+  static const CStrAny sSuffixes[] = { CStrAny(ST_WHOLE, "_I"), CStrAny(ST_WHOLE, "_T"), CStrAny(ST_WHOLE, "_IT"), CStrAny(ST_WHOLE, "_TI"), };
   CMatrixVar *pDstVar;
-  CStrPart sSuff;
+  CStrAny sSuff;
 
   for (i = 0; i < ARRSIZE(sSuffixes); i++) {
     sAlias = sVarMatrix + sSuffixes[i];
+    sAlias.AssureInRepository();
     pDstVar = Cast<CMatrixVar>(pVars->FindVar(sAlias));
     if (!pDstVar)
       continue;
     sSuff = sSuffixes[i];
-    sSuff += 1;
+    sSuff >>= 1;
     bRes &= CConstantBuffer::SetMatrixVar(pDstVar, pMatVar, sSuff);
   }
 
@@ -826,17 +827,17 @@ bool CTechnique::SetMatrixVar(CVarObj *pVars, CStrConst sVarMatrix, CMatrixVar c
 
 CTechnique::ECacheLocation CTechnique::GetStateLocation(CStateCache::EStateType eStateType)
 {
-  static const CStrConst sTechnique("Technique");
-  static const CStrConst sMaterial("Material");
-  static const CStrConst sModel("Model");
+  static const CStrAny sTechnique(ST_CONST, "Technique");
+  static const CStrAny sMaterial(ST_CONST, "Material");
+  static const CStrAny sModel(ST_CONST, "Model");
 
-  static const CStrConst sRasterizerState("RasterizerState");
-  static const CStrConst sBlendState("BlendState");
-  static const CStrConst sDepthStencilState("DepthStencilState");
+  static const CStrAny sRasterizerState(ST_CONST, "RasterizerState");
+  static const CStrAny sBlendState(ST_CONST, "BlendState");
+  static const CStrAny sDepthStencilState(ST_CONST, "DepthStencilState");
 
-  static const CStrConst sLocationNames[] = { sRasterizerState, sBlendState, sDepthStencilState };
+  static const CStrAny sLocationNames[] = { sRasterizerState, sBlendState, sDepthStencilState };
 
-  CStr sLoc;
+  CStrAny sLoc;
   if (m_pDefStates && m_pDefStates->GetStr(sLocationNames[eStateType], sLoc)) {
     if (sLoc == sTechnique)
       return CL_TECHNIQUE;

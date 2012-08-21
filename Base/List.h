@@ -38,8 +38,8 @@ public:
 	T Head() const;
 	T Tail() const;
 
-  void PushAfter(TNode *pNode, T t);
-  void PushBefore(TNode *pNode, T t);
+  void PushAfter(TNode *pAfter, T t);
+  void PushBefore(TNode *pBefore, T t);
 
   void Remove(TNode *pNode);
   bool RemoveValue(T t);
@@ -48,6 +48,15 @@ public:
 	TNode *Find(K1 k) const;
 
   TNode *Find(K k) const { return Find<K>(k); }
+
+  void PushNode(TNode *pNode);
+  void PushNodeTail(TNode *pNode);
+
+  TNode *PopNode();
+  TNode *PopNodeTail();
+
+  void PushNodeAfter(TNode *pAfter, TNode *pNode);
+  void PushNodeBefore(TNode *pBefore, TNode *pNode);
 };
 
 // Implementation ------------------------------------------------------------------
@@ -99,42 +108,22 @@ void CList<T, K, P>::Clear()
 template <class T, class K, class P>
 void CList<T, K, P>::Push(T t)
 {
-  TNode *p = new TNode(t);
-  p->pNext = m_pHead;
-  p->pPrev = 0;
-  if (m_pHead)
-    m_pHead->pPrev = p;
-  else
-    m_pTail = p;
-  m_pHead = p;
-  m_iCount++;
+  PushNode(new TNode(t));
 }
 
 template <class T, class K, class P>
 void CList<T, K, P>::PushTail(T t)
 {
-  TNode *p = new TNode(t);
-  p->pNext = 0;
-  p->pPrev = m_pTail;
-  if (m_pTail)
-    m_pTail->pNext = p;
-  else
-    m_pHead = p;
-  m_pTail = p;
-  m_iCount++;
+  PushNodeTail(new TNode(t));
 }
 
 template <class T, class K, class P>
 T &CList<T, K, P>::Pop(T &t)
 {
-  if (m_pHead) {
-    t = m_pHead->Data;
-    if (!m_pHead->pNext)
-      m_pTail = 0;
-    TNode *pNode = m_pHead;
-    m_pHead = m_pHead->pNext;
+  TNode *pNode = PopNode();
+  if (pNode) {
+    t = pNode->Data;
     delete pNode;
-    m_iCount--;
   }
   return t;
 }
@@ -142,14 +131,10 @@ T &CList<T, K, P>::Pop(T &t)
 template <class T, class K, class P>
 T &CList<T, K, P>::PopTail(T &t)
 {
-  if (m_pTail) {
-    t = m_pTail->Data;
-    if (!m_pTail->pPrev)
-      m_pHead = 0;
-    TNode *pNode = m_pTail;
-    m_pTail = m_pTail->pPrev;
+  TNode *pNode = PopNodeTail();
+  if (pNode) {
+    t = pNode->Data;
     delete pNode;
-    m_iCount--;
   }
   return t;
 }
@@ -174,32 +159,14 @@ template <class T, class K, class P>
 T CList<T, K, P>::Pop()
 {
 	T t;
-  if (m_pHead) {
-    t = m_pHead->Data;
-    if (!m_pHead->pNext)
-      m_pTail = 0;
-    TNode *pNode = m_pHead;
-    m_pHead = m_pHead->pNext;
-    delete pNode;
-    m_iCount--;
-  }
-  return t;
+  return Pop(t);
 }
 
 template <class T, class K, class P>
 T CList<T, K, P>::PopTail()
 {
 	T t;
-  if (m_pTail) {
-    t = m_pTail->Data;
-    if (!m_pTail->pPrev)
-      m_pHead = 0;
-    TNode *pNode = m_pTail;
-    m_pTail = m_pTail->pPrev;
-    delete pNode;
-    m_iCount--;
-  }
-  return t;
+  return PopTail(t);
 }
 
 template <class T, class K, class P>
@@ -221,33 +188,15 @@ T CList<T, K, P>::Tail() const
 }
 
 template <class T, class K, class P>
-void CList<T, K, P>::PushAfter(TNode *pNode, T t)
+void CList<T, K, P>::PushAfter(TNode *pAfter, T t)
 {
-  TNode *p = new TNode(t);
-  if (pNode) {
-    p->pPrev = pNode;
-    p->pNext = pNode->pNext;
-    if (!pNode->pNext)
-      m_pTail = p;
-    pNode->pNext = p;
-    m_iCount++;
-  } else
-    PushTail(t);
+  PushNodeAfter(pAfter, new TNode(t));
 }
 
 template <class T, class K, class P>
-void CList<T, K, P>::PushBefore(TNode *pNode, T t)
+void CList<T, K, P>::PushBefore(TNode *pBefore, T t)
 {
-  TNode *p = new TNode(t);
-  if (pNode) {
-    p->pNext = pNode;
-    p->pPrev = pNode->pPrev;
-    if (!pNode->pPrev)
-      m_pHead = p;
-    pNode->pPrev = p;
-    m_iCount++;
-  } else
-    Push(t);
+  PushNodeBefore(pBefore, new TNode(t));
 }
 
 template <class T, class K, class P>
@@ -282,6 +231,86 @@ typename CList<T, K, P>::TNode *CList<T, K, P>::Find(K1 k) const
   TNode *pNode;
   for (pNode = m_pHead; pNode && !P::Eq(k, pNode->Data); pNode = pNode->pNext);
   return pNode;
+}
+
+template <class T, class K, class P>
+void CList<T, K, P>::PushNode(TNode *pNode)
+{
+  pNode->pNext = m_pHead;
+  pNode->pPrev = 0;
+  if (m_pHead)
+    m_pHead->pPrev = pNode;
+  else
+    m_pTail = pNode;
+  m_pHead = pNode;
+  m_iCount++;
+}
+
+template <class T, class K, class P>
+void CList<T, K, P>::PushNodeTail(TNode *pNode)
+{
+  pNode->pNext = 0;
+  pNode->pPrev = m_pTail;
+  if (m_pTail)
+    m_pTail->pNext = pNode;
+  else
+    m_pHead = pNode;
+  m_pTail = pNode;
+  m_iCount++;
+}
+
+template <class T, class K, class P>
+typename CList<T, K, P>::TNode *CList<T, K, P>::PopNode()
+{
+  TNode *pNode = m_pHead; 
+  if (m_pHead) {
+    if (!m_pHead->pNext)
+      m_pTail = 0;
+    m_pHead = m_pHead->pNext;
+    m_iCount--;
+  }
+  return pNode;
+}
+
+template <class T, class K, class P>
+typename CList<T, K, P>::TNode *CList<T, K, P>::PopNodeTail()
+{
+  TNode *pNode = m_pTail;
+  if (m_pTail) {
+    if (!m_pTail->pPrev)
+      m_pHead = 0;
+    m_pTail = m_pTail->pPrev;
+    m_iCount--;
+  }
+  return pNode;
+}
+
+template <class T, class K, class P>
+void CList<T, K, P>::PushNodeAfter(TNode *pAfter, TNode *pNode)
+{
+  if (pAfter) {
+    pNode->pPrev = pAfter;
+    pNode->pNext = pAfter->pNext;
+    if (!pAfter->pNext)
+      m_pTail = pNode;
+    pAfter->pNext = pNode;
+    m_iCount++;
+  } else
+    PushNodeTail(pNode);
+}
+
+template <class T, class K, class P>
+void CList<T, K, P>::PushNodeBefore(TNode *pBefore, TNode *pNode)
+{
+  if (pBefore) {
+    pNode->pNext = pBefore;
+    pNode->pPrev = pBefore->pPrev;
+    if (!pBefore->pPrev)
+      m_pHead = pNode;
+    pBefore->pPrev = pNode;
+    m_iCount++;
+  } else
+    PushNode(pNode);
 }
 
 #endif

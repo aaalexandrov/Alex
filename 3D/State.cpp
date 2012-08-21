@@ -17,23 +17,23 @@ void CStateVarObj::Done()
   SAFE_DELETE(m_pVars);
 }
 
-CVarObj::CIter *CStateVarObj::GetIter(const CStrBase &sVar) const
+CVarObj::CIter *CStateVarObj::GetIter(const CStrAny &sVar) const
 {
   return m_pVars->GetIter(sVar);
 }
 
-CBaseVar *CStateVarObj::FindVar(const CStrBase &sVar) const
+CBaseVar *CStateVarObj::FindVar(const CStrAny &sVar) const
 {
   return m_pVars->FindVar(sVar);
 }
 
-bool CStateVarObj::ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding)
+bool CStateVarObj::ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding)
 {
   ASSERT(0);
   return false;
 }
 
-bool CStateVarObj::SetVar(const CStrBase &sVar, const CBaseVar &vSrc)
+bool CStateVarObj::SetVar(const CStrAny &sVar, const CBaseVar &vSrc)
 {
   CAutoDeletePtr<CVarObj::CIter> pIt(m_pVars->GetIter(sVar));
   if (!pIt)
@@ -87,7 +87,7 @@ CBaseVar const *CStateVarObj::TranslateValue(CBaseVar const *pValue)
   return TranslateStr2Int(pValue, pDict, iCount);
 }
 
-int CStateVarObj::GetStrIndex(CStrBase const *pStr, TStr2Int *pDict, int iCount)
+int CStateVarObj::GetStrIndex(CStrAny const *pStr, TStr2Int *pDict, int iCount)
 {
   int i;
   for (i = 0; i < iCount; i++)
@@ -99,7 +99,7 @@ int CStateVarObj::GetStrIndex(CStrBase const *pStr, TStr2Int *pDict, int iCount)
 inline CBaseVar const *CStateVarObj::TranslateStr2Int(CBaseVar const *pValue, TStr2Int *pDict, int iCount)
 {
   int i;
-  CVarValueBase<CStr> const *pStrVal = Cast<CVarValueBase<CStr> >(pValue);
+  CVarValueBase<CStrAny> const *pStrVal = Cast<CVarValueBase<CStrAny> >(pValue);
   if (pStrVal)
     for (i = 0; i < iCount; i++)
       if (pStrVal->GetValue() == pDict[i].sName)
@@ -133,16 +133,16 @@ IMP_VAR_RTTI(CRasterizerState)
 
 bool CRasterizerState::Init()
 {
-  static CStrConst sFillMode("FillMode");
-  static CStrConst sCullMode("CullMode");
-  static CStrConst sFrontCCW("FrontCounterClockwise");
-  static CStrConst sDepthBias("DepthBias");
-  static CStrConst sSlopeScaledDepthBias("SlopeScaledDepthBias");
-  static CStrConst sDepthBiasClamp("DepthBiasClamp");
-  static CStrConst sDepthClipEnable("DepthClipEnable");
-  static CStrConst sScissorEnable("ScissorEnable");
-  static CStrConst sMultisampleEnable("MultisampleEnable");
-  static CStrConst sAntialiasedLineEnable("AntialiasedLineEnable");
+  static CStrAny sFillMode(ST_CONST, "FillMode");
+  static CStrAny sCullMode(ST_CONST, "CullMode");
+  static CStrAny sFrontCCW(ST_CONST, "FrontCounterClockwise");
+  static CStrAny sDepthBias(ST_CONST, "DepthBias");
+  static CStrAny sSlopeScaledDepthBias(ST_CONST, "SlopeScaledDepthBias");
+  static CStrAny sDepthBiasClamp(ST_CONST, "DepthBiasClamp");
+  static CStrAny sDepthClipEnable(ST_CONST, "DepthClipEnable");
+  static CStrAny sScissorEnable(ST_CONST, "ScissorEnable");
+  static CStrAny sMultisampleEnable(ST_CONST, "MultisampleEnable");
+  static CStrAny sAntialiasedLineEnable(ST_CONST, "AntialiasedLineEnable");
 
   if (!CStateVarObj::Init())
     return false;
@@ -199,11 +199,11 @@ bool CRasterizerState::Init()
 
 CStateVarObj::TStr2Int *CRasterizerState::GetDict_s(int &iCount)
 {
-  static CStrConst sSolid("Solid");
-  static CStrConst sWireframe("Wireframe");
-  static CStrConst sFront("Front");
-  static CStrConst sBack("Back");
-  static CStrConst sNone("None");
+  static CStrAny sSolid(ST_CONST, "Solid");
+  static CStrAny sWireframe(ST_CONST, "Wireframe");
+  static CStrAny sFront(ST_CONST, "Front");
+  static CStrAny sBack(ST_CONST, "Back");
+  static CStrAny sNone(ST_CONST, "None");
 
   static TStr2Int arrStr2Rast[] = {
     { sSolid, D3D11_FILL_SOLID },
@@ -259,18 +259,18 @@ IMP_VAR_RTTI(CBlendState)
 
 bool CBlendState::Init()
 {
-  static CStrConst sAlphaToCoverageEnable("AlphaToCoverageEnable");
-  static CStrConst sIndependentBlendEnable("IndependentBlendEnable");
-  static CStrConst sBlendEnable("BlendEnable");
-  static CStrConst sSrcBlend("SrcBlend");
-  static CStrConst sDestBlend("DestBlend");
-  static CStrConst sBlendOp("BlendOp");
-  static CStrConst sSrcBlendAlpha("SrcBlendAlpha");
-  static CStrConst sDestBlendAlpha("DestBlendAlpha");
-  static CStrConst sBlendOpAlpha("BlendOpAlpha");
-  static CStrConst sRenderTargetWriteMask("RenderTargetWriteMask");
-  static CStrConst sBlendFactor("BlendFactor");
-  static CStrConst sSampleMask("SampleMask");
+  static CStrAny sAlphaToCoverageEnable(ST_CONST, "AlphaToCoverageEnable");
+  static CStrAny sIndependentBlendEnable(ST_CONST, "IndependentBlendEnable");
+  static CStrAny sBlendEnable(ST_CONST, "BlendEnable");
+  static CStrAny sSrcBlend(ST_CONST, "SrcBlend");
+  static CStrAny sDestBlend(ST_CONST, "DestBlend");
+  static CStrAny sBlendOp(ST_CONST, "BlendOp");
+  static CStrAny sSrcBlendAlpha(ST_CONST, "SrcBlendAlpha");
+  static CStrAny sDestBlendAlpha(ST_CONST, "DestBlendAlpha");
+  static CStrAny sBlendOpAlpha(ST_CONST, "BlendOpAlpha");
+  static CStrAny sRenderTargetWriteMask(ST_CONST, "RenderTargetWriteMask");
+  static CStrAny sBlendFactor(ST_CONST, "BlendFactor");
+  static CStrAny sSampleMask(ST_CONST, "SampleMask");
 
   if (!CStateVarObj::Init())
     return false;
@@ -299,30 +299,30 @@ bool CBlendState::Init()
 
   for (i = 0; i < ARRSIZE(m_BSDesc.RenderTarget); i++) {
     pVar = new CVarRef<int>(m_BSDesc.RenderTarget[i].BlendEnable);
-    m_pVars->ReplaceVar(sBlendEnable + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sBlendEnable + CStrAny(ST_STR, i), pVar, true);
 
     COMPILE_ASSERT(sizeof(D3D11_BLEND) == sizeof(int));
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].SrcBlend);
-    m_pVars->ReplaceVar(sSrcBlend + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sSrcBlend + CStrAny(ST_STR, i), pVar, true);
 
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].DestBlend);
-    m_pVars->ReplaceVar(sDestBlend + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sDestBlend + CStrAny(ST_STR, i), pVar, true);
 
     COMPILE_ASSERT(sizeof(D3D11_BLEND_OP) == sizeof(int));
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].BlendOp);
-    m_pVars->ReplaceVar(sBlendOp + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sBlendOp + CStrAny(ST_STR, i), pVar, true);
 
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].SrcBlendAlpha);
-    m_pVars->ReplaceVar(sSrcBlendAlpha + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sSrcBlendAlpha + CStrAny(ST_STR, i), pVar, true);
 
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].DestBlendAlpha);
-    m_pVars->ReplaceVar(sDestBlendAlpha + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sDestBlendAlpha + CStrAny(ST_STR, i), pVar, true);
 
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].BlendOpAlpha);
-    m_pVars->ReplaceVar(sBlendOpAlpha + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sBlendOpAlpha + CStrAny(ST_STR, i), pVar, true);
 
     pVar = new CVarRef<BYTE>(m_BSDesc.RenderTarget[i].RenderTargetWriteMask);
-    m_pVars->ReplaceVar(sRenderTargetWriteMask + CStr(i), pVar, true);
+    m_pVars->ReplaceVar(sRenderTargetWriteMask + CStrAny(ST_STR, i), pVar, true);
   }
 
   m_vBlendFactor.Set(1, 1, 1, 1);
@@ -341,29 +341,29 @@ bool CBlendState::Init()
 
 CStateVarObj::TStr2Int *CBlendState::GetDict_s(int &iCount)
 {
-  static CStrConst sZero("Zero");
-  static CStrConst sOne("One");
-  static CStrConst sSrcColor("SrcColor");
-  static CStrConst sInvSrcColor("InvSrcColor");
-  static CStrConst sSrcAlpha("SrcAlpha");
-  static CStrConst sInvSrcAlpha("InvSrcAlpha");
-  static CStrConst sDestColor("DestColor");
-  static CStrConst sInvDestColor("InvDestColor");
-  static CStrConst sDestAlpha("DestAlpha");
-  static CStrConst sInvDestAlpha("InvDestAlpha");
-  static CStrConst sSrcAlphaSat("SrcAlphaSat");
-  static CStrConst sBlendFactor("BlendFactor");
-  static CStrConst sInvBlendFactor("InvBlendFactor");
-  static CStrConst sSrc1Color("Src1Color");
-  static CStrConst sInvSrc1Color("InvSrc1Color");
-  static CStrConst sSrc1Alpha("Src1Alpha");
-  static CStrConst sInvSrc1Alpha("InvSrc1Alpha");
+  static CStrAny sZero(ST_CONST, "Zero");
+  static CStrAny sOne(ST_CONST, "One");
+  static CStrAny sSrcColor(ST_CONST, "SrcColor");
+  static CStrAny sInvSrcColor(ST_CONST, "InvSrcColor");
+  static CStrAny sSrcAlpha(ST_CONST, "SrcAlpha");
+  static CStrAny sInvSrcAlpha(ST_CONST, "InvSrcAlpha");
+  static CStrAny sDestColor(ST_CONST, "DestColor");
+  static CStrAny sInvDestColor(ST_CONST, "InvDestColor");
+  static CStrAny sDestAlpha(ST_CONST, "DestAlpha");
+  static CStrAny sInvDestAlpha(ST_CONST, "InvDestAlpha");
+  static CStrAny sSrcAlphaSat(ST_CONST, "SrcAlphaSat");
+  static CStrAny sBlendFactor(ST_CONST, "BlendFactor");
+  static CStrAny sInvBlendFactor(ST_CONST, "InvBlendFactor");
+  static CStrAny sSrc1Color(ST_CONST, "Src1Color");
+  static CStrAny sInvSrc1Color(ST_CONST, "InvSrc1Color");
+  static CStrAny sSrc1Alpha(ST_CONST, "Src1Alpha");
+  static CStrAny sInvSrc1Alpha(ST_CONST, "InvSrc1Alpha");
 
-  static CStrConst sAdd("Add");
-  static CStrConst sSubtract("Subtract");
-  static CStrConst sRevSubtract("RevSubtract");
-  static CStrConst sMin("Min");
-  static CStrConst sMax("Max");
+  static CStrAny sAdd(ST_CONST, "Add");
+  static CStrAny sSubtract(ST_CONST, "Subtract");
+  static CStrAny sRevSubtract(ST_CONST, "RevSubtract");
+  static CStrAny sMin(ST_CONST, "Min");
+  static CStrAny sMax(ST_CONST, "Max");
 
   static TStr2Int arrStr2Blend[] = {
     { sZero, D3D11_BLEND_ZERO },
@@ -438,21 +438,21 @@ IMP_VAR_RTTI(CDepthStencilState)
 
 bool CDepthStencilState::Init()
 {
-  static CStrConst sDepthEnable("DepthEnable");
-  static CStrConst sDepthWriteMask("DepthWriteMask");
-  static CStrConst sDepthFunc("DepthFunc");
-  static CStrConst sStencilEnable("StencilEnable");
-  static CStrConst sStencilReadMask("StencilReadMask");
-  static CStrConst sStencilWriteMask("StencilWriteMask");
-  static CStrConst sStencilFunc("StencilFunc");
-  static CStrConst sStencilDepthFailOp("StencilDepthFailOp");
-  static CStrConst sStencilPassOp("StencilPassOp");
-  static CStrConst sStencilFailOp("StencilFailOp");
-  static CStrConst sStencilFuncBack("StencilFuncBack");
-  static CStrConst sStencilDepthFailOpBack("StencilDepthFailOpBack");
-  static CStrConst sStencilPassOpBack("StencilPassOpBack");
-  static CStrConst sStencilFailOpBack("StencilFailOpBack");
-  static CStrConst sStencilRef("StencilRef");
+  static CStrAny sDepthEnable(ST_CONST, "DepthEnable");
+  static CStrAny sDepthWriteMask(ST_CONST, "DepthWriteMask");
+  static CStrAny sDepthFunc(ST_CONST, "DepthFunc");
+  static CStrAny sStencilEnable(ST_CONST, "StencilEnable");
+  static CStrAny sStencilReadMask(ST_CONST, "StencilReadMask");
+  static CStrAny sStencilWriteMask(ST_CONST, "StencilWriteMask");
+  static CStrAny sStencilFunc(ST_CONST, "StencilFunc");
+  static CStrAny sStencilDepthFailOp(ST_CONST, "StencilDepthFailOp");
+  static CStrAny sStencilPassOp(ST_CONST, "StencilPassOp");
+  static CStrAny sStencilFailOp(ST_CONST, "StencilFailOp");
+  static CStrAny sStencilFuncBack(ST_CONST, "StencilFuncBack");
+  static CStrAny sStencilDepthFailOpBack(ST_CONST, "StencilDepthFailOpBack");
+  static CStrAny sStencilPassOpBack(ST_CONST, "StencilPassOpBack");
+  static CStrAny sStencilFailOpBack(ST_CONST, "StencilFailOpBack");
+  static CStrAny sStencilRef(ST_CONST, "StencilRef");
 
   if (!CStateVarObj::Init())
     return false;
@@ -528,23 +528,23 @@ bool CDepthStencilState::Init()
 
 CStateVarObj::TStr2Int *CDepthStencilState::GetDict_s(int &iCount)
 {
-  static CStrConst sNever("Never");
-  static CStrConst sLess("Less");
-  static CStrConst sEqual("Equal");
-  static CStrConst sLessEqual("LessEqual");
-  static CStrConst sGreater("Greater");
-  static CStrConst sNotEqual("NotEqual");
-  static CStrConst sGreaterEqual("GreaterEqual");
-  static CStrConst sAlways("Always");
+  static CStrAny sNever(ST_CONST, "Never");
+  static CStrAny sLess(ST_CONST, "Less");
+  static CStrAny sEqual(ST_CONST, "Equal");
+  static CStrAny sLessEqual(ST_CONST, "LessEqual");
+  static CStrAny sGreater(ST_CONST, "Greater");
+  static CStrAny sNotEqual(ST_CONST, "NotEqual");
+  static CStrAny sGreaterEqual(ST_CONST, "GreaterEqual");
+  static CStrAny sAlways(ST_CONST, "Always");
 
-  static CStrConst sKeep("Keep");
-  static CStrConst sZero("Zero");   
-  static CStrConst sReplace("Replace");
-  static CStrConst sIncrSat("IncrSat");
-  static CStrConst sDecrSat("DecrSat");
-  static CStrConst sInvert("Invert"); 
-  static CStrConst sIncr("Incr");   
-  static CStrConst sDecr("Decr");   
+  static CStrAny sKeep(ST_CONST, "Keep");
+  static CStrAny sZero(ST_CONST, "Zero");   
+  static CStrAny sReplace(ST_CONST, "Replace");
+  static CStrAny sIncrSat(ST_CONST, "IncrSat");
+  static CStrAny sDecrSat(ST_CONST, "DecrSat");
+  static CStrAny sInvert(ST_CONST, "Invert"); 
+  static CStrAny sIncr(ST_CONST, "Incr");   
+  static CStrAny sDecr(ST_CONST, "Decr");   
 
   static TStr2Int arrStr2Stencil[] = {
     { sNever, D3D11_COMPARISON_NEVER },
@@ -664,7 +664,7 @@ CStateCache *CStateCache::GetContainer(EStateType eStateType)
   return 0;
 }
 
-bool CStateCache::GetVar(const CStrBase &sVar, CBaseVar &vDst) const
+bool CStateCache::GetVar(const CStrAny &sVar, CBaseVar &vDst) const
 {
   for (int i = 0; i < ARRSIZE(m_pStates); i++) {
     if (!m_pStates[i])
@@ -679,7 +679,7 @@ bool CStateCache::GetVar(const CStrBase &sVar, CBaseVar &vDst) const
   return false;
 }
 
-bool CStateCache::SetVar(const CStrBase &sVar, const CBaseVar &vSrc)
+bool CStateCache::SetVar(const CStrAny &sVar, const CBaseVar &vSrc)
 {
   for (int i = 0; i < ARRSIZE(m_pStates); i++) {
     if (!m_pStates[i])

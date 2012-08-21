@@ -51,7 +51,7 @@ bool CMaterial::Init(CTechnique *pTech, bool bUseGlobals, CVarObj *pInitParams, 
 
 bool CMaterial::InitConstantCache()
 {
-  static const CStrConst scbPerMaterial("cbPerMaterial");
+  static const CStrAny scbPerMaterial(ST_CONST, "cbPerMaterial");
 
   ASSERT(!m_pPerMaterialCache);
   CConstantBuffer *pCB = m_pTechnique->GetConstantBuffer(scbPerMaterial);
@@ -92,7 +92,7 @@ bool CMaterial::IsValid()
   return m_pTechnique && m_pParams;
 }
 
-bool CMaterial::SetMatrixVar(CStrConst sVarMatrix, CMatrixVar const *pMatVar, CVarObj *pModelParams)
+bool CMaterial::SetMatrixVar(CStrAny sVarMatrix, CMatrixVar const *pMatVar, CVarObj *pModelParams)
 {
   return m_pTechnique->SetMatrixVar(GetApplyVars(pModelParams), sVarMatrix, pMatVar);
 }
@@ -126,7 +126,7 @@ bool CMaterial::Apply(CVarObj *pModelParams, CStateCache *pStateCache)
   return bRes;
 }
 
-bool CMaterial::SetVar(const CStrBase &sVar, const CBaseVar &vSrc) 
+bool CMaterial::SetVar(const CStrAny &sVar, const CBaseVar &vSrc) 
 { 
   bool bRes;
   CMatrixVar const *pMatVar = Cast<CMatrixVar>(&vSrc);
@@ -231,7 +231,7 @@ void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, WORD *pIn
     else
       pInd = pIndices;
 
-    static const CStrConst sPOSITION("POSITION");
+    static const CStrAny sPOSITION(ST_CONST, "POSITION");
     int iPosIndex, iStride;
     CInputDesc::TInputElement *pElem = m_pInputDesc->GetElementInfo(sPOSITION, 0, &iPosIndex);
     ASSERT(pElem && pElem->m_btElements >= 3);
@@ -593,7 +593,7 @@ bool CModel::Init(CGeometry *pGeom, CMaterial *pMaterial, CVarObj *pInitParams, 
 
 bool CModel::InitConstantCache()
 {
-  static const CStrConst scbPerObject("cbPerObject");
+  static const CStrAny scbPerObject(ST_CONST, "cbPerObject");
 
   ASSERT(!m_pPerObjectCache);
   CConstantBuffer *pCB = m_pMaterial->m_pTechnique->GetConstantBuffer(scbPerObject);
@@ -638,7 +638,7 @@ bool CModel::IsValid()
   return m_pGeometry && m_pGeometry->IsValid() && m_pMaterial && m_pMaterial->IsValid() && m_pLayout;
 }
 
-bool CModel::SetMatrixVar(CStrConst sVarMatrix, CMatrixVar const *pMatVar)
+bool CModel::SetMatrixVar(CStrAny sVarMatrix, CMatrixVar const *pMatVar)
 {
   return m_pMaterial->SetMatrixVar(sVarMatrix, pMatVar, m_pParams);
 }
@@ -655,7 +655,7 @@ bool CModel::UpdateBound()
 {
   if (!m_pBound)
     return true;
-  static const CStrConst sg_mWorld("g_mWorld");
+  static const CStrAny sg_mWorld(ST_CONST, "g_mWorld");
 /*  CMatrixVar *pMatVar = Cast<CMatrixVar>(m_pParams->FindVar(sg_mWorld));
   if (!pMatVar || pMatVar->m_iCols != 4 || pMatVar->m_iRows != 4) {
     ASSERT(0);
@@ -711,7 +711,7 @@ bool CModel::Render()
   return true;
 }
 
-bool CModel::SetVar(const CStrBase &sVar, const CBaseVar &vSrc)
+bool CModel::SetVar(const CStrAny &sVar, const CBaseVar &vSrc)
 {
   bool bRes;
   CMatrixVar const *pMatVar = Cast<CMatrixVar>(&vSrc);

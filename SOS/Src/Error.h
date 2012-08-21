@@ -1,0 +1,31 @@
+#ifndef __ERROR_H
+#define __ERROR_H
+
+// Errors ---------------------------------------------------------------------
+
+enum EInterpretError {
+	IERR_OK,
+	IERR_UNKNOWN,
+
+	IERR_UNINITIALIZED,
+
+  IERR_UNKNOWN_TOKEN,
+
+	IERR_NO_CLOSE_BRACE,
+	IERR_NO_OPEN_BRACE,
+
+	IERR_NOT_LVALUE,
+
+	IERR_NOT_ENOUGH_OPERANDS,
+	IERR_TOO_MANY_OPERANDS,
+  IERR_OPERAND_TYPE,
+
+  IERR_INVALID_INSTRUCTION,
+
+  IERR_INVALID_TOKEN,
+  IERR_INVALID_OPERATOR,
+
+  IERR_PARSING_FAILED,
+};
+
+#endif

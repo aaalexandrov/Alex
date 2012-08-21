@@ -35,6 +35,8 @@ public:
 
   T &Last()               { return At(m_iCount - 1); }
   const T &Last() const   { return At(m_iCount - 1); }
+  T &PreLast()               { return At(m_iCount - 2); }
+  const T &PreLast() const   { return At(m_iCount - 2); }
   void Append(const T &t);
 
   template <bool bLinear>

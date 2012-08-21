@@ -113,7 +113,7 @@ public:
   CMesh();
   ~CMesh();
 
-  bool Init(CGeometry *pOrgGeom, CStrConst sMatSemantic, BYTE btMatSemanticIndex);
+  bool Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIndex);
 
   CProgressiveGeometry *BuildProgressiveGeometry(int iMaterial, UINT uiNoReorderVertexCount, UINT uiMaxCollapses); // The first uiNoReorderVertexCount will not be reordered and will appear at their original order at the start of the resulting progressive mesh VB
   CD3DBuffer *BuildVB(UINT uiNoReorderVertexCount);

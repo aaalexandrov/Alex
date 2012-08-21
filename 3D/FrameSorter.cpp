@@ -93,7 +93,7 @@ bool CGroupSorter::Render()
 
 int CGroupSorter::GetModelGroup(CModel *pModel)
 {
-  static const CStrConst sSorterGroup("SorterGroup");
+  static const CStrAny sSorterGroup(ST_CONST, "SorterGroup");
   int iGroup;
 
   if (!pModel->GetApplyVars()->GetInt(sSorterGroup, iGroup))

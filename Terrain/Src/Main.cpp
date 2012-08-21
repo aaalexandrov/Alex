@@ -54,14 +54,14 @@ void AddText()
   CRect<> rcView;
   float fNear, fFar;
   CGraphics::Get()->GetViewport(rcView, fNear, fFar);
-  g_pFont->AddStr(CStrPart(chBuf), CVector<2>::Get(10, rcView.GetHeight() - 8));
+  g_pFont->AddStr(CStrAny(ST_WHOLE, chBuf), CVector<2>::Get(10, rcView.GetHeight() - 8));
 
   sprintf(chBuf, "DP: %d, Tri: %d, Vert: %d", CGraphics::Get()->m_uiDrawPrimitiveCount, CGraphics::Get()->m_uiTriangleCount, CGraphics::Get()->m_uiVertexCount);
-  g_pFont->AddStr(CStrPart(chBuf), CVector<2>::Get(180, rcView.GetHeight() - 8));
+  g_pFont->AddStr(CStrAny(ST_WHOLE, chBuf), CVector<2>::Get(180, rcView.GetHeight() - 8));
 
   sprintf(chBuf, "Buffers - Total: %dK, Dev: %dK, Texture - Total: %dK, Dev: %dK", 
           CD3DBuffer::s_uiTotalMemory / 1024, CD3DBuffer::s_uiDeviceMemory / 1024, CTexture::s_uiTotalMemory / 1024, CTexture::s_uiDeviceMemory / 1024);
-  g_pFont->AddStr(CStrPart(chBuf), CVector<2>::Get(10, rcView.GetHeight() - 8 - g_pFont->m_iHeight));
+  g_pFont->AddStr(CStrAny(ST_WHOLE, chBuf), CVector<2>::Get(10, rcView.GetHeight() - 8 - g_pFont->m_iHeight));
 }
 
 struct TTerrainVertex {
@@ -72,27 +72,27 @@ struct TTerrainVertex {
 
 bool InitModels()
 {
-  if (!g_pGraphics->LoadTechnique("Src/Plain.vfx"))
+  if (!g_pGraphics->LoadTechnique(CStrAny(ST_WHOLE, "Src/Plain.vfx")))
     return false;
 
-  if (!g_pGraphics->LoadTechnique("Src/Terrain.vfx"))
+  if (!g_pGraphics->LoadTechnique(CStrAny(ST_WHOLE, "Src/Terrain.vfx")))
     return false;
 
-  if (!g_pGraphics->LoadTechnique("Src/TerrainLOD.vfx"))
+  if (!g_pGraphics->LoadTechnique(CStrAny(ST_WHOLE, "Src/TerrainLOD.vfx")))
     return false;
 
-  g_pTech = g_pGraphics->GetTechnique("Terrain");
+  g_pTech = g_pGraphics->GetTechnique(CStrAny(ST_WHOLE, "Terrain"));
   if (!g_pTech)
     return false;
 
   g_pTexture = new CTexture();
 //  if (!g_pTexture->Init("Data/earth.bmp"))
-  if (!g_pTexture->Init("Data/Bumpy Textured Leaves.jpg", 0, CResource::RF_KEEPSYSTEMCOPY))
+  if (!g_pTexture->Init(CStrAny(ST_WHOLE, "Data/Bumpy Textured Leaves.jpg"), 0, CResource::RF_KEEPSYSTEMCOPY))
 //  if (!g_pTexture->Init("Data/Fall Leaf Pile.jpg"))
     return false;
 
   g_pTexture1 = new CTexture();
-  if (!g_pTexture1->Init("Data/Fall Leaf Pile.jpg", 0, CResource::RF_KEEPSYSTEMCOPY))
+  if (!g_pTexture1->Init(CStrAny(ST_WHOLE, "Data/Fall Leaf Pile.jpg"), 0, CResource::RF_KEEPSYSTEMCOPY))
     return false;
 
   char chNormBuf[2] = { 0, 0 };
@@ -100,7 +100,7 @@ bool InitModels()
   if (!g_pTextureNorm->Init(1, 1, DXGI_FORMAT_R8G8_SNORM, 1, (BYTE *) chNormBuf, 2, 0))
     return false;
 
-  g_pFont = new CFont("Arial", 20);
+  g_pFont = new CFont(CStrAny(ST_WHOLE, "Arial"), 20);
   if (!g_pFont->IsValid())
     return false;
 
@@ -137,19 +137,19 @@ bool InitModels()
 
   g_pMaterial = pMat;
 
-  static const CStrConst sg_mWorld("g_mWorld");
-  static const CStrConst sg_mDiffTransform("g_mDiffTransform");
-  static const CStrConst sg_mNormTransform("g_mNormTransform");
-  static const CStrConst sg_cMaterialSpecular("g_cMaterialSpecular");
-  static const CStrConst sg_cMaterialDiffuse("g_cMaterialDiffuse");
-  static const CStrConst sg_cMaterialAmbient("g_cMaterialAmbient");
-  static const CStrConst sg_fLODDistance("g_fLODDistance");
-  static const CStrConst sg_txDiffuse("g_txDiffuse");
-  static const CStrConst sg_txFar("g_txFar");
-  static const CStrConst sg_txNormals("g_txNormals");
-  static const CStrConst sg_sDiffuse("g_sDiffuse");
-  static const CStrConst sg_sNormals("g_sNormals");
-  static const CStrConst sg_fMaterialID("g_fMaterialID");
+  static const CStrAny sg_mWorld(ST_CONST, "g_mWorld");
+  static const CStrAny sg_mDiffTransform(ST_CONST, "g_mDiffTransform");
+  static const CStrAny sg_mNormTransform(ST_CONST, "g_mNormTransform");
+  static const CStrAny sg_cMaterialSpecular(ST_CONST, "g_cMaterialSpecular");
+  static const CStrAny sg_cMaterialDiffuse(ST_CONST, "g_cMaterialDiffuse");
+  static const CStrAny sg_cMaterialAmbient(ST_CONST, "g_cMaterialAmbient");
+  static const CStrAny sg_fLODDistance(ST_CONST, "g_fLODDistance");
+  static const CStrAny sg_txDiffuse(ST_CONST, "g_txDiffuse");
+  static const CStrAny sg_txFar(ST_CONST, "g_txFar");
+  static const CStrAny sg_txNormals(ST_CONST, "g_txNormals");
+  static const CStrAny sg_sDiffuse(ST_CONST, "g_sDiffuse");
+  static const CStrAny sg_sNormals(ST_CONST, "g_sNormals");
+  static const CStrAny sg_fMaterialID(ST_CONST, "g_fMaterialID");
 
   CMatrixVar vMat(4, 4);
   CMatrix<4, 4> *pWorld = (CMatrix<4, 4> *) vMat.m_pVal;
@@ -248,7 +248,7 @@ bool InitTerrain(int iTerrainSize)
   CRect<int> rcGrid;
   float fGrid2World;
 
-  static CStrConst sTerFile("Data/Terrain.ter");
+  static CStrAny sTerFile(ST_CONST, "Data/Terrain.ter");
 
   if (iTerrainSize > 0)
     iSize = (CTerrain::PATCH_SIZE - 1) * iTerrainSize + 1;
@@ -264,7 +264,7 @@ bool InitTerrain(int iTerrainSize)
   } else
     pFile->SetPos(0);
 
-  g_pTerrain = new CTerrain(rcGrid.GetWidth() + 1, rcGrid.GetHeight() + 1, fGrid2World, g_pMaterial, "Data/");
+  g_pTerrain = new CTerrain(rcGrid.GetWidth() + 1, rcGrid.GetHeight() + 1, fGrid2World, g_pMaterial, CStrAny(ST_WHOLE, "Data/"));
   g_pTerrain->AddMaterial(g_pMaterial1);
 
   g_pTerrain->SetCamera(g_pFreeCamera->m_pCamera);
@@ -305,10 +305,10 @@ bool InitCameraParams()
 
 bool InitScene()
 {
-  static CStrConst sg_vLightDirection("g_vLightDirection");
-  static CStrConst sg_cLightSpecular("g_cLightSpecular");
-  static CStrConst sg_cLightDiffuse("g_cLightDiffuse");
-  static CStrConst sg_cLightAmbient("g_cLightAmbient");
+  static CStrAny sg_vLightDirection(ST_CONST, "g_vLightDirection");
+  static CStrAny sg_cLightSpecular(ST_CONST, "g_cLightSpecular");
+  static CStrAny sg_cLightDiffuse(ST_CONST, "g_cLightDiffuse");
+  static CStrAny sg_cLightAmbient(ST_CONST, "g_cLightAmbient");
 
   g_pCamera = new CCamera();
   g_pCamera->m_XForm.SetTranslation(CVector<3>::Get(0, 0, 10));
@@ -347,7 +347,7 @@ bool Init(char const *pCmdLine)
   new CFileSystem();
 
   g_pGraphics = new CGraphics();
-  g_pGraphics->SetSorter(new CPrioritySorter<>("g_fMaterialID"));
+  g_pGraphics->SetSorter(new CPrioritySorter<>(CStrAny(ST_CONST, "g_fMaterialID")));
   if (!g_pGraphics->Init(g_hWnd, false))
     return false;
 
@@ -358,7 +358,7 @@ bool Init(char const *pCmdLine)
     return false;
 
   int iTerrainSize;
-  CStrPart sSize, sCmdLine(pCmdLine);
+  CStrAny sSize, sCmdLine(ST_WHOLE, pCmdLine);
 
   sSize = Parse::ReadInt(sCmdLine);
   if (!sSize || !Parse::Str2Int(iTerrainSize, sSize))

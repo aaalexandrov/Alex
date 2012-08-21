@@ -22,8 +22,8 @@ public:
 
   virtual ~CFileBase() {}
 
-  virtual bool      IsValid() const = 0;
-  virtual CStrConst GetFullName() const = 0;
+  virtual bool     IsValid() const = 0;
+  virtual CStrAny  GetFullName() const = 0;
 
   virtual FILESIZE GetSize() const = 0;
   virtual ERRCODE  SetSize(FILESIZE iSize) = 0;
@@ -55,14 +55,14 @@ public:
 class CFile: public CFileBase {
   DEFRTTI_NOCREATE
 public:
-  CStrConst  m_sFileName;
+  CStrAny    m_sFileName;
   int        m_hFile;
 
-  explicit CFile(const CStrBase &sName, unsigned int uiFlags);
+  explicit CFile(CStrAny const &sName, unsigned int uiFlags);
   virtual ~CFile();
 
-  virtual bool      IsValid() const     { return m_hFile > 0; }
-  virtual CStrConst GetFullName() const { return m_sFileName; }
+  virtual bool     IsValid() const     { return m_hFile > 0; }
+  virtual CStrAny  GetFullName() const { return m_sFileName; }
 
   virtual FILESIZE GetSize() const;
   virtual ERRCODE  SetSize(FILESIZE iSize);
@@ -80,14 +80,14 @@ public:
     intptr_t       m_hFind;
     __finddata64_t m_FindData;
 
-    CFileIter(const CStrBase &sPath) { m_hFind = -1; operator =(sPath); }
+    CFileIter(CStrAny const &sPath) { m_hFind = -1; operator =(sPath); }
     ~CFileIter();
 
     operator bool() const;
     CFileIter &operator ++();
-    CFileIter &operator =(const CStrBase &sPath);
+    CFileIter &operator =(CStrAny const &sPath);
 
-    CStrPart GetName() const;
+    CStrAny GetName() const;
     CFileBase::FILESIZE GetSize() const;
     UINT GetAttributes() const;
   };
@@ -95,25 +95,25 @@ public:
   static CFileSystem *s_pFileSystem;
   static inline CFileSystem *Get() { return s_pFileSystem; }
 
-  CStr m_sRootPath;
+  CStrAny m_sRootPath;
 
   CFileSystem();
   virtual ~CFileSystem();
 
-  virtual CFileBase *OpenFile(const CStrBase &sFile, unsigned int uiFlags);
+  virtual CFileBase *OpenFile(CStrAny const &sFile, unsigned int uiFlags);
 
-  virtual CFileBase::ERRCODE DeleteFile(const CStrBase &sFile);
+  virtual CFileBase::ERRCODE DeleteFile(CStrAny const &sFile);
 
-  virtual CFileBase::ERRCODE GetCurrentDirectory(CStrBase &sDir);
-  virtual CFileBase::ERRCODE SetCurrentDirectory(const CStrBase &sDir);
-  virtual CFileBase::ERRCODE CreateDirectory(const CStrBase &sDir);
-  virtual CFileBase::ERRCODE DeleteDirectory(const CStrBase &sDir);
+  virtual CFileBase::ERRCODE GetCurrentDirectory(CStrAny &sDir);
+  virtual CFileBase::ERRCODE SetCurrentDirectory(CStrAny const &sDir);
+  virtual CFileBase::ERRCODE CreateDirectory(CStrAny const &sDir);
+  virtual CFileBase::ERRCODE DeleteDirectory(CStrAny const &sDir);
 
-  virtual CStr ResolvePath(const CStrBase &sFile);
-  virtual CStr GetCurrentRoot();
-  virtual void SetCurrentRoot(const CStrBase &sPath);
+  virtual CStrAny ResolvePath(CStrAny const &sFile);
+  virtual CStrAny GetCurrentRoot();
+  virtual void SetCurrentRoot(CStrAny const &sPath);
 
-  static bool ParsePath(const CStrBase &sFile, CStrPart *pDrive, CStrPart *pPath, CStrPart *pName, CStrPart *pExtension);
+  static bool ParsePath(CStrAny const &sFile, CStrAny *pDrive, CStrAny *pPath, CStrAny *pName, CStrAny *pExtension);
 };
 
 // Implementation -------------------------------------------------------------

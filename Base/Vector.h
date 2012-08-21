@@ -573,13 +573,13 @@ inline bool Set(int *dst, const CVector<D, T> *src) { ASSERT(0); return false; }
 template <int D, class T>
 inline bool Set(float *dst, const CVector<D, T> *src) { ASSERT(0); return false; }
 template <int D, class T>
-inline bool Set(CStrBase *dst, const CVector<D, T> *src) { ASSERT(0); return false; }
+inline bool Set(CStrAny *dst, const CVector<D, T> *src) { ASSERT(0); return false; }
 template <int D, class T>
 inline bool Set(CVector<D, T> *dst, const int *src) { ASSERT(0); return false; }
 template <int D, class T>
 inline bool Set(CVector<D, T> *dst, const float *src) { ASSERT(0); return false; }
 template <int D, class T>
-inline bool Set(CVector<D, T> *dst, const CStrBase *src) { ASSERT(0); return false; }
+inline bool Set(CVector<D, T> *dst, const CStrAny *src) { ASSERT(0); return false; }
 
 template <int D, class T>
 static inline bool SetValue(CVector<D, T> *val, const CBaseVar *vSrc)

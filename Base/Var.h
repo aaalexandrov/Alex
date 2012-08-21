@@ -16,8 +16,8 @@ public:
   virtual void *GetPtr()  const = 0;
   virtual int   GetSize() const = 0;
 
-  virtual bool GetStr(CStrBase &s) const    = 0;
-  virtual bool SetStr(CStrBase const &s)    = 0;
+  virtual bool GetStr(CStrAny &s) const     = 0;
+  virtual bool SetStr(CStrAny const &s)     = 0;
 
   virtual bool GetInt(int &i) const         = 0;
   virtual bool SetInt(int i)                = 0;
@@ -42,8 +42,8 @@ public:
   virtual void *GetPtr()  const             { return 0;                          }
   virtual int   GetSize() const             { return 0;                          }
 
-  virtual bool GetStr(CStrBase &s) const    { s.Assign(CStrPart()); return true; }
-  virtual bool SetStr(CStrBase const &s)    { return true;                       }
+  virtual bool GetStr(CStrAny &s) const     { s.Clear(); return true;            }
+  virtual bool SetStr(CStrAny const &s)     { return true;                       }
 
   virtual bool GetInt(int &i) const         { i = 0; return true;                }
   virtual bool SetInt(int i)                { return true;                       }
@@ -129,8 +129,8 @@ public:
   void *GetPtr()  const { return (void *) &Val(); }
   int   GetSize() const { return sizeof(Val());   }
 
-  bool GetStr(CStrBase &s) const { return Set(&s, &Val()); }
-  bool SetStr(CStrBase const &s) { return Set(&Val(), &s); }
+  bool GetStr(CStrAny &s) const  { return Set(&s, &Val()); }
+  bool SetStr(CStrAny const &s)  { return Set(&Val(), &s); }
 
   bool GetInt(int &i) const      { return Set(&i, &Val()); }
   bool SetInt(int i)             { return Set(&Val(), &i); }
@@ -180,7 +180,7 @@ public:
     virtual CIter &Prev()                     = 0;
     virtual operator bool () const            = 0;
                                               
-		virtual const CStrConst GetName()         = 0;
+		virtual CStrAny GetName() const           = 0;
 		virtual bool GetVar(CBaseVar &vDst) const = 0;
 		virtual bool SetVar(CBaseVar const &vSrc) = 0;
 
@@ -190,27 +190,27 @@ public:
 
   virtual ~CVarObj() {}
 
-  virtual bool GetStr(CStrBase const &sVar, CStrBase &s) const;
-  virtual bool SetStr(CStrBase const &sVar, const CStrBase &s);
+  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
+  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
 
-  virtual bool GetInt(CStrBase const &sVar, int &i) const;
-  virtual bool SetInt(CStrBase const &sVar, int i);
+  virtual bool GetInt(CStrAny const &sVar, int &i) const;
+  virtual bool SetInt(CStrAny const &sVar, int i);
 
-  virtual bool GetFloat(CStrBase const &sVar, float &f) const;
-  virtual bool SetFloat(CStrBase const &sVar, float f);
+  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
+  virtual bool SetFloat(CStrAny const &sVar, float f);
 
-  virtual CVarObj *GetContext(const CStrBase &sVar);
+  virtual CVarObj *GetContext(const CStrAny &sVar);
 
   // Empty string gets iterator to the first element, "@last" gets iterator to the last element
-  virtual CIter *GetIter(const CStrBase &sVar = CStrPart()) const = 0;
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const = 0;
 
-	virtual CBaseVar *FindVar(const CStrBase &sVar) const                               = 0;
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false) = 0;
+	virtual CBaseVar *FindVar(const CStrAny &sVar) const                               = 0;
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) = 0;
 
-  virtual bool GetVar(const CStrBase &sVar, CBaseVar &vDst) const;
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 
-  static const CStrConst GetLastIterConst() { static const CStrConst sLast("@last"); return sLast; }
+  static const CStrAny &GetLastIterConst() { static const CStrAny sLast(ST_WHOLE, "@last"); return sLast; }
 };
 
 // Collection of CVar objects -------------------------------------------------
@@ -220,37 +220,39 @@ class CVarValueObj: public CVarObj {
 public:
   virtual ~CVarValueObj() {}
 
-  virtual bool GetStr(CStrBase const &sVar, CStrBase &s) const;
-  virtual bool SetStr(CStrBase const &sVar, const CStrBase &s);
+  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
+  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
 
-  virtual bool GetInt(CStrBase const &sVar, int &i) const;
-  virtual bool SetInt(CStrBase const &sVar, int i);
+  virtual bool GetInt(CStrAny const &sVar, int &i) const;
+  virtual bool SetInt(CStrAny const &sVar, int i);
 
-  virtual bool GetFloat(CStrBase const &sVar, float &f) const;
-  virtual bool SetFloat(CStrBase const &sVar, float f);
+  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
+  virtual bool SetFloat(CStrAny const &sVar, float f);
 
-  virtual CVarObj *GetContext(const CStrBase &sVar);
+  virtual CVarObj *GetContext(const CStrAny &sVar);
 
-  virtual bool GetVar(const CStrBase &sVar, CBaseVar &vDst) const;
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 };
 
 class CVarHash: public CVarValueObj {
 	DEFRTTI
 public:
   struct TVarName {
-    CStrConst           sName;
-    CSmartPtr<CBaseVar> pVar;
+    CSmartPtr<CStrHeader const> pName;
+    CSmartPtr<CBaseVar>         pVar;
 
-    TVarName(const CStrBase &sN, CBaseVar *pV): sName(sN), pVar(pV) {}
+    TVarName(const CStrAny &sN, CBaseVar *pV): pName(sN.GetHeaderForContents(true)), pVar(pV) {}
     ~TVarName() {}
 
-    static inline bool Eq(const CStrBase &s, TVarName *pVarName) { return pVarName->sName == s;      }
-    static inline size_t Hash(const CStrBase &s)                 { return s.GetHash();               }
-    static inline size_t Hash(TVarName *pVarName)                { return pVarName->sName.GetHash(); }
+    static inline bool Eq(CStrAny const &s, TVarName *pVarName)          { return CStrAny::Eq(pVarName->pName, s);          }
+    static inline bool Eq(CStrHeader const *pHeader, TVarName *pVarName) { return CStrHeader::Eq(pHeader, pVarName->pName); }
+    static inline size_t Hash(const CStrAny &s)                          { return s.GetHash();                              }
+    static inline size_t Hash(CStrHeader const *pHeader)                 { return pHeader->GetHash();                       }
+    static inline size_t Hash(TVarName *pVarName)                        { return pVarName->pName->GetHash();               }
   };
 
-  typedef CHash<TVarName *, const CStrBase &, TVarName, TVarName> THash;
+  typedef CHash<TVarName *, const CStrAny &, TVarName, TVarName> THash;
 
 public:
   THash m_Vars;
@@ -272,7 +274,7 @@ public:
     virtual CIter &Prev() { --m_it; return *this; }
     virtual operator bool () const { return (bool) m_it; }
 
-		virtual const CStrConst GetName()         { return m_it->sName; }
+    virtual CStrAny GetName() const           { return CStrAny(m_it->pName); }
     virtual bool GetVar(CBaseVar &vDst) const { return vDst.SetVar(*m_it->pVar); }
     virtual bool SetVar(CBaseVar const &vSrc) { return m_it->pVar->SetVar(vSrc); }
 
@@ -284,9 +286,9 @@ public:
   CVarHash();
   virtual ~CVarHash();
 
-	virtual CVarObj::CIter *GetIter(const CStrBase &sVar = CStrPart()) const;
-	virtual CBaseVar *FindVar(const CStrBase &sVar) const;
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false);
+	virtual CVarObj::CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const;
+	virtual CBaseVar *FindVar(const CStrAny &sVar) const;
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false);
 };
 
 // Data Conversion implementation - copying of values -----------------------------------------
@@ -334,16 +336,17 @@ inline bool Set(float *dst, const BYTE *src)
   return true;
 }
 
-bool Set(CStrBase *dst, const int *src);
-bool Set(int *dst, const CStrBase *src);
-bool Set(CStrBase *dst, const float *src);
-bool Set(float *dst, const CStrBase *src);
-inline bool Set(CStrBase *dst, const BYTE *src) { int i = *src; return Set(dst, &i); }
-inline bool Set(BYTE *dst, const CStrBase *src) { int i; bool bRes = Set(&i, src); *dst = (BYTE) i; return bRes && *dst == i; }
+bool Set(CStrAny *dst, const int *src);
+bool Set(int *dst, const CStrAny *src);
+bool Set(CStrAny *dst, const float *src);
+bool Set(float *dst, const CStrAny *src);
+inline bool Set(CStrAny *dst, const BYTE *src) { int i = *src; return Set(dst, &i); }
+inline bool Set(BYTE *dst, const CStrAny *src) { int i; bool bRes = Set(&i, src); *dst = (BYTE) i; return bRes && *dst == i; }
 
-inline bool Set(CStrBase *dst, const CStrBase *src)
+inline bool Set(CStrAny *dst, const CStrAny *src)
 {
-  dst->Assign(*src);
+  *dst = *src;
+  dst->AssureHasHeader();
   ASSERT(*dst == *src);
   return true;
 }
@@ -370,7 +373,7 @@ static inline bool SetValue(float *val, const CBaseVar *vSrc)
   return vSrc->GetFloat(*val);
 }
 
-static inline bool SetValue(CStr *val, const CBaseVar *vSrc)
+static inline bool SetValue(CStrAny *val, const CBaseVar *vSrc)
 {
   return vSrc->GetStr(*val);
 }
@@ -392,10 +395,10 @@ inline bool HasRTTI(const CObject *) { return true;  }
 #define IMPLEMENT_NO_BASIC_SET(TYPE) \
   inline bool Set(TYPE *dst, int const *src) { ASSERT(0); return false; } \
   inline bool Set(TYPE *dst, float const *src) { ASSERT(0); return false; } \
-  inline bool Set(TYPE *dst, CStrBase const *src) { ASSERT(0); return false; } \
+  inline bool Set(TYPE *dst, CStrAny const *src) { ASSERT(0); return false; } \
   inline bool Set(int *dst,  TYPE const *src) { ASSERT(0); return false; } \
   inline bool Set(float *dst, TYPE const *src) { ASSERT(0); return false; } \
-  inline bool Set(CStrBase *dst, TYPE const *src) { ASSERT(0); return false; }
+  inline bool Set(CStrAny *dst, TYPE const *src) { ASSERT(0); return false; }
 
 #define IMPLEMENT_NO_SET(TYPE) \
   IMPLEMENT_NO_BASIC_SET(TYPE) \

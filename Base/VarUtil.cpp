@@ -14,7 +14,7 @@ CVarMerge::CIter::CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, 
   if (pIt || m_iVar >= pMerge->m_Vars.m_iCount)
     m_pIt = pIt;
   else {
-    m_pIt = pMerge->m_Vars[m_iVar].m_pVar->GetIter(iDirection > 0 ? CStrPart() : GetLastIterConst());
+    m_pIt = pMerge->m_Vars[m_iVar].m_pVar->GetIter(iDirection > 0 ? CStrAny() : GetLastIterConst());
     if (!*m_pIt) 
       if (iDirection > 0)
         Next();
@@ -108,7 +108,7 @@ void CVarMerge::ClearBaseVars()
     RemoveLastBaseVar();
 }
 
-CVarObj::CIter *CVarMerge::GetIter(const CStrBase &sVar) const
+CVarObj::CIter *CVarMerge::GetIter(CStrAny const &sVar) const
 {
   int i;
   if (!sVar) 
@@ -124,7 +124,7 @@ CVarObj::CIter *CVarMerge::GetIter(const CStrBase &sVar) const
   return 0;
 }
 
-CBaseVar *CVarMerge::FindVar(const CStrBase &sVar) const
+CBaseVar *CVarMerge::FindVar(CStrAny const &sVar) const
 {
   int i;
   for (i = 0; i < m_Vars.m_iCount; i++) {
@@ -135,7 +135,7 @@ CBaseVar *CVarMerge::FindVar(const CStrBase &sVar) const
   return 0;
 }
 
-bool CVarMerge::ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding)
+bool CVarMerge::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
 {
   int i;
   if (!bAdding) {
@@ -237,7 +237,7 @@ bool CVarFile::Read(CVarObj *pVars)
   if (err)
     return false;
   pBuf[iSize] = 0;
-  CStrPart sBuf(pBuf, iSize);
+  CStrAny sBuf(ST_PART, pBuf, iSize);
   bool bRes = Set(pVars, &sBuf);
   return bRes;
 }
@@ -249,18 +249,18 @@ bool CVarFile::Write(CVarObj *pVars, int iIndent)
   CFile::ERRCODE err;
 
   for (pIter = pVars->GetIter(); *pIter; pIter->Next()) {
-    CStr sVal, sRes;
+    CStrAny sVal, sRes;
     CVarObj *pContext;
     if (pIter->GetValue()->ValueHasRTTI())
       pContext = Cast<CVarObj>((CObject *) pIter->GetValue()->GetRef());
     else
       pContext = 0;
     if (pContext) {
-      sRes = pIter->GetName() + CStrPart(" =  {");
+      sRes = pIter->GetName() + CStrAny(ST_WHOLE, " =  {");
       pItContext = pContext->GetIter();
       if (*pItContext) {
-        sRes += CStrPart("\r\n");
-        err = m_pFile->Write((void *) (const char *) sRes, sRes.Length());
+        sRes += CStrAny(ST_WHOLE, "\r\n");
+        err = m_pFile->Write((void *) sRes.m_pBuf, sRes.Length());
         bRes = bRes && !err;
         ASSERT(!err);
         bRes &= Write(pContext, iIndent + 2);
@@ -268,15 +268,15 @@ bool CVarFile::Write(CVarObj *pVars, int iIndent)
         sRes = "";
       } 
       delete pItContext;
-      sRes += CStrPart("}\r\n");
-      err = m_pFile->Write((void *) (const char *) sRes, sRes.Length());
+      sRes += CStrAny(ST_WHOLE, "}\r\n");
+      err = m_pFile->Write((void *) sRes.m_pBuf, sRes.Length());
       bRes = bRes && !err;
       ASSERT(!err);
     } else
       if (pIter->GetValue()->GetStr(sVal)) {
         bRes &= WriteIndent(iIndent);
-        sRes = pIter->GetName() + CStrPart(" = ") + sVal + CStrPart("\r\n");
-        err = m_pFile->Write((void *) (const char *) sRes, sRes.Length());
+        sRes = pIter->GetName() + CStrAny(ST_WHOLE, " = ") + sVal + CStrAny(ST_WHOLE, "\r\n");
+        err = m_pFile->Write((void *) sRes.m_pBuf, sRes.Length());
         bRes = bRes && !err;
         ASSERT(!err);
       }
@@ -301,7 +301,7 @@ bool CVarFile::WriteIndent(int iIndent)
 // Context var ----------------------------------------------------------------
 IMP_VAR_RTTI(CVarHash)
 
-CStr EncodeValStr(const CStrBase &s)
+CStrAny EncodeValStr(CStrAny const &s)
 {
   if (!s)
     return s;
@@ -309,8 +309,8 @@ CStr EncodeValStr(const CStrBase &s)
   if (s[0] == '{' && s[s.Length() - 1] == '}')
     return s;
 
-  CStrPart sSpecial(" \n\r\t\\\"");
-  CStrPart sTemp;
+  CStrAny sSpecial(ST_WHOLE, " \n\r\t\\\"");
+  CStrAny sTemp;
   bool bEncode;
 
   bEncode = (s[0] == '"');
@@ -323,16 +323,16 @@ CStr EncodeValStr(const CStrBase &s)
   if (!bEncode)
     return s;
 
-  CStr sRes;
-  CStrPart sQuote = CStrPart("\"");
+  CStrAny sRes(ST_WHOLE, "");
+  CStrAny sQuote(ST_WHOLE, "\"");
 
   sRes = sQuote;
   
-  for (sTemp = s; sTemp.Length(); sTemp += 1) {
+  for (sTemp = s; sTemp.Length(); sTemp >>= 1) {
     char ch = sTemp[0];
     if (ch == '"' || ch == '\\')
-      sRes += CStrPart("\\");
-    sRes += CStrPart(&ch, 1);
+      sRes += CStrAny(ST_PART, "\\");
+    sRes += CStrAny(ST_PART, &ch, 1);
   }
 
   sRes += sQuote;
@@ -340,7 +340,7 @@ CStr EncodeValStr(const CStrBase &s)
   return sRes;
 }
 
-CStr DecodeValStr(const CStrBase &s)
+CStrAny DecodeValStr(CStrAny const &s)
 {
   if (!s)
     return s;
@@ -349,30 +349,30 @@ CStr DecodeValStr(const CStrBase &s)
   if (s.Length() < 2 || s[s.Length() - 1] != '"')
     return s;
 
-  CStr sRes;
-  CStrPart sTemp(s);
+  CStrAny sRes;
+  CStrAny sTemp(s, ST_PART);
 
-  sTemp += 1;
+  sTemp >>= 1;
   sTemp.m_iLen -= 1;
 
   while (sTemp.Length()) {
     if (sTemp[0] == '\\') {
-      sTemp += 1;
+      sTemp >>= 1;
       if (!sTemp)
         break;
     }
-    sRes += CStrPart(sTemp, 1);
+    sRes += CStrAny(ST_PART, sTemp.m_pBuf, 1);
 
-    sTemp += 1;
+    sTemp >>= 1;
   }
 
   return sRes;
 }
 
-bool Set(CStrBase *dst, CVarObj const *src)
+bool Set(CStrAny *dst, CVarObj const *src)
 {
   bool bRes = true;
-  CStr sRes, sVal;
+  CStrAny sRes, sVal;
   sRes = "{ ";
 
   CVarObj::CIter *pIt;
@@ -381,32 +381,32 @@ bool Set(CStrBase *dst, CVarObj const *src)
     bRes &= bConverted;
     if (!bConverted)
       continue;
-    sRes = sRes + CStrPart("\r\n") + EncodeValStr(pIt->GetName()) + CStrPart(" = ") + EncodeValStr(sVal);
+    sRes = sRes + CStrAny(ST_WHOLE, "\r\n") + EncodeValStr(pIt->GetName()) + CStrAny(ST_WHOLE, " = ") + EncodeValStr(sVal);
   }
 
   if (sRes.Length() > 3)
-    sRes += CStrPart("\r\n");
+    sRes += CStrAny(ST_WHOLE, "\r\n");
 
-  sRes += CStrPart(" }");
-  dst->Assign(sRes);
+  sRes += CStrAny(ST_WHOLE, " }");
+  *dst = sRes;
   return bRes;
 }
 
-bool Set(CVarObj *dst, CStrBase const *src)
+bool Set(CVarObj *dst, CStrAny const *src)
 {
-  CStrPart sSrc(*src), sBlock;
+  CStrAny sSrc(*src, ST_PART), sBlock;
   int iInd;
   bool bRes = true;
 
   static Parse::TDelimiterBlock arrDelim[] = {
-    { "{", "}", true },
-    { "\"", "\"", false },
+    { CStrAny(ST_WHOLE, "{"), CStrAny(ST_WHOLE, "}"), true },
+    { CStrAny(ST_WHOLE, "\""), CStrAny(ST_WHOLE, "\""), false },
   };
 
   Parse::ReadWhitespace(sSrc);
 
   sBlock = Parse::MatchDelimiters(sSrc, arrDelim, ARRSIZE(arrDelim), &iInd);
-  if (sBlock) {
+  if (!!sBlock) {
     if (iInd)
       return false;
     Parse::ReadWhitespace(sSrc);
@@ -417,24 +417,24 @@ bool Set(CVarObj *dst, CStrBase const *src)
   }
 
   while (!!sSrc) {
-    CStrPart sStart;
+    CStrAny sStart;
     sStart = Parse::ReadUntilChar(sSrc, '=');
     sStart = Parse::TrimWhitespace(sStart);
     if (!sStart)
       continue;
     if (!sSrc)
       bRes = false;
-    CStrConst sVarName = DecodeValStr(sStart); 
+    CStrAny sVarName(DecodeValStr(sStart), ST_CONST); 
     Parse::ReadChar(sSrc, '=');
     Parse::ReadWhitespace(sSrc);
     sBlock = Parse::MatchDelimiters(sSrc, arrDelim, ARRSIZE(arrDelim), &iInd);
     if (!sBlock)
       sBlock = Parse::ReadUntilWhitespace(sSrc);
-    CStr sVal = DecodeValStr(sBlock);
+    CStrAny sVal = DecodeValStr(sBlock);
     CBaseVar *pVar = 0;
     if (!!sBlock && sBlock[0] != '"') {
-      CStrPart sRest(sVal);
-      CStrPart sNum = Parse::ReadFloat(sRest);
+      CStrAny sRest(sVal, ST_PART);
+      CStrAny sNum = Parse::ReadFloat(sRest);
       Parse::ReadWhitespace(sRest);
       if (!!sNum && !sRest) {
         sRest = sNum;
@@ -448,7 +448,7 @@ bool Set(CVarObj *dst, CStrBase const *src)
           pVar = new CVar<CVarHash>();
     }
     if (!pVar)
-      pVar = new CVar<CStr>();
+      pVar = new CVar<CStrAny>();
     bRes &= pVar->SetStr(sVal);
     dst->ReplaceVar(sVarName, pVar);
   }

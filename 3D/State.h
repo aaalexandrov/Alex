@@ -8,7 +8,7 @@ class CStateVarObj: public CVarObj {
   DEFRTTI_NOCREATE
 public:
   struct TStr2Int {
-    CStrConst sName;
+    CStrAny sName;
     int iVal;
   };
 
@@ -21,11 +21,11 @@ public:
   virtual bool Init();
   virtual void Done();
 
-  virtual CIter *GetIter(const CStrBase &sVar = CStrPart()) const;
-	virtual CBaseVar *FindVar(const CStrBase &sVar) const;
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false);
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny()) const;
+	virtual CBaseVar *FindVar(const CStrAny &sVar) const;
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false);
 
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
   virtual bool SetVar(CVarObj::CIter *pIt, const CBaseVar &vSrc);
   virtual bool ApplyVars(CVarObj *pVars, bool bCommit);
 
@@ -35,7 +35,7 @@ public:
   virtual bool StateReleased() = 0;
   virtual bool Commit(bool bOnlyIfChanged) = 0;
 
-  static inline int GetStrIndex(CStrBase const *pStr, TStr2Int *pDict, int iCount);
+  static inline int GetStrIndex(CStrAny const *pStr, TStr2Int *pDict, int iCount);
   static inline CBaseVar const *TranslateStr2Int(CBaseVar const *pValue, TStr2Int *pDict, int iCount);
   static inline bool EqualVars(CBaseVar const *pVar0, CBaseVar const *pVar1);
 };
@@ -119,13 +119,13 @@ public:
 
   CStateCache *GetContainer(EStateType eStateType);
 
-  virtual CIter *GetIter(const CStrBase &sVar = CStrPart()) const                     { ASSERT(0); return 0;     }
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny()) const                      { ASSERT(0); return 0;     }
 
-  virtual CBaseVar *FindVar(const CStrBase &sVar) const                               { ASSERT(0); return 0;     }
-  virtual bool ReplaceVar(const CStrBase &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
+  virtual CBaseVar *FindVar(const CStrAny &sVar) const                               { ASSERT(0); return 0;     }
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) { ASSERT(0); return false; }
 
-  virtual bool GetVar(const CStrBase &sVar, CBaseVar &vDst) const;
-  virtual bool SetVar(const CStrBase &sVar, const CBaseVar &vSrc);
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 };
 
 IMPLEMENT_BASE_SET(CRasterizerState *)
