@@ -96,6 +96,7 @@
     <ClCompile Include="..\..\Base\Base.cpp" />
     <ClCompile Include="..\..\Base\Bits.cpp" />
     <ClCompile Include="..\..\Base\Debug.cpp" />
+    <ClCompile Include="..\..\Base\Encode.cpp" />
     <ClCompile Include="..\..\Base\File.cpp" />
     <ClCompile Include="..\..\Base\Hash.cpp" />
     <ClCompile Include="..\..\Base\List.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="..\..\Base\Base.h" />
     <ClInclude Include="..\..\Base\Bits.h" />
     <ClInclude Include="..\..\Base\Debug.h" />
+    <ClInclude Include="..\..\Base\Encode.h" />
     <ClInclude Include="..\..\Base\File.h" />
     <ClInclude Include="..\..\Base\Hash.h" />
     <ClInclude Include="..\..\Base\List.h" />

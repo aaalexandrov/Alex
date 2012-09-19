@@ -46,6 +46,7 @@ def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
 -------------------------------------------------------------------------------
 
 Operand ::= Number
+Operand ::= FunctionCall
 Operand ::= Variable
 Operand ::= ( Expression )
 Operand ::= Negation
@@ -70,3 +71,21 @@ Assignment ::= Lvalue = Expression
 
 Expression ::= Assignment
 Expression ::= Sum
+
+Operator ::= Expression
+
+OperatorList ::= Operator OperatorList
+OperatorList ::= Nothing
+
+Block ::= { OperatorList }
+
+VarList ::= Variable VarListSuffix
+VarListSuffix ::= , Variable VarListSuffix
+VarListSuffix ::= Nothing
+
+ArgList ::= VarList
+ArgList ::= Nothing
+
+Fragment ::= [ ArgList ] Block
+
+FunctionCall ::= Variable ( ArgList )

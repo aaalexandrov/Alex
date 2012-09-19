@@ -11,6 +11,11 @@ CValue2String::TValueString CGrammarParser::s_arrNT2Str[NT_LAST] = {
   VAL2STR(NT_SUM),
   VAL2STR(NT_LVALUE),
   VAL2STR(NT_ASSIGN),
+  VAL2STR(NT_OPERATORLIST),
+  VAL2STR(NT_BLOCK), 
+  VAL2STR(NT_VARLIST),
+  VAL2STR(NT_ARGLIST),
+  VAL2STR(NT_FRAGMENT),
 };
 
 CValue2String CGrammarParser::s_kNT2Str(s_arrNT2Str, ARRSIZE(s_arrNT2Str));
@@ -28,6 +33,7 @@ void CGrammarParser::Clear()
 {
   m_pLstTokens = 0;
   SAFE_DELETE(m_pParseTree);
+  m_lstErrors.Clear();
 }
 
 EInterpretError CGrammarParser::Parse(CList<CToken *> *pLstTokens)
@@ -276,5 +282,112 @@ CGrammarParser::TOperatorNode *CGrammarParser::ParseExpression(CList<CToken *>::
     // Expression ::= Sum
     return pOpNode;
   }
+  return 0;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseOperator(CList<CToken *>::TNode *&pFirstToken)
+{
+  // Operator ::= Expression
+  return ParseExpression(pFirstToken);
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseOperatorList(CList<CToken *>::TNode *&pFirstToken)
+{
+  TOperatorNode *pFirstNode, *pRestNode, *pNewNode;
+  if (!pFirstToken)
+    return 0;
+  pFirstNode = ParseOperator(pFirstToken);
+  if (!pFirstNode) {
+    // OperatorList ::= Nothing
+    return 0;
+  }
+  pRestNode = ParseOperatorList(pFirstToken);
+  // OperatorList ::= Operator OperatorList
+  pNewNode = new TOperatorNode(0, NT_OPERATORLIST);
+  pNewNode->m_pOperand[0] = pFirstNode;
+  pNewNode->m_pOperand[1] = pRestNode;
+  return pNewNode;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseBlock(CList<CToken *>::TNode *&pFirstToken)
+{
+  if (!pFirstToken)
+    return 0;
+  if (pFirstToken->Data->m_eType != CToken::TT_OPENCURLY)
+    return 0;
+  CList<CToken *>::TNode *pToken = pFirstToken->pNext;
+  TOperatorNode *pOperatorList = ParseOperatorList(pToken);
+  if (!pToken || pToken->Data->m_eType != CToken::TT_CLOSECURLY) {
+    delete pOperatorList;
+    return 0;
+  }
+  // Block ::= { OperatorList }
+  pFirstToken = pToken->pNext;
+  TOperatorNode *pNewNode = new TOperatorNode(0, NT_BLOCK);
+  pNewNode->m_pOperand[0] = pOperatorList;
+  return pNewNode;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseVarList(CList<CToken *>::TNode *&pFirstToken)
+{
+  if (!pFirstToken)
+    return 0;
+  if (pFirstToken->Data->m_eType != CToken::TT_VARIABLE)
+    return 0;
+  // VarList ::= Variable VarListSuffix
+  TOperatorNode *pNode = new TOperatorNode(pFirstToken->Data, NT_VARLIST);
+  pFirstToken = pFirstToken->pNext;
+  pNode->m_pOperand[0] = ParseVarListSuffix(pFirstToken);
+  return pNode;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseVarListSuffix(CList<CToken *>::TNode *&pFirstToken)
+{
+  if (!pFirstToken)
+    return 0;
+  if (pFirstToken->Data->m_eType != CToken::TT_COMMA || !pFirstToken->pNext || pFirstToken->pNext->Data->m_eType != CToken::TT_VARIABLE) {
+    // VarListSuffix ::= Nothing
+    return 0;
+  }
+  // VarListSuffix ::= , Variable VarListSuffix
+  TOperatorNode *pNode = new TOperatorNode(pFirstToken->pNext->Data, NT_VARLIST);
+  pFirstToken = pFirstToken->pNext->pNext;
+  pNode->m_pOperand[0] = ParseVarListSuffix(pFirstToken);
+  return pNode;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseArgList(CList<CToken *>::TNode *&pFirstToken)
+{
+  return ParseVarList(pFirstToken);
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseFragment(CList<CToken *>::TNode *&pFirstToken)
+{
+  if (!pFirstToken)
+    return 0;
+  if (pFirstToken->Data->m_eType != CToken::TT_OPENBRACKET) 
+    return 0;
+  CList<CToken *>::TNode *pToken = pFirstToken->pNext;
+  TOperatorNode *pNodeArgs = ParseArgList(pToken);
+  if (pToken->Data->m_eType != CToken::TT_CLOSEBRACKET) {
+    delete pNodeArgs;
+    return 0;
+  }
+  pToken = pToken->pNext;
+  TOperatorNode *pNodeBlock = ParseBlock(pToken);
+  if (!pNodeBlock) {
+    delete pNodeArgs;
+    return 0;
+  }
+  // Fragment ::= [ ArgList ] Block
+  pFirstToken = pToken;
+  TOperatorNode *pNode = new TOperatorNode(0, NT_FRAGMENT);
+  pNode->m_pOperand[0] = pNodeArgs;
+  pNode->m_pOperand[1] = pNodeBlock;
+  return pNode;
+}
+
+CGrammarParser::TOperatorNode *ParseFunctionCall(CList<CToken *>::TNode *&pFirstToken)
+{
   return 0;
 }

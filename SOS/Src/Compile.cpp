@@ -89,7 +89,7 @@ EInterpretError CCompiler::CompileVariable(CGrammarParser::TOperatorNode *pNode)
   kInstr.SetPushValue(CValue(sStr.GetHeader()));
   m_pCode->Append(kInstr);
 
-  kInstr.SetResolveValue();
+  kInstr.SetResolveVar();
   m_pCode->Append(kInstr);
 
   return IERR_OK;

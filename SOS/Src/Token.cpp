@@ -50,6 +50,11 @@ CValue2String::TValueString CToken::s_arrTT2Str[TT_LAST] = {
   VAL2STR(TT_ASSIGN),
   VAL2STR(TT_OPENBRACE),
   VAL2STR(TT_CLOSEBRACE),
+  VAL2STR(TT_OPENBRACKET),
+  VAL2STR(TT_CLOSEBRACKET),
+  VAL2STR(TT_OPENCURLY),
+  VAL2STR(TT_CLOSECURLY),
+  VAL2STR(TT_COMMA),
 };
 
 CValue2String CToken::s_kTT2Str(s_arrTT2Str, ARRSIZE(s_arrTT2Str));
@@ -206,6 +211,11 @@ CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = {
   CToken(CStrAny(ST_WHOLE, "="), CToken::TC_OPERATOR,   CToken::TT_ASSIGN),
   CToken(CStrAny(ST_WHOLE, "("), CToken::TC_SEPARATOR,  CToken::TT_OPENBRACE),
   CToken(CStrAny(ST_WHOLE, ")"), CToken::TC_SEPARATOR,  CToken::TT_CLOSEBRACE),
+  CToken(CStrAny(ST_WHOLE, "["), CToken::TC_SEPARATOR,  CToken::TT_OPENBRACKET),
+  CToken(CStrAny(ST_WHOLE, "]"), CToken::TC_SEPARATOR,  CToken::TT_CLOSEBRACKET),
+  CToken(CStrAny(ST_WHOLE, "{"), CToken::TC_SEPARATOR,  CToken::TT_OPENCURLY),
+  CToken(CStrAny(ST_WHOLE, "}"), CToken::TC_SEPARATOR,  CToken::TT_CLOSECURLY),
+  CToken(CStrAny(ST_WHOLE, ","), CToken::TC_SEPARATOR,  CToken::TT_COMMA),
 };
 
 CToken const *CTokenizer::GetTemplateToken(CStrAny const &sToken)

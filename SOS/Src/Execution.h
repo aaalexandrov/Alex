@@ -19,7 +19,7 @@ public:
     IT_DIVIDE,
     IT_POWER,
     IT_ASSIGN,
-    IT_RESOLVE_VALUE,
+    IT_RESOLVE_VAR,
     IT_RESOLVE_REF,
 
     IT_LAST
@@ -43,7 +43,7 @@ public:
   void SetDivide() { ReleaseData(); m_eType = IT_DIVIDE; }
   void SetPower() { ReleaseData(); m_eType = IT_POWER; }
   void SetAssign() { ReleaseData(); m_eType = IT_ASSIGN; }
-  void SetResolveValue() { ReleaseData(); m_eType = IT_RESOLVE_VALUE; }
+  void SetResolveVar() { ReleaseData(); m_eType = IT_RESOLVE_VAR; }
   void SetResolveRef() { ReleaseData(); m_eType = IT_RESOLVE_REF; }
 
   EInterpretError Execute(CExecution *pExecution);

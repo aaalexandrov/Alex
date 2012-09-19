@@ -59,6 +59,9 @@
     <ClCompile Include="..\Src\Variable.cpp" />
     <ClCompile Include="..\Src\Execution.cpp" />
     <ClCompile Include="..\Src\Compile.cpp" />
+    <ClCompile Include="..\..\Base\Encode.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Expression.h" />
@@ -119,6 +122,9 @@
     <ClInclude Include="..\Src\Variable.h" />
     <ClInclude Include="..\Src\Execution.h" />
     <ClInclude Include="..\Src\Compile.h" />
+    <ClInclude Include="..\..\Base\Encode.h">
+      <Filter>Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />

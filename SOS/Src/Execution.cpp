@@ -12,7 +12,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
   VAL2STR(IT_DIVIDE),
   VAL2STR(IT_POWER),
   VAL2STR(IT_ASSIGN),
-  VAL2STR(IT_RESOLVE_VALUE),
+  VAL2STR(IT_RESOLVE_VAR),
   VAL2STR(IT_RESOLVE_REF),
 };
 
@@ -42,7 +42,7 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
       return ExecPower(pExecution);
     case IT_ASSIGN:
       return ExecAssign(pExecution);
-    case IT_RESOLVE_VALUE:
+    case IT_RESOLVE_VAR:
       return ExecResolveValue(pExecution);
     case IT_RESOLVE_REF:
       return ExecResolveRef(pExecution);
