@@ -1,0 +1,253 @@
+﻿typeName;groupName
+Enyo;Assault Ship
+Freki;Assault Ship
+Harpy;Assault Ship
+Hawk;Assault Ship
+Ishkur;Assault Ship
+Jaguar;Assault Ship
+Malice;Assault Ship
+Retribution;Assault Ship
+Utu;Assault Ship
+Vengeance;Assault Ship
+Wolf;Assault Ship
+Brutix;Battlecruiser
+Cyclone;Battlecruiser
+Drake;Battlecruiser
+Ferox;Battlecruiser
+Harbinger;Battlecruiser
+Hurricane;Battlecruiser
+Myrmidon;Battlecruiser
+Naga;Battlecruiser
+Oracle;Battlecruiser
+Prophecy;Battlecruiser
+Talos;Battlecruiser
+Tornado;Battlecruiser
+Abaddon;Battleship
+Apocalypse;Battleship
+Apocalypse Imperial Issue;Battleship
+Apocalypse Navy Issue;Battleship
+Armageddon;Battleship
+Armageddon Imperial Issue;Battleship
+Armageddon Navy Issue;Battleship
+Bhaalgorn;Battleship
+Dominix;Battleship
+Dominix Navy Issue;Battleship
+Hyperion;Battleship
+Machariel;Battleship
+Maelstrom;Battleship
+Megathron;Battleship
+Megathron Navy Issue;Battleship
+Nightmare;Battleship
+Rattlesnake;Battleship
+Raven;Battleship
+Raven Navy Issue;Battleship
+Rokh;Battleship
+Scorpion;Battleship
+Scorpion Navy Issue;Battleship
+Tempest;Battleship
+Tempest Fleet Issue;Battleship
+Typhoon;Battleship
+Typhoon Fleet Issue;Battleship
+Vindicator;Battleship
+Panther;Black Ops
+Redeemer;Black Ops
+Sin;Black Ops
+Widow;Black Ops
+Rorqual;Capital Industrial Ship
+Archon;Carrier
+Chimera;Carrier
+Nidhoggur;Carrier
+Thanatos;Carrier
+Curse;Combat Recon Ship
+Huginn;Combat Recon Ship
+Lachesis;Combat Recon Ship
+Rook;Combat Recon Ship
+Absolution;Command Ship
+Astarte;Command Ship
+Claymore;Command Ship
+Damnation;Command Ship
+Eos;Command Ship
+Nighthawk;Command Ship
+Sleipnir;Command Ship
+Vulture;Command Ship
+Anathema;Covert Ops
+Buzzard;Covert Ops
+Cheetah;Covert Ops
+Helios;Covert Ops
+Arbitrator;Cruiser
+Ashimmu;Cruiser
+Augoror;Cruiser
+Augoror Navy Issue;Cruiser
+Bellicose;Cruiser
+Blackbird;Cruiser
+Caracal;Cruiser
+Caracal Navy Issue;Cruiser
+Celestis;Cruiser
+Cynabal;Cruiser
+Exequror;Cruiser
+Exequror Navy Issue;Cruiser
+Gila;Cruiser
+Guardian-Vexor;Cruiser
+Maller;Cruiser
+Moa;Cruiser
+Omen;Cruiser
+Omen Navy Issue;Cruiser
+Osprey;Cruiser
+Osprey Navy Issue;Cruiser
+Phantasm;Cruiser
+Rupture;Cruiser
+Scythe;Cruiser
+Scythe Fleet Issue;Cruiser
+Stabber;Cruiser
+Stabber Fleet Issue;Cruiser
+Thorax;Cruiser
+Vexor;Cruiser
+Vexor Navy Issue;Cruiser
+Vigilant;Cruiser
+Catalyst;Destroyer
+Coercer;Destroyer
+Cormorant;Destroyer
+Thrasher;Destroyer
+Moros;Dreadnought
+Naglfar;Dreadnought
+Phoenix;Dreadnought
+Revelation;Dreadnought
+Hyena;Electronic Attack Ship
+Keres;Electronic Attack Ship
+Kitsune;Electronic Attack Ship
+Sentinel;Electronic Attack Ship
+Hulk;Exhumer
+Mackinaw;Exhumer
+Skiff;Exhumer
+Arazu;Force Recon Ship
+Falcon;Force Recon Ship
+Pilgrim;Force Recon Ship
+Rapier;Force Recon Ship
+Charon;Freighter
+Fenrir;Freighter
+Obelisk;Freighter
+Providence;Freighter
+Atron;Frigate
+Bantam;Frigate
+Breacher;Frigate
+Burst;Frigate
+Caldari Navy Hookbill;Frigate
+Condor;Frigate
+Crucifier;Frigate
+Cruor;Frigate
+Daredevil;Frigate
+Dramiel;Frigate
+Echelon;Frigate
+Executioner;Frigate
+Federation Navy Comet;Frigate
+Gold Magnate;Frigate
+Griffin;Frigate
+Heron;Frigate
+Imicus;Frigate
+Imperial Navy Slicer;Frigate
+Incursus;Frigate
+Inquisitor;Frigate
+Kestrel;Frigate
+Magnate;Frigate
+Maulus;Frigate
+Merlin;Frigate
+Navitas;Frigate
+Probe;Frigate
+Punisher;Frigate
+Republic Fleet Firetail;Frigate
+Rifter;Frigate
+Silver Magnate;Frigate
+Slasher;Frigate
+Succubus;Frigate
+Tormentor;Frigate
+Tristan;Frigate
+Vigil;Frigate
+Worm;Frigate
+Adrestia;Heavy Assault Ship
+Cerberus;Heavy Assault Ship
+Deimos;Heavy Assault Ship
+Eagle;Heavy Assault Ship
+Ishtar;Heavy Assault Ship
+Mimir;Heavy Assault Ship
+Muninn;Heavy Assault Ship
+Sacrilege;Heavy Assault Ship
+Vagabond;Heavy Assault Ship
+Vangel;Heavy Assault Ship
+Zealot;Heavy Assault Ship
+Broadsword;Heavy Interdictor
+Devoter;Heavy Interdictor
+Onyx;Heavy Interdictor
+Phobos;Heavy Interdictor
+Badger;Industrial
+Badger Mark II;Industrial
+Bestower;Industrial
+Hoarder;Industrial
+Iteron;Industrial
+Iteron Mark II;Industrial
+Iteron Mark III;Industrial
+Iteron Mark IV;Industrial
+Iteron Mark V;Industrial
+Mammoth;Industrial
+Noctis;Industrial
+Primae;Industrial
+Sigil;Industrial
+Wreathe;Industrial
+Orca;Industrial Command Ship
+Ares;Interceptor
+Claw;Interceptor
+Crow;Interceptor
+Crusader;Interceptor
+Malediction;Interceptor
+Raptor;Interceptor
+Stiletto;Interceptor
+Taranis;Interceptor
+Eris;Interdictor
+Flycatcher;Interdictor
+Heretic;Interdictor
+Sabre;Interdictor
+Anshar;Jump Freighter
+Ark;Jump Freighter
+Nomad;Jump Freighter
+Rhea;Jump Freighter
+Basilisk;Logistics
+Guardian;Logistics
+Oneiros;Logistics
+Scimitar;Logistics
+Golem;Marauder
+Kronos;Marauder
+Paladin;Marauder
+Vargur;Marauder
+Covetor;Mining Barge
+Procurer;Mining Barge
+Retriever;Mining Barge
+Zephyr;Prototype Exploration Ship
+Amarr Shuttle;Shuttle
+Apotheosis;Shuttle
+Caldari Shuttle;Shuttle
+Gallente Shuttle;Shuttle
+Minmatar Shuttle;Shuttle
+Hound;Stealth Bomber
+Manticore;Stealth Bomber
+Nemesis;Stealth Bomber
+Purifier;Stealth Bomber
+Legion;Strategic Cruiser
+Loki;Strategic Cruiser
+Proteus;Strategic Cruiser
+Tengu;Strategic Cruiser
+Aeon;Supercarrier
+Hel;Supercarrier
+Nyx;Supercarrier
+Revenant;Supercarrier
+Wyvern;Supercarrier
+Avatar;Titan
+Erebus;Titan
+Leviathan;Titan
+Ragnarok;Titan
+Bustard;Transport Ship
+Crane;Transport Ship
+Impel;Transport Ship
+Mastodon;Transport Ship
+Occator;Transport Ship
+Prorator;Transport Ship
+Prowler;Transport Ship
+Viator;Transport Ship

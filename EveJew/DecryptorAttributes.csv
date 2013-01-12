@@ -1,0 +1,97 @@
+﻿typeName;(No column name);attributeName;groupName
+Advanced Theories;2;inventionMEModifier;Decryptors - Minmatar
+Advanced Theories;1;inventionMaxRunModifier;Decryptors - Minmatar
+Advanced Theories;5;inventionPEModifier;Decryptors - Minmatar
+Advanced Theories;1.2;inventionPropabilityMultiplier;Decryptors - Minmatar
+Amarr Hybrid Tech Decryptor;0;inventionMEModifier;Decryptors - Hybrid
+Amarr Hybrid Tech Decryptor;0;inventionMaxRunModifier;Decryptors - Hybrid
+Amarr Hybrid Tech Decryptor;0;inventionPEModifier;Decryptors - Hybrid
+Amarr Hybrid Tech Decryptor;1;inventionPropabilityMultiplier;Decryptors - Hybrid
+Assembly Instructions;-1;inventionMEModifier;Decryptors - Minmatar
+Assembly Instructions;4;inventionMaxRunModifier;Decryptors - Minmatar
+Assembly Instructions;2;inventionPEModifier;Decryptors - Minmatar
+Assembly Instructions;1.8;inventionPropabilityMultiplier;Decryptors - Minmatar
+Caldari Hybrid Tech Decryptor;0;inventionMEModifier;Decryptors - Hybrid
+Caldari Hybrid Tech Decryptor;0;inventionMaxRunModifier;Decryptors - Hybrid
+Caldari Hybrid Tech Decryptor;0;inventionPEModifier;Decryptors - Hybrid
+Caldari Hybrid Tech Decryptor;1;inventionPropabilityMultiplier;Decryptors - Hybrid
+Calibration Data;3;inventionMEModifier;Decryptors - Minmatar
+Calibration Data;0;inventionMaxRunModifier;Decryptors - Minmatar
+Calibration Data;3;inventionPEModifier;Decryptors - Minmatar
+Calibration Data;1.1;inventionPropabilityMultiplier;Decryptors - Minmatar
+Circuitry Schematics;-2;inventionMEModifier;Decryptors - Minmatar
+Circuitry Schematics;9;inventionMaxRunModifier;Decryptors - Minmatar
+Circuitry Schematics;1;inventionPEModifier;Decryptors - Minmatar
+Circuitry Schematics;0.6;inventionPropabilityMultiplier;Decryptors - Minmatar
+Circular Logic;-2;inventionMEModifier;Decryptors - Amarr
+Circular Logic;9;inventionMaxRunModifier;Decryptors - Amarr
+Circular Logic;1;inventionPEModifier;Decryptors - Amarr
+Circular Logic;0.6;inventionPropabilityMultiplier;Decryptors - Amarr
+Classic Doctrine;2;inventionMEModifier;Decryptors - Amarr
+Classic Doctrine;1;inventionMaxRunModifier;Decryptors - Amarr
+Classic Doctrine;5;inventionPEModifier;Decryptors - Amarr
+Classic Doctrine;1.2;inventionPropabilityMultiplier;Decryptors - Amarr
+Collision Measurements;3;inventionMEModifier;Decryptors - Gallente
+Collision Measurements;0;inventionMaxRunModifier;Decryptors - Gallente
+Collision Measurements;3;inventionPEModifier;Decryptors - Gallente
+Collision Measurements;1.1;inventionPropabilityMultiplier;Decryptors - Gallente
+Engagement Plan;1;inventionMEModifier;Decryptors - Gallente
+Engagement Plan;2;inventionMaxRunModifier;Decryptors - Gallente
+Engagement Plan;4;inventionPEModifier;Decryptors - Gallente
+Engagement Plan;1;inventionPropabilityMultiplier;Decryptors - Gallente
+Formation Layout;3;inventionMEModifier;Decryptors - Amarr
+Formation Layout;0;inventionMaxRunModifier;Decryptors - Amarr
+Formation Layout;3;inventionPEModifier;Decryptors - Amarr
+Formation Layout;1.1;inventionPropabilityMultiplier;Decryptors - Amarr
+Gallente Hybrid Tech Decryptor;0;inventionMEModifier;Decryptors - Hybrid
+Gallente Hybrid Tech Decryptor;0;inventionMaxRunModifier;Decryptors - Hybrid
+Gallente Hybrid Tech Decryptor;0;inventionPEModifier;Decryptors - Hybrid
+Gallente Hybrid Tech Decryptor;1;inventionPropabilityMultiplier;Decryptors - Hybrid
+Installation Guide;-1;inventionMEModifier;Decryptors - Caldari
+Installation Guide;4;inventionMaxRunModifier;Decryptors - Caldari
+Installation Guide;2;inventionPEModifier;Decryptors - Caldari
+Installation Guide;1.8;inventionPropabilityMultiplier;Decryptors - Caldari
+Interface Alignment Chart;-2;inventionMEModifier;Decryptors - Caldari
+Interface Alignment Chart;9;inventionMaxRunModifier;Decryptors - Caldari
+Interface Alignment Chart;1;inventionPEModifier;Decryptors - Caldari
+Interface Alignment Chart;0.6;inventionPropabilityMultiplier;Decryptors - Caldari
+Minmatar Hybrid Tech Decryptor;0;inventionMEModifier;Decryptors - Hybrid
+Minmatar Hybrid Tech Decryptor;0;inventionMaxRunModifier;Decryptors - Hybrid
+Minmatar Hybrid Tech Decryptor;0;inventionPEModifier;Decryptors - Hybrid
+Minmatar Hybrid Tech Decryptor;1;inventionPropabilityMultiplier;Decryptors - Hybrid
+Operation Handbook;1;inventionMEModifier;Decryptors - Minmatar
+Operation Handbook;2;inventionMaxRunModifier;Decryptors - Minmatar
+Operation Handbook;4;inventionPEModifier;Decryptors - Minmatar
+Operation Handbook;1;inventionPropabilityMultiplier;Decryptors - Minmatar
+Prototype Diagram;2;inventionMEModifier;Decryptors - Caldari
+Prototype Diagram;1;inventionMaxRunModifier;Decryptors - Caldari
+Prototype Diagram;5;inventionPEModifier;Decryptors - Caldari
+Prototype Diagram;1.2;inventionPropabilityMultiplier;Decryptors - Caldari
+Sacred Manifesto;1;inventionMEModifier;Decryptors - Amarr
+Sacred Manifesto;2;inventionMaxRunModifier;Decryptors - Amarr
+Sacred Manifesto;4;inventionPEModifier;Decryptors - Amarr
+Sacred Manifesto;1;inventionPropabilityMultiplier;Decryptors - Amarr
+Stolen Formulas;-1;inventionMEModifier;Decryptors - Gallente
+Stolen Formulas;4;inventionMaxRunModifier;Decryptors - Gallente
+Stolen Formulas;2;inventionPEModifier;Decryptors - Gallente
+Stolen Formulas;1.8;inventionPropabilityMultiplier;Decryptors - Gallente
+Symbiotic Figures;-2;inventionMEModifier;Decryptors - Gallente
+Symbiotic Figures;9;inventionMaxRunModifier;Decryptors - Gallente
+Symbiotic Figures;1;inventionPEModifier;Decryptors - Gallente
+Symbiotic Figures;0.6;inventionPropabilityMultiplier;Decryptors - Gallente
+Test Reports;2;inventionMEModifier;Decryptors - Gallente
+Test Reports;1;inventionMaxRunModifier;Decryptors - Gallente
+Test Reports;5;inventionPEModifier;Decryptors - Gallente
+Test Reports;1.2;inventionPropabilityMultiplier;Decryptors - Gallente
+Tuning Instructions;3;inventionMEModifier;Decryptors - Caldari
+Tuning Instructions;0;inventionMaxRunModifier;Decryptors - Caldari
+Tuning Instructions;3;inventionPEModifier;Decryptors - Caldari
+Tuning Instructions;1.1;inventionPropabilityMultiplier;Decryptors - Caldari
+User Manual;1;inventionMEModifier;Decryptors - Caldari
+User Manual;2;inventionMaxRunModifier;Decryptors - Caldari
+User Manual;4;inventionPEModifier;Decryptors - Caldari
+User Manual;1;inventionPropabilityMultiplier;Decryptors - Caldari
+War Strategon;-1;inventionMEModifier;Decryptors - Amarr
+War Strategon;4;inventionMaxRunModifier;Decryptors - Amarr
+War Strategon;2;inventionPEModifier;Decryptors - Amarr
+War Strategon;1.8;inventionPropabilityMultiplier;Decryptors - Amarr

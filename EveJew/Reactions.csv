@@ -1,0 +1,322 @@
+﻿typeName;input;typeName;quantity
+Basic Freedom Program ;0;Freedom Fighters;1
+Basic Freedom Program ;1;Slaves;1
+Black Morphite Reaction;0;Black Morphite;1
+Black Morphite Reaction;1;Morphite;100
+Black Morphite Reaction;1;Technetium;100
+Black Morphite Reaction;1;Promethium;100
+C3-FTM Acid Reaction;0;C3-FTM Acid;2
+C3-FTM Acid Reaction;1;Megacyte;80
+C3-FTM Acid Reaction;1;Fullerite-C84;100
+C3-FTM Acid Reaction;1;Fullerite-C540;100
+Caesarium Cadmide Reaction;0;Caesarium Cadmide;2
+Caesarium Cadmide Reaction;1;Cadmium;1
+Caesarium Cadmide Reaction;1;Caesium;1
+Carbon Polymers Reaction;0;Carbon Polymers;2
+Carbon Polymers Reaction;1;Hydrocarbons;1
+Carbon Polymers Reaction;1;Silicates;1
+Carbon-86 Epoxy Resin Reaction;0;Carbon-86 Epoxy Resin;8
+Carbon-86 Epoxy Resin Reaction;1;Zydrine;30
+Carbon-86 Epoxy Resin Reaction;1;Fullerite-C32;100
+Carbon-86 Epoxy Resin Reaction;1;Fullerite-C320;100
+Ceramic Powder Reaction;0;Ceramic Powder;2
+Ceramic Powder Reaction;1;Evaporite Deposits;1
+Ceramic Powder Reaction;1;Silicates;1
+Crystalline Carbonide Reaction;0;Crystalline Carbonide;1
+Crystalline Carbonide Reaction;1;Crystallite Alloy;1
+Crystalline Carbonide Reaction;1;Carbon Polymers;1
+Crystallite Alloy Reaction;0;Crystallite Alloy;2
+Crystallite Alloy Reaction;1;Cobalt;1
+Crystallite Alloy Reaction;1;Cadmium;1
+defunct reaction 1;0;generic item 6;20
+defunct reaction 1;1;Nocxium;1000
+defunct reaction 1;1;Fullerite-C72;125
+defunct reaction 1;1;Fullerite-C28;50
+defunct reaction 2;0;Fullero-Ferrocene;60
+defunct reaction 2;1;Nocxium;600
+defunct reaction 2;1;Fullerite-C70;150
+defunct reaction 2;1;Fullerite-C28;80
+defunct reaction 3;0;Nanobud Polymers;60
+defunct reaction 3;1;Megacyte;25
+defunct reaction 3;1;Fullerite-C60;150
+defunct reaction 3;1;Fullerite-C28;50
+defunct reaction 4;0;Nanotori Polymers;60
+defunct reaction 4;1;Megacyte;20
+defunct reaction 4;1;Fullerite-C50;250
+defunct reaction 4;1;Fullerite-C84;50
+defunct reaction 5;0;Plutonium Metallofullerene;20
+defunct reaction 5;1;Megacyte;75
+defunct reaction 5;1;Fullerite-C32;300
+defunct reaction 5;1;Fullerite-C540;150
+defunct reaction 6;0;Polyfullerene Condensate;20
+defunct reaction 6;1;Zydrine;30
+defunct reaction 6;1;Fullerite-C84;150
+defunct reaction 6;1;Fullerite-C32;80
+defunct reaction 7;0;generic item 4;20
+defunct reaction 7;1;Megacyte;50
+defunct reaction 7;1;Fullerite-C28;250
+defunct reaction 7;1;Fullerite-C320;100
+Dysporite Reaction;0;Dysporite;2
+Dysporite Reaction;1;Mercury;1
+Dysporite Reaction;1;Dysprosium;1
+Fermionic Condensates Reaction;0;Fermionic Condensates;1
+Fermionic Condensates Reaction;1;Caesarium Cadmide;1
+Fermionic Condensates Reaction;1;Dysporite;1
+Fermionic Condensates Reaction;1;Fluxed Condensates;1
+Fermionic Condensates Reaction;1;Prometium;1
+Fernite Alloy Reaction;0;Fernite Alloy;2
+Fernite Alloy Reaction;1;Scandium;1
+Fernite Alloy Reaction;1;Vanadium;1
+Fernite Carbide Reaction;0;Fernite Carbide;1
+Fernite Carbide Reaction;1;Fernite Alloy;1
+Fernite Carbide Reaction;1;Ceramic Powder;1
+Ferrofluid Reaction;0;Ferrofluid;2
+Ferrofluid Reaction;1;Hafnium;1
+Ferrofluid Reaction;1;Dysprosium;1
+Ferrogel Reaction;0;Ferrogel;1
+Ferrogel Reaction;1;Hexite;1
+Ferrogel Reaction;1;Hyperflurite;1
+Ferrogel Reaction;1;Ferrofluid;1
+Ferrogel Reaction;1;Prometium;1
+Fluxed Condensates Reaction;0;Fluxed Condensates;2
+Fluxed Condensates Reaction;1;Neodymium;1
+Fluxed Condensates Reaction;1;Thulium;1
+Fullerene Intercalated Graphite Reaction;0;Fullerene Intercalated Graphite;120
+Fullerene Intercalated Graphite Reaction;1;Mexallon;600
+Fullerene Intercalated Graphite Reaction;1;Fullerite-C60;100
+Fullerene Intercalated Graphite Reaction;1;Fullerite-C70;100
+Fulleride Reaction;0;Fullerides;1
+Fulleride Reaction;1;Carbon Polymers;1
+Fulleride Reaction;1;Platinum Technite;1
+Fulleroferrocene Reaction;0;Fulleroferrocene;1000
+Fulleroferrocene Reaction;1;Tritanium;1000
+Fulleroferrocene Reaction;1;Fullerite-C50;200
+Fulleroferrocene Reaction;1;Fullerite-C60;100
+Graphene Nanoribbons Reaction;0;Graphene Nanoribbons;30
+Graphene Nanoribbons Reaction;1;Nocxium;400
+Graphene Nanoribbons Reaction;1;Fullerite-C28;100
+Graphene Nanoribbons Reaction;1;Fullerite-C32;100
+Hexite Reaction;0;Hexite;2
+Hexite Reaction;1;Chromium;1
+Hexite Reaction;1;Platinum;1
+Hyperflurite Reaction;0;Hyperflurite;2
+Hyperflurite Reaction;1;Vanadium;1
+Hyperflurite Reaction;1;Promethium;1
+Hypersynaptic Fibers Reaction;0;Hypersynaptic Fibers;1
+Hypersynaptic Fibers Reaction;1;Solerium;1
+Hypersynaptic Fibers Reaction;1;Dysporite;1
+Hypersynaptic Fibers Reaction;1;Vanadium Hafnite;1
+Improved Blue Pill Booster Reaction;0;Oxygen;95
+Improved Blue Pill Booster Reaction;0;Pure Improved Blue Pill Booster;12
+Improved Blue Pill Booster Reaction;1;Oxygen;100
+Improved Blue Pill Booster Reaction;1;Pure Standard Blue Pill Booster;15
+Improved Blue Pill Booster Reaction;1;Pure Standard Crash Booster;15
+Improved Crash Booster Reaction;0;Spirits;95
+Improved Crash Booster Reaction;0;Pure Improved Crash Booster;12
+Improved Crash Booster Reaction;1;Spirits;100
+Improved Crash Booster Reaction;1;Pure Standard Blue Pill Booster;15
+Improved Crash Booster Reaction;1;Pure Standard Crash Booster;15
+Improved Drop Booster Reaction;0;Oxygen;95
+Improved Drop Booster Reaction;0;Pure Improved Drop Booster;12
+Improved Drop Booster Reaction;1;Oxygen;100
+Improved Drop Booster Reaction;1;Pure Standard Drop Booster;15
+Improved Drop Booster Reaction;1;Pure Standard Exile Booster;15
+Improved Exile Booster Reaction;0;Spirits;95
+Improved Exile Booster Reaction;0;Pure Improved Exile Booster;12
+Improved Exile Booster Reaction;1;Spirits;100
+Improved Exile Booster Reaction;1;Pure Standard Drop Booster;15
+Improved Exile Booster Reaction;1;Pure Standard Exile Booster;15
+Improved Frentix Booster Reaction;0;Spirits;95
+Improved Frentix Booster Reaction;0;Pure Improved Frentix Booster;12
+Improved Frentix Booster Reaction;1;Spirits;100
+Improved Frentix Booster Reaction;1;Pure Standard Frentix Booster;15
+Improved Frentix Booster Reaction;1;Pure Standard Mindflood Booster;15
+Improved Mindflood Booster Reaction;0;Oxygen;95
+Improved Mindflood Booster Reaction;0;Pure Improved Mindflood Booster;12
+Improved Mindflood Booster Reaction;1;Oxygen;100
+Improved Mindflood Booster Reaction;1;Pure Standard Frentix Booster;15
+Improved Mindflood Booster Reaction;1;Pure Standard Mindflood Booster;15
+Improved Sooth Sayer Booster Reaction;0;Spirits;95
+Improved Sooth Sayer Booster Reaction;0;Pure Improved Sooth Sayer Booster;12
+Improved Sooth Sayer Booster Reaction;1;Spirits;100
+Improved Sooth Sayer Booster Reaction;1;Pure Standard X-Instinct Booster;15
+Improved Sooth Sayer Booster Reaction;1;Pure Standard Sooth Sayer Booster;15
+Improved X-Instinct Booster Reaction;0;Oxygen;95
+Improved X-Instinct Booster Reaction;0;Pure Improved X-Instinct Booster;12
+Improved X-Instinct Booster Reaction;1;Oxygen;100
+Improved X-Instinct Booster Reaction;1;Pure Standard X-Instinct Booster;15
+Improved X-Instinct Booster Reaction;1;Pure Standard Sooth Sayer Booster;15
+Lanthanum Metallofullerene Reaction;0;Lanthanum Metallofullerene;60
+Lanthanum Metallofullerene Reaction;1;Nocxium;200
+Lanthanum Metallofullerene Reaction;1;Fullerite-C70;100
+Lanthanum Metallofullerene Reaction;1;Fullerite-C84;100
+Methanofullerene Reaction;0;Methanofullerene;80
+Methanofullerene Reaction;1;Isogen;300
+Methanofullerene Reaction;1;Fullerite-C70;100
+Methanofullerene Reaction;1;Fullerite-C72;100
+Nanotransistors Reaction;0;Nanotransistors;1
+Nanotransistors Reaction;1;Sulfuric Acid;1
+Nanotransistors Reaction;1;Platinum Technite;1
+Nanotransistors Reaction;1;Neo Mercurite;1
+Neo Mercurite Reaction;0;Neo Mercurite;2
+Neo Mercurite Reaction;1;Mercury;1
+Neo Mercurite Reaction;1;Neodymium;1
+Phenolic Composites Reaction;0;Phenolic Composites;1
+Phenolic Composites Reaction;1;Silicon Diborite;1
+Phenolic Composites Reaction;1;Caesarium Cadmide;1
+Phenolic Composites Reaction;1;Vanadium Hafnite;1
+Platinum Technite Reaction;0;Platinum Technite;2
+Platinum Technite Reaction;1;Platinum;1
+Platinum Technite Reaction;1;Technetium;1
+PPD Fullerene Fibers Reaction;0;PPD Fullerene Fibers;250
+PPD Fullerene Fibers Reaction;1;Pyerite;800
+PPD Fullerene Fibers Reaction;1;Fullerite-C50;300
+PPD Fullerene Fibers Reaction;1;Fullerite-C60;100
+Prometium Reaction;0;Prometium;2
+Prometium Reaction;1;Cadmium;1
+Prometium Reaction;1;Promethium;1
+Rolled Tungsten Alloy Reaction;0;Rolled Tungsten Alloy;2
+Rolled Tungsten Alloy Reaction;1;Tungsten;1
+Rolled Tungsten Alloy Reaction;1;Platinum;1
+Scandium Metallofullerene Reaction;0;Scandium Metallofullerene;40
+Scandium Metallofullerene Reaction;1;Zydrine;25
+Scandium Metallofullerene Reaction;1;Fullerite-C72;100
+Scandium Metallofullerene Reaction;1;Fullerite-C28;100
+Silicon Diborite Reaction;0;Silicon Diborite;2
+Silicon Diborite Reaction;1;Evaporite Deposits;1
+Silicon Diborite Reaction;1;Silicates;1
+Solerium Reaction;0;Solerium;2
+Solerium Reaction;1;Chromium;1
+Solerium Reaction;1;Caesium;1
+Standard Blue Pill Booster Reaction;0;Water;95
+Standard Blue Pill Booster Reaction;0;Pure Standard Blue Pill Booster;15
+Standard Blue Pill Booster Reaction;1;Water;100
+Standard Blue Pill Booster Reaction;1;Amber Cytoserocin;20
+Standard Crash Booster Reaction;0;Water;95
+Standard Crash Booster Reaction;0;Pure Standard Crash Booster;15
+Standard Crash Booster Reaction;1;Water;100
+Standard Crash Booster Reaction;1;Golden Cytoserocin;20
+Standard Drop Booster Reaction;0;Water;95
+Standard Drop Booster Reaction;0;Pure Standard Drop Booster;15
+Standard Drop Booster Reaction;1;Water;100
+Standard Drop Booster Reaction;1;Viridian Cytoserocin;20
+Standard Exile Booster Reaction;0;Water;95
+Standard Exile Booster Reaction;0;Pure Standard Exile Booster;15
+Standard Exile Booster Reaction;1;Water;100
+Standard Exile Booster Reaction;1;Celadon Cytoserocin;20
+Standard Frentix Booster Reaction;0;Water;95
+Standard Frentix Booster Reaction;0;Pure Standard Frentix Booster;15
+Standard Frentix Booster Reaction;1;Water;100
+Standard Frentix Booster Reaction;1;Lime Cytoserocin;20
+Standard Mindflood Booster Reaction;0;Water;95
+Standard Mindflood Booster Reaction;0;Pure Standard Mindflood Booster;15
+Standard Mindflood Booster Reaction;1;Water;100
+Standard Mindflood Booster Reaction;1;Malachite Cytoserocin;20
+Standard Sooth Sayer Booster Reaction;0;Water;95
+Standard Sooth Sayer Booster Reaction;0;Pure Standard Sooth Sayer Booster;15
+Standard Sooth Sayer Booster Reaction;1;Water;100
+Standard Sooth Sayer Booster Reaction;1;Azure Cytoserocin;20
+Standard X-Instinct Booster Reaction;0;Water;95
+Standard X-Instinct Booster Reaction;0;Pure Standard X-Instinct Booster;15
+Standard X-Instinct Booster Reaction;1;Water;100
+Standard X-Instinct Booster Reaction;1;Vermillion Cytoserocin;20
+Strong Blue Pill Booster Reaction;0;Hydrochloric Acid;95
+Strong Blue Pill Booster Reaction;0;Pure Strong Blue Pill Booster;12
+Strong Blue Pill Booster Reaction;1;Hydrochloric Acid;100
+Strong Blue Pill Booster Reaction;1;Pure Improved Blue Pill Booster;12
+Strong Blue Pill Booster Reaction;1;Pure Standard Mindflood Booster;15
+Strong Crash Booster Reaction;0;Hydrochloric Acid;95
+Strong Crash Booster Reaction;0;Pure Strong Crash Booster;12
+Strong Crash Booster Reaction;1;Hydrochloric Acid;100
+Strong Crash Booster Reaction;1;Pure Standard Frentix Booster;15
+Strong Crash Booster Reaction;1;Pure Improved Crash Booster;12
+Strong Drop Booster Reaction;0;Hydrochloric Acid;95
+Strong Drop Booster Reaction;0;Pure Strong Drop Booster;12
+Strong Drop Booster Reaction;1;Hydrochloric Acid;100
+Strong Drop Booster Reaction;1;Pure Standard X-Instinct Booster;15
+Strong Drop Booster Reaction;1;Pure Improved Drop Booster;12
+Strong Exile Booster Reaction;0;Hydrochloric Acid;95
+Strong Exile Booster Reaction;0;Pure Strong Exile Booster;12
+Strong Exile Booster Reaction;1;Hydrochloric Acid;100
+Strong Exile Booster Reaction;1;Pure Standard Sooth Sayer Booster;15
+Strong Exile Booster Reaction;1;Pure Improved Exile Booster;12
+Strong Frentix Booster Reaction;0;Hydrochloric Acid;95
+Strong Frentix Booster Reaction;0;Pure Strong Frentix Booster;12
+Strong Frentix Booster Reaction;1;Hydrochloric Acid;100
+Strong Frentix Booster Reaction;1;Pure Standard Blue Pill Booster;15
+Strong Frentix Booster Reaction;1;Pure Improved Frentix Booster;12
+Strong Mindflood Booster Reaction;0;Hydrochloric Acid;95
+Strong Mindflood Booster Reaction;0;Pure Strong Mindflood Booster;12
+Strong Mindflood Booster Reaction;1;Hydrochloric Acid;100
+Strong Mindflood Booster Reaction;1;Pure Standard Crash Booster;15
+Strong Mindflood Booster Reaction;1;Pure Improved Mindflood Booster;12
+Strong Sooth Sayer Booster Reaction;0;Hydrochloric Acid;95
+Strong Sooth Sayer Booster Reaction;0;Pure Strong Sooth Sayer Booster;12
+Strong Sooth Sayer Booster Reaction;1;Hydrochloric Acid;100
+Strong Sooth Sayer Booster Reaction;1;Pure Standard Drop Booster;15
+Strong Sooth Sayer Booster Reaction;1;Pure Improved Sooth Sayer Booster;12
+Strong X-Instinct Booster Reaction;0;Hydrochloric Acid;95
+Strong X-Instinct Booster Reaction;0;Pure Strong X-Instinct Booster;12
+Strong X-Instinct Booster Reaction;1;Hydrochloric Acid;100
+Strong X-Instinct Booster Reaction;1;Pure Standard Exile Booster;15
+Strong X-Instinct Booster Reaction;1;Pure Improved X-Instinct Booster;12
+Sulfuric Acid Reaction;0;Sulfuric Acid;2
+Sulfuric Acid Reaction;1;Atmospheric Gases;1
+Sulfuric Acid Reaction;1;Evaporite Deposits;1
+Sylramic Fibers Reaction;0;Sylramic Fibers;1
+Sylramic Fibers Reaction;1;Ceramic Powder;1
+Sylramic Fibers Reaction;1;Hexite;1
+Synth Blue Pill Booster Reaction;0;Pure Synth Blue Pill Booster;30
+Synth Blue Pill Booster Reaction;1;Garbage;20
+Synth Blue Pill Booster Reaction;1;Amber Mykoserocin;40
+Synth Crash Booster Reaction;0;Pure Synth Crash Booster;30
+Synth Crash Booster Reaction;1;Garbage;20
+Synth Crash Booster Reaction;1;Golden Mykoserocin;40
+Synth Drop Booster Reaction;0;Pure Synth Drop Booster;30
+Synth Drop Booster Reaction;1;Garbage;20
+Synth Drop Booster Reaction;1;Viridian Mykoserocin;40
+Synth Exile Booster Reaction;0;Pure Synth Exile Booster;30
+Synth Exile Booster Reaction;1;Garbage;20
+Synth Exile Booster Reaction;1;Celadon Mykoserocin;40
+Synth Frentix Booster Reaction;0;Pure Synth Frentix Booster;30
+Synth Frentix Booster Reaction;1;Garbage;20
+Synth Frentix Booster Reaction;1;Lime Mykoserocin;40
+Synth Mindflood Booster Reaction;0;Pure Synth Mindflood Booster;30
+Synth Mindflood Booster Reaction;1;Garbage;20
+Synth Mindflood Booster Reaction;1;Malachite Mykoserocin;40
+Synth Sooth Sayer Booster Reaction;0;Pure Synth Sooth Sayer Booster;30
+Synth Sooth Sayer Booster Reaction;1;Garbage;20
+Synth Sooth Sayer Booster Reaction;1;Azure Mykoserocin;40
+Synth X-Instinct Booster Reaction;0;Pure Synth X-Instinct Booster;30
+Synth X-Instinct Booster Reaction;1;Garbage;20
+Synth X-Instinct Booster Reaction;1;Vermillion Mykoserocin;40
+Titanium Carbide Reaction;0;Titanium Carbide;1
+Titanium Carbide Reaction;1;Titanium Chromide;1
+Titanium Carbide Reaction;1;Silicon Diborite;1
+Titanium Chromide Reaction;0;Titanium Chromide;2
+Titanium Chromide Reaction;1;Titanium;1
+Titanium Chromide Reaction;1;Chromium;1
+Tungsten Carbide Reaction;0;Tungsten Carbide;1
+Tungsten Carbide Reaction;1;Rolled Tungsten Alloy;1
+Tungsten Carbide Reaction;1;Sulfuric Acid;1
+Unrefined Dysporite Reaction;0;Unrefined Dysporite;1
+Unrefined Dysporite Reaction;1;Cadmium;1
+Unrefined Dysporite Reaction;1;Mercury;1
+Unrefined Ferrofluid Reaction;0;Unrefined Ferrofluid;1
+Unrefined Ferrofluid Reaction;1;Cadmium;1
+Unrefined Ferrofluid Reaction;1;Hafnium;1
+Unrefined Fluxed Condensates Reaction;0;Unrefined Fluxed Condensates;1
+Unrefined Fluxed Condensates Reaction;1;Vanadium;1
+Unrefined Fluxed Condensates Reaction;1;Platinum;1
+Unrefined Hyperflurite Reaction;0;Unrefined Hyperflurite;1
+Unrefined Hyperflurite Reaction;1;Chromium;1
+Unrefined Hyperflurite Reaction;1;Vanadium;1
+Unrefined Neo Mercurite Reaction;0;Unrefined Neo Mercurite;1
+Unrefined Neo Mercurite Reaction;1;Platinum;1
+Unrefined Neo Mercurite Reaction;1;Mercury;1
+Unrefined Prometium Reaction;0;Unrefined Prometium;1
+Unrefined Prometium Reaction;1;Chromium;1
+Unrefined Prometium Reaction;1;Cadmium;1
+Vanadium Hafnite Reaction;0;Vanadium Hafnite;2
+Vanadium Hafnite Reaction;1;Vanadium;1
+Vanadium Hafnite Reaction;1;Hafnium;1

@@ -1,0 +1,2484 @@
+﻿typeName;wasteFactor;maxProductionLimit;techLevel;(No column name)
+100mm Reinforced Steel Plates I;10;300;1;NULL
+100mm Reinforced Steel Plates II;10;100;2;100mm Reinforced Steel Plates I
+100MN Afterburner I;10;300;1;NULL
+100MN Afterburner II;10;100;2;100MN Afterburner I
+100MN Analog Booster Rockets;10;1000;1;100MN Afterburner I
+100MN Digital Booster Rockets;10;1000;1;100MN MicroWarpdrive I
+100MN MicroWarpdrive I;10;300;1;NULL
+100MN MicroWarpdrive II;10;100;2;100MN MicroWarpdrive I
+10MN Afterburner I;10;300;1;NULL
+10MN Afterburner II;10;100;2;10MN Afterburner I
+10MN Analog Booster Rockets;10;1000;1;10MN Afterburner I
+10MN Digital Booster Rockets;10;1000;1;10MN MicroWarpdrive I
+10MN MicroWarpdrive I;10;300;1;NULL
+10MN MicroWarpdrive II;10;100;2;10MN MicroWarpdrive I
+1200mm Artillery Cannon I;10;300;1;NULL
+1200mm Artillery Cannon II;10;100;2;1200mm Artillery Cannon I
+1200mm Heavy 'Jolt' Artillery I;10;1000;1;1200mm Artillery Cannon I
+125mm Gatling AutoCannon I;10;300;1;NULL
+125mm Gatling AutoCannon II;10;100;2;125mm Gatling AutoCannon I
+125mm Railgun I;10;300;1;NULL
+125mm Railgun II;10;100;2;125mm Railgun I
+1400mm Howitzer Artillery I;10;300;1;NULL
+1400mm Howitzer Artillery II;10;100;2;1400mm Howitzer Artillery I
+1400mm 'Jolt' Artillery I;10;1000;1;1400mm Howitzer Artillery I
+150mm Light AutoCannon I;10;300;1;NULL
+150mm Light AutoCannon II;10;100;2;150mm Light AutoCannon I
+150mm 'Musket' Railgun;10;1000;2;150mm Railgun I
+150mm Railgun I;10;300;1;NULL
+150mm Railgun II;10;100;2;150mm Railgun I
+1600mm Reinforced Steel Plates I;10;300;1;NULL
+1600mm Reinforced Steel Plates II;10;100;2;1600mm Reinforced Steel Plates I
+1MN Afterburner I;10;300;1;NULL
+1MN Afterburner II;10;100;2;1MN Afterburner I
+1MN Analog Booster Rockets;10;1000;1;1MN Afterburner I
+1MN Digital Booster Rockets;10;1000;1;1MN MicroWarpdrive I
+1MN MicroWarpdrive I;10;300;1;NULL
+1MN MicroWarpdrive II;10;100;2;1MN MicroWarpdrive I
+200mm AutoCannon I;10;300;1;NULL
+200mm AutoCannon II;10;100;2;200mm AutoCannon I
+200mm Light 'Jolt' Autocannon I;10;1000;1;200mm AutoCannon I
+200mm Railgun I;10;300;1;NULL
+200mm Railgun II;10;100;2;200mm Railgun I
+200mm Reinforced Steel Plates I;10;300;1;NULL
+200mm Reinforced Steel Plates II;10;100;2;200mm Reinforced Steel Plates I
+220mm Vulcan AutoCannon I;10;300;1;NULL
+220mm Vulcan AutoCannon II;10;100;2;220mm Vulcan AutoCannon I
+250mm 'Flintlock' Railgun;10;1000;2;250mm Railgun I
+250mm Light Artillery Cannon I;10;300;1;NULL
+250mm Light Artillery Cannon II;10;100;2;250mm Light Artillery Cannon I
+250mm Light 'Jolt' Artillery I;10;1000;1;250mm Light Artillery Cannon I
+250mm Railgun I;10;300;1;NULL
+250mm Railgun II;10;100;2;250mm Railgun I
+280mm Howitzer Artillery I;10;300;1;NULL
+280mm Howitzer Artillery II;10;100;2;280mm Howitzer Artillery I
+280mm 'Jolt' Artillery I;10;1000;1;280mm Howitzer Artillery I
+350mm Railgun I;10;300;1;NULL
+350mm Railgun II;10;100;2;350mm Railgun I
+400mm Reinforced Steel Plates I;10;300;1;NULL
+400mm Reinforced Steel Plates II;10;100;2;400mm Reinforced Steel Plates I
+425mm AutoCannon I;10;300;1;NULL
+425mm AutoCannon II;10;100;2;425mm AutoCannon I
+425mm Medium 'Jolt' Autocannon I;10;1000;1;425mm AutoCannon I
+425mm 'Popper' Railgun;10;1000;2;425mm Railgun I
+425mm Railgun I;10;300;1;NULL
+425mm Railgun II;10;100;2;425mm Railgun I
+50mm Reinforced Steel Plates I;10;300;1;NULL
+50mm Reinforced Steel Plates II;10;100;2;50mm Reinforced Steel Plates I
+650mm Artillery Cannon I;10;300;1;NULL
+650mm Artillery Cannon II;10;100;2;650mm Artillery Cannon I
+650mm Medium 'Jolt' Artillery I;10;1000;1;650mm Artillery Cannon I
+6x2500mm Heavy Gallium Repeating Cannon;10;1000;1;6x2500mm Repeating Artillery I
+6x2500mm Repeating Artillery I;10;10;1;NULL
+720mm Howitzer Artillery I;10;300;1;NULL
+720mm Howitzer Artillery II;10;100;2;720mm Howitzer Artillery I
+720mm 'Jolt' Artillery I;10;1000;1;720mm Howitzer Artillery I
+75mm Gatling Rail I;10;300;1;NULL
+75mm Gatling Rail II;10;100;2;75mm Gatling Rail I
+800mm Heavy 'Jolt' Repeating Artillery I;10;1000;1;800mm Repeating Artillery I
+800mm Reinforced Steel Plates I;10;300;1;NULL
+800mm Reinforced Steel Plates II;10;100;2;800mm Reinforced Steel Plates I
+800mm Repeating Artillery I;10;300;1;NULL
+800mm Repeating Artillery II;10;100;2;800mm Repeating Artillery I
+Abaddon;10;10;1;NULL
+'Abatis' 100mm Reinforced Steel Plates I;10;1000;1;100mm Reinforced Steel Plates I
+Absolution;10;10;2;Prophecy
+Acolyte EV-300;10;1500;1;NULL
+Acolyte I;10;1500;1;NULL
+Acolyte II;10;100;2;Acolyte I
+Acolyte TD-300;10;1500;1;NULL
+Adaptive Nano Plating I;10;300;1;NULL
+Adaptive Nano Plating II;10;100;2;Adaptive Nano Plating I
+Advanced Large Ship Assembly Array;10;5;1;NULL
+Advanced Medium Ship Assembly Array;10;5;1;NULL
+Advanced Mobile Laboratory;10;5;1;NULL
+Advanced Small Ship Assembly Array;10;5;1;NULL
+Aeon;10;1;1;NULL
+'Alpha' Codebreaker I;10;1000;1;NULL
+Amarr Control Tower;10;5;1;NULL
+Amarr Control Tower Medium;10;5;1;NULL
+Amarr Control Tower Small;10;5;1;NULL
+Amarr Factory Outpost Platform;10;1;1;NULL
+Amarr Fuel Block;5;300;1;NULL
+Amarr Shuttle;10;30;1;NULL
+Ammatar Navy Adaptive Nano Plating;10;1000;1;Adaptive Nano Plating I
+Ammatar Navy Armor EM Hardener;10;1000;1;Armor EM Hardener I
+Ammatar Navy Armor Explosive Hardener;10;1000;1;Armor Explosive Hardener I
+Ammatar Navy Armor Kinetic Hardener;10;1000;1;Armor Kinetic Hardener I
+Ammatar Navy Armor Thermic Hardener;10;1000;1;Armor Thermic Hardener I
+Ammatar Navy Cap Recharger;10;1000;1;Cap Recharger I
+Ammatar Navy Capacitor Power Relay;10;1000;1;Capacitor Power Relay I
+Ammatar Navy Energized Adaptive Nano Membrane;10;1000;1;Energized Adaptive Nano Membrane I
+Ammatar Navy Energized Magnetic Membrane;10;1000;1;Energized Magnetic Membrane I
+Ammatar Navy Energized Reactive Membrane;10;1000;1;Energized Reactive Membrane I
+Ammatar Navy Energized Reflective Membrane;10;1000;1;Energized Reflective Membrane I
+Ammatar Navy Energized Thermic Membrane;10;1000;1;Energized Thermic Membrane I
+Ammatar Navy Heat Sink;10;1000;1;Heat Sink I
+Ammatar Navy Heavy Capacitor Booster;10;1000;1;Heavy Capacitor Booster I
+Ammatar Navy Heavy Energy Neutralizer;10;1000;1;Heavy Energy Neutralizer I
+Ammatar Navy Heavy Nosferatu;10;1000;1;Heavy Nosferatu I
+Ammatar Navy Large EMP Smartbomb;10;1000;1;Large EMP Smartbomb I
+Ammatar Navy Magnetic Plating;10;1000;1;Magnetic Plating I
+Ammatar Navy Medium Capacitor Booster;10;1000;1;Medium Capacitor Booster I
+Ammatar Navy Medium EMP Smartbomb;10;1000;1;Medium EMP Smartbomb I
+Ammatar Navy Medium Energy Neutralizer;10;1000;1;Medium Energy Neutralizer I
+Ammatar Navy Medium Nosferatu;10;1000;1;Medium Nosferatu I
+Ammatar Navy Power Diagnostic System;10;1000;1;Power Diagnostic System I
+Ammatar Navy Reactive Plating;10;1000;1;Reactive Plating I
+Ammatar Navy Reactor Control Unit;10;1000;1;Reactor Control Unit I
+Ammatar Navy Reflective Plating;10;1000;1;Reflective Plating I
+Ammatar Navy Small Capacitor Booster;10;1000;1;Small Capacitor Booster I
+Ammatar Navy Small EMP Smartbomb;10;1000;1;Small EMP Smartbomb I
+Ammatar Navy Small Energy Neutralizer;10;1000;1;Small Energy Neutralizer I
+Ammatar Navy Small Nosferatu;10;1000;1;Small Nosferatu I
+Ammunition Assembly Array;10;5;1;NULL
+Analyzer I;10;300;1;NULL
+Analyzer II;10;100;2;Analyzer I
+Anathema;10;10;2;Magnate
+Angel Control Tower;0;5;1;Minmatar Control Tower
+Angel Control Tower Medium;0;5;1;Minmatar Control Tower Medium
+Angel Control Tower Small;0;5;1;Minmatar Control Tower Small
+Angel Large Artillery Battery;10;3;1;Large Artillery Battery
+Angel Large AutoCannon Battery;10;3;1;Large AutoCannon Battery
+Angel Medium Artillery Battery;10;3;1;Medium Artillery Battery
+Angel Medium AutoCannon Battery;10;3;1;Medium AutoCannon Battery
+Angel Small Artillery Battery;10;3;1;Small Artillery Battery
+Angel Small AutoCannon Battery;10;3;1;Small AutoCannon Battery
+Angel Stasis Webification Battery;10;5;1;Stasis Webification Battery
+Anshar;10;10;2;Obelisk
+Antimatter Charge L;10;1500;1;NULL
+Antimatter Charge M;10;1500;1;NULL
+Antimatter Charge S;10;1500;1;NULL
+Antimatter Charge XL;10;1000;1;NULL
+Antimatter Reactor Unit;10;1000;2;NULL
+Apocalypse;10;10;1;NULL
+Apocalypse Imperial Issue;10;10;1;Apocalypse
+Apocalypse Navy Issue;10;10;1;Apocalypse
+Apotheosis;10;1000;1;NULL
+Arazu;10;10;2;Celestis
+Arbitrator;10;15;1;NULL
+Archon;10;1;1;NULL
+Ares;10;10;2;Atron
+Ark;10;10;2;Providence
+Arkonor Mining Crystal I;10;100;1;NULL
+Arkonor Mining Crystal II;10;100;2;Arkonor Mining Crystal I
+Armageddon;10;10;1;NULL
+Armor EM Hardener I;10;300;1;NULL
+Armor EM Hardener II;10;100;2;Armor EM Hardener I
+Armor Explosive Hardener I;10;300;1;NULL
+Armor Explosive Hardener II;10;100;2;Armor Explosive Hardener I
+Armor Kinetic Hardener I;10;300;1;NULL
+Armor Kinetic Hardener II;10;100;2;Armor Kinetic Hardener I
+Armor Thermic Hardener I;10;300;1;NULL
+Armor Thermic Hardener II;10;100;2;Armor Thermic Hardener I
+Armored Warfare Link - Damage Control I;5;300;1;NULL
+Armored Warfare Link - Damage Control II;5;100;2;Armored Warfare Link - Damage Control I
+Armored Warfare Link - Passive Defense I;5;300;1;NULL
+Armored Warfare Link - Passive Defense II;5;100;2;Armored Warfare Link - Passive Defense I
+Armored Warfare Link - Rapid Repair I;5;300;1;NULL
+Armored Warfare Link - Rapid Repair II;5;100;2;Armored Warfare Link - Rapid Repair I
+'Arquebus' Heavy Beam Laser I;10;1000;1;Heavy Beam Laser I
+Ashimmu;10;15;1;NULL
+Assault Missile Launcher I;10;300;1;NULL
+Assault Missile Launcher II;10;100;2;Assault Missile Launcher I
+Astarte;10;10;2;Brutix
+Atron;10;30;1;NULL
+'Augmented' Acolyte;10;100;2;Acolyte I
+'Augmented' Berserker;10;100;2;Berserker I
+'Augmented' Hammerhead;10;100;2;Hammerhead I
+'Augmented' Hobgoblin;10;100;2;Hobgoblin I
+'Augmented' Hornet;10;100;2;Hornet I
+'Augmented' Infiltrator;10;100;2;Infiltrator I
+'Augmented' Ogre;10;100;2;Ogre I
+'Augmented' Praetor;10;100;2;Praetor I
+'Augmented' Valkyrie;10;100;2;Valkyrie I
+'Augmented' Vespa;10;100;2;Vespa I
+'Augmented' Warrior;10;100;2;Warrior I
+'Augmented' Wasp;10;100;2;Wasp I
+Augoror;10;15;1;NULL
+Augoror Navy Issue;10;15;1;Augoror
+'Aura' Warp Core Stabilizer I;10;1000;1;Warp Core Stabilizer I
+Aurora L;10;100;2;Radio L
+Aurora M;10;100;2;Radio M
+Aurora Ominae;10;1;1;NULL
+Aurora S;10;100;2;Radio S
+Auto Targeting System I;10;300;1;NULL
+Auto Targeting System II;10;100;2;Auto Targeting System I
+Avatar;10;1;1;NULL
+Badger;10;15;1;NULL
+Badger Mark II;10;15;1;NULL
+'Bailey' 1600mm Reinforced Steel Plates I;10;1000;1;1600mm Reinforced Steel Plates I
+'Balefire' Rocket Launcher;10;1000;2;Rocket Launcher I
+'Ballista' Tachyon Beam Laser I;10;1000;1;Tachyon Beam Laser I
+Ballistic Control System I;10;300;1;NULL
+Ballistic Control System II;10;100;2;Ballistic Control System I
+Ballistic Deflection Array;10;5;1;NULL
+Ballistic Deflection Field I;10;300;1;NULL
+Ballistic Deflection Field II;10;100;2;Ballistic Deflection Field I
+Ballistic 'Purge' Targeting System I;10;1000;1;Ballistic Control System I
+Bantam;10;30;1;NULL
+'Barbican' 800mm Reinforced Steel Plates I;10;1000;1;800mm Reinforced Steel Plates I
+Barrage L;10;100;2;Nuclear L
+Barrage M;10;100;2;Nuclear M
+Barrage S;10;100;2;Nuclear S
+'Barrage' Siege Missile Launcher;10;1000;2;Siege Missile Launcher I
+Basic Robotics;5;1000;1;NULL
+Basilisk;10;10;2;Osprey
+'Bastion' 400mm Reinforced Steel Plates I;10;1000;1;400mm Reinforced Steel Plates I
+'Beatnik' Small Remote Armor Repair System I;10;1000;1;Small Remote Armor Repair System I
+Bellicose;10;15;1;NULL
+Berserker I;10;1500;1;NULL
+Berserker II;10;100;2;Berserker I
+Berserker SW-900;10;1500;1;NULL
+Berserker TP-900;10;1500;1;NULL
+Bestower;10;15;1;NULL
+Bhaalgorn;10;10;1;Armageddon
+Biochemical Reactor Array;10;5;1;NULL
+Biochemical Silo;10;5;1;NULL
+Bistot Mining Crystal I;10;100;1;NULL
+Bistot Mining Crystal II;10;100;2;Bistot Mining Crystal I
+Blackbird;10;15;1;NULL
+Blood Control Tower;0;5;1;Amarr Control Tower
+Blood Control Tower Medium;0;5;1;Amarr Control Tower Medium
+Blood Control Tower Small;0;5;1;Amarr Control Tower Small
+Blood Energy Neutralizing Battery;10;5;1;Energy Neutralizing Battery
+Blood Large Beam Laser Battery;10;3;1;Large Beam Laser Battery
+Blood Large Pulse Laser Battery;10;3;1;Large Pulse Laser Battery
+Blood Medium Beam Laser Battery;10;3;1;Medium Beam Laser Battery
+Blood Medium Pulse Laser Battery;10;3;1;Medium Pulse Laser Battery
+Blood Small Beam Laser Battery;10;3;1;Small Beam Laser Battery
+Blood Small Pulse Laser Battery;10;3;1;Small Pulse Laser Battery
+Bomb Launcher I;10;300;1;NULL
+Bomb Launcher II;10;100;2;Bomb Launcher I
+'Bootleg' ECCM Projector I;10;1000;1;ECCM Projector I
+'Boss' Remote Sensor Booster I;10;1000;1;Remote Sensor Booster I
+Bouncer I;10;1500;1;NULL
+Bouncer II;10;100;2;Bouncer I
+Breacher;10;30;1;NULL
+Broadsword;10;10;2;Rupture
+'Broker' Remote Sensor Dampener I;10;1000;1;Remote Sensor Dampener I
+'Brotherhood' Small Remote Armor Repair System I;10;1000;1;Small Remote Armor Repair System I
+Brutix;10;15;1;NULL
+Burst;10;30;1;NULL
+Bustard;10;10;2;Badger Mark II
+Buzzard;10;10;2;Heron
+Cactus Kinetic Deflection Amplifier;10;1000;2;Kinetic Deflection Amplifier I
+Caldari Control Tower;10;5;1;NULL
+Caldari Control Tower Medium;10;5;1;NULL
+Caldari Control Tower Small;10;5;1;NULL
+Caldari Fuel Block;5;300;1;NULL
+Caldari Navy 200mm Railgun;10;1000;1;200mm Railgun I
+Caldari Navy 350mm Railgun;10;1000;1;350mm Railgun I
+Caldari Navy Ballistic Control System;10;1000;1;Ballistic Control System I
+Caldari Navy Cloaking Device;10;1000;1;Prototype Cloaking Device I
+Caldari Navy Co-Processor;10;1000;1;Co-Processor I
+Caldari Navy Cruise Missile Launcher;10;1000;1;Cruise Missile Launcher I
+Caldari Navy Explosion Dampening Amplifier;10;1000;1;Explosion Dampening Amplifier I
+Caldari Navy Heat Dissipation Amplifier;10;1000;1;Heat Dissipation Amplifier I
+Caldari Navy Heavy Assault Missile Launcher;10;1000;1;Heavy Assault Missile Launcher I
+Caldari Navy Hookbill;10;30;1;NULL
+Caldari Navy Kinetic Deflection Amplifier;10;1000;1;Kinetic Deflection Amplifier I
+Caldari Navy Large Graviton Smartbomb;10;1000;1;Large Graviton Smartbomb I
+Caldari Navy Magnetic Scattering Amplifier;10;1000;1;Magnetic Scattering Amplifier I
+Caldari Navy Medium Graviton Smartbomb;10;1000;1;Medium Graviton Smartbomb I
+Caldari Navy Micro Graviton Smartbomb;10;1000;1;NULL
+Caldari Navy Rocket Launcher;10;1000;1;Rocket Launcher I
+Caldari Navy Shield Boost Amplifier;10;300;1;Shield Boost Amplifier I
+Caldari Navy Small Graviton Smartbomb;10;1000;1;Small Graviton Smartbomb I
+Caldari Navy Stasis Webifier;10;1000;1;Stasis Webifier I
+Caldari Navy Warp Disruptor;10;1000;1;Warp Disruptor I
+Caldari Navy Warp Scrambler;10;1000;1;Warp Scrambler I
+Caldari Research Outpost Platform;10;1;1;NULL
+Caldari Shuttle;10;30;1;NULL
+'Caltrop' Small Energy Neutralizer I;10;1000;1;Small Energy Neutralizer I
+Cap Booster 100;10;1500;1;NULL
+Cap Booster 150;10;1500;1;NULL
+Cap Booster 200;10;1500;1;NULL
+Cap Booster 25;10;1500;1;NULL
+Cap Booster 400;10;1500;1;NULL
+Cap Booster 50;10;1500;1;NULL
+Cap Booster 75;10;1500;1;NULL
+Cap Booster 800;10;1500;1;NULL
+Cap Recharger I;10;300;1;NULL
+Cap Recharger II;10;100;2;Cap Recharger I
+Capacitor Flux Coil I;10;300;1;NULL
+Capacitor Flux Coil II;10;100;2;Capacitor Flux Coil I
+Capacitor Power Relay I;10;300;1;NULL
+Capacitor Power Relay II;10;100;2;Capacitor Power Relay I
+Capital Antimatter Reactor Unit;10;1000;2;NULL
+Capital Armor Plates;10;5;1;NULL
+Capital Armor Repairer I;10;10;1;NULL
+Capital Capacitor Battery;10;5;1;NULL
+Capital Cargo Bay;10;5;1;NULL
+Capital Clone Vat Bay;10;5;1;NULL
+Capital Coaxial Regenerative Projector;10;1000;1;Capital Remote Armor Repair System I
+Capital Computer System;10;5;1;NULL
+Capital Construction Parts;10;5;1;NULL
+Capital Corporate Hangar Bay;10;5;1;NULL
+Capital Crystalline Carbonide Armor Plate;10;1000;2;NULL
+Capital Deflection Shield Emitter;10;1000;2;NULL
+Capital Doomsday Weapon Mount;10;5;1;NULL
+Capital Drone Bay;10;5;1;NULL
+Capital Electrolytic Capacitor Unit;10;1000;2;NULL
+Capital EM Pulse Generator;10;1000;2;NULL
+Capital Energy Transfer Array I;10;10;1;NULL
+Capital Fernite Carbide Composite Armor Plate;10;1000;2;NULL
+Capital Fusion Reactor Unit;10;1000;2;NULL
+Capital Fusion Thruster;10;1000;2;NULL
+Capital Gravimetric Sensor Cluster;10;1000;2;NULL
+Capital Graviton Pulse Generator;10;1000;2;NULL
+Capital Graviton Reactor Unit;10;1000;2;NULL
+Capital Inefficient Armor Repair Unit;10;1000;1;Capital Armor Repairer I
+Capital Ion Thruster;10;1000;2;NULL
+Capital Jump Bridge Array;10;5;1;NULL
+Capital Jump Drive;10;5;1;NULL
+Capital Ladar Sensor Cluster;10;1000;2;NULL
+Capital Laser Focusing Crystals;10;1000;2;NULL
+Capital Launcher Hardpoint;10;5;1;NULL
+Capital Linear Shield Emitter;10;1000;2;NULL
+Capital Magnetometric Sensor Cluster;10;1000;2;NULL
+Capital Magpulse Thruster;10;1000;2;NULL
+Capital Murky Energy Transmitter I;10;1000;1;Capital Energy Transfer Array I
+Capital Murky Shield Screen Transmitter I;10;1000;1;Capital Shield Transporter I
+Capital Nanoelectrical Microprocessor;10;1000;2;NULL
+Capital Nanomechanical Microprocessor;10;1000;2;NULL
+Capital Neutron Saturation Injector I;10;1000;1;Capital Shield Booster I
+Capital Nuclear Pulse Generator;10;1000;2;NULL
+Capital Nuclear Reactor Unit;10;1000;2;NULL
+Capital Oscillator Capacitor Unit;10;1000;2;NULL
+Capital Particle Accelerator Unit;10;1000;2;NULL
+Capital Photon Microprocessor;10;1000;2;NULL
+Capital Plasma Pulse Generator;10;1000;2;NULL
+Capital Plasma Thruster;10;1000;2;NULL
+Capital Power Generator;10;5;1;NULL
+Capital Propulsion Engine;10;5;1;NULL
+Capital Pulse Shield Emitter;10;1000;2;NULL
+Capital Quantum Microprocessor;10;1000;2;NULL
+Capital Radar Sensor Cluster;10;1000;2;NULL
+Capital Remote Armor Repair System I;10;10;1;NULL
+Capital Remote Hull Repair System I;10;10;1;NULL
+Capital Scalar Capacitor Unit;10;1000;2;NULL
+Capital Sensor Cluster;10;5;1;NULL
+Capital Shield Booster I;10;10;1;NULL
+Capital Shield Emitter;10;5;1;NULL
+Capital Shield Transporter I;10;10;1;NULL
+Capital Ship Assembly Array;10;5;1;NULL
+Capital Ship Maintenance Array;10;5;1;NULL
+Capital Ship Maintenance Bay;10;5;1;NULL
+Capital Siege Array;10;5;1;NULL
+Capital Superconductor Rails;10;1000;2;NULL
+Capital Sustained Shield Emitter;10;1000;2;NULL
+Capital Tesseract Capacitor Unit;10;1000;2;NULL
+Capital Thermonuclear Trigger Unit;10;1000;2;NULL
+Capital Titanium Diborite Armor Plate;10;1000;2;NULL
+Capital Tractor Beam I;10;10;1;NULL
+Capital Tractor Beam II;10;10;2;Capital Tractor Beam I
+Capital Tungsten Carbide Armor Plate;10;1000;2;NULL
+Capital Turret Hardpoint;10;5;1;NULL
+'Capitalist' Magnetic Field Stabilizer I;10;1000;1;Magnetic Field Stabilizer I
+Caracal;10;15;1;NULL
+Caracal Navy Issue;10;15;1;Caracal
+Carbonized Lead L;10;1500;1;NULL
+Carbonized Lead M;10;1500;1;NULL
+Carbonized Lead S;10;1500;1;NULL
+Carbonized Lead XL;10;1000;1;NULL
+Cargo Scanner I;10;300;1;NULL
+Cargo Scanner II;10;100;2;Cargo Scanner I
+'Cartel' Power Diagnostic System I;10;1000;1;Power Diagnostic System I
+Catalyst;10;20;1;NULL
+Catalyst Silo;10;5;1;NULL
+'Catapult' Mega Beam Laser I;10;1000;1;Mega Beam Laser I
+Celestis;10;15;1;NULL
+'Censer' Medium Capacitor Battery I;10;1000;1;Medium Capacitor Battery I
+Cerberus;10;10;2;Caracal
+'Chainmail' 200mm Reinforced Steel Plates I;10;1000;1;200mm Reinforced Steel Plates I
+Charon;10;1;1;NULL
+Cheetah;10;10;2;Probe
+Chimera;10;1;1;NULL
+'Chivalry' Large Energy Transfer Array I;10;1000;1;Large Energy Transfer Array I
+Citadel Cruise Launcher I;10;10;1;NULL
+Citadel Torpedo Battery;10;5;1;NULL
+Citadel Torpedo Launcher I;10;10;1;NULL
+'Citadella' 50mm Reinforced Steel Plates I;10;1000;1;50mm Reinforced Steel Plates I
+Civilian Ballistic Deflection Field;10;1000;1;NULL
+Civilian Damage Control;10;1000;1;NULL
+Civilian Explosion Dampening Field;10;1000;1;NULL
+Civilian Heat Dissipation Field;10;1000;1;NULL
+Civilian Mining Drone;5;1500;1;NULL
+Civilian Photon Scattering Field;10;1000;1;NULL
+Civilian Shield Booster I;10;300;1;NULL
+Civilian Stasis Webifier;10;1000;1;NULL
+Claw;10;10;2;Slasher
+Claymore;10;10;2;Cyclone
+Clone Vat Bay I;10;10;1;NULL
+Codebreaker I;10;300;1;NULL
+Codebreaker II;10;100;2;Codebreaker I
+'Codex' Codebreaker I;10;1000;1;NULL
+Coercer;10;20;1;NULL
+Combat Scanner Probe I;5;1500;1;NULL
+Command Processor I;5;300;1;NULL
+Complex Reactor Array;10;5;1;NULL
+Component Assembly Array;10;5;1;NULL
+Compressed Arkonor;0;20;1;NULL
+Compressed Azure Plagioclase;0;20;1;NULL
+Compressed Bistot;0;20;1;NULL
+Compressed Blue Ice;0;10;1;NULL
+Compressed Bright Spodumain;0;20;1;NULL
+Compressed Clear Icicle;0;10;1;NULL
+Compressed Concentrated Veldspar;0;20;1;NULL
+Compressed Condensed Scordite;0;20;1;NULL
+Compressed Crimson Arkonor;0;20;1;NULL
+Compressed Crokite;0;20;1;NULL
+Compressed Crystalline Crokite;0;20;1;NULL
+Compressed Dark Glitter;0;10;1;NULL
+Compressed Dark Ochre;0;20;1;NULL
+Compressed Dense Veldspar;0;20;1;NULL
+Compressed Enriched Clear Icicle;0;10;1;NULL
+Compressed Fiery Kernite;0;20;1;NULL
+Compressed Gelidus;0;10;1;NULL
+Compressed Glacial Mass;0;10;1;NULL
+Compressed Glare Crust;0;10;1;NULL
+Compressed Glazed Hedbergite;0;20;1;NULL
+Compressed Gleaming Spodumain;0;20;1;NULL
+Compressed Gneiss;0;20;1;NULL
+Compressed Golden Omber;0;20;1;NULL
+Compressed Hedbergite;0;20;1;NULL
+Compressed Hemorphite;0;20;1;NULL
+Compressed Iridescent Gneiss;0;20;1;NULL
+Compressed Jaspet;0;20;1;NULL
+Compressed Kernite;0;20;1;NULL
+Compressed Krystallos;0;10;1;NULL
+Compressed Luminous Kernite;0;20;1;NULL
+Compressed Magma Mercoxit;0;20;1;NULL
+Compressed Massive Scordite;0;20;1;NULL
+Compressed Mercoxit;0;20;1;NULL
+Compressed Monoclinic Bistot;0;20;1;NULL
+Compressed Obsidian Ochre;0;20;1;NULL
+Compressed Omber;0;20;1;NULL
+Compressed Onyx Ochre;0;20;1;NULL
+Compressed Plagioclase;0;20;1;NULL
+Compressed Prime Arkonor;0;20;1;NULL
+Compressed Prismatic Gneiss;0;20;1;NULL
+Compressed Pristine Jaspet;0;20;1;NULL
+Compressed Pristine White Glaze;0;10;1;NULL
+Compressed Pure Jaspet;0;20;1;NULL
+Compressed Pyroxeres;0;20;1;NULL
+Compressed Radiant Hemorphite;0;20;1;NULL
+Compressed Rich Plagioclase;0;20;1;NULL
+Compressed Scordite;0;20;1;NULL
+Compressed Sharp Crokite;0;20;1;NULL
+Compressed Silvery Omber;0;20;1;NULL
+Compressed Smooth Glacial Mass;0;10;1;NULL
+Compressed Solid Pyroxeres;0;20;1;NULL
+Compressed Spodumain;0;20;1;NULL
+Compressed Thick Blue Ice;0;10;1;NULL
+Compressed Triclinic Bistot;0;20;1;NULL
+Compressed Veldspar;0;20;1;NULL
+Compressed Viscous Pyroxeres;0;20;1;NULL
+Compressed Vitreous Mercoxit;0;20;1;NULL
+Compressed Vitric Hedbergite;0;20;1;NULL
+Compressed Vivid Hemorphite;0;20;1;NULL
+Compressed White Glaze;0;10;1;NULL
+Concussion Bomb;10;300;1;NULL
+Condor;10;30;1;NULL
+Conflagration L;10;100;2;Xray L
+Conflagration M;10;100;2;Xray M
+Conflagration S;10;100;2;Xray S
+Co-Processor I;10;300;1;NULL
+Co-Processor II;10;100;2;Co-Processor I
+Core Probe Launcher I;10;300;1;NULL
+Core Probe Launcher II;10;100;2;Core Probe Launcher I
+Core Scanner Probe I;5;1000;1;NULL
+Cormorant;10;20;1;NULL
+Corporate Hangar Array;10;5;1;NULL
+'Corporate' Light Electron Blaster I;10;1000;1;Light Electron Blaster I
+Coupling Array;10;5;1;NULL
+Covert Cynosural Field Generator I;10;100;1;NULL
+Covert Jump Portal Generator I;10;1;1;NULL
+Covert Ops Cloaking Device II;10;100;2;Prototype Cloaking Device I
+Covetor;10;10;1;NULL
+Crane;10;10;2;Badger
+Crokite Mining Crystal I;10;100;1;NULL
+Crokite Mining Crystal II;10;100;2;Crokite Mining Crystal I
+'Crossbow' Focused Medium Beam Laser I;10;1000;1;Focused Medium Beam Laser I
+Crow;10;10;2;Condor
+'Crucible' Small Capacitor Battery I;10;1000;1;Small Capacitor Battery I
+Crucifier;10;30;1;NULL
+Cruise Missile Battery;10;5;1;NULL
+Cruise Missile Launcher I;10;300;1;NULL
+Cruise Missile Launcher II;10;100;2;Cruise Missile Launcher I
+Cruor;10;30;1;NULL
+Crusader;10;10;2;Executioner
+Cryptic Data Interface;10;10;1;NULL
+Cryptic Ship Data Interface;10;10;1;NULL
+Cryptic Tuner Data Interface;10;10;1;NULL
+Crystalline Carbonide Armor Plate;10;1000;2;NULL
+Curator I;10;1500;1;NULL
+Curator II;10;100;2;Curator I
+Curse;10;10;2;Arbitrator
+Customs Office Gantry;0;1000;1;NULL
+Cyclone;10;15;1;NULL
+Cyclops;10;10;1;NULL
+Cynabal;10;15;1;NULL
+Cynosural Field Generator I;10;100;1;NULL
+Cynosural Generator Array;10;5;1;NULL
+Cynosural System Jammer;10;5;1;NULL
+'Daemon' Codebreaker I;10;1000;1;NULL
+Damage Control I;10;300;1;NULL
+Damage Control II;10;100;2;Damage Control I
+Damnation;10;10;2;Prophecy
+Daredevil;10;30;1;NULL
+Dark Blood Control Tower;0;5;1;Amarr Control Tower
+Dark Blood Control Tower Medium;0;5;1;Amarr Control Tower Medium
+Dark Blood Control Tower Small;0;5;1;Amarr Control Tower Small
+Dark Blood Energy Neutralizing Battery;10;5;1;Energy Neutralizing Battery
+Dark Blood Large Beam Laser Battery;10;3;1;Large Beam Laser Battery
+Dark Blood Large Pulse Laser Battery;10;3;1;Large Pulse Laser Battery
+Dark Blood Medium Beam Laser Battery;10;3;1;Medium Beam Laser Battery
+Dark Blood Medium Pulse Laser Battery;10;3;1;Medium Pulse Laser Battery
+Dark Blood Small Beam Laser Battery;10;3;1;Small Beam Laser Battery
+Dark Blood Small Pulse Laser Battery;10;3;1;Small Pulse Laser Battery
+Dark Ochre Mining Crystal I;10;100;1;NULL
+Dark Ochre Mining Crystal II;10;100;2;Dark Ochre Mining Crystal I
+Data Subverter I;10;1000;1;NULL
+'Dealer' Light Ion Blaster I;10;1000;1;Light Ion Blaster I
+Deep Core Mining Laser I;10;100;2;NULL
+Deep Space Scanner Probe I;5;1000;1;NULL
+Defender I;10;1500;1;NULL
+Deflection Shield Emitter;10;1000;2;NULL
+Deimos;10;10;2;Thorax
+'Delineative' Warp Scrambler;10;1000;1;Warp Scrambler I
+Depleted Uranium L;10;1500;1;NULL
+Depleted Uranium M;10;1500;1;NULL
+Depleted Uranium S;10;1500;1;NULL
+Depleted Uranium XL;10;1000;1;NULL
+'Desert Heat' Heat Dissipation Field;10;1000;2;Heat Dissipation Field I
+'Deuce' Co-Processor I;10;1000;2;Co-Processor I
+Devoter;10;10;2;Maller
+Discovery Survey Probe I;5;1000;1;NULL
+'Distributor' Tracking Disruptor I;10;1000;1;Tracking Disruptor I
+'Ditch' Medium Energy Neutralizer I;10;1000;1;Medium Energy Neutralizer I
+Domination Control Tower;0;5;1;Minmatar Control Tower
+Domination Control Tower Medium;0;5;1;Minmatar Control Tower Medium
+Domination Control Tower Small;0;5;1;Minmatar Control Tower Small
+Domination Large Artillery Battery;10;3;1;Large Artillery Battery
+Domination Large AutoCannon Battery;10;3;1;Large AutoCannon Battery
+Domination Medium Artillery Battery;10;3;1;Medium Artillery Battery
+Domination Medium AutoCannon Battery;10;3;1;Medium AutoCannon Battery
+Domination Small Artillery Battery;10;3;1;Small Artillery Battery
+Domination Small AutoCannon Battery;10;3;1;Small AutoCannon Battery
+Domination Stasis Webification Battery;10;5;1;Stasis Webification Battery
+Dominix;10;10;1;NULL
+Dragon F.O.F. Cruise Missile I;10;1500;1;NULL
+Dragonfly;10;10;1;NULL
+Drake;10;15;1;NULL
+Dramiel;10;30;1;NULL
+Dread Guristas Citadel Torpedo Battery;10;3;1;Citadel Torpedo Battery
+Dread Guristas Control Tower;0;5;1;Caldari Control Tower
+Dread Guristas Control Tower Medium;0;5;1;Caldari Control Tower Medium
+Dread Guristas Control Tower Small;0;5;1;Caldari Control Tower Small
+Dread Guristas Cruise Missile Battery;10;3;1;Cruise Missile Battery
+Dread Guristas Ion Field Projection Battery;10;5;1;Ion Field Projection Battery
+Dread Guristas Phase Inversion Battery;10;3;1;Phase Inversion Battery
+Dread Guristas Spatial Destabilization Battery;10;5;1;Spatial Destabilization Battery
+Dread Guristas Torpedo Battery;10;3;1;Torpedo Battery
+Dread Guristas White Noise Generation Battery;10;5;1;White Noise Generation Battery
+Drone Assembly Array;10;5;1;NULL
+Drone Control Unit I;10;10;1;NULL
+Drone Link Augmentor I;10;300;1;NULL
+Drone Link Augmentor II;10;100;2;Drone Link Augmentor I
+Drone Navigation Computer I;10;300;1;NULL
+Drone Navigation Computer II;10;100;2;Drone Navigation Computer I
+Drug Lab;10;5;1;NULL
+Dual 1000mm Railgun I;10;10;1;NULL
+Dual 1000mm 'Scout' Accelerator Cannon;10;1000;1;Dual 1000mm Railgun I
+Dual 150mm Railgun I;10;300;1;NULL
+Dual 150mm Railgun II;10;100;2;Dual 150mm Railgun I
+Dual 180mm AutoCannon I;10;300;1;NULL
+Dual 180mm AutoCannon II;10;100;2;Dual 180mm AutoCannon I
+Dual 250mm Railgun I;10;300;1;NULL
+Dual 250mm Railgun II;10;100;2;Dual 250mm Railgun I
+Dual 425mm AutoCannon I;10;300;1;NULL
+Dual 425mm AutoCannon II;10;100;2;Dual 425mm AutoCannon I
+Dual 650mm Repeating Artillery I;10;300;1;NULL
+Dual 650mm Repeating Artillery II;10;100;2;Dual 650mm Repeating Artillery I
+Dual Giga Beam Laser I;10;10;1;NULL
+Dual Giga Modal Laser I;10;1000;1;Dual Giga Beam Laser I
+Dual Giga Pulse Laser I;10;10;1;NULL
+Dual Heavy Beam Laser I;10;300;1;NULL
+Dual Heavy Beam Laser II;10;100;2;Dual Heavy Beam Laser I
+Dual Heavy Pulse Laser I;10;300;1;NULL
+Dual Heavy Pulse Laser II;10;100;2;Dual Heavy Pulse Laser I
+Dual Light Beam Laser I;10;300;1;NULL
+Dual Light Beam Laser II;10;100;2;Dual Light Beam Laser I
+Dual Light Pulse Laser I;10;300;1;NULL
+Dual Light Pulse Laser II;10;100;2;Dual Light Pulse Laser I
+Dual Modal Giga Pulse Laser I;10;1000;1;Dual Giga Pulse Laser I
+'Dyad' Co-Processor I;10;1000;2;Co-Processor I
+Eagle;10;10;2;Moa
+ECCM - Gravimetric I;10;300;1;NULL
+ECCM - Gravimetric II;10;100;2;ECCM - Gravimetric I
+ECCM - Ladar I;10;300;1;NULL
+ECCM - Ladar II;10;100;2;ECCM - Ladar I
+ECCM - Magnetometric I;10;300;1;NULL
+ECCM - Magnetometric II;10;100;2;ECCM - Magnetometric I
+ECCM - Omni I;10;300;1;NULL
+ECCM - Omni II;10;100;2;ECCM - Omni I
+ECCM - Radar I;10;300;1;NULL
+ECCM - Radar II;10;100;2;ECCM - Radar I
+ECCM Projector I;10;300;1;NULL
+ECCM Projector II;10;100;2;ECCM Projector I
+Echelon;10;1000;1;NULL
+ECM - Ion Field Projector I;10;300;1;NULL
+ECM - Ion Field Projector II;10;100;2;ECM - Ion Field Projector I
+ECM - Multispectral Jammer I;10;300;1;NULL
+ECM - Multispectral Jammer II;10;100;2;ECM - Multispectral Jammer I
+ECM - Phase Inverter I;10;300;1;NULL
+ECM - Phase Inverter II;10;100;2;ECM - Phase Inverter I
+ECM - Spatial Destabilizer I;10;300;1;NULL
+ECM - Spatial Destabilizer II;10;100;2;ECM - Spatial Destabilizer I
+ECM - White Noise Generator I;10;300;1;NULL
+ECM - White Noise Generator II;10;100;2;ECM - White Noise Generator I
+ECM Burst I;10;300;1;NULL
+ECM Burst II;10;100;2;ECM Burst I
+'Economist' Tracking Computer I;10;1000;1;Tracking Computer I
+Einherji;10;10;1;NULL
+Electrolytic Capacitor Unit;10;1000;2;NULL
+Electromechanical Interface Nexus;10;1000;3;NULL
+Electron Blaster Cannon I;10;300;1;NULL
+Electron Blaster Cannon II;10;100;2;Electron Blaster Cannon I
+Electron Bomb;10;300;1;NULL
+EM Pulse Generator;10;1000;2;NULL
+Emergent Neurovisual Interface;10;1000;3;NULL
+EMP L;10;1500;1;NULL
+EMP M;10;1500;1;NULL
+EMP S;10;1500;1;NULL
+EMP XL;10;1000;1;NULL
+Energized Adaptive Nano Membrane I;10;300;1;NULL
+Energized Adaptive Nano Membrane II;10;100;2;Energized Adaptive Nano Membrane I
+Energized Basic Adaptive Nano Plating;10;300;1;NULL
+Energized Basic Magnetic Plating;10;300;1;NULL
+Energized Basic Reactive Plating;10;300;1;NULL
+Energized Basic Reflective Plating;10;300;1;NULL
+Energized Basic Regenerative Plating;10;300;1;NULL
+Energized Basic Thermic Plating;10;300;1;NULL
+Energized Magnetic Membrane I;10;300;1;NULL
+Energized Magnetic Membrane II;10;100;2;Energized Magnetic Membrane I
+Energized Reactive Membrane I;10;300;1;NULL
+Energized Reactive Membrane II;10;100;2;Energized Reactive Membrane I
+Energized Reflective Membrane I;10;300;1;NULL
+Energized Reflective Membrane II;10;100;2;Energized Reflective Membrane I
+Energized Regenerative Membrane I;10;300;1;NULL
+Energized Regenerative Membrane II;10;100;2;Energized Regenerative Membrane I
+Energized Thermic Membrane I;10;300;1;NULL
+Energized Thermic Membrane II;10;100;2;Energized Thermic Membrane I
+Energy Neutralizing Battery;10;5;1;NULL
+'Enterprise' Tracking Link I;10;1000;1;Tracking Link I
+'Entrepreneur' Remote Sensor Booster I;10;1000;1;Remote Sensor Booster I
+Enyo;10;10;2;Incursus
+Eos;10;10;2;Brutix
+Equipment Assembly Array;10;5;1;NULL
+Eradicator F.O.F. Heavy Missile I;10;1500;1;NULL
+Erebus;10;1;1;NULL
+Eris;10;10;2;Catalyst
+Esoteric Data Interface;10;10;1;NULL
+Esoteric Ship Data Interface;10;10;1;NULL
+Esoteric Tuner Data Interface;10;10;1;NULL
+Executioner;10;30;1;NULL
+'Executive' Remote Sensor Dampener I;10;1000;1;Remote Sensor Dampener I
+Exequror;10;15;1;NULL
+Exequror Navy Issue;10;15;1;Exequror
+Expanded Cargohold I;10;300;1;NULL
+Expanded Cargohold II;10;100;2;Expanded Cargohold I
+Expanded Probe Launcher I;10;300;1;NULL
+Expanded Probe Launcher II;10;100;2;Expanded Probe Launcher I
+Experimental Laboratory;10;5;1;NULL
+Explosion Dampening Amplifier I;10;300;1;NULL
+Explosion Dampening Amplifier II;10;100;2;Explosion Dampening Amplifier I
+Explosion Dampening Array;10;5;1;NULL
+Explosion Dampening Field I;10;300;1;NULL
+Explosion Dampening Field II;10;100;2;Explosion Dampening Field I
+Exterminator F.O.F. Light Missile I;10;1500;1;NULL
+Falcon;10;10;2;Blackbird
+Federation Navy 100MN Afterburner;10;1000;1;100MN Afterburner I
+Federation Navy 100MN MicroWarpdrive;10;1000;1;100MN MicroWarpdrive I
+Federation Navy 10MN Afterburner;10;1000;1;10MN Afterburner I
+Federation Navy 10MN MicroWarpdrive;10;1000;1;10MN MicroWarpdrive I
+Federation Navy 1MN Afterburner;10;1000;1;1MN Afterburner I
+Federation Navy 1MN MicroWarpdrive;10;1000;1;1MN MicroWarpdrive I
+Federation Navy 200mm Railgun;10;1000;1;200mm Railgun I
+Federation Navy 350mm Railgun;10;1000;1;350mm Railgun I
+Federation Navy Adaptive Nano Plating;10;1000;1;Adaptive Nano Plating I
+Federation Navy Armor EM Hardener;10;1000;1;Armor EM Hardener I
+Federation Navy Armor Explosive Hardener;10;1000;1;Armor Explosive Hardener I
+Federation Navy Armor Kinetic Hardener;10;1000;1;Armor Kinetic Hardener I
+Federation Navy Armor Thermic Hardener;10;1000;1;Armor Thermic Hardener I
+Federation Navy Comet;10;30;1;NULL
+Federation Navy Co-Processor;10;1000;1;Co-Processor I
+Federation Navy Energized Adaptive Nano Membrane;10;1000;1;Energized Adaptive Nano Membrane I
+Federation Navy Energized Magnetic Membrane;10;1000;1;Energized Magnetic Membrane I
+Federation Navy Energized Reactive Membrane;10;1000;1;Energized Reactive Membrane I
+Federation Navy Energized Reflective Membrane;10;1000;1;Energized Reflective Membrane I
+Federation Navy Energized Thermic Membrane;10;1000;1;Energized Thermic Membrane I
+Federation Navy Large Plasma Smartbomb;10;1000;1;Large Plasma Smartbomb I
+Federation Navy Magnetic Field Stabilizer;10;1000;1;Magnetic Field Stabilizer I
+Federation Navy Magnetic Plating;10;1000;1;Magnetic Plating I
+Federation Navy Medium Plasma Smartbomb;10;1000;1;Medium Plasma Smartbomb I
+Federation Navy Reactive Plating;10;1000;1;Reactive Plating I
+Federation Navy Reflective Plating;10;1000;1;Reflective Plating I
+Federation Navy Sensor Booster;10;1000;1;Sensor Booster I
+Federation Navy Small Plasma Smartbomb;10;1000;1;Small Plasma Smartbomb I
+Federation Navy Stasis Webifier;10;1000;1;Stasis Webifier I
+Federation Navy Thermic Plating;10;1000;1;Thermic Plating I
+Federation Navy Tracking Computer;10;1000;1;Tracking Computer I
+Federation Navy Tracking Link;10;1000;1;Tracking Link I
+'Felon' Ion Blaster Cannon I;10;1000;1;Ion Blaster Cannon I
+Fenrir;10;1;1;NULL
+Fernite Carbide Composite Armor Plate;10;1000;2;NULL
+Ferox;10;15;1;NULL
+Firbolg;10;10;1;NULL
+Firefly F.O.F. Light Missile I;10;1500;1;NULL
+Flycatcher;10;10;2;Cormorant
+Focused Medium Beam Laser I;10;300;1;NULL
+Focused Medium Beam Laser II;10;100;2;Focused Medium Beam Laser I
+Focused Medium Pulse Laser I;10;300;1;NULL
+Focused Medium Pulse Laser II;10;100;2;Focused Medium Pulse Laser I
+Focused Warp Disruption;10;1000;1;NULL
+'Forger' ECCM - Magnetometric I;10;1000;1;ECCM - Magnetometric I
+'Full Duplex' Ballistic Targeting System;10;1000;1;Ballistic Control System I
+Fullerene Intercalated Sheets;10;1000;3;NULL
+Fulleroferrocene Power Conduits;10;1000;3;NULL
+Fusion L;10;1500;1;NULL
+Fusion M;10;1500;1;NULL
+Fusion Reactor Unit;10;1000;2;NULL
+Fusion S;10;1500;1;NULL
+Fusion Thruster;10;1000;2;NULL
+Fusion XL;10;1000;1;NULL
+Gallente Administrative Outpost Platform;10;1;1;NULL
+Gallente Control Tower;10;5;1;NULL
+Gallente Control Tower Medium;10;5;1;NULL
+Gallente Control Tower Small;10;5;1;NULL
+Gallente Fuel Block;5;300;1;NULL
+Gallente Shuttle;10;30;1;NULL
+'Gallows' Standard Missile Launcher;10;1000;2;Standard Missile Launcher I
+'Gambler' Phase Inverter;10;1000;2;ECM - Phase Inverter I
+Gamma L;10;1500;1;NULL
+Gamma M;10;1500;1;NULL
+Gamma S;10;1500;1;NULL
+Gamma XL;10;1000;1;NULL
+Garde I;10;1500;1;NULL
+Garde II;10;100;2;Garde I
+Gas Cloud Harvester I;10;300;1;NULL
+Gas Cloud Harvester II;10;100;2;Gas Cloud Harvester I
+Gatling Pulse Laser I;10;300;1;NULL
+Gatling Pulse Laser II;10;100;2;Gatling Pulse Laser I
+'Gauntlet' Medium Beam Laser I;10;1000;1;Medium Beam Laser I
+Gaze Survey Probe I;5;1000;1;NULL
+General Storage;10;5;1;NULL
+'Ghost' ECM Burst;10;1000;2;ECM Burst I
+Ghost Heavy Missile;10;1000;1;NULL
+Gila;10;15;1;Moa
+Gjallarhorn;10;1;1;NULL
+Gleam L;10;100;2;Multifrequency L
+Gleam M;10;100;2;Multifrequency M
+Gleam S;10;100;2;Multifrequency S
+'Glycerine' Shield Boost Amplifier;10;300;1;Shield Boost Amplifier I
+Gneiss Mining Crystal I;10;100;1;NULL
+Gneiss Mining Crystal II;10;100;2;Gneiss Mining Crystal I
+Golem;10;10;2;Raven
+'Gonzo' Damage Control I;10;1000;1;Damage Control I
+'Gorget' Small Armor Repairer I;10;1000;1;Small Armor Repairer I
+Gravimetric Backup Array I;10;300;1;NULL
+Gravimetric Backup Array II;10;100;2;Gravimetric Backup Array I
+Gravimetric Firewall;10;1000;1;Gravimetric Backup Array I
+Gravimetric Sensor Cluster;10;1000;2;NULL
+Graviton Pulse Generator;10;1000;2;NULL
+Graviton Reactor Unit;10;1000;2;NULL
+'Greaves' Medium Armor Repairer I;10;1000;1;Medium Armor Repairer I
+Griffin;10;30;1;NULL
+Guardian;10;10;2;Augoror
+Guardian-Vexor;10;15;1;Vexor
+Guristas Citadel Torpedo Battery;10;3;1;Citadel Torpedo Battery
+Guristas Control Tower;0;5;1;Caldari Control Tower
+Guristas Control Tower Medium;0;5;1;Caldari Control Tower Medium
+Guristas Control Tower Small;0;5;1;Caldari Control Tower Small
+Guristas Cruise Missile Battery;10;3;1;Cruise Missile Battery
+Guristas Ion Field Projection Battery;10;5;1;Ion Field Projection Battery
+Guristas Phase Inversion Battery;10;5;1;Phase Inversion Battery
+Guristas Spatial Destabilization Battery;10;5;1;Spatial Destabilization Battery
+Guristas Torpedo Battery;10;3;1;Torpedo Battery
+Guristas White Noise Generation Battery;10;5;1;White Noise Generation Battery
+Gyrostabilizer I;10;300;1;NULL
+Gyrostabilizer II;10;100;2;Gyrostabilizer I
+Hail L;10;100;2;Depleted Uranium L
+Hail M;10;100;2;Depleted Uranium M
+Hail S;10;100;2;Depleted Uranium S
+'Halberd' Mega Pulse Laser I;10;1000;1;Mega Pulse Laser I
+Hammerhead I;10;1500;1;NULL
+Hammerhead II;10;100;2;Hammerhead I
+Hammerhead SD-600;10;1500;1;NULL
+Harbinger;10;15;1;NULL
+'Harmony' Small Armor Repairer I;10;1000;1;Small Armor Repairer I
+'Harness' Medium Capacitor Booster I;10;1000;1;Medium Capacitor Booster I
+Harpy;10;10;2;Merlin
+'Hauberk' Large Armor Repairer I;10;1000;1;Large Armor Repairer I
+Hawk;10;10;2;Merlin
+Hazardous Chemical Silo;10;5;1;NULL
+Heat Dissipation Amplifier I;10;300;1;NULL
+Heat Dissipation Amplifier II;10;100;2;Heat Dissipation Amplifier I
+Heat Dissipation Array;10;5;1;NULL
+Heat Dissipation Field I;10;300;1;NULL
+Heat Dissipation Field II;10;100;2;Heat Dissipation Field I
+Heat Sink I;10;300;1;NULL
+Heat Sink II;10;100;2;Heat Sink I
+Heavy Armor Maintenance Bot I;10;1500;1;NULL
+Heavy Armor Maintenance Bot II;10;100;2;Heavy Armor Maintenance Bot I
+Heavy Assault Missile Launcher I;10;300;1;NULL
+Heavy Assault Missile Launcher II;10;100;2;Heavy Assault Missile Launcher I
+Heavy Beam Laser I;10;300;1;NULL
+Heavy Beam Laser II;10;100;2;Heavy Beam Laser I
+Heavy 'Brave' Capacitor Booster;10;1000;2;Heavy Capacitor Booster I
+Heavy Capacitor Booster I;10;300;1;NULL
+Heavy Capacitor Booster II;10;100;2;Heavy Capacitor Booster I
+Heavy Electron Blaster I;10;300;1;NULL
+Heavy Electron Blaster II;10;100;2;Heavy Electron Blaster I
+Heavy Energy Neutralizer I;10;300;1;NULL
+Heavy Energy Neutralizer II;10;100;2;Heavy Energy Neutralizer I
+Heavy Ion Blaster I;10;300;1;NULL
+Heavy Ion Blaster II;10;100;2;Heavy Ion Blaster I
+Heavy Missile Launcher I;10;300;1;NULL
+Heavy Missile Launcher II;10;100;2;Heavy Missile Launcher I
+Heavy Neutron Blaster I;10;300;1;NULL
+Heavy Neutron Blaster II;10;100;2;Heavy Neutron Blaster I
+Heavy Nosferatu I;10;300;1;NULL
+Heavy Nosferatu II;10;100;2;Heavy Nosferatu I
+Heavy Pulse Laser I;10;300;1;NULL
+Heavy Pulse Laser II;10;100;2;Heavy Pulse Laser I
+Heavy Shield Maintenance Bot I;10;1500;1;NULL
+Heavy Shield Maintenance Bot II;10;100;2;Heavy Shield Maintenance Bot I
+Hedbergite Mining Crystal I;10;100;1;NULL
+Hedbergite Mining Crystal II;10;100;2;Hedbergite Mining Crystal I
+'Heist' White Noise Generator;10;1000;2;ECM - White Noise Generator I
+Hel;10;1;1;NULL
+Helios;10;10;2;Imicus
+Hellhound F.O.F. Heavy Missile I;10;1500;1;NULL
+Hemorphite Mining Crystal I;10;100;1;NULL
+Hemorphite Mining Crystal II;10;100;2;Hemorphite Mining Crystal I
+Heretic;10;10;2;Coercer
+Heron;10;30;1;NULL
+High Noon Heat Dissipation Amplifier;10;1000;2;Heat Dissipation Amplifier I
+Hoarder;10;15;1;NULL
+Hobgoblin I;10;1500;1;NULL
+Hobgoblin II;10;100;2;Hobgoblin I
+Hobgoblin SD-300;10;1500;1;NULL
+'Hooligan' Heavy Ion Blaster I;10;1000;1;Heavy Ion Blaster I
+Hornet EC-300;10;1500;1;NULL
+Hornet I;10;1500;1;NULL
+Hornet II;10;100;2;Hornet I
+Hound;10;10;2;Breacher
+Huginn;10;10;2;Bellicose
+Hulk;10;10;2;Covetor
+Hunter F.O.F. Cruise Missile I;10;1500;1;NULL
+Hurricane;10;15;1;NULL
+'Hustler' Heavy Neutron Blaster I;10;1000;1;Heavy Neutron Blaster I
+Hybrid Polymer Silo;10;5;1;NULL
+Hydra F.O.F. Heavy Missile I;10;1500;1;NULL
+Hyena;10;10;2;Vigil
+Hyperion;10;10;1;NULL
+Ice Harvester I;10;300;1;NULL
+Ice Harvester II;10;100;2;Ice Harvester I
+Ice Harvester Upgrade I;10;300;1;NULL
+Ice Harvester Upgrade II;10;100;2;Ice Harvester Upgrade I
+Imicus;10;30;1;NULL
+Impel;10;10;2;Bestower
+Imperial Navy Adaptive Nano Plating;10;1000;1;Adaptive Nano Plating I
+Imperial Navy Armor EM Hardener;10;1000;1;Armor EM Hardener I
+Imperial Navy Armor Explosive Hardener;10;1000;1;Armor Explosive Hardener I
+Imperial Navy Armor Kinetic Hardener;10;1000;1;Armor Kinetic Hardener I
+Imperial Navy Armor Thermic Hardener;10;1000;1;Armor Thermic Hardener I
+Imperial Navy Cap Recharger;10;1000;1;Cap Recharger I
+Imperial Navy Capacitor Power Relay;10;1000;1;Capacitor Power Relay I
+Imperial Navy Energized Adaptive Nano Membrane;10;1000;1;Energized Adaptive Nano Membrane I
+Imperial Navy Energized Magnetic Membrane;10;1000;1;Energized Magnetic Membrane I
+Imperial Navy Energized Reactive Membrane;10;1000;1;Energized Reactive Membrane I
+Imperial Navy Energized Reflective Membrane;10;1000;1;Energized Reflective Membrane I
+Imperial Navy Energized Thermic Membrane;10;1000;1;Energized Thermic Membrane I
+Imperial Navy Heat Sink;10;1000;1;Heat Sink I
+Imperial Navy Heavy Capacitor Booster;10;1000;1;Heavy Capacitor Booster I
+Imperial Navy Heavy Energy Neutralizer;10;1000;1;Heavy Energy Neutralizer I
+Imperial Navy Heavy Nosferatu;10;1000;1;Heavy Nosferatu I
+Imperial Navy Large EMP Smartbomb;10;1000;1;Large EMP Smartbomb I
+Imperial Navy Magnetic Plating;10;1000;1;Magnetic Plating I
+Imperial Navy Medium Capacitor Booster;10;1000;1;Medium Capacitor Booster I
+Imperial Navy Medium EMP Smartbomb;10;1000;1;Medium EMP Smartbomb I
+Imperial Navy Medium Energy Neutralizer;10;1000;1;Medium Energy Neutralizer I
+Imperial Navy Medium Nosferatu;10;1000;1;Medium Nosferatu I
+Imperial Navy Micro Capacitor Booster;10;1000;1;NULL
+Imperial Navy Micro EMP Smartbomb;10;1000;1;NULL
+Imperial Navy Reactive Plating;10;1000;1;Reactive Plating I
+Imperial Navy Reflective Plating;10;1000;1;Reflective Plating I
+Imperial Navy Slicer;10;30;1;NULL
+Imperial Navy Small Capacitor Booster;10;1000;1;Small Capacitor Booster I
+Imperial Navy Small EMP Smartbomb;10;1000;1;Small EMP Smartbomb I
+Imperial Navy Small Energy Neutralizer;10;1000;1;Small Energy Neutralizer I
+Imperial Navy Small Nosferatu;10;1000;1;Small Nosferatu I
+Imperial Navy Thermic Plating;10;1000;1;Thermic Plating I
+Improved Blue Pill Booster;10;1000;1;NULL
+Improved Cloaking Device II;10;100;2;Prototype Cloaking Device I
+Improved Crash Booster;10;1000;1;NULL
+Improved Drop Booster;10;1000;1;NULL
+Improved Exile Booster;10;1000;1;NULL
+Improved Frentix Booster;10;1000;1;NULL
+Improved 'Guise' Cloaking Device II;10;1000;2;Prototype Cloaking Device I
+Improved Mindflood Booster;10;1000;1;NULL
+Improved Sooth Sayer Booster;10;1000;1;NULL
+Improved X-Instinct Booster;10;1000;1;NULL
+'Inception' Target Painter I;10;1000;1;Target Painter I
+Incognito Data Interface;10;10;1;NULL
+Incognito Ship Data Interface;10;10;1;NULL
+Incognito Tuner Data Interface;10;10;1;NULL
+Incursus;10;30;1;NULL
+Industrial Core I;10;10;1;NULL
+Inertia Stabilizers I;10;300;1;NULL
+Inertia Stabilizers II;10;100;2;Inertia Stabilizers I
+Inferno Assault Missile;10;1500;1;NULL
+Inferno Citadel Cruise Missile;10;1000;1;NULL
+Inferno Citadel Torpedo;10;1000;1;NULL
+Inferno Cruise Missile;10;1500;1;NULL
+Inferno Fury Cruise Missile;10;100;2;Inferno Cruise Missile
+Inferno Fury Heavy Missile;10;100;2;Inferno Heavy Missile
+Inferno Fury Light Missile;10;100;2;Inferno Light Missile
+Inferno Heavy Missile;10;1500;1;NULL
+Inferno Javelin Assault Missile;10;100;2;Inferno Assault Missile
+Inferno Javelin Rocket;10;100;2;Inferno Rocket
+Inferno Javelin Torpedo;10;100;2;Inferno Torpedo
+Inferno Light Missile;10;1500;1;NULL
+Inferno Precision Cruise Missile;10;100;2;Inferno Cruise Missile
+Inferno Precision Heavy Missile;10;100;2;Inferno Heavy Missile
+Inferno Precision Light Missile;10;100;2;Inferno Light Missile
+Inferno Rage Assault Missile;10;100;2;Inferno Assault Missile
+Inferno Rage Rocket;10;100;2;Inferno Rocket
+Inferno Rage Torpedo;10;100;2;Inferno Torpedo
+Inferno Rocket;10;1500;1;NULL
+Inferno Torpedo;10;1500;1;NULL
+Infiltrator EV-600;10;1500;1;NULL
+Infiltrator I;10;1500;1;NULL
+Infiltrator II;10;100;2;Infiltrator I
+Infiltrator TD-600;10;1500;1;NULL
+Information Warfare Link - Electronic Superiority I;5;300;1;NULL
+Information Warfare Link - Electronic Superiority II;5;100;2;Information Warfare Link - Electronic Superiority I
+Information Warfare Link - Recon Operation I;5;300;1;NULL
+Information Warfare Link - Recon Operation II;5;100;2;Information Warfare Link - Recon Operation I
+Information Warfare Link - Sensor Integrity I;5;300;1;NULL
+Information Warfare Link - Sensor Integrity II;5;100;2;Information Warfare Link - Sensor Integrity I
+Infrared L;10;1500;1;NULL
+Infrared M;10;1500;1;NULL
+Infrared S;10;1500;1;NULL
+Infrared XL;10;1000;1;NULL
+Infrastructure Hub;10;5;1;NULL
+Inquisitor;10;30;1;NULL
+'Integrated' Acolyte;10;1000;1;Acolyte I
+'Integrated' Berserker;10;1000;1;Berserker I
+'Integrated' Hammerhead;10;1000;1;Hammerhead I
+'Integrated' Hobgoblin;10;1000;1;Hobgoblin I
+'Integrated' Hornet;10;1000;1;Hornet I
+'Integrated' Infiltrator;10;1000;1;Infiltrator I
+'Integrated' Ogre;10;1000;1;Ogre I
+'Integrated' Praetor;10;1000;1;Praetor I
+'Integrated' Valkyrie;10;1000;1;Valkyrie I
+'Integrated' Vespa;10;1000;1;Vespa I
+'Integrated' Warrior;10;1000;1;Warrior I
+'Integrated' Wasp;10;1000;1;Wasp I
+Intensive Refining Array;10;5;1;NULL
+Interbus Shuttle;10;1000;1;NULL
+Interdiction Sphere Launcher I;10;300;1;NULL
+'Investor' Tracking Disruptor I;10;1000;1;Tracking Disruptor I
+Invulnerability Field I;10;300;1;NULL
+Invulnerability Field II;10;100;2;Invulnerability Field I
+Ion Blaster Cannon I;10;300;1;NULL
+Ion Blaster Cannon II;10;100;2;Ion Blaster Cannon I
+Ion Field Projection Battery;10;5;1;NULL
+Ion Siege Blaster Cannon I;10;10;1;NULL
+Ion Thruster;10;1000;2;NULL
+Iridium Charge L;10;1500;1;NULL
+Iridium Charge M;10;1500;1;NULL
+Iridium Charge S;10;1500;1;NULL
+Iridium Charge XL;10;1000;1;NULL
+Iron Charge L;10;1500;1;NULL
+Iron Charge M;10;1500;1;NULL
+Iron Charge S;10;1500;1;NULL
+Iron Charge XL;10;1000;1;NULL
+Ishkur;10;10;2;Incursus
+Ishtar;10;10;2;Vexor
+Iteron;10;15;1;NULL
+Iteron Mark II;10;15;1;NULL
+Iteron Mark III;10;15;1;NULL
+Iteron Mark IV;10;15;1;NULL
+Iteron Mark V;10;15;1;NULL
+Jaguar;10;10;2;Rifter
+Jaspet Mining Crystal I;10;100;1;NULL
+Jaspet Mining Crystal II;10;100;2;Jaspet Mining Crystal I
+Javelin L;10;100;2;Iridium Charge L
+Javelin M;10;100;2;Iridium Charge M
+Javelin S;10;100;2;Iridium Charge S
+'Joust' Heavy Pulse Laser I;10;1000;1;Heavy Pulse Laser I
+Judgement;10;1;1;NULL
+Jump Bridge;10;5;1;NULL
+Jump Portal Generator I;10;1;1;NULL
+Keres;10;10;2;Maulus
+Kernite Mining Crystal I;10;100;1;NULL
+Kernite Mining Crystal II;10;100;2;Kernite Mining Crystal I
+Kestrel;10;30;1;NULL
+Khanid Navy Adaptive Nano Plating;10;1000;1;Adaptive Nano Plating I
+Khanid Navy Armor EM Hardener;10;1000;1;Armor EM Hardener I
+Khanid Navy Armor Explosive Hardener;10;1000;1;Armor Explosive Hardener I
+Khanid Navy Armor Kinetic Hardener;10;1000;1;Armor Kinetic Hardener I
+Khanid Navy Armor Thermic Hardener;10;1000;1;Armor Thermic Hardener I
+Khanid Navy Ballistic Control System;10;1000;1;Ballistic Control System I
+Khanid Navy Cap Recharger;10;1000;1;Cap Recharger I
+Khanid Navy Capacitor Power Relay;10;1000;1;Capacitor Power Relay I
+Khanid Navy Co-Processor;10;1000;1;Co-Processor I
+Khanid Navy Energized Adaptive Nano Membrane;10;1000;1;Energized Adaptive Nano Membrane I
+Khanid Navy Energized Magnetic Membrane;10;1000;1;Energized Magnetic Membrane I
+Khanid Navy Energized Reactive Membrane;10;1000;1;Energized Reactive Membrane I
+Khanid Navy Energized Reflective Membrane;10;1000;1;Energized Reflective Membrane I
+Khanid Navy Energized Thermic Membrane;10;1000;1;Energized Thermic Membrane I
+Khanid Navy Heavy Assault Missile Launcher;10;1000;1;Heavy Assault Missile Launcher I
+Khanid Navy Large EMP Smartbomb;10;1000;1;Large EMP Smartbomb I
+Khanid Navy Magnetic Plating;10;1000;1;Magnetic Plating I
+Khanid Navy Medium EMP Smartbomb;10;1000;1;Medium EMP Smartbomb I
+Khanid Navy Reactive Plating;10;1000;1;Reactive Plating I
+Khanid Navy Reflective Plating;10;1000;1;Reflective Plating I
+Khanid Navy Rocket Launcher;10;1000;1;Rocket Launcher I
+Khanid Navy Stasis Webifier;10;1000;1;Stasis Webifier I
+Khanid Navy Thermic Plating;10;1000;1;Thermic Plating I
+Khanid Navy Warp Disruptor;10;1000;1;Warp Disruptor I
+Khanid Navy Warp Scrambler;10;1000;1;Warp Scrambler I
+'Kindred' Stabilization Actuator I;10;1000;1;Gyrostabilizer I
+Kinetic Deflection Amplifier I;10;300;1;NULL
+Kinetic Deflection Amplifier II;10;100;2;Kinetic Deflection Amplifier I
+Kitsune;10;10;2;Griffin
+'Knight' Medium Energy Transfer Array I;10;1000;1;Medium Energy Transfer Array I
+Kronos;10;10;2;Megathron
+Lachesis;10;10;2;Celestis
+LADAR Backup Array I;10;300;1;NULL
+LADAR Backup Array II;10;100;2;LADAR Backup Array I
+LADAR Firewall;10;1000;1;LADAR Backup Array I
+Ladar Sensor Cluster;10;1000;2;NULL
+'Lance' Medium EMP Smartbomb I;10;1000;1;Medium EMP Smartbomb I
+Large Algid Energy Administrations Unit I;10;300;1;NULL
+Large Algid Energy Administrations Unit II;10;10;2;Large Algid Energy Administrations Unit I
+Large Algid Hybrid Administrations Unit I;10;300;1;NULL
+Large Algid Hybrid Administrations Unit II;10;10;2;Large Algid Hybrid Administrations Unit I
+Large Ancillary Current Router I;10;300;1;NULL
+Large Ancillary Current Router II;10;10;2;Large Ancillary Current Router I
+Large Anti-EM Pump I;10;300;1;NULL
+Large Anti-EM Pump II;10;10;2;Large Anti-EM Pump I
+Large Anti-EM Screen Reinforcer I;10;300;1;NULL
+Large Anti-EM Screen Reinforcer II;10;10;2;Large Anti-EM Screen Reinforcer I
+Large Anti-Explosive Pump I;10;300;1;NULL
+Large Anti-Explosive Pump II;10;10;2;Large Anti-Explosive Pump I
+Large Anti-Explosive Screen Reinforcer I;10;300;1;NULL
+Large Anti-Explosive Screen Reinforcer II;10;10;2;Large Anti-Explosive Screen Reinforcer I
+Large Anti-Kinetic Pump I;10;300;1;NULL
+Large Anti-Kinetic Pump II;10;10;2;Large Anti-Kinetic Pump I
+Large Anti-Kinetic Screen Reinforcer I;10;300;1;NULL
+Large Anti-Kinetic Screen Reinforcer II;10;10;2;Large Anti-Kinetic Screen Reinforcer I
+Large Anti-Thermal Screen Reinforcer I;10;300;1;NULL
+Large Anti-Thermal Screen Reinforcer II;10;10;2;Large Anti-Thermal Screen Reinforcer I
+Large Anti-Thermic Pump I;10;300;1;NULL
+Large Anti-Thermic Pump II;10;10;2;Large Anti-Thermic Pump I
+Large Armor Repairer I;10;300;1;NULL
+Large Armor Repairer II;10;100;2;Large Armor Repairer I
+Large Artillery Battery;10;5;1;NULL
+Large AutoCannon Battery;10;5;1;NULL
+Large Auxiliary Nano Pump I;10;300;1;NULL
+Large Auxiliary Nano Pump II;10;10;2;Large Auxiliary Nano Pump I
+Large Auxiliary Thrusters I;10;300;1;NULL
+Large Auxiliary Thrusters II;10;10;2;Large Auxiliary Thrusters I
+Large Bay Loading Accelerator I;10;300;1;NULL
+Large Bay Loading Accelerator II;10;10;2;Large Bay Loading Accelerator I
+Large Beam Laser Battery;10;5;1;NULL
+Large Blaster Battery;10;5;1;NULL
+Large Capacitor Battery I;10;300;1;NULL
+Large Capacitor Battery II;10;100;2;Large Capacitor Battery I
+Large Capacitor Control Circuit I;10;300;1;NULL
+Large Capacitor Control Circuit II;10;10;2;Large Capacitor Control Circuit I
+Large Cargohold Optimization I;10;300;1;NULL
+Large Cargohold Optimization II;10;10;2;Large Cargohold Optimization I
+Large Core Defence Capacitor Safeguard I;10;300;1;NULL
+Large Core Defence Capacitor Safeguard II;10;10;2;Large Core Defence Capacitor Safeguard I
+Large Core Defence Charge Economizer I;10;300;1;NULL
+Large Core Defence Charge Economizer II;10;10;2;Large Core Defence Charge Economizer I
+Large Core Defence Field Extender I;10;300;1;NULL
+Large Core Defence Field Extender II;10;10;2;Large Core Defence Field Extender I
+Large Core Defence Field Purger I;10;300;1;NULL
+Large Core Defence Field Purger II;10;10;2;Large Core Defence Field Purger I
+Large Core Defence Operational Solidifier I;10;300;1;NULL
+Large Core Defence Operational Solidifier II;10;10;2;Large Core Defence Operational Solidifier I
+Large Degenerative Concussion Bomb I;10;1000;1;Large Proton Smartbomb I
+Large Drone Control Range Augmentor I;10;300;1;NULL
+Large Drone Control Range Augmentor II;10;10;2;Large Drone Control Range Augmentor I
+Large Drone Durability Enhancer I;10;300;1;NULL
+Large Drone Durability Enhancer II;10;10;2;Large Drone Durability Enhancer I
+Large Drone Mining Augmentor I;10;300;1;NULL
+Large Drone Mining Augmentor II;10;10;2;Large Drone Mining Augmentor I
+Large Drone Repair Augmentor I;10;300;1;NULL
+Large Drone Repair Augmentor II;10;10;2;Large Drone Repair Augmentor I
+Large Drone Scope Chip I;10;300;1;NULL
+Large Drone Scope Chip II;10;10;2;Large Drone Scope Chip I
+Large Drone Speed Augmentor I;10;300;1;NULL
+Large Drone Speed Augmentor II;10;10;2;Large Drone Speed Augmentor I
+Large Dynamic Fuel Valve I;10;300;1;NULL
+Large Dynamic Fuel Valve II;10;10;2;Large Dynamic Fuel Valve I
+Large Egress Port Maximizer I;10;300;1;NULL
+Large Egress Port Maximizer II;10;10;2;Large Egress Port Maximizer I
+Large Emission Scope Sharpener I;10;300;1;NULL
+Large Emission Scope Sharpener II;10;10;2;Large Emission Scope Sharpener I
+Large EMP Smartbomb I;10;300;1;NULL
+Large EMP Smartbomb II;10;100;2;Large EMP Smartbomb I
+Large Energy Ambit Extension I;10;300;1;NULL
+Large Energy Ambit Extension II;10;10;2;Large Energy Ambit Extension I
+Large Energy Burst Aerator I;10;300;1;NULL
+Large Energy Burst Aerator II;10;10;2;Large Energy Burst Aerator I
+Large Energy Collision Accelerator I;10;300;1;NULL
+Large Energy Collision Accelerator II;10;10;2;Large Energy Collision Accelerator I
+Large Energy Discharge Elutriation I;10;300;1;NULL
+Large Energy Discharge Elutriation II;10;10;2;Large Energy Discharge Elutriation I
+Large Energy Locus Coordinator I;10;300;1;NULL
+Large Energy Locus Coordinator II;10;10;2;Large Energy Locus Coordinator I
+Large Energy Metastasis Adjuster I;10;300;1;NULL
+Large Energy Metastasis Adjuster II;10;10;2;Large Energy Metastasis Adjuster I
+Large Energy Transfer Array I;10;300;1;NULL
+Large Energy Transfer Array II;10;100;2;Large Energy Transfer Array I
+Large Engine Thermal Shielding I;10;300;1;NULL
+Large Engine Thermal Shielding II;10;10;2;Large Engine Thermal Shielding I
+Large Graviton Smartbomb I;10;300;1;NULL
+Large Graviton Smartbomb II;10;100;2;Large Graviton Smartbomb I
+Large Gravity Capacitor Upgrade I;10;300;1;NULL
+Large Gravity Capacitor Upgrade II;10;10;2;Large Gravity Capacitor Upgrade I
+Large Hull Repairer I;10;300;1;NULL
+Large Hull Repairer II;10;100;2;Large Hull Repairer I
+Large Hybrid Ambit Extension I;10;300;1;NULL
+Large Hybrid Ambit Extension II;10;10;2;Large Hybrid Ambit Extension I
+Large Hybrid Burst Aerator I;10;300;1;NULL
+Large Hybrid Burst Aerator II;10;10;2;Large Hybrid Burst Aerator I
+Large Hybrid Collision Accelerator I;10;300;1;NULL
+Large Hybrid Collision Accelerator II;10;10;2;Large Hybrid Collision Accelerator I
+Large Hybrid Discharge Elutriation I;10;300;1;NULL
+Large Hybrid Discharge Elutriation II;10;10;2;Large Hybrid Discharge Elutriation I
+Large Hybrid Locus Coordinator I;10;300;1;NULL
+Large Hybrid Locus Coordinator II;10;10;2;Large Hybrid Locus Coordinator I
+Large Hybrid Metastasis Adjuster I;10;300;1;NULL
+Large Hybrid Metastasis Adjuster II;10;10;2;Large Hybrid Metastasis Adjuster I
+Large Hydraulic Bay Thrusters I;10;300;1;NULL
+Large Hydraulic Bay Thrusters II;10;10;2;Large Hydraulic Bay Thrusters I
+Large Hyperspatial Velocity Optimizer I;10;300;1;NULL
+Large Hyperspatial Velocity Optimizer II;10;10;2;Large Hyperspatial Velocity Optimizer I
+Large 'Integrative' Hull Repair Unit;10;1000;1;Large Hull Repairer I
+Large Inverted Signal Field Projector I;10;300;1;NULL
+Large Inverted Signal Field Projector II;10;10;2;Large Inverted Signal Field Projector I
+Large Ionic Field Projector I;10;300;1;NULL
+Large Ionic Field Projector II;10;10;2;Large Ionic Field Projector I
+Large Liquid Cooled Electronics I;10;300;1;NULL
+Large Liquid Cooled Electronics II;10;10;2;Large Liquid Cooled Electronics I
+Large Low Friction Nozzle Joints I;10;300;1;NULL
+Large Low Friction Nozzle Joints II;10;10;2;Large Low Friction Nozzle Joints I
+Large Memetic Algorithm Bank I;10;300;1;NULL
+Large Memetic Algorithm Bank II;10;10;2;Large Memetic Algorithm Bank I
+Large Nanobot Accelerator I;10;300;1;NULL
+Large Nanobot Accelerator II;10;10;2;Large Nanobot Accelerator I
+Large 'Outlaw' Shield Booster;10;1000;1;Large Shield Booster I
+Large Particle Dispersion Augmentor I;10;300;1;NULL
+Large Particle Dispersion Augmentor II;10;10;2;Large Particle Dispersion Augmentor I
+Large Particle Dispersion Projector I;10;300;1;NULL
+Large Particle Dispersion Projector II;10;10;2;Large Particle Dispersion Projector I
+Large Plasma Smartbomb I;10;300;1;NULL
+Large Plasma Smartbomb II;10;100;2;Large Plasma Smartbomb I
+Large Polycarbon Engine Housing I;10;300;1;NULL
+Large Polycarbon Engine Housing II;10;10;2;Large Polycarbon Engine Housing I
+Large Powergrid Subroutine Maximizer I;10;300;1;NULL
+Large Powergrid Subroutine Maximizer II;10;10;2;Large Powergrid Subroutine Maximizer I
+Large Projectile Ambit Extension I;10;300;1;NULL
+Large Projectile Ambit Extension II;10;10;2;Large Projectile Ambit Extension I
+Large Projectile Burst Aerator I;10;300;1;NULL
+Large Projectile Burst Aerator II;10;10;2;Large Projectile Burst Aerator I
+Large Projectile Collision Accelerator I;10;300;1;NULL
+Large Projectile Collision Accelerator II;10;10;2;Large Projectile Collision Accelerator I
+Large Projectile Locus Coordinator I;10;300;1;NULL
+Large Projectile Locus Coordinator II;10;10;2;Large Projectile Locus Coordinator I
+Large Projectile Metastasis Adjuster I;10;300;1;NULL
+Large Projectile Metastasis Adjuster II;10;10;2;Large Projectile Metastasis Adjuster I
+Large Proton Smartbomb I;10;300;1;NULL
+Large Proton Smartbomb II;10;100;2;Large Proton Smartbomb I
+Large Pulse Laser Battery;10;5;1;NULL
+Large Railgun Battery;10;5;1;NULL
+Large Remote Armor Repair System I;10;300;1;NULL
+Large Remote Armor Repair System II;10;100;2;Large Remote Armor Repair System I
+Large Remote Hull Repair System I;10;300;1;NULL
+Large Remote Hull Repair System II;10;100;2;Large Remote Hull Repair System I
+Large Remote Repair Augmentor I;10;300;1;NULL
+Large Remote Repair Augmentor II;10;10;2;Large Remote Repair Augmentor I
+Large Rocket Fuel Cache Partition I;10;300;1;NULL
+Large Rocket Fuel Cache Partition II;10;10;2;Large Rocket Fuel Cache Partition I
+Large Salvage Tackle I;10;300;1;NULL
+Large Salvage Tackle II;10;10;2;Large Salvage Tackle I
+Large Semiconductor Memory Cell I;10;300;1;NULL
+Large Semiconductor Memory Cell II;10;10;2;Large Semiconductor Memory Cell I
+Large Sentry Damage Augmentor I;10;300;1;NULL
+Large Sentry Damage Augmentor II;10;10;2;Large Sentry Damage Augmentor I
+Large 'Sheriff' Shield Extender;10;1000;1;Large Shield Extender I
+Large Shield Booster I;10;300;1;NULL
+Large Shield Booster II;10;100;2;Large Shield Booster I
+Large Shield Extender I;10;300;1;NULL
+Large Shield Extender II;10;100;2;Large Shield Extender I
+Large Shield Transporter I;10;300;1;NULL
+Large Shield Transporter II;10;100;2;Large Shield Transporter I
+Large Ship Assembly Array;10;5;1;NULL
+Large Signal Disruption Amplifier I;10;300;1;NULL
+Large Signal Disruption Amplifier II;10;10;2;Large Signal Disruption Amplifier I
+Large Signal Focusing Kit I;10;300;1;NULL
+Large Signal Focusing Kit II;10;10;2;Large Signal Focusing Kit I
+Large Stasis Drone Augmentor I;10;300;1;NULL
+Large Stasis Drone Augmentor II;10;10;2;Large Stasis Drone Augmentor I
+Large Targeting System Subcontroller I;10;300;1;NULL
+Large Targeting System Subcontroller II;10;10;2;Large Targeting System Subcontroller I
+Large Targeting Systems Stabilizer I;10;300;1;NULL
+Large Targeting Systems Stabilizer II;10;10;2;Large Targeting Systems Stabilizer I
+Large Tracking Diagnostic Subroutines I;10;300;1;NULL
+Large Tracking Diagnostic Subroutines II;10;10;2;Large Tracking Diagnostic Subroutines I
+Large Trimark Armor Pump I;10;300;1;NULL
+Large Trimark Armor Pump II;10;10;2;Large Trimark Armor Pump I
+Large Warhead Calefaction Catalyst I;10;300;1;NULL
+Large Warhead Calefaction Catalyst II;10;10;2;Large Warhead Calefaction Catalyst I
+Large Warhead Flare Catalyst I;10;300;1;NULL
+Large Warhead Flare Catalyst II;10;10;2;Large Warhead Flare Catalyst I
+Large Warhead Rigor Catalyst I;10;300;1;NULL
+Large Warhead Rigor Catalyst II;10;10;2;Large Warhead Rigor Catalyst I
+Large Warp Core Optimizer I;10;300;1;NULL
+Large Warp Core Optimizer II;10;10;2;Large Warp Core Optimizer I
+Laser Focusing Crystals;10;1000;2;NULL
+Lead Charge L;10;1500;1;NULL
+Lead Charge M;10;1500;1;NULL
+Lead Charge S;10;1500;1;NULL
+Lead Charge XL;10;1000;1;NULL
+Legion;0;20;3;NULL
+Legion Defensive - Adaptive Augmenter;0;1000;3;NULL
+Legion Defensive - Augmented Plating;0;1000;3;Legion Defensive - Adaptive Augmenter
+Legion Defensive - Nanobot Injector;0;1000;3;Legion Defensive - Adaptive Augmenter
+Legion Defensive - Warfare Processor;0;1000;3;Legion Defensive - Adaptive Augmenter
+Legion Electronics - Dissolution Sequencer;0;1000;3;Legion Electronics - Energy Parasitic Complex
+Legion Electronics - Emergent Locus Analyzer;0;1000;3;Legion Electronics - Energy Parasitic Complex
+Legion Electronics - Energy Parasitic Complex;0;1000;3;NULL
+Legion Electronics - Tactical Targeting Network;0;1000;3;Legion Electronics - Energy Parasitic Complex
+Legion Engineering - Augmented Capacitor Reservoir;0;1000;3;Legion Engineering - Power Core Multiplier
+Legion Engineering - Capacitor Regeneration Matrix;0;1000;3;Legion Engineering - Power Core Multiplier
+Legion Engineering - Power Core Multiplier;0;1000;3;NULL
+Legion Engineering - Supplemental Coolant Injector;0;1000;3;Legion Engineering - Power Core Multiplier
+Legion Offensive - Assault Optimization;0;1000;3;Legion Offensive - Drone Synthesis Projector
+Legion Offensive - Covert Reconfiguration;0;1000;3;Legion Offensive - Drone Synthesis Projector
+Legion Offensive - Drone Synthesis Projector;0;1000;3;NULL
+Legion Offensive - Liquid Crystal Magnifiers;0;1000;3;Legion Offensive - Drone Synthesis Projector
+Legion Propulsion - Chassis Optimization;0;1000;3;NULL
+Legion Propulsion - Fuel Catalyst;0;1000;3;Legion Propulsion - Chassis Optimization
+Legion Propulsion - Interdiction Nullifier;0;1000;3;Legion Propulsion - Chassis Optimization
+Legion Propulsion - Wake Limiter;0;1000;3;Legion Propulsion - Chassis Optimization
+Leviathan;10;1;1;NULL
+'Libram' Codebreaker I;10;1000;1;NULL
+Light Armor Maintenance Bot I;10;1500;1;NULL
+Light Armor Maintenance Bot II;10;100;2;Light Armor Maintenance Bot I
+Light Electron Blaster I;10;300;1;NULL
+Light Electron Blaster II;10;100;2;Light Electron Blaster I
+Light Ion Blaster I;10;300;1;NULL
+Light Ion Blaster II;10;100;2;Light Ion Blaster I
+Light Neutron Blaster I;10;300;1;NULL
+Light Neutron Blaster II;10;100;2;Light Neutron Blaster I
+Light Shield Maintenance Bot I;10;1500;1;NULL
+Light Shield Maintenance Bot II;10;100;2;Light Shield Maintenance Bot I
+Limited Expanded 'Archiver' Cargo I;10;1000;1;Expanded Cargohold I
+Limited Mega Ion Siege Blaster I;10;1000;1;Ion Siege Blaster Cannon I
+'Limos' Citadel Cruise Launcher I;10;1000;1;Citadel Cruise Launcher I
+Linear Shield Emitter;10;1000;2;NULL
+Lockbreaker Bomb;10;300;1;NULL
+Loki;0;20;3;NULL
+Loki Defensive - Adaptive Augmenter;0;1000;3;Loki Defensive - Adaptive Shielding
+Loki Defensive - Adaptive Shielding;0;1000;3;NULL
+Loki Defensive - Amplification Node;0;1000;3;Loki Defensive - Adaptive Shielding
+Loki Defensive - Warfare Processor;0;1000;3;Loki Defensive - Adaptive Shielding
+Loki Electronics - Dissolution Sequencer;0;1000;3;Loki Electronics - Immobility Drivers
+Loki Electronics - Emergent Locus Analyzer;0;1000;3;Loki Electronics - Immobility Drivers
+Loki Electronics - Immobility Drivers;0;1000;3;NULL
+Loki Electronics - Tactical Targeting Network;0;1000;3;Loki Electronics - Immobility Drivers
+Loki Engineering - Augmented Capacitor Reservoir;0;1000;3;Loki Engineering - Power Core Multiplier
+Loki Engineering - Capacitor Regeneration Matrix;0;1000;3;Loki Engineering - Power Core Multiplier
+Loki Engineering - Power Core Multiplier;0;1000;3;NULL
+Loki Engineering - Supplemental Coolant Injector;0;1000;3;Loki Engineering - Power Core Multiplier
+Loki Offensive - Covert Reconfiguration;0;1000;3;Loki Offensive - Turret Concurrence Registry
+Loki Offensive - Hardpoint Efficiency Configuration;0;1000;3;Loki Offensive - Turret Concurrence Registry
+Loki Offensive - Projectile Scoping Array;0;1000;3;Loki Offensive - Turret Concurrence Registry
+Loki Offensive - Turret Concurrence Registry;0;1000;3;NULL
+Loki Propulsion - Chassis Optimization;0;1000;3;NULL
+Loki Propulsion - Fuel Catalyst;0;1000;3;Loki Propulsion - Chassis Optimization
+Loki Propulsion - Intercalated Nanofibers;0;1000;3;Loki Propulsion - Chassis Optimization
+Loki Propulsion - Interdiction Nullifier;0;1000;3;Loki Propulsion - Chassis Optimization
+'Longbow' Medium Pulse Laser I;10;1000;1;Medium Pulse Laser I
+'Love' Medium Remote Armor Repair System I;10;1000;1;Medium Remote Armor Repair System I
+'Mace' Dual Light Beam Laser I;10;1000;1;Dual Light Beam Laser I
+Machariel;10;10;1;NULL
+Mackinaw;10;10;2;Retriever
+Maelstrom;10;10;1;NULL
+'Mafia' Energized Magnetic Membrane I;10;1000;1;Energized Magnetic Membrane I
+Magnate;10;30;1;NULL
+Magnetic Field Stabilizer I;10;300;1;NULL
+Magnetic Field Stabilizer II;10;100;2;Magnetic Field Stabilizer I
+Magnetic Plating I;10;300;1;NULL
+Magnetic Plating II;10;100;2;Magnetic Plating I
+Magnetic Scattering Amplifier I;10;300;1;NULL
+Magnetic Scattering Amplifier II;10;100;2;Magnetic Scattering Amplifier I
+Magnetometric Backup Array I;10;300;1;NULL
+Magnetometric Backup Array II;10;100;2;Magnetometric Backup Array I
+Magnetometric Firewall;10;1000;1;Magnetometric Backup Array I
+Magnetometric Sensor Cluster;10;1000;2;NULL
+Magpulse Thruster;10;1000;2;NULL
+Malediction;10;10;2;Executioner
+Malice;10;1000;2;NULL
+Maller;10;15;1;NULL
+Malleus;10;10;1;NULL
+Mammoth;10;15;1;NULL
+Mangled Sansha Codebreaker;10;1000;1;NULL
+'Mangonel' Heat Sink I;10;1000;1;Heat Sink I
+Manticore;10;10;2;Kestrel
+Mantis;10;10;1;NULL
+'Marketeer' Tracking Computer I;10;1000;1;Tracking Computer I
+'Marshall' Ion Field Projector;10;1000;2;ECM - Ion Field Projector I
+Mastodon;10;10;2;Mammoth
+Maulus;10;30;1;NULL
+'Meditation' Medium Armor Repairer I;10;1000;1;Medium Armor Repairer I
+Medium Algid Energy Administrations Unit I;10;300;1;NULL
+Medium Algid Energy Administrations Unit II;10;10;2;Medium Algid Energy Administrations Unit I
+Medium Algid Hybrid Administrations Unit I;10;300;1;NULL
+Medium Algid Hybrid Administrations Unit II;10;10;2;Medium Algid Hybrid Administrations Unit I
+Medium Ancillary Current Router I;10;300;1;NULL
+Medium Ancillary Current Router II;10;10;2;Medium Ancillary Current Router I
+Medium Anti-EM Pump I;10;300;1;NULL
+Medium Anti-EM Pump II;10;10;2;Medium Anti-EM Pump I
+Medium Anti-EM Screen Reinforcer I;10;300;1;NULL
+Medium Anti-EM Screen Reinforcer II;10;10;2;Medium Anti-EM Screen Reinforcer I
+Medium Anti-Explosive Pump I;10;300;1;NULL
+Medium Anti-Explosive Pump II;10;10;2;Medium Anti-Explosive Pump I
+Medium Anti-Explosive Screen Reinforcer I;10;300;1;NULL
+Medium Anti-Explosive Screen Reinforcer II;10;10;2;Medium Anti-Explosive Screen Reinforcer I
+Medium Anti-Kinetic Pump I;10;300;1;NULL
+Medium Anti-Kinetic Pump II;10;10;2;Medium Anti-Kinetic Pump I
+Medium Anti-Kinetic Screen Reinforcer I;10;300;1;NULL
+Medium Anti-Kinetic Screen Reinforcer II;10;10;2;Medium Anti-Kinetic Screen Reinforcer I
+Medium Anti-Thermal Screen Reinforcer I;10;300;1;NULL
+Medium Anti-Thermal Screen Reinforcer II;10;10;2;Medium Anti-Thermal Screen Reinforcer I
+Medium Anti-Thermic Pump I;10;300;1;NULL
+Medium Anti-Thermic Pump II;10;10;2;Medium Anti-Thermic Pump I
+Medium Armor Maintenance Bot I;10;1500;1;NULL
+Medium Armor Maintenance Bot II;10;100;2;Medium Armor Maintenance Bot I
+Medium Armor Repairer I;10;300;1;NULL
+Medium Armor Repairer II;10;100;2;Medium Armor Repairer I
+Medium Artillery Battery;10;5;1;NULL
+Medium AutoCannon Battery;10;5;1;NULL
+Medium Auxiliary Nano Pump I;10;300;1;NULL
+Medium Auxiliary Nano Pump II;10;10;2;Medium Auxiliary Nano Pump I
+Medium Auxiliary Thrusters I;10;300;1;NULL
+Medium Auxiliary Thrusters II;10;10;2;Medium Auxiliary Thrusters I
+Medium Bay Loading Accelerator I;10;300;1;NULL
+Medium Bay Loading Accelerator II;10;10;2;Medium Bay Loading Accelerator I
+Medium Beam Laser Battery;10;5;1;NULL
+Medium Beam Laser I;10;300;1;NULL
+Medium Beam Laser II;10;100;2;Medium Beam Laser I
+Medium Biochemical Reactor Array;10;5;1;NULL
+Medium Blaster Battery;10;5;1;NULL
+Medium 'Canyon' Shield Extender;10;1000;1;Medium Shield Extender I
+Medium Capacitor Battery I;10;300;1;NULL
+Medium Capacitor Battery II;10;100;2;Medium Capacitor Battery I
+Medium Capacitor Booster I;10;300;1;NULL
+Medium Capacitor Booster II;10;100;2;Medium Capacitor Booster I
+Medium Capacitor Control Circuit I;10;300;1;NULL
+Medium Capacitor Control Circuit II;10;10;2;Medium Capacitor Control Circuit I
+Medium Cargohold Optimization I;10;300;1;NULL
+Medium Cargohold Optimization II;10;10;2;Medium Cargohold Optimization I
+Medium Core Defence Capacitor Safeguard I;10;300;1;NULL
+Medium Core Defence Capacitor Safeguard II;10;10;2;Medium Core Defence Capacitor Safeguard I
+Medium Core Defence Charge Economizer I;10;300;1;NULL
+Medium Core Defence Charge Economizer II;10;10;2;Medium Core Defence Charge Economizer I
+Medium Core Defence Field Extender I;10;300;1;NULL
+Medium Core Defence Field Extender II;10;10;2;Medium Core Defence Field Extender I
+Medium Core Defence Field Purger I;10;300;1;NULL
+Medium Core Defence Field Purger II;10;10;2;Medium Core Defence Field Purger I
+Medium Core Defence Operational Solidifier I;10;300;1;NULL
+Medium Core Defence Operational Solidifier II;10;10;2;Medium Core Defence Operational Solidifier I
+Medium Degenerative Concussion Bomb I;10;1000;1;Medium Proton Smartbomb I
+Medium Drone Control Range Augmentor I;10;300;1;NULL
+Medium Drone Control Range Augmentor II;10;10;2;Medium Drone Control Range Augmentor I
+Medium Drone Durability Enhancer I;10;300;1;NULL
+Medium Drone Durability Enhancer II;10;10;2;Medium Drone Durability Enhancer I
+Medium Drone Mining Augmentor I;10;300;1;NULL
+Medium Drone Mining Augmentor II;10;10;2;Medium Drone Mining Augmentor I
+Medium Drone Repair Augmentor I;10;300;1;NULL
+Medium Drone Repair Augmentor II;10;10;2;Medium Drone Repair Augmentor I
+Medium Drone Scope Chip I;10;300;1;NULL
+Medium Drone Scope Chip II;10;10;2;Medium Drone Scope Chip I
+Medium Drone Speed Augmentor I;10;300;1;NULL
+Medium Drone Speed Augmentor II;10;10;2;Medium Drone Speed Augmentor I
+Medium Dynamic Fuel Valve I;10;300;1;NULL
+Medium Dynamic Fuel Valve II;10;10;2;Medium Dynamic Fuel Valve I
+Medium Egress Port Maximizer I;10;300;1;NULL
+Medium Egress Port Maximizer II;10;10;2;Medium Egress Port Maximizer I
+Medium Emission Scope Sharpener I;10;300;1;NULL
+Medium Emission Scope Sharpener II;10;10;2;Medium Emission Scope Sharpener I
+Medium EMP Smartbomb I;10;300;1;NULL
+Medium EMP Smartbomb II;10;100;2;Medium EMP Smartbomb I
+Medium Energy Ambit Extension I;10;300;1;NULL
+Medium Energy Ambit Extension II;10;10;2;Medium Energy Ambit Extension I
+Medium Energy Burst Aerator I;10;300;1;NULL
+Medium Energy Burst Aerator II;10;10;2;Medium Energy Burst Aerator I
+Medium Energy Collision Accelerator I;10;300;1;NULL
+Medium Energy Collision Accelerator II;10;10;2;Medium Energy Collision Accelerator I
+Medium Energy Discharge Elutriation I;10;300;1;NULL
+Medium Energy Discharge Elutriation II;10;10;2;Medium Energy Discharge Elutriation I
+Medium Energy Locus Coordinator I;10;300;1;NULL
+Medium Energy Locus Coordinator II;10;10;2;Medium Energy Locus Coordinator I
+Medium Energy Metastasis Adjuster I;10;300;1;NULL
+Medium Energy Metastasis Adjuster II;10;10;2;Medium Energy Metastasis Adjuster I
+Medium Energy Neutralizer I;10;300;1;NULL
+Medium Energy Neutralizer II;10;100;2;Medium Energy Neutralizer I
+Medium Energy Transfer Array I;10;300;1;NULL
+Medium Energy Transfer Array II;10;100;1;Medium Energy Transfer Array I
+Medium Engine Thermal Shielding I;10;300;1;NULL
+Medium Engine Thermal Shielding II;10;10;2;Medium Engine Thermal Shielding I
+Medium 'Gattotte' Capacitor Booster;10;1000;2;Medium Capacitor Booster I
+Medium Graviton Smartbomb I;10;300;1;NULL
+Medium Graviton Smartbomb II;10;100;2;Medium Graviton Smartbomb I
+Medium Gravity Capacitor Upgrade I;10;300;1;NULL
+Medium Gravity Capacitor Upgrade II;10;10;2;Medium Gravity Capacitor Upgrade I
+Medium Hull Repairer I;10;300;1;NULL
+Medium Hull Repairer II;10;100;2;Medium Hull Repairer I
+Medium Hybrid Ambit Extension I;10;300;1;NULL
+Medium Hybrid Ambit Extension II;10;10;2;Medium Hybrid Ambit Extension I
+Medium Hybrid Burst Aerator I;10;300;1;NULL
+Medium Hybrid Burst Aerator II;10;10;2;Medium Hybrid Burst Aerator I
+Medium Hybrid Collision Accelerator I;10;300;1;NULL
+Medium Hybrid Collision Accelerator II;10;10;2;Medium Hybrid Collision Accelerator I
+Medium Hybrid Discharge Elutriation I;10;300;1;NULL
+Medium Hybrid Discharge Elutriation II;10;10;2;Medium Hybrid Discharge Elutriation I
+Medium Hybrid Locus Coordinator I;10;300;1;NULL
+Medium Hybrid Locus Coordinator II;10;10;2;Medium Hybrid Locus Coordinator I
+Medium Hybrid Metastasis Adjuster I;10;300;1;NULL
+Medium Hybrid Metastasis Adjuster II;10;10;2;Medium Hybrid Metastasis Adjuster I
+Medium Hydraulic Bay Thrusters I;10;300;1;NULL
+Medium Hydraulic Bay Thrusters II;10;10;2;Medium Hydraulic Bay Thrusters I
+Medium Hyperspatial Velocity Optimizer I;10;300;1;NULL
+Medium Hyperspatial Velocity Optimizer II;10;10;2;Medium Hyperspatial Velocity Optimizer I
+Medium 'Integrative' Hull Repair Unit;10;1000;1;Medium Hull Repairer I
+Medium Intensive Refining Array;10;5;1;NULL
+Medium Inverted Signal Field Projector I;10;300;1;NULL
+Medium Inverted Signal Field Projector II;10;10;2;Medium Inverted Signal Field Projector I
+Medium Ionic Field Projector I;10;300;1;NULL
+Medium Ionic Field Projector II;10;10;2;Medium Ionic Field Projector I
+Medium Liquid Cooled Electronics I;10;300;1;NULL
+Medium Liquid Cooled Electronics II;10;10;2;Medium Liquid Cooled Electronics I
+Medium 'Lone Ranger' Shield Booster;10;1000;1;Medium Shield Booster I
+Medium Low Friction Nozzle Joints I;10;300;1;NULL
+Medium Low Friction Nozzle Joints II;10;10;2;Medium Low Friction Nozzle Joints I
+Medium Memetic Algorithm Bank I;10;300;1;NULL
+Medium Memetic Algorithm Bank II;10;10;2;Medium Memetic Algorithm Bank I
+Medium Nanobot Accelerator I;10;300;1;NULL
+Medium Nanobot Accelerator II;10;10;2;Medium Nanobot Accelerator I
+Medium Nosferatu I;10;300;1;NULL
+Medium Nosferatu II;10;100;2;Medium Nosferatu I
+Medium Particle Dispersion Augmentor I;10;300;1;NULL
+Medium Particle Dispersion Augmentor II;10;10;2;Medium Particle Dispersion Augmentor I
+Medium Particle Dispersion Projector I;10;300;1;NULL
+Medium Particle Dispersion Projector II;10;10;2;Medium Particle Dispersion Projector I
+Medium Plasma Smartbomb I;10;300;1;NULL
+Medium Plasma Smartbomb II;10;100;2;Medium Plasma Smartbomb I
+Medium Polycarbon Engine Housing I;10;300;1;NULL
+Medium Polycarbon Engine Housing II;10;10;2;Medium Polycarbon Engine Housing I
+Medium Powergrid Subroutine Maximizer I;10;300;1;NULL
+Medium Powergrid Subroutine Maximizer II;10;10;2;Medium Powergrid Subroutine Maximizer I
+Medium Projectile Ambit Extension I;10;300;1;NULL
+Medium Projectile Ambit Extension II;10;10;2;Medium Projectile Ambit Extension I
+Medium Projectile Burst Aerator I;10;300;1;NULL
+Medium Projectile Burst Aerator II;10;10;2;Medium Projectile Burst Aerator I
+Medium Projectile Collision Accelerator I;10;300;1;NULL
+Medium Projectile Collision Accelerator II;10;10;2;Medium Projectile Collision Accelerator I
+Medium Projectile Locus Coordinator I;10;300;1;NULL
+Medium Projectile Locus Coordinator II;10;10;2;Medium Projectile Locus Coordinator I
+Medium Projectile Metastasis Adjuster I;10;300;1;NULL
+Medium Projectile Metastasis Adjuster II;10;10;2;Medium Projectile Metastasis Adjuster I
+Medium Proton Smartbomb I;10;300;1;NULL
+Medium Proton Smartbomb II;10;100;2;Medium Proton Smartbomb I
+Medium Pulse Laser Battery;10;5;1;NULL
+Medium Pulse Laser I;10;300;1;NULL
+Medium Pulse Laser II;10;100;2;Medium Pulse Laser I
+Medium Railgun Battery;10;5;1;NULL
+Medium Remote Armor Repair System I;10;300;1;NULL
+Medium Remote Armor Repair System II;10;100;2;Medium Remote Armor Repair System I
+Medium Remote Hull Repair System I;10;300;1;NULL
+Medium Remote Hull Repair System II;10;100;2;Medium Remote Hull Repair System I
+Medium Remote Repair Augmentor I;10;300;1;NULL
+Medium Remote Repair Augmentor II;10;10;2;Medium Remote Repair Augmentor I
+Medium Rocket Fuel Cache Partition I;10;300;1;NULL
+Medium Rocket Fuel Cache Partition II;10;10;2;Medium Rocket Fuel Cache Partition I
+Medium Salvage Tackle I;10;300;1;NULL
+Medium Salvage Tackle II;10;10;2;Medium Salvage Tackle I
+Medium Semiconductor Memory Cell I;10;300;1;NULL
+Medium Semiconductor Memory Cell II;10;10;2;Medium Semiconductor Memory Cell I
+Medium Sentry Damage Augmentor I;10;300;1;NULL
+Medium Sentry Damage Augmentor II;10;10;2;Medium Sentry Damage Augmentor I
+Medium Shield Booster I;10;300;1;NULL
+Medium Shield Booster II;10;100;2;Medium Shield Booster I
+Medium Shield Extender I;10;300;1;NULL
+Medium Shield Extender II;10;100;2;Medium Shield Extender I
+Medium Shield Maintenance Bot I;10;1500;1;NULL
+Medium Shield Maintenance Bot II;10;100;2;Medium Shield Maintenance Bot I
+Medium Shield Transporter I;10;300;1;NULL
+Medium Shield Transporter II;10;100;2;Medium Shield Transporter I
+Medium Ship Assembly Array;10;5;1;NULL
+Medium Signal Disruption Amplifier I;10;300;1;NULL
+Medium Signal Disruption Amplifier II;10;10;2;Medium Signal Disruption Amplifier I
+Medium Signal Focusing Kit I;10;300;1;NULL
+Medium Signal Focusing Kit II;10;10;2;Medium Signal Focusing Kit I
+Medium Stasis Drone Augmentor I;10;300;1;NULL
+Medium Stasis Drone Augmentor II;10;10;2;Medium Stasis Drone Augmentor I
+Medium Targeting System Subcontroller I;10;300;1;NULL
+Medium Targeting System Subcontroller II;10;10;2;Medium Targeting System Subcontroller I
+Medium Targeting Systems Stabilizer I;10;300;1;NULL
+Medium Targeting Systems Stabilizer II;10;10;2;Medium Targeting Systems Stabilizer I
+Medium Tracking Diagnostic Subroutines I;10;300;1;NULL
+Medium Tracking Diagnostic Subroutines II;10;10;2;Medium Tracking Diagnostic Subroutines I
+Medium Trimark Armor Pump I;10;300;1;NULL
+Medium Trimark Armor Pump II;10;10;2;Medium Trimark Armor Pump I
+Medium Warhead Calefaction Catalyst I;10;300;1;NULL
+Medium Warhead Calefaction Catalyst II;10;10;2;Medium Warhead Calefaction Catalyst I
+Medium Warhead Flare Catalyst I;10;300;1;NULL
+Medium Warhead Flare Catalyst II;10;10;2;Medium Warhead Flare Catalyst I
+Medium Warhead Rigor Catalyst I;10;300;1;NULL
+Medium Warhead Rigor Catalyst II;10;10;2;Medium Warhead Rigor Catalyst I
+Medium Warp Core Optimizer I;10;300;1;NULL
+Medium Warp Core Optimizer II;10;10;2;Medium Warp Core Optimizer I
+Mega Beam Laser I;10;300;1;NULL
+Mega Beam Laser II;10;100;2;Mega Beam Laser I
+Mega Pulse Laser I;10;300;1;NULL
+Mega Pulse Laser II;10;100;2;Mega Pulse Laser I
+Megathron;10;10;1;NULL
+Megathron Federate Issue;10;10;1;Megathron
+Megathron Navy Issue;10;10;1;Megathron
+Mercoxit Mining Crystal I;10;100;2;NULL
+Mercoxit Mining Crystal II;10;100;2;Mercoxit Mining Crystal I
+Merlin;10;30;1;NULL
+Metallofullerene Plating;10;1000;3;NULL
+Micro Auxiliary Power Core I;10;300;1;NULL
+Micro Auxiliary Power Core II;10;100;2;Micro Auxiliary Power Core I
+Microwave L;10;1500;1;NULL
+Microwave M;10;1500;1;NULL
+Microwave S;10;1500;1;NULL
+Microwave XL;10;1000;1;NULL
+Miner I;10;300;1;NULL
+Miner II;10;100;2;Miner I
+Mining Drone I;10;1500;1;NULL
+Mining Drone II;10;100;2;Mining Drone I
+Mining Foreman Link - Harvester Capacitor Efficiency I;5;300;1;NULL
+Mining Foreman Link - Harvester Capacitor Efficiency II;5;100;2;Mining Foreman Link - Harvester Capacitor Efficiency I
+Mining Foreman Link - Laser Optimization I;5;300;1;NULL
+Mining Foreman Link - Laser Optimization II;5;100;2;Mining Foreman Link - Laser Optimization I
+Mining Foreman Link - Mining Laser Field Enhancement I;5;300;1;NULL
+Mining Foreman Link - Mining Laser Field Enhancement II;5;100;2;Mining Foreman Link - Mining Laser Field Enhancement I
+Mining Laser Upgrade I;10;300;1;NULL
+Mining Laser Upgrade II;10;100;2;Mining Laser Upgrade I
+Minmatar Control Tower;10;5;1;NULL
+Minmatar Control Tower Medium;10;5;1;NULL
+Minmatar Control Tower Small;10;5;1;NULL
+Minmatar Fuel Block;5;300;1;NULL
+Minmatar Service Outpost Platform;10;1;1;NULL
+Minmatar Shuttle;10;30;1;NULL
+Mjolnir Assault Missile;10;1500;1;NULL
+Mjolnir Citadel Cruise Missile;10;1000;1;NULL
+Mjolnir Citadel Torpedo;10;1000;1;NULL
+Mjolnir Cruise Missile;10;1500;1;NULL
+Mjolnir Fury Cruise Missile;10;100;2;Mjolnir Cruise Missile
+Mjolnir Fury Heavy Missile;10;100;2;Mjolnir Heavy Missile
+Mjolnir Fury Light Missile;10;100;2;Mjolnir Light Missile
+Mjolnir Heavy Missile;10;1500;1;NULL
+Mjolnir Javelin Assault Missile;10;100;2;Mjolnir Assault Missile
+Mjolnir Javelin Rocket;10;100;2;Mjolnir Rocket
+Mjolnir Javelin Torpedo;10;100;2;Mjolnir Torpedo
+Mjolnir Light Missile;10;1500;1;NULL
+Mjolnir Precision Cruise Missile;10;100;2;Mjolnir Cruise Missile
+Mjolnir Precision Heavy Missile;10;100;2;Mjolnir Heavy Missile
+Mjolnir Precision Light Missile;10;100;2;Mjolnir Light Missile
+Mjolnir Rage Assault Missile;10;100;2;Mjolnir Assault Missile
+Mjolnir Rage Rocket;10;100;2;Mjolnir Rocket
+Mjolnir Rage Torpedo;10;100;2;Mjolnir Torpedo
+Mjolnir Rocket;10;1500;1;NULL
+Mjolnir Torpedo;10;1500;1;NULL
+Moa;10;15;1;NULL
+'Moat' Heavy Energy Neutralizer I;10;1000;1;Heavy Energy Neutralizer I
+Mobile Laboratory;10;5;1;NULL
+Mobile Large Warp Disruptor I;10;10;1;NULL
+Mobile Large Warp Disruptor II;10;50;2;Mobile Large Warp Disruptor I
+Mobile Medium Warp Disruptor I;10;10;1;NULL
+Mobile Medium Warp Disruptor II;10;50;2;Mobile Medium Warp Disruptor I
+Mobile Small Warp Disruptor I;10;10;1;NULL
+Mobile Small Warp Disruptor II;10;50;2;Mobile Small Warp Disruptor I
+Modified Augumene Antidote;5;1;1;NULL
+Modulated Deep Core Miner II;10;100;2;Deep Core Mining Laser I
+Modulated Deep Core Strip Miner II;10;100;2;Strip Miner I
+Modulated Strip Miner II;10;100;2;Strip Miner I
+'Monopoly' Magnetic Field Stabilizer I;10;1000;1;Magnetic Field Stabilizer I
+Moon Harvesting Array;10;5;1;NULL
+'Moonshine' Energized Thermic Membrane I;10;1000;1;Energized Thermic Membrane I
+Moros;10;1;1;NULL
+'Motte' Capacitor Power Relay I;10;1000;1;Capacitor Power Relay I
+Multi Sensor Backup Array I;10;300;1;NULL
+Multi Sensor Backup Array II;10;100;2;Multi Sensor Backup Array I
+Multi Sensor Firewall;10;1000;1;Multi Sensor Backup Array I
+Multifrequency L;10;1500;1;NULL
+Multifrequency M;10;1500;1;NULL
+Multifrequency S;10;1500;1;NULL
+Multifrequency XL;10;1000;1;NULL
+Muninn;10;10;2;Rupture
+Myrmidon;10;15;1;NULL
+N-1 Neon Type Rocket Bay;10;1000;1;Rocket Launcher I
+Naga;10;15;1;NULL
+Naglfar;10;1;1;NULL
+Nanite Repair Paste;10;5;1;NULL
+Nano Paint;10;1000;1;NULL
+Nanoelectrical Microprocessor;10;1000;2;NULL
+Nanofiber Internal Structure I;10;300;1;NULL
+Nanofiber Internal Structure II;10;100;2;Nanofiber Internal Structure I
+Nanomechanical Microprocessor;10;1000;2;NULL
+Nanowire Composites;10;1000;3;NULL
+'Natura' Warp Core Stabilizer I;10;1000;1;Warp Core Stabilizer I
+Navitas;10;30;1;NULL
+Nemesis;10;10;2;Tristan
+Neurovisual Output Analyzer;10;1000;3;NULL
+Neutron Blaster Cannon I;10;300;1;NULL
+Neutron Blaster Cannon II;10;100;2;Neutron Blaster Cannon I
+Nidhoggur;10;1;1;NULL
+Nighthawk;10;10;2;Ferox
+Nightmare;10;10;1;NULL
+Noctis;10;15;1;Primae
+Nomad;10;10;2;Fenrir
+'Noose' Cruise Missile Launcher;10;1000;2;Cruise Missile Launcher I
+Nova Assault Missile;10;1500;1;NULL
+Nova Citadel Cruise Missile;10;1000;1;NULL
+Nova Citadel Torpedo;10;1000;1;NULL
+Nova Cruise Missile;10;1500;1;NULL
+Nova Fury Cruise Missile;10;100;2;Nova Cruise Missile
+Nova Fury Heavy Missile;10;100;2;Nova Heavy Missile
+Nova Fury Light Missile;10;100;2;Nova Light Missile
+Nova Heavy Missile;10;1500;1;NULL
+Nova Javelin Assault Missile;10;100;2;Nova Assault Missile
+Nova Javelin Rocket;10;100;2;Nova Rocket
+Nova Javelin Torpedo;10;100;2;Nova Torpedo
+Nova Light Missile;10;1500;1;NULL
+Nova Precision Cruise Missile;10;100;2;Nova Cruise Missile
+Nova Precision Heavy Missile;10;100;2;Nova Heavy Missile
+Nova Precision Light Missile;10;100;2;Nova Light Missile
+Nova Rage Assault Missile;10;100;2;Nova Assault Missile
+Nova Rage Rocket;10;100;2;Nova Rocket
+Nova Rage Torpedo;10;100;2;Nova Torpedo
+Nova Rocket;10;1500;1;NULL
+Nova Torpedo;10;1500;1;NULL
+Nuclear L;10;1500;1;NULL
+Nuclear M;10;1500;1;NULL
+Nuclear Pulse Generator;10;1000;2;NULL
+Nuclear Reactor Unit;10;1000;2;NULL
+Nuclear S;10;1500;1;NULL
+Nuclear XL;10;1000;1;NULL
+Nugget Ballistic Deflection Field;10;1000;2;Ballistic Deflection Field I
+Null L;10;100;2;Thorium Charge L
+Null M;10;100;2;Thorium Charge M
+Null S;10;100;2;Thorium Charge S
+Nyx;10;1;1;NULL
+Obelisk;10;1;1;NULL
+Obliterator F.O.F. Cruise Missile I;10;1500;1;NULL
+Oblivion;10;1;1;NULL
+Occator;10;10;2;Iteron Mark III
+Occult Data Interface;10;10;1;NULL
+Occult Ship Data Interface;10;10;1;NULL
+Occult Tuner Data Interface;10;10;1;NULL
+Ogre I;10;1500;1;NULL
+Ogre II;10;100;2;Ogre I
+Ogre SD-900;10;1500;1;NULL
+Omber Mining Crystal I;10;100;1;NULL
+Omber Mining Crystal II;10;100;2;Omber Mining Crystal I
+Omen;10;15;1;NULL
+Omen Navy Issue;10;15;1;Omen
+Omnidirectional Tracking Link I;10;300;1;NULL
+Omnidirectional Tracking Link II;10;100;2;Omnidirectional Tracking Link I
+Oneiros;10;10;2;Exequror
+Onyx;10;10;2;Moa
+Optimal Range;10;1000;1;NULL
+Optimal Range Disruption;10;1000;1;NULL
+Optimized Nano-engines;10;1000;3;NULL
+Oracle;10;15;1;NULL
+Orca;10;1;1;NULL
+Oscillator Capacitor Unit;10;1000;2;NULL
+Osprey;10;15;1;NULL
+Osprey Navy Issue;10;15;1;Osprey
+Overdrive Injector System I;10;300;1;NULL
+Overdrive Injector System II;10;100;2;Overdrive Injector System I
+'Pacifier' Large Remote Armor Repair System I;10;1000;1;Large Remote Armor Repair System I
+'Page' Capacitor Flux Coil I;10;1000;1;Capacitor Flux Coil I
+Paladin;10;10;2;Apocalypse
+'Palisade' Cap Recharger I;10;1000;1;Cap Recharger I
+Panther;10;10;2;Typhoon
+Particle Accelerator Unit;10;1000;2;NULL
+Passive Targeter I;10;300;1;NULL
+Passive Targeter II;10;100;2;Passive Targeter I
+'Peace' Large Remote Armor Repair System I;10;1000;1;Large Remote Armor Repair System I
+Phantasm;10;15;1;NULL
+Phase Inversion Battery;10;5;1;NULL
+Phased Plasma L;10;1500;1;NULL
+Phased Plasma M;10;1500;1;NULL
+Phased Plasma S;10;1500;1;NULL
+Phased Plasma XL;10;1000;1;NULL
+Phobos;10;10;2;Thorax
+Phoenix;10;1;1;NULL
+Phoenix F.O.F. Cruise Missile I;10;1500;1;NULL
+Photon Microprocessor;10;1000;2;NULL
+Photon Scattering Array;10;5;1;NULL
+Photon Scattering Field I;10;300;1;NULL
+Photon Scattering Field II;10;100;2;Photon Scattering Field I
+'Pickaxe' Assault Missile Launcher;10;1000;2;Assault Missile Launcher I
+'Pike' Small EMP Smartbomb I;10;1000;1;Small EMP Smartbomb I
+'Pilfer' Energized Adaptive Nano Membrane I;10;1000;1;Energized Adaptive Nano Membrane I
+Pilgrim;10;10;2;Arbitrator
+Plagioclase Mining Crystal I;10;100;1;NULL
+Plagioclase Mining Crystal II;10;100;2;Plagioclase Mining Crystal I
+Plasma Pulse Generator;10;1000;2;NULL
+Plasma Thruster;10;1000;2;NULL
+'Plough' Heavy Capacitor Booster I;10;1000;1;Heavy Capacitor Booster I
+'Plunderer' Spatial Destabilizer;10;1000;2;ECM - Spatial Destabilizer I
+Plutonium Charge L;10;1500;1;NULL
+Plutonium Charge M;10;1500;1;NULL
+Plutonium Charge S;10;1500;1;NULL
+Plutonium Charge XL;10;1000;1;NULL
+Poacher Photon Scattering Field;10;1000;2;Photon Scattering Field I
+Polymer Reactor Array;10;5;1;NULL
+'Portcullis' Reactor Control Unit I;10;1000;1;Reactor Control Unit I
+Posse Invulnerability Field;10;1000;2;Invulnerability Field I
+Power Diagnostic System I;10;300;1;NULL
+Power Diagnostic System II;10;100;2;Power Diagnostic System I
+Praetor EV-900;10;1500;1;NULL
+Praetor I;10;1500;1;NULL
+Praetor II;10;100;2;Praetor I
+Praetor TD-900;10;1500;1;NULL
+Primae;10;1000;1;NULL
+Probe;10;30;1;NULL
+Process-Interruptive Warp Disruptor;10;1000;1;Warp Disruptor I
+Procurer;10;10;1;NULL
+Prophecy;10;15;1;NULL
+Prorator;10;10;2;Sigil
+Prospector Magnetic Scattering Amplifier;10;1000;2;Magnetic Scattering Amplifier I
+'Protest' Large Armor Repairer I;10;1000;1;Large Armor Repairer I
+Proteus;0;20;3;NULL
+Proteus Defensive - Adaptive Augmenter;0;1000;3;NULL
+Proteus Defensive - Augmented Plating;0;1000;3;Proteus Defensive - Adaptive Augmenter
+Proteus Defensive - Nanobot Injector;0;1000;3;Proteus Defensive - Adaptive Augmenter
+Proteus Defensive - Warfare Processor;0;1000;3;Proteus Defensive - Adaptive Augmenter
+Proteus Electronics - CPU Efficiency Gate;0;1000;3;Proteus Electronics - Friction Extension Processor
+Proteus Electronics - Dissolution Sequencer;0;1000;3;Proteus Electronics - Friction Extension Processor
+Proteus Electronics - Emergent Locus Analyzer;0;1000;3;Proteus Electronics - Friction Extension Processor
+Proteus Electronics - Friction Extension Processor;0;1000;3;NULL
+Proteus Engineering - Augmented Capacitor Reservoir;0;1000;3;Proteus Engineering - Power Core Multiplier
+Proteus Engineering - Capacitor Regeneration Matrix;0;1000;3;Proteus Engineering - Power Core Multiplier
+Proteus Engineering - Power Core Multiplier;0;1000;3;NULL
+Proteus Engineering - Supplemental Coolant Injector;0;1000;3;Proteus Engineering - Power Core Multiplier
+Proteus Offensive - Covert Reconfiguration;0;1000;3;Proteus Offensive - Dissonic Encoding Platform
+Proteus Offensive - Dissonic Encoding Platform;0;1000;3;NULL
+Proteus Offensive - Drone Synthesis Projector;0;1000;3;Proteus Offensive - Dissonic Encoding Platform
+Proteus Offensive - Hybrid Propulsion Armature;0;1000;3;Proteus Offensive - Dissonic Encoding Platform
+Proteus Propulsion - Gravitational Capacitor;0;1000;3;Proteus Propulsion - Wake Limiter
+Proteus Propulsion - Interdiction Nullifier;0;1000;3;Proteus Propulsion - Wake Limiter
+Proteus Propulsion - Localized Injectors;0;1000;3;Proteus Propulsion - Wake Limiter
+Proteus Propulsion - Wake Limiter;0;1000;3;NULL
+Proton L;10;1500;1;NULL
+Proton M;10;1500;1;NULL
+Proton S;10;1500;1;NULL
+Proton XL;10;1000;1;NULL
+Prototype Cloaking Device I;10;100;1;NULL
+Prototype 'Poncho' Cloaking Device I;10;1000;2;Prototype Cloaking Device I
+Providence;10;1;1;NULL
+Prowler;10;10;2;Wreathe
+Pulse Shield Emitter;10;1000;2;NULL
+Punisher;10;30;1;NULL
+Purifier;10;10;2;Inquisitor
+Purloined Sansha Codebreaker;10;1000;1;Codebreaker I
+Pyroxeres Mining Crystal I;10;100;1;NULL
+Pyroxeres Mining Crystal II;10;100;2;Pyroxeres Mining Crystal I
+Quad 3500mm Gallium Cannon;10;1000;1;Quad 3500mm Siege Artillery I
+Quad 3500mm Siege Artillery I;10;10;1;NULL
+Quad Light Beam Laser I;10;300;1;NULL
+Quad Light Beam Laser II;10;100;2;Quad Light Beam Laser I
+Quake L;10;100;2;Titanium Sabot L
+Quake M;10;100;2;Titanium Sabot M
+Quake S;10;100;2;Titanium Sabot S
+Quantum Microprocessor;10;1000;2;NULL
+Quest Survey Probe I;5;1000;1;NULL
+R.A.M.- Ammunition Tech;10;300;2;NULL
+R.A.M.- Armor/Hull Tech;10;300;2;NULL
+R.A.M.- Cybernetics;10;300;2;NULL
+R.A.M.- Electronics;10;300;2;NULL
+R.A.M.- Energy Tech;10;300;2;NULL
+R.A.M.- Robotics;10;300;2;NULL
+R.A.M.- Shield Tech;10;300;2;NULL
+R.A.M.- Starship Tech;10;300;2;NULL
+R.A.M.- Weapon Tech;10;300;2;NULL
+R.Db - Boundless Creations;10;300;2;NULL
+R.Db - Carthum Conglomerate;10;300;2;NULL
+R.Db - Core Complexion;10;300;2;NULL
+R.Db - CreoDron;10;300;2;NULL
+R.Db - Duvolle Labs;10;300;2;NULL
+R.Db - Ishukone;10;300;2;NULL
+R.Db - Kaalakiota;10;300;2;NULL
+R.Db - Khanid Innovation;10;300;2;NULL
+R.Db - Lai Dai;10;300;2;NULL
+R.Db - Roden Shipyards;10;300;2;NULL
+R.Db - Thukker Mix;10;300;2;NULL
+R.Db - Viziam;10;300;2;NULL
+RADAR Backup Array I;10;300;1;NULL
+RADAR Backup Array II;10;100;2;RADAR Backup Array I
+RADAR Firewall;10;1000;1;RADAR Backup Array I
+Radar Sensor Cluster;10;1000;2;NULL
+'Radical' Damage Control I;10;1000;1;Damage Control I
+Radio L;10;1500;1;NULL
+Radio M;10;1500;1;NULL
+Radio S;10;1500;1;NULL
+Radio XL;10;1000;1;NULL
+Ragnarok;10;1;1;NULL
+Rapid Equipment Assembly Array;10;5;1;NULL
+Rapier;10;10;2;Bellicose
+Raptor;10;10;2;Condor
+Rattlesnake;10;10;1;Scorpion
+Raven;10;10;1;NULL
+Raven Navy Issue;10;10;1;Raven
+Reactive Plating I;10;300;1;NULL
+Reactive Plating II;10;100;2;Reactive Plating I
+Reactor Control Unit I;10;300;1;NULL
+Reactor Control Unit II;10;100;2;Reactor Control Unit I
+Reconfigured Subspace Calibrator;10;1000;3;NULL
+Redeemer;10;10;2;Armageddon
+Refining Array;10;5;1;NULL
+Reflective Plating I;10;300;1;NULL
+Reflective Plating II;10;100;2;Reflective Plating I
+Regenerative Plating I;10;300;1;NULL
+Regenerative Plating II;10;100;2;Regenerative Plating I
+Reinforced Bulkheads I;10;300;1;NULL
+Reinforced Bulkheads II;10;100;2;Reinforced Bulkheads I
+Reinforced Metallofullerene Alloys;10;1000;3;NULL
+Remote ECM Burst I;10;10;1;NULL
+Remote Sensor Booster I;10;300;1;NULL
+Remote Sensor Booster II;10;100;2;Remote Sensor Booster I
+Remote Sensor Dampener I;10;300;1;NULL
+Remote Sensor Dampener II;10;100;2;Remote Sensor Dampener I
+Republic Fleet 100MN Afterburner;10;1000;1;100MN Afterburner I
+Republic Fleet 100MN MicroWarpdrive;10;1000;1;100MN MicroWarpdrive I
+Republic Fleet 10MN Afterburner;10;1000;1;10MN Afterburner I
+Republic Fleet 10MN MicroWarpdrive;10;1000;1;10MN MicroWarpdrive I
+Republic Fleet 1MN Afterburner;10;1000;1;1MN Afterburner I
+Republic Fleet 1MN MicroWarpdrive;10;1000;1;1MN MicroWarpdrive I
+Republic Fleet Adaptive Nano Plating;10;1000;1;Adaptive Nano Plating I
+Republic Fleet Armor EM Hardener;10;1000;1;Armor EM Hardener I
+Republic Fleet Armor Explosive Hardener;10;1000;1;Armor Explosive Hardener I
+Republic Fleet Armor Kinetic Hardener;10;1000;1;Armor Kinetic Hardener I
+Republic Fleet Armor Thermic Hardener;10;1000;1;Armor Thermic Hardener I
+Republic Fleet Ballistic Control System;10;1000;1;Ballistic Control System I
+Republic Fleet Cruise Missile Launcher;10;1000;1;Cruise Missile Launcher I
+Republic Fleet Explosion Dampening Amplifier;10;1000;1;Explosion Dampening Amplifier I
+Republic Fleet Firetail;10;30;1;NULL
+Republic Fleet Gyrostabilizer;10;1000;1;Gyrostabilizer I
+Republic Fleet Heat Dissipation Amplifier;10;1000;1;Heat Dissipation Amplifier I
+Republic Fleet Heavy Assault Missile Launcher;10;1000;1;Heavy Assault Missile Launcher I
+Republic Fleet Kinetic Deflection Amplifier;10;1000;1;Kinetic Deflection Amplifier I
+Republic Fleet Large Proton Smartbomb;10;1000;1;Large Proton Smartbomb I
+Republic Fleet Magnetic Plating;10;1000;1;Magnetic Plating I
+Republic Fleet Magnetic Scattering Amplifier;10;1000;1;Magnetic Scattering Amplifier I
+Republic Fleet Medium Proton Smartbomb;10;1000;1;Medium Proton Smartbomb I
+Republic Fleet Reactive Plating;10;1000;1;Reactive Plating I
+Republic Fleet Reflective Plating;10;1000;1;Reflective Plating I
+Republic Fleet Rocket Launcher;10;1000;1;Rocket Launcher I
+Republic Fleet Shield Boost Amplifier;10;300;1;Shield Boost Amplifier I
+Republic Fleet Small Proton Smartbomb;10;1000;1;Small Proton Smartbomb I
+Republic Fleet Thermic Plating;10;1000;1;Thermic Plating I
+Republic Fleet Tracking Enhancer;10;1000;1;Tracking Enhancer I
+Republic Fleet Warp Disruptor;10;1000;1;Warp Disruptor I
+Republic Fleet Warp Scrambler;10;1000;1;Warp Scrambler I
+Retribution;10;10;2;Punisher
+Retriever;10;10;1;NULL
+Revelation;10;1;1;NULL
+Revenant;10;1;1;NULL
+Rhea;10;10;2;Charon
+Rifter;10;30;1;NULL
+Rocket Launcher I;10;300;1;NULL
+Rocket Launcher II;10;100;2;Rocket Launcher I
+Rokh;10;10;1;NULL
+Rook;10;10;2;Blackbird
+Rorqual;10;1;1;NULL
+Rupture;10;15;1;NULL
+Sabre;10;10;2;Thrasher
+Sacrilege;10;10;2;Maller
+'Saddle' Small Capacitor Booster I;10;1000;1;Small Capacitor Booster I
+Salvager I;10;300;1;NULL
+Salvager II;10;100;2;Salvager I
+Sansha Control Tower;0;5;1;Amarr Control Tower
+Sansha Control Tower Medium;0;5;1;Amarr Control Tower Medium
+Sansha Control Tower Small;0;5;1;Amarr Control Tower Small
+Sansha Energy Neutralizing Battery;10;5;1;Energy Neutralizing Battery
+Sansha Large Beam Laser Battery;10;3;1;Large Beam Laser Battery
+Sansha Large Pulse Laser Battery;10;3;1;Large Pulse Laser Battery
+Sansha Medium Beam Laser Battery;10;3;1;Medium Beam Laser Battery
+Sansha Medium Pulse Laser Battery;10;3;1;Medium Pulse Laser Battery
+Sansha Small Beam Laser Battery;10;3;1;Small Beam Laser Battery
+Sansha Small Pulse Laser Battery;10;3;1;Small Pulse Laser Battery
+Scalar Capacitor Unit;10;1000;2;NULL
+Scan Resolution;10;1000;1;NULL
+Scan Resolution Dampening;10;1000;1;NULL
+Scimitar;10;10;2;Scythe
+Scorch Bomb;10;300;1;NULL
+Scorch L;10;100;2;Ultraviolet L
+Scorch M;10;100;2;Ultraviolet M
+Scorch S;10;100;2;Ultraviolet S
+Scordite Mining Crystal I;10;100;1;NULL
+Scordite Mining Crystal II;10;100;2;Scordite Mining Crystal I
+Scorpion;10;10;1;NULL
+Scorpion Ishukone Watch;10;1000;1;NULL
+Scythe;10;15;1;NULL
+Scythe Fleet Issue;10;15;1;Scythe
+Seeker F.O.F. Light Missile I;10;1500;1;NULL
+Sensor Booster I;10;300;1;NULL
+Sensor Booster II;10;100;2;Sensor Booster I
+Sensor Dampening Battery;10;5;1;NULL
+Sentinel;10;10;2;Crucifier
+Serpent F.O.F. Light Missile I;10;1500;1;NULL
+Serpentis Control Tower;0;5;1;Gallente Control Tower
+Serpentis Control Tower Medium;0;5;1;Gallente Control Tower Medium
+Serpentis Control Tower Small;0;5;1;Gallente Control Tower Small
+Serpentis Large Blaster Battery;10;5;1;Large Blaster Battery
+Serpentis Large Railgun Battery;10;5;1;Large Railgun Battery
+Serpentis Medium Blaster Battery;10;5;1;Medium Blaster Battery
+Serpentis Medium Railgun Battery;10;5;1;Medium Railgun Battery
+Serpentis Sensor Dampening Battery;10;5;1;Sensor Dampening Battery
+Serpentis Small Blaster Battery;10;5;1;Small Blaster Battery
+Serpentis Small Railgun Battery;10;5;1;Small Railgun Battery
+Serpentis Warp Disruption Battery;10;3;1;Warp Disruption Battery
+Serpentis Warp Scrambling Battery;10;3;1;Warp Scrambling Battery
+Shadow;10;10;1;NULL
+Shadow Control Tower;0;5;1;Gallente Control Tower
+Shadow Control Tower Medium;0;5;1;Gallente Control Tower Medium
+Shadow Control Tower Small;0;5;1;Gallente Control Tower Small
+Shadow Large Blaster Battery;10;5;1;Large Blaster Battery
+Shadow Large Railgun Battery;10;5;1;Large Railgun Battery
+Shadow Medium Blaster Battery;10;5;1;Medium Blaster Battery
+Shadow Medium Railgun Battery;10;5;1;Medium Railgun Battery
+Shadow Sensor Dampening Battery;10;5;1;Sensor Dampening Battery
+Shadow Small Blaster Battery;10;5;1;Small Blaster Battery
+Shadow Small Railgun Battery;10;5;1;Small Railgun Battery
+Shadow Warp Disruption Battery;10;3;1;Warp Disruption Battery
+Shadow Warp Scrambling Battery;10;3;1;Warp Scrambling Battery
+'Shady' ECCM - Gravimetric I;10;1000;1;ECCM - Gravimetric I
+Shield Boost Amplifier I;10;300;1;NULL
+Shield Boost Amplifier II;10;100;2;Shield Boost Amplifier I
+Shield Flux Coil I;10;300;1;NULL
+Shield Flux Coil II;10;100;2;Shield Flux Coil I
+Shield Power Relay I;10;300;1;NULL
+Shield Power Relay II;10;100;2;Shield Power Relay I
+Shield Recharger I;10;300;1;NULL
+Shield Recharger II;10;100;2;Shield Recharger I
+Ship Maintenance Array;10;5;1;NULL
+Ship Scanner I;10;300;1;NULL
+Ship Scanner II;10;100;2;Ship Scanner I
+Shock 'Limos' Citadel Torpedo Bay I;10;1000;1;Citadel Torpedo Launcher I
+Shrapnel Bomb;10;300;1;NULL
+Siege Missile Launcher I;10;300;1;NULL
+Siege Missile Launcher II;10;100;2;Siege Missile Launcher I
+Siege Module I;10;10;1;NULL
+Siege Module II;10;10;2;Siege Module I
+Siege Warfare Link - Active Shielding I;5;300;1;NULL
+Siege Warfare Link - Active Shielding II;5;100;2;Siege Warfare Link - Active Shielding I
+Siege Warfare Link - Shield Efficiency I;5;300;1;NULL
+Siege Warfare Link - Shield Efficiency II;5;100;2;Siege Warfare Link - Shield Efficiency I
+Siege Warfare Link - Shield Harmonizing I;5;300;1;NULL
+Siege Warfare Link - Shield Harmonizing II;5;100;2;Siege Warfare Link - Shield Harmonizing I
+Sigil;10;15;1;NULL
+Signal Amplifier I;10;300;1;NULL
+Signal Amplifier II;5;100;2;Signal Amplifier I
+Signal Distortion Amplifier I;10;300;1;NULL
+Signal Distortion Amplifier II;10;100;2;Signal Distortion Amplifier I
+Silo;10;5;1;NULL
+Simple Reactor Array;10;5;1;NULL
+Sin;10;10;2;Dominix
+Sisters Combat Scanner Probe;5;1500;1;Combat Scanner Probe I
+Sisters Core Scanner Probe;5;1000;1;Core Scanner Probe I
+Sisters Deep Space Scanner Probe;5;1000;1;Deep Space Scanner Probe I
+Skiff;10;10;2;Procurer
+Skirmish Warfare Link - Evasive Maneuvers I;5;300;1;NULL
+Skirmish Warfare Link - Evasive Maneuvers II;5;100;2;Skirmish Warfare Link - Evasive Maneuvers I
+Skirmish Warfare Link - Interdiction Maneuvers I;5;300;1;NULL
+Skirmish Warfare Link - Interdiction Maneuvers II;5;100;2;Skirmish Warfare Link - Interdiction Maneuvers I
+Skirmish Warfare Link - Rapid Deployment I;5;300;1;NULL
+Skirmish Warfare Link - Rapid Deployment II;5;100;2;Skirmish Warfare Link - Rapid Deployment I
+Slasher;10;30;1;NULL
+Sleipnir;10;10;2;Cyclone
+'Slither' Heavy Electron Blaster I;10;1000;1;Heavy Electron Blaster I
+Small Algid Energy Administrations Unit I;10;300;1;NULL
+Small Algid Energy Administrations Unit II;10;10;2;Small Algid Energy Administrations Unit I
+Small Algid Hybrid Administrations Unit I;10;300;1;NULL
+Small Algid Hybrid Administrations Unit II;10;10;2;Small Algid Hybrid Administrations Unit I
+Small Ancillary Current Router I;10;300;1;NULL
+Small Ancillary Current Router II;10;10;2;Small Ancillary Current Router I
+Small Anti-EM Pump I;10;300;1;NULL
+Small Anti-EM Pump II;10;10;2;Small Anti-EM Pump I
+Small Anti-EM Screen Reinforcer I;10;300;1;NULL
+Small Anti-EM Screen Reinforcer II;10;10;2;Small Anti-EM Screen Reinforcer I
+Small Anti-Explosive Pump I;10;300;1;NULL
+Small Anti-Explosive Pump II;10;10;2;Small Anti-Explosive Pump I
+Small Anti-Explosive Screen Reinforcer I;10;300;1;NULL
+Small Anti-Explosive Screen Reinforcer II;10;10;2;Small Anti-Explosive Screen Reinforcer I
+Small Anti-Kinetic Pump I;10;300;1;NULL
+Small Anti-Kinetic Pump II;10;10;2;Small Anti-Kinetic Pump I
+Small Anti-Kinetic Screen Reinforcer I;10;300;1;NULL
+Small Anti-Kinetic Screen Reinforcer II;10;10;2;Small Anti-Kinetic Screen Reinforcer I
+Small Anti-Thermal Screen Reinforcer I;10;300;1;NULL
+Small Anti-Thermal Screen Reinforcer II;10;10;2;Small Anti-Thermal Screen Reinforcer I
+Small Anti-Thermic Pump I;10;300;1;NULL
+Small Anti-Thermic Pump II;10;10;2;Small Anti-Thermic Pump I
+Small Armor Repairer I;10;300;1;NULL
+Small Armor Repairer II;10;100;2;Small Armor Repairer I
+Small Artillery Battery;10;5;1;NULL
+Small AutoCannon Battery;10;5;1;NULL
+Small Auxiliary Nano Pump I;10;300;1;NULL
+Small Auxiliary Nano Pump II;10;10;2;Small Auxiliary Nano Pump I
+Small Auxiliary Thrusters I;10;300;1;NULL
+Small Auxiliary Thrusters II;10;10;2;Small Auxiliary Thrusters I
+Small Bay Loading Accelerator I;10;300;1;NULL
+Small Bay Loading Accelerator II;10;10;2;Small Bay Loading Accelerator I
+Small Beam Laser Battery;10;5;1;NULL
+Small Blaster Battery;10;5;1;NULL
+Small Capacitor Battery I;10;300;1;NULL
+Small Capacitor Battery II;10;100;2;Small Capacitor Battery I
+Small Capacitor Booster I;10;300;1;NULL
+Small Capacitor Booster II;10;100;2;Small Capacitor Booster I
+Small Capacitor Control Circuit I;10;300;1;NULL
+Small Capacitor Control Circuit II;10;10;2;Small Capacitor Control Circuit I
+Small Cargohold Optimization I;10;300;1;NULL
+Small Cargohold Optimization II;10;10;2;Small Cargohold Optimization I
+Small Core Defence Capacitor Safeguard I;10;300;1;NULL
+Small Core Defence Capacitor Safeguard II;10;10;2;Small Core Defence Capacitor Safeguard I
+Small Core Defence Charge Economizer I;10;300;1;NULL
+Small Core Defence Charge Economizer II;10;10;2;Small Core Defence Charge Economizer I
+Small Core Defence Field Extender I;10;300;1;NULL
+Small Core Defence Field Extender II;10;10;2;Small Core Defence Field Extender I
+Small Core Defence Field Purger I;10;300;1;NULL
+Small Core Defence Field Purger II;10;10;2;Small Core Defence Field Purger I
+Small Core Defence Operational Solidifier I;10;300;1;NULL
+Small Core Defence Operational Solidifier II;10;10;2;Small Core Defence Operational Solidifier I
+Small Degenerative Concussion Bomb I;10;1000;1;Small Proton Smartbomb I
+Small Drone Control Range Augmentor I;10;300;1;NULL
+Small Drone Control Range Augmentor II;10;10;2;Small Drone Control Range Augmentor I
+Small Drone Durability Enhancer I;10;300;1;NULL
+Small Drone Durability Enhancer II;10;10;2;Small Drone Durability Enhancer I
+Small Drone Mining Augmentor I;10;300;1;NULL
+Small Drone Mining Augmentor II;10;10;2;Small Drone Mining Augmentor I
+Small Drone Repair Augmentor I;10;300;1;NULL
+Small Drone Repair Augmentor II;10;10;2;Small Drone Repair Augmentor I
+Small Drone Scope Chip I;10;300;1;NULL
+Small Drone Scope Chip II;10;10;2;Small Drone Scope Chip I
+Small Drone Speed Augmentor I;10;300;1;NULL
+Small Drone Speed Augmentor II;10;10;2;Small Drone Speed Augmentor I
+Small Dynamic Fuel Valve I;10;300;1;NULL
+Small Dynamic Fuel Valve II;10;10;2;Small Dynamic Fuel Valve I
+Small Egress Port Maximizer I;10;300;1;NULL
+Small Egress Port Maximizer II;10;10;2;Small Egress Port Maximizer I
+Small Emission Scope Sharpener I;10;300;1;NULL
+Small Emission Scope Sharpener II;10;10;2;Small Emission Scope Sharpener I
+Small EMP Smartbomb I;10;300;1;NULL
+Small EMP Smartbomb II;10;100;2;Small EMP Smartbomb I
+Small Energy Ambit Extension I;10;300;1;NULL
+Small Energy Ambit Extension II;10;10;2;Small Energy Ambit Extension I
+Small Energy Burst Aerator I;10;300;1;NULL
+Small Energy Burst Aerator II;10;10;2;Small Energy Burst Aerator I
+Small Energy Collision Accelerator I;10;300;1;NULL
+Small Energy Collision Accelerator II;10;10;2;Small Energy Collision Accelerator I
+Small Energy Discharge Elutriation I;10;300;1;NULL
+Small Energy Discharge Elutriation II;10;10;2;Small Energy Discharge Elutriation I
+Small Energy Locus Coordinator I;10;300;1;NULL
+Small Energy Locus Coordinator II;10;10;2;Small Energy Locus Coordinator I
+Small Energy Metastasis Adjuster I;10;300;1;NULL
+Small Energy Metastasis Adjuster II;10;10;2;Small Energy Metastasis Adjuster I
+Small Energy Neutralizer I;10;300;1;NULL
+Small Energy Neutralizer II;10;100;2;Small Energy Neutralizer I
+Small Energy Transfer Array I;10;300;1;NULL
+Small Energy Transfer Array II;10;100;2;Small Energy Transfer Array I
+Small Engine Thermal Shielding I;10;300;1;NULL
+Small Engine Thermal Shielding II;10;10;2;Small Engine Thermal Shielding I
+Small Graviton Smartbomb I;10;300;1;NULL
+Small Graviton Smartbomb II;10;100;2;Small Graviton Smartbomb I
+Small Gravity Capacitor Upgrade I;10;300;1;NULL
+Small Gravity Capacitor Upgrade II;10;10;2;Small Gravity Capacitor Upgrade I
+Small Hull Repairer I;10;300;1;NULL
+Small Hull Repairer II;10;100;2;Small Hull Repairer I
+Small Hybrid Ambit Extension I;10;300;1;NULL
+Small Hybrid Ambit Extension II;10;10;2;Small Hybrid Ambit Extension I
+Small Hybrid Burst Aerator I;10;300;1;NULL
+Small Hybrid Burst Aerator II;10;10;2;Small Hybrid Burst Aerator I
+Small Hybrid Collision Accelerator I;10;300;1;NULL
+Small Hybrid Collision Accelerator II;10;10;2;Small Hybrid Collision Accelerator I
+Small Hybrid Discharge Elutriation I;10;300;1;NULL
+Small Hybrid Discharge Elutriation II;10;10;2;Small Hybrid Discharge Elutriation I
+Small Hybrid Locus Coordinator I;10;300;1;NULL
+Small Hybrid Locus Coordinator II;10;10;2;Small Hybrid Locus Coordinator I
+Small Hybrid Metastasis Adjuster I;10;300;1;NULL
+Small Hybrid Metastasis Adjuster II;10;10;2;Small Hybrid Metastasis Adjuster I
+Small Hydraulic Bay Thrusters I;10;300;1;NULL
+Small Hydraulic Bay Thrusters II;10;10;2;Small Hydraulic Bay Thrusters I
+Small Hyperspatial Velocity Optimizer I;10;300;1;NULL
+Small Hyperspatial Velocity Optimizer II;10;10;2;Small Hyperspatial Velocity Optimizer I
+Small 'Integrative' Hull Repair Unit;10;1000;1;Small Hull Repairer I
+Small Inverted Signal Field Projector I;10;300;1;NULL
+Small Inverted Signal Field Projector II;10;10;2;Small Inverted Signal Field Projector I
+Small Ionic Field Projector I;10;300;1;NULL
+Small Ionic Field Projector II;10;10;2;Small Ionic Field Projector I
+Small Liquid Cooled Electronics I;10;300;1;NULL
+Small Liquid Cooled Electronics II;10;10;2;Small Liquid Cooled Electronics I
+Small Low Friction Nozzle Joints I;10;300;1;NULL
+Small Low Friction Nozzle Joints II;10;10;2;Small Low Friction Nozzle Joints I
+Small Memetic Algorithm Bank I;10;300;1;NULL
+Small Memetic Algorithm Bank II;10;10;2;Small Memetic Algorithm Bank I
+Small Nanobot Accelerator I;10;300;1;NULL
+Small Nanobot Accelerator II;10;10;2;Small Nanobot Accelerator I
+Small Nosferatu I;10;300;1;NULL
+Small Nosferatu II;10;100;2;Small Nosferatu I
+Small Particle Dispersion Augmentor I;10;300;1;NULL
+Small Particle Dispersion Augmentor II;10;10;2;Small Particle Dispersion Augmentor I
+Small Particle Dispersion Projector I;10;300;1;NULL
+Small Particle Dispersion Projector II;10;10;2;Small Particle Dispersion Projector I
+Small Plasma Smartbomb I;10;300;1;NULL
+Small Plasma Smartbomb II;10;100;2;Small Plasma Smartbomb I
+Small Polycarbon Engine Housing I;10;300;1;NULL
+Small Polycarbon Engine Housing II;10;10;2;Small Polycarbon Engine Housing I
+Small Powergrid Subroutine Maximizer I;10;300;1;NULL
+Small Powergrid Subroutine Maximizer II;10;10;2;Small Powergrid Subroutine Maximizer I
+Small Projectile Ambit Extension I;10;300;1;NULL
+Small Projectile Ambit Extension II;10;10;2;Small Projectile Ambit Extension I
+Small Projectile Burst Aerator I;10;300;1;NULL
+Small Projectile Burst Aerator II;10;10;2;Small Projectile Burst Aerator I
+Small Projectile Collision Accelerator I;10;300;1;NULL
+Small Projectile Collision Accelerator II;10;10;2;Small Projectile Collision Accelerator I
+Small Projectile Locus Coordinator I;10;300;1;NULL
+Small Projectile Locus Coordinator II;10;10;2;Small Projectile Locus Coordinator I
+Small Projectile Metastasis Adjuster I;10;300;1;NULL
+Small Projectile Metastasis Adjuster II;10;10;2;Small Projectile Metastasis Adjuster I
+Small Proton Smartbomb I;10;300;1;NULL
+Small Proton Smartbomb II;10;100;2;Small Proton Smartbomb I
+Small Pulse Laser Battery;10;5;1;NULL
+Small Railgun Battery;10;5;1;NULL
+Small Remote Armor Repair System I;10;300;1;NULL
+Small Remote Armor Repair System II;10;100;2;Small Remote Armor Repair System I
+Small Remote Hull Repair System I;10;300;1;NULL
+Small Remote Hull Repair System II;10;100;2;Small Remote Hull Repair System I
+Small Remote Repair Augmentor I;10;300;1;NULL
+Small Remote Repair Augmentor II;10;10;2;Small Remote Repair Augmentor I
+Small Rocket Fuel Cache Partition I;10;300;1;NULL
+Small Rocket Fuel Cache Partition II;10;10;2;Small Rocket Fuel Cache Partition I
+Small Salvage Tackle I;10;300;1;NULL
+Small Salvage Tackle II;10;10;2;Small Salvage Tackle I
+Small Semiconductor Memory Cell I;10;300;1;NULL
+Small Semiconductor Memory Cell II;10;10;2;Small Semiconductor Memory Cell I
+Small Sentry Damage Augmentor I;10;300;1;NULL
+Small Sentry Damage Augmentor II;10;10;2;Small Sentry Damage Augmentor I
+Small 'Settler' Shield Booster;10;1000;1;Small Shield Booster I
+Small Shield Booster I;10;300;1;NULL
+Small Shield Booster II;10;100;2;Small Shield Booster I
+Small Shield Extender I;10;300;1;NULL
+Small Shield Extender II;10;100;2;Small Shield Extender I
+Small Shield Transporter I;10;300;1;NULL
+Small Shield Transporter II;10;100;2;Small Shield Transporter I
+Small Ship Assembly Array;10;5;1;NULL
+Small 'Siesta' Capacitor Booster;10;1000;2;Small Capacitor Booster I
+Small Signal Disruption Amplifier I;10;300;1;NULL
+Small Signal Disruption Amplifier II;10;10;2;Small Signal Disruption Amplifier I
+Small Signal Focusing Kit I;10;300;1;NULL
+Small Signal Focusing Kit II;10;10;2;Small Signal Focusing Kit I
+Small Stasis Drone Augmentor I;10;300;1;NULL
+Small Stasis Drone Augmentor II;10;10;2;Small Stasis Drone Augmentor I
+Small Targeting System Subcontroller I;10;300;1;NULL
+Small Targeting System Subcontroller II;10;10;2;Small Targeting System Subcontroller I
+Small Targeting Systems Stabilizer I;10;300;1;NULL
+Small Targeting Systems Stabilizer II;10;10;2;Small Targeting Systems Stabilizer I
+Small Tracking Diagnostic Subroutines I;10;300;1;NULL
+Small Tracking Diagnostic Subroutines II;10;10;2;Small Tracking Diagnostic Subroutines I
+Small Tractor Beam I;10;300;1;NULL
+Small Tractor Beam II;10;100;2;Small Tractor Beam I
+Small Trimark Armor Pump I;10;300;1;NULL
+Small Trimark Armor Pump II;10;10;2;Small Trimark Armor Pump I
+Small Warhead Calefaction Catalyst I;10;300;1;NULL
+Small Warhead Calefaction Catalyst II;10;10;2;Small Warhead Calefaction Catalyst I
+Small Warhead Flare Catalyst I;10;300;1;NULL
+Small Warhead Flare Catalyst II;10;10;2;Small Warhead Flare Catalyst I
+Small Warhead Rigor Catalyst I;10;300;1;NULL
+Small Warhead Rigor Catalyst II;10;10;2;Small Warhead Rigor Catalyst I
+Small Warp Core Optimizer I;10;300;1;NULL
+Small Warp Core Optimizer II;10;10;2;Small Warp Core Optimizer I
+Small 'Wolf' Shield Extender;10;1000;1;Small Shield Extender I
+'Smokescreen' Covert Ops Cloaking Device II;10;1000;2;Prototype Cloaking Device I
+Snake Eyes Explosion Dampening Field;10;1000;2;Explosion Dampening Field I
+Sovereignty Blockade Unit;10;5;1;NULL
+Spatial Destabilization Battery;10;5;1;NULL
+Spike L;10;100;2;Plutonium Charge L
+Spike M;10;100;2;Plutonium Charge M
+Spike S;10;100;2;Plutonium Charge S
+Spodumain Mining Crystal I;10;100;1;NULL
+Spodumain Mining Crystal II;10;100;2;Spodumain Mining Crystal I
+'Squire' Small Energy Transfer Array I;10;1000;1;Small Energy Transfer Array I
+Stabber;10;15;1;NULL
+Stabber Fleet Issue;10;15;1;Stabber
+Stalker F.O.F. Heavy Missile I;10;1500;1;NULL
+Standard Blue Pill Booster;10;1000;1;NULL
+Standard Crash Booster;10;1000;1;NULL
+Standard Drop Booster;10;1000;1;NULL
+Standard Exile Booster;10;1000;1;NULL
+Standard Frentix Booster;10;1000;1;NULL
+Standard L;10;1500;1;NULL
+Standard M;10;1500;1;NULL
+Standard Mindflood Booster;10;1000;1;NULL
+Standard Missile Launcher I;10;300;1;NULL
+Standard Missile Launcher II;10;100;2;Standard Missile Launcher I
+Standard S;10;1500;1;NULL
+Standard Sooth Sayer Booster;10;1000;1;NULL
+Standard X-Instinct Booster;10;1000;1;NULL
+Standard XL;10;1000;1;NULL
+Stasis Webification Battery;10;5;1;NULL
+Stasis Webifier I;10;300;1;NULL
+Stasis Webifier II;10;100;2;Stasis Webifier I
+Station Construction Parts;10;5;1;NULL
+Station Docking Bay;10;5;1;NULL
+Station Factory;10;5;1;NULL
+Station Hangar Array;10;5;1;NULL
+Station Laboratory;10;5;1;NULL
+Station Market Network;10;5;1;NULL
+Station Medical Center;10;5;1;NULL
+Station Mission Network;10;5;1;NULL
+Station Office Center;10;5;1;NULL
+Station Repair Facility;10;5;1;NULL
+Station Reprocessing Plant;10;5;1;NULL
+Station Storage Bay;10;5;1;NULL
+Station Warehouse;10;10;1;NULL
+Stiletto;10;10;2;Slasher
+'Strigoi' Medium Nosferatu I;10;1000;1;Medium Nosferatu I
+Strip Miner I;10;300;1;NULL
+Strong Blue Pill Booster;10;1000;1;NULL
+Strong Crash Booster;10;1000;1;NULL
+Strong Drop Booster;10;1000;1;NULL
+Strong Exile Booster;10;1000;1;NULL
+Strong Frentix Booster;10;1000;1;NULL
+Strong Mindflood Booster;10;1000;1;NULL
+Strong Sooth Sayer Booster;10;1000;1;NULL
+Strong X-Instinct Booster;10;1000;1;NULL
+Subsystem Assembly Array;10;5;1;NULL
+Succubus;10;30;1;NULL
+Superconductor Rails;10;1000;2;NULL
+Survey Scanner I;10;300;1;NULL
+Survey Scanner II;10;100;2;Survey Scanner I
+Sustained Shield Emitter;10;1000;2;NULL
+'Swindler' Electron Blaster Cannon I;10;1000;1;Electron Blaster Cannon I
+Synth Blue Pill Booster;10;1000;1;NULL
+Synth Crash Booster;10;1000;1;NULL
+Synth Drop Booster;10;1000;1;NULL
+Synth Exile Booster;10;1000;1;NULL
+Synth Frentix Booster;10;1000;1;NULL
+Synth Mindflood Booster;10;1000;1;NULL
+Synth Sooth Sayer Booster;10;1000;1;NULL
+Synth X-Instinct Booster;10;1000;1;NULL
+Synthetic Hull Conversion Inertia Stabilizers I;10;1000;1;Inertia Stabilizers I
+Synthetic Hull Conversion Nanofiber Structure I;10;1000;1;Nanofiber Internal Structure I
+Synthetic Hull Conversion Overdrive Injector I;10;1000;1;Overdrive Injector System I
+Synthetic Hull Conversion Reinforced Bulkheads I;10;1000;1;Reinforced Bulkheads I
+Tachyon Beam Laser I;10;300;1;NULL
+Tachyon Beam Laser II;10;100;2;Tachyon Beam Laser I
+Talos;10;15;1;NULL
+Taranis;10;10;2;Atron
+Target Painter I;10;300;1;NULL
+Target Painter II;10;100;2;Target Painter I
+Targeting Range;10;1000;1;NULL
+Targeting Range Dampening;10;1000;1;NULL
+Tempest;10;10;1;NULL
+Tempest Fleet Issue;10;10;1;Tempest
+Templar;10;10;1;NULL
+Tengu;0;20;3;NULL
+Tengu Defensive - Adaptive Shielding;0;1000;3;NULL
+Tengu Defensive - Amplification Node;0;1000;3;Tengu Defensive - Adaptive Shielding
+Tengu Defensive - Supplemental Screening;0;1000;3;Tengu Defensive - Adaptive Shielding
+Tengu Defensive - Warfare Processor;0;1000;3;Tengu Defensive - Adaptive Shielding
+Tengu Electronics - CPU Efficiency Gate;0;1000;3;Tengu Electronics - Obfuscation Manifold
+Tengu Electronics - Dissolution Sequencer;0;1000;3;Tengu Electronics - Obfuscation Manifold
+Tengu Electronics - Emergent Locus Analyzer;0;1000;3;Tengu Electronics - Obfuscation Manifold
+Tengu Electronics - Obfuscation Manifold;0;1000;3;NULL
+Tengu Engineering - Augmented Capacitor Reservoir;0;1000;3;Tengu Engineering - Power Core Multiplier
+Tengu Engineering - Capacitor Regeneration Matrix;0;1000;3;Tengu Engineering - Power Core Multiplier
+Tengu Engineering - Power Core Multiplier;0;1000;3;NULL
+Tengu Engineering - Supplemental Coolant Injector;0;1000;3;Tengu Engineering - Power Core Multiplier
+Tengu Offensive - Accelerated Ejection Bay;0;1000;3;NULL
+Tengu Offensive - Covert Reconfiguration;0;1000;3;Tengu Offensive - Accelerated Ejection Bay
+Tengu Offensive - Magnetic Infusion Basin;0;1000;3;Tengu Offensive - Accelerated Ejection Bay
+Tengu Offensive - Rifling Launcher Pattern;0;1000;3;Tengu Offensive - Accelerated Ejection Bay
+Tengu Propulsion - Fuel Catalyst;0;1000;3;Tengu Propulsion - Intercalated Nanofibers
+Tengu Propulsion - Gravitational Capacitor;0;1000;3;Tengu Propulsion - Intercalated Nanofibers
+Tengu Propulsion - Intercalated Nanofibers;0;1000;3;NULL
+Tengu Propulsion - Interdiction Nullifier;0;1000;3;Tengu Propulsion - Intercalated Nanofibers
+Territorial Claim Unit;10;5;1;NULL
+Tesseract Capacitor Unit;10;1000;2;NULL
+Thanatos;10;1;1;NULL
+Thermic Plating I;10;300;1;NULL
+Thermic Plating II;10;100;2;Thermic Plating I
+Thermonuclear Trigger Unit;10;1000;2;NULL
+Thorax;10;15;1;NULL
+Thorium Charge L;10;1500;1;NULL
+Thorium Charge M;10;1500;1;NULL
+Thorium Charge S;10;1500;1;NULL
+Thorium Charge XL;10;1000;1;NULL
+Thrasher;10;20;1;NULL
+'Thurifer' Large Capacitor Battery I;10;1000;1;Large Capacitor Battery I
+Titanium Diborite Armor Plate;10;1000;2;NULL
+Titanium Sabot L;10;1500;1;NULL
+Titanium Sabot M;10;1500;1;NULL
+Titanium Sabot S;10;1500;1;NULL
+Titanium Sabot XL;10;1000;1;NULL
+Tormentor;10;30;1;NULL
+Tornado;10;15;1;NULL
+Torpedo Battery;10;5;1;NULL
+Tracking Computer I;10;300;1;NULL
+Tracking Computer II;10;100;2;Tracking Computer I
+Tracking Disruptor I;10;300;1;NULL
+Tracking Disruptor II;10;100;2;Tracking Disruptor I
+Tracking Enhancer I;10;300;1;NULL
+Tracking Enhancer II;10;100;2;Tracking Enhancer I
+Tracking Link I;10;300;1;NULL
+Tracking Link II;10;100;2;Tracking Link I
+Tracking Speed;10;1000;1;NULL
+Tracking Speed Disruption;10;1000;1;NULL
+Trauma Assault Missile;10;1500;1;NULL
+Trauma Citadel Cruise Missile;10;1000;1;NULL
+Trauma Citadel Torpedo;10;1000;1;NULL
+Trauma Cruise Missile;10;1500;1;NULL
+Trauma Fury Cruise Missile;10;100;2;Trauma Cruise Missile
+Trauma Fury Heavy Missile;10;100;2;Trauma Heavy Missile
+Trauma Fury Light Missile;10;100;2;Trauma Light Missile
+Trauma Heavy Missile;10;1500;1;NULL
+Trauma Javelin Assault Missile;10;100;2;Trauma Assault Missile
+Trauma Javelin Rocket;10;100;2;Trauma Rocket
+Trauma Javelin Torpedo;10;100;2;Trauma Torpedo
+Trauma Light Missile;10;1500;1;NULL
+Trauma Precision Cruise Missile;10;100;2;Trauma Cruise Missile
+Trauma Precision Heavy Missile;10;100;2;Trauma Heavy Missile
+Trauma Precision Light Missile;10;100;2;Trauma Light Missile
+Trauma Rage Assault Missile;10;100;2;Trauma Assault Missile
+Trauma Rage Rocket;10;100;2;Trauma Rocket
+Trauma Rage Torpedo;10;100;2;Trauma Torpedo
+Trauma Rocket;10;1500;1;NULL
+Trauma Torpedo;10;1500;1;NULL
+'Trebuchet' Heat Sink I;10;1000;1;Heat Sink I
+Tremor L;10;100;2;Carbonized Lead L
+Tremor M;10;100;2;Carbonized Lead M
+Tremor S;10;100;2;Carbonized Lead S
+Triage Module I;10;10;1;NULL
+Triage Module II;10;10;2;Triage Module I
+Tristan;10;30;1;NULL
+True Sansha Control Tower;0;5;1;Amarr Control Tower
+True Sansha Control Tower Medium;0;5;1;Amarr Control Tower Medium
+True Sansha Control Tower Small;0;5;1;Amarr Control Tower Small
+True Sansha Energy Neutralizing Battery;10;5;1;Energy Neutralizing Battery
+True Sansha Large Beam Laser Battery;10;3;1;Large Beam Laser Battery
+True Sansha Large Pulse Laser Battery;10;3;1;Large Pulse Laser Battery
+True Sansha Medium Beam Laser Battery;10;3;1;Medium Beam Laser Battery
+True Sansha Medium Pulse Laser Battery;10;3;1;Medium Pulse Laser Battery
+True Sansha Small Beam Laser Battery;10;3;1;Small Beam Laser Battery
+True Sansha Small Pulse Laser Battery;10;3;1;Small Pulse Laser Battery
+Tungsten Carbide Armor Plate;10;1000;2;NULL
+Tungsten Charge L;10;1500;1;NULL
+Tungsten Charge M;10;1500;1;NULL
+Tungsten Charge S;10;1500;1;NULL
+Tungsten Charge XL;10;1000;1;NULL
+'Tycoon' Tracking Link I;10;1000;1;Tracking Link I
+Typhoon;10;10;1;NULL
+Tyrfing;10;10;1;NULL
+Ultraviolet L;10;1500;1;NULL
+Ultraviolet M;10;1500;1;NULL
+Ultraviolet S;10;1500;1;NULL
+Ultraviolet XL;10;1000;1;NULL
+'Underhand' Neutron Blaster Cannon I;10;1000;1;Neutron Blaster Cannon I
+'Undertaker' Heavy Missile Launcher;10;1000;2;Heavy Missile Launcher I
+'Upir' Small Nosferatu I;10;1000;1;Small Nosferatu I
+Uranium Charge L;10;1500;1;NULL
+Uranium Charge M;10;1500;1;NULL
+Uranium Charge S;10;1500;1;NULL
+Uranium Charge XL;10;1000;1;NULL
+Vagabond;10;10;2;Stabber
+Valkyrie I;10;1500;1;NULL
+Valkyrie II;10;100;2;Valkyrie I
+Valkyrie TP-600;10;1500;1;NULL
+Vangel;10;1000;2;NULL
+Vargur;10;10;2;Tempest
+Veldspar Mining Crystal I;10;100;1;NULL
+Veldspar Mining Crystal II;10;100;2;Veldspar Mining Crystal I
+Vengeance;10;10;2;Punisher
+Vespa EC-600;10;1500;1;NULL
+Vespa I;10;1500;1;NULL
+Vespa II;10;100;2;Vespa I
+Vexor;10;15;1;NULL
+Vexor Navy Issue;10;15;1;Vexor
+Viator;10;10;2;Iteron
+Vigil;10;30;1;NULL
+Vigilant;10;15;1;Thorax
+Vindicator;10;10;1;Megathron
+Void Bomb;10;300;1;NULL
+Void L;10;100;2;Antimatter Charge L
+Void M;10;100;2;Antimatter Charge M
+Void S;10;100;2;Antimatter Charge S
+'Vrykolakas' Heavy Nosferatu I;10;1000;1;Heavy Nosferatu I
+Vulture;10;10;2;Ferox
+Warden I;10;1500;1;NULL
+Warden II;10;100;2;Warden I
+Warfare Computation Core;10;1000;3;NULL
+'Warhammer' Large EMP Smartbomb I;10;1000;1;Large EMP Smartbomb I
+Warp Core Stabilizer I;10;300;1;NULL
+Warp Core Stabilizer II;10;100;2;Warp Core Stabilizer I
+Warp Disrupt Probe;10;1000;1;NULL
+Warp Disruption Battery;10;5;1;NULL
+Warp Disruption Field Generator I;10;300;1;NULL
+Warp Disruption Field Generator II;10;100;2;Warp Disruption Field Generator I
+Warp Disruptor I;10;300;1;NULL
+Warp Disruptor II;10;100;2;Warp Disruptor I
+Warp Scrambler I;10;300;1;NULL
+Warp Scrambler II;10;100;2;Warp Scrambler I
+Warp Scrambling Battery;10;5;1;NULL
+Warrior I;10;1500;1;NULL
+Warrior II;10;100;2;Warrior I
+Warrior TP-300;10;1500;1;NULL
+Wasp EC-900;10;1500;1;NULL
+Wasp I;10;1500;1;NULL
+Wasp II;10;100;2;Wasp I
+Whiskey Explosion Dampening Amplifier;10;1000;2;Explosion Dampening Amplifier I
+White Noise Generation Battery;10;5;1;NULL
+Widow;10;10;2;Scorpion
+Wolf;10;10;2;Rifter
+Worm;10;30;1;Merlin
+Wreathe;10;15;1;NULL
+Wyvern;10;1;1;NULL
+X-Large 'Locomotive' Shield Booster;10;1000;1;X-Large Shield Booster I
+X-Large Shield Booster I;10;300;1;NULL
+X-Large Shield Booster II;10;100;2;X-Large Shield Booster I
+X-Large Ship Assembly Array;10;5;1;NULL
+Xray L;10;1500;1;NULL
+Xray M;10;1500;1;NULL
+Xray S;10;1500;1;NULL
+Xray XL;10;1000;1;NULL
+Zealot;10;10;2;Omen
