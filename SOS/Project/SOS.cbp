@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SOS" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="..\Output\bin\Debug\SOS" prefix_auto="1" extension_auto="1" />
+				<Option object_output="..\Output\obj\Debug\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-D_DEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="..\Output\bin\Release\SOS" prefix_auto="1" extension_auto="1" />
+				<Option object_output="..\Output\obj\Release\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add directory="..\Src" />
+		</Compiler>
+		<Unit filename="..\Src\AVLTree.cpp" />
+		<Unit filename="..\Src\AVLTree.h" />
+		<Unit filename="..\Src\Array.cpp" />
+		<Unit filename="..\Src\Array.h" />
+		<Unit filename="..\Src\Base.cpp" />
+		<Unit filename="..\Src\Base.h" />
+		<Unit filename="..\Src\Debug.cpp" />
+		<Unit filename="..\Src\Debug.h" />
+		<Unit filename="..\Src\Expression.cpp" />
+		<Unit filename="..\Src\Expression.h" />
+		<Unit filename="..\Src\Frontend.cpp" />
+		<Unit filename="..\Src\Frontend.h" />
+		<Unit filename="..\Src\Hash.cpp" />
+		<Unit filename="..\Src\Hash.h" />
+		<Unit filename="..\Src\Interpreter.cpp" />
+		<Unit filename="..\Src\Interpreter.h" />
+		<Unit filename="..\Src\List.cpp" />
+		<Unit filename="..\Src\List.h" />
+		<Unit filename="..\Src\Parse.cpp" />
+		<Unit filename="..\Src\Parse.h" />
+		<Unit filename="..\Src\SOS.cpp" />
+		<Unit filename="..\Src\SOS.txt" />
+		<Unit filename="..\Src\Str.cpp" />
+		<Unit filename="..\Src\Str.h" />
+		<Unit filename="..\Src\Util.cpp" />
+		<Unit filename="..\Src\Util.h" />
+		<Unit filename="..\Src\Var.cpp" />
+		<Unit filename="..\Src\Var.h" />
+		<Unit filename="..\Src\stdafx.cpp" />
+		<Unit filename="..\Src\stdafx.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
