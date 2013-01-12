@@ -60,7 +60,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
   new CFileSystem();
 
-  RangeEncoderTest();
+//  RangeEncoderTest();
   StrAnyTest();
 
   int iRes;

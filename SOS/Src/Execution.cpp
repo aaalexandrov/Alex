@@ -14,6 +14,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
   VAL2STR(IT_ASSIGN),
   VAL2STR(IT_RESOLVE_VAR),
   VAL2STR(IT_RESOLVE_REF),
+	VAL2STR(IT_CALL),
 };
 
 CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
@@ -46,6 +47,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
       return ExecResolveValue(pExecution);
     case IT_RESOLVE_REF:
       return ExecResolveRef(pExecution);
+		case IT_CALL:
+			return ExecCall(pExecution);
     default:
       ASSERT(!"Invalid instruction");
       return IERR_INVALID_INSTRUCTION;
@@ -201,6 +204,33 @@ EInterpretError CInstruction::ExecResolveRef(CExecution *pExecution)
   return IERR_OK;
 }
 
+EInterpretError CInstruction::ExecCall(CExecution *pExecution)
+{
+  if (pExecution->m_kStack.m_iCount < 1)
+    return IERR_NOT_ENOUGH_OPERANDS;
+	CArray<CValue> arrParams;
+	int i = pExecution->m_kStack.m_iCount - 1;
+	while (i >= 0 && pExecution->m_kStack[i].m_btType != CValue::VT_NONE) {
+		arrParams.Append(pExecution->m_kStack[i]);
+		pExecution->m_kStack[i].ClearValue();
+		--i;
+	}
+	if (i < 1)
+		return IERR_NOT_ENOUGH_OPERANDS;
+	CValue &kVal = pExecution->m_kStack[i - 1];
+	if (kVal.m_btType != CValue::VT_FRAGMENT)
+		return IERR_OPERAND_TYPE;
+
+	CExecution kExecution;
+	EInterpretError err = kExecution.Execute(kVal.m_pFragment, arrParams);
+	if (err != IERR_OK)
+		return err;
+	for (i = 0; i < kExecution.m_kStack.m_iCount; ++i)
+		pExecution->m_kStack.Append(kExecution.m_kStack[i]);
+
+	return IERR_OK;
+}
+
 CStrAny CInstruction::ToStr()
 {
   CStrAny sRes = CStrAny(ST_WHOLE, "Instruction: ") + s_IT2Str.GetStr(m_eType);
@@ -209,40 +239,12 @@ CStrAny CInstruction::ToStr()
   return sRes;
 }
 
-// CFragment ------------------------------------------------------------------
-
-EInterpretError CFragment::Execute(CExecution *pExecution)
-{
-  while (pExecution->m_pNextInstruction) {
-    CInstruction *pInstruction = pExecution->m_pNextInstruction;
-    pExecution->m_pNextInstruction = GetNextInstruction(pInstruction);
-    EInterpretError res = pInstruction->Execute(pExecution);
-    if (res != IERR_OK)
-      return res;
-  }
-  return IERR_OK;
-}
-
-CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const 
-{ 
-  ASSERT(pInstruction >= m_arrCode.m_pArray && pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount); 
-  if (pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount - 1)
-    return pInstruction + 1;
-  return 0;
-}
-
-void CFragment::Dump()
-{
-  for (int i = 0; i < m_arrCode.m_iCount; ++i) 
-    printf("%s\n", m_arrCode[i].ToStr().m_pBuf);
-}
-
 // CExecution -----------------------------------------------------------------
 
 EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams)
 {
   m_pCode = pCode;
-  m_pNextInstruction = &m_pCode->m_arrCode[0];
+  m_pNextInstruction = m_pCode->GetFirstInstruction();
   m_kStack.Clear();
   for (int i = 0; i < Util::Min(m_pCode->m_arrInputs.m_iCount, arrParams.m_iCount); ++i) 
     m_kEnvironment.m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i], arrParams[i]));

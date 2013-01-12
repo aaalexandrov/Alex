@@ -62,6 +62,10 @@
     <ClCompile Include="..\..\Base\Encode.cpp">
       <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="..\Src\BNF.cpp" />
+    <ClCompile Include="..\..\Base\HashInner.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Expression.h" />
@@ -123,6 +127,10 @@
     <ClInclude Include="..\Src\Execution.h" />
     <ClInclude Include="..\Src\Compile.h" />
     <ClInclude Include="..\..\Base\Encode.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Src\BNF.h" />
+    <ClInclude Include="..\..\Base\HashInner.h">
       <Filter>Base</Filter>
     </ClInclude>
   </ItemGroup>

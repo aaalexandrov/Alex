@@ -6,7 +6,7 @@
 
 class CCompiler {
 public:
-  CFragment *m_pCode;
+  CSmartPtr<CFragment> m_pCode;
 
   CCompiler();
   ~CCompiler();
@@ -22,6 +22,7 @@ public:
   EInterpretError CompileVariable(CGrammarParser::TOperatorNode *pNode);
   EInterpretError CompileLValue(CGrammarParser::TOperatorNode *pNode);
   EInterpretError CompileOperator(CGrammarParser::TOperatorNode *pNode);
+  EInterpretError CompileFunctionCall(CGrammarParser::TOperatorNode *pNode);
 };
 
 class CCompileChain {

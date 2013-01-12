@@ -23,6 +23,7 @@ public:
 
   void DeleteAll(int iMaxCount = 16);
   void Clear(int iMaxCount = 16);
+	bool IsEmpty() const { return !m_iCount; }
 
   T &operator [](int i);
   const T &operator [](int i) const;
@@ -33,7 +34,7 @@ public:
   void SetCount(int iCount);
   void SetMaxCount(int iMaxCount);
 
-  T &Last()               { return At(m_iCount - 1); }
+	T &Last()               { return At(m_iCount - 1); }
   const T &Last() const   { return At(m_iCount - 1); }
   T &PreLast()               { return At(m_iCount - 2); }
   const T &PreLast() const   { return At(m_iCount - 2); }
@@ -95,20 +96,23 @@ CArray<T, G>::CArray(int iMaxCount)
 {
   m_iCount = 0;
   m_iMaxCount = iMaxCount;
-  m_pArray = new T[m_iMaxCount];
+  m_pArray = (T *) new BYTE[m_iMaxCount * sizeof(T)];
 }
 
 template <class T, int G>
 CArray<T, G>::~CArray()
 {
-  delete [] m_pArray;
+	TConDestructor<T>::Destroy(m_pArray, m_iCount);
+  delete [] (BYTE *) m_pArray;
 }
 
 template <class T, int G>
 void CArray<T, G>::DeleteAll(int iMaxCount)
 {
-  for (int i = 0; i < m_iCount; i++)
+  for (int i = 0; i < m_iCount; i++) {
     delete m_pArray[i];
+		TConDestructor<T>::Destroy(m_pArray + i);
+	}
   m_iCount = 0;
   if (iMaxCount > 0)
     SetMaxCount(iMaxCount);
@@ -117,6 +121,7 @@ void CArray<T, G>::DeleteAll(int iMaxCount)
 template <class T, int G>
 void CArray<T, G>::Clear(int iMaxCount)
 {
+	TConDestructor<T>::Destroy(m_pArray, m_iCount);
   m_iCount = 0;
   if (iMaxCount > 0)
     SetMaxCount(iMaxCount);
@@ -161,6 +166,11 @@ void CArray<T, G>::SetCount(int iCount)
     else
       SetMaxCount(iCount + iInc);
   }
+	if (iCount > m_iCount)
+		TConDestructor<T>::Construct(m_pArray + m_iCount, iCount - m_iCount);
+	else
+		if (iCount < m_iCount)
+			TConDestructor<T>::Destroy(m_pArray + iCount, m_iCount - iCount);
   ASSERT(m_iMaxCount >= iCount);
   m_iCount = iCount;
 }
@@ -171,16 +181,15 @@ void CArray<T, G>::SetMaxCount(int iMaxCount)
   if (iMaxCount == m_iMaxCount)
     return;
   ASSERT(iMaxCount > 0);
-  T *p = new T[iMaxCount];
-  int iSize = Util::Min(iMaxCount, m_iMaxCount);
+  T *p = (T *) new BYTE[iMaxCount * sizeof(T)];
+  int iSize = Util::Min(iMaxCount, m_iCount);
   for (int i = 0; i < iSize; i++)
-    p[i] = m_pArray[i];
-//  memcpy(p, m_pArray, iSize * sizeof(T));
-  delete [] m_pArray;
+		TConDestructor<T>::ConstructCopy(p + i, m_pArray[i]);
+	TConDestructor<T>::Destroy(m_pArray, m_iCount);
+  delete [] (BYTE *) m_pArray;
   m_pArray = p;
+	m_iCount = iSize;
   m_iMaxCount = iMaxCount;
-  if (m_iCount > m_iMaxCount)
-    m_iCount = m_iMaxCount;
 }
 
 template <class T, int G>
@@ -200,15 +209,6 @@ CSortedArray<T, K, P, G>::CSortedArray(int iMaxCount): CArray<T, G>(iMaxCount)
 template <class T, class K, class P, int G>
 int CSortedArray<T, K, P, G>::Add(T t)
 {
-/*  int iPos = Find(t);
-  if (iPos < 0)
-    iPos = -iPos - 1;
-  int iRest = m_iCount - iPos;
-  SetCount(m_iCount + 1);
-  memmove(m_pArray + iPos + 1, m_pArray + iPos, iRest * sizeof(T));
-  m_pArray[iPos] = t;
-  return iPos;
-*/
   int i;
   SetCount(m_iCount + 1);
   i = m_iCount - 1;
@@ -225,8 +225,6 @@ T CSortedArray<T, K, P, G>::Remove(int i)
 {
   ASSERT(i >= 0 && i < m_iCount);
   T t = m_pArray[i];
-//  int iRest = m_iCount - i - 1;
-//  memmove(m_pArray + i, m_pArray + i + 1, iRest * sizeof(T));
   while (i < m_iCount - 1) {
     m_pArray[i] = m_pArray[i + 1];
     i++;
@@ -243,9 +241,6 @@ int CSortedArray<T, K, P, G>::RemoveValue(T t)
   iPos = Find(t);
   if (iPos < 0)
     return iPos;
-/*  int iRest = m_iCount - iPos - 1;
-  memmove(m_pArray + iPos, m_pArray + iPos + 1, iRest * sizeof(T));
-*/
   for (i = iPos; i < m_iCount - 1; i++)
     m_pArray[i] = m_pArray[i + 1];
   SetCount(m_iCount - 1);

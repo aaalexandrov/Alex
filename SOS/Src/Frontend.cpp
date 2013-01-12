@@ -14,11 +14,11 @@ int ProcessInput(CInterpreter &kInterp)
 		if (!fgets(chBuf, ARRSIZE(chBuf), stdin))
 			return 0;
 		CExpression kExpr;
-		EInterpretError err;
+		EInterpretError err = IERR_OK;
     CStrAny sInput(ST_WHOLE, chBuf);
-		err = kExpr.Init(sInput);
+//		err = kExpr.Init(sInput);
     if (err == IERR_OK) {
-		  err = kExpr.Execute(kInterp.m_kStack, kInterp.m_Vars);
+//		  err = kExpr.Execute(kInterp.m_kStack, kInterp.m_Vars);
       if (err == IERR_OK) {
         CCompileChain kChain;
         CArray<CValue> arrParams;
@@ -35,7 +35,7 @@ int ProcessInput(CInterpreter &kInterp)
         }
       }
     }
-		if (!kInterp.m_kStack.m_iCount)
+/*		if (!kInterp.m_kStack.m_iCount)
 			err = IERR_UNKNOWN;
 		if (err == IERR_OK) {
 			CStrAny sRes;
@@ -44,8 +44,8 @@ int ProcessInput(CInterpreter &kInterp)
 		} else {
 			fprintf(stdout, "ERROR %d\n", err);
 		}
-
 		kInterp.m_kStack.DeleteAll();
+*/
 	}
 
 	return 0;

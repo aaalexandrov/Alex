@@ -80,6 +80,7 @@ OperatorList ::= Nothing
 Block ::= { OperatorList }
 
 VarList ::= Variable VarListSuffix
+VarList ::= Nothing
 VarListSuffix ::= , Variable VarListSuffix
 VarListSuffix ::= Nothing
 
@@ -88,4 +89,11 @@ ArgList ::= Nothing
 
 Fragment ::= [ ArgList ] Block
 
-FunctionCall ::= Variable ( ArgList )
+ParamList ::= Expression ParamListSuffix
+ParamList ::= Nothing
+ParamListSuffix ::= , Expression ParamListSuffix
+ParamListSuffix ::= Nothing
+
+ParamList ::= [ Expression { "," Expression } ]
+
+FunctionCall ::= Variable ( ParamList )

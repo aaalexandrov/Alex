@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Variable.h"
+#include "Execution.h"
 
 // CEnvRegistry ---------------------------------------------------------------
 
@@ -28,7 +29,7 @@ void CEnvRegistry::MarkAndSweep()
     return;
 
   // Sweep
-  CArray<CValueTable *> arrValues(m_hashValues.m_iCount - m_iMarked);
+  // CArray<CValueTable *> arrValues(m_hashValues.m_iCount - m_iMarked);
   THashValues::TIter itVal;
   itVal = m_hashValues;
   while (itVal) {
@@ -37,4 +38,32 @@ void CEnvRegistry::MarkAndSweep()
     if (pValueTable->m_btMark != m_btLastMark) // Deletion will also remove the table from the hash
       delete pValueTable;
   }
+}
+
+// CFragment ------------------------------------------------------------------
+
+EInterpretError CFragment::Execute(CExecution *pExecution)
+{
+  while (pExecution->m_pNextInstruction) {
+    CInstruction *pInstruction = pExecution->m_pNextInstruction;
+    pExecution->m_pNextInstruction = GetNextInstruction(pInstruction);
+    EInterpretError res = pInstruction->Execute(pExecution);
+    if (res != IERR_OK)
+      return res;
+  }
+  return IERR_OK;
+}
+
+CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const 
+{ 
+  ASSERT(pInstruction >= m_arrCode.m_pArray && pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount); 
+  if (pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount - 1)
+    return pInstruction + 1;
+  return 0;
+}
+
+void CFragment::Dump()
+{
+  for (int i = 0; i < m_arrCode.m_iCount; ++i) 
+    printf("%s\n", m_arrCode[i].ToStr().m_pBuf);
 }

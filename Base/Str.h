@@ -114,7 +114,7 @@ public:
   void Clear() { Done(); Init(ST_PART, 0, -1); }
 
   int Length() const { return m_iLen; }
-  bool Empty() const { return !m_iLen; }
+  bool IsEmpty() const { return !m_iLen; }
   bool EndsAt(int iOffset) const { return iOffset >= m_iLen; }
 
   bool ZeroTerminated() const { return !!m_bZeroTerminated; }

@@ -5,6 +5,7 @@
 #include "Str.h"
 
 class CValueTable;
+class CFragment;
 class CValue {
 public:
   enum EValueType {
@@ -13,6 +14,7 @@ public:
     VT_STRING,
     VT_TABLE,
     VT_REF,
+		VT_FRAGMENT,
   };
 
   typedef CHashKV<CStrHeader const *, CValue, CStrHeader, CStrHeader> THash;
@@ -23,6 +25,7 @@ public:
     CStrHeader const *m_pStrValue;
     CValueTable      *m_pTableValue;
     CValue           *m_pReference; 
+		CFragment        *m_pFragment;
     void             *m_Value;
   };
   BYTE m_btType;
@@ -32,6 +35,7 @@ public:
   CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   CValue(CValueTable *pTable)          { Set(pTable); }
   CValue(CValue *pReference)           { Set(pReference); }
+	CValue(CFragment *pFragment)         { Set(pFragment); }
   CValue(CValue const &kValue)         { Set(kValue); }
 
   ~CValue() { ReleaseValue(); }
@@ -41,10 +45,12 @@ public:
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
   inline void Set(CValue *pReference);
-  inline void Set(CValue const &kValue);
+	inline void Set(CFragment *pFragment);
+	inline void Set(CValue const &kValue);
 
   inline void AcquireValue();
   inline void ReleaseValue();
+	inline void ClearValue() { ReleaseValue(); SetNone(); }
 
   inline bool operator ==(CValue const &kValue) const { return m_btType == kValue.m_btType && m_Value == kValue.m_Value; }
   inline bool operator !=(CValue const &kValue) const { return !(*this == kValue); }
@@ -55,6 +61,7 @@ public:
   inline CStrAny      GetStr() const;
   inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
   inline CValue      *GetReference() const { return m_btType == VT_REF ? m_pReference : 0; }
+	inline CFragment   *GetFragment() const  { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
 };
 
 class CValueTable;
@@ -108,21 +115,48 @@ public:
   inline void Mark(BYTE btMark);
 };
 
+class CExecution;
+class CInstruction;
+class CFragment {
+	DEFREFCOUNT
+public:
+  CArray<CInstruction> m_arrCode;
+  CArray<CStrHeader *> m_arrInputs;
 
+  void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
+
+  EInterpretError Execute(CExecution *pExecution);
+	CInstruction *GetFirstInstruction() const { return m_arrCode.m_iCount ? m_arrCode.m_pArray : 0; }
+  CInstruction *GetNextInstruction(CInstruction *pInstruction) const;
+
+  void Dump();
+};
 
 // Implementation -------------------------------------------------------------
 
 // CValue ---------------------------------------------------------------------
 void CValue::AcquireValue()
 {
-  if (m_btType == VT_STRING) 
-    m_pStrValue->Acquire();
+	switch (m_btType) {
+		case VT_STRING:
+			m_pStrValue->Acquire();
+			break;
+		case VT_FRAGMENT:
+			m_pFragment->Acquire();
+			break;
+	}
 }
 
 void CValue::ReleaseValue()
 {
-  if (m_btType == VT_STRING) 
-    m_pStrValue->Release();
+	switch (m_btType) {
+		case VT_STRING:
+			m_pStrValue->Release();
+			break;
+		case VT_FRAGMENT:
+			m_pFragment->Release();
+			break;
+	}
 }
 
 void CValue::SetNone() 
@@ -156,6 +190,13 @@ void CValue::Set(CValue *pReference)
   m_pReference = pReference; 
 }
 
+void CValue::Set(CFragment *pFragment)    
+{ 
+  m_btType = VT_FRAGMENT; 
+  m_pFragment = pFragment; 
+	AcquireValue();
+}
+
 void CValue::Set(CValue const &kValue)
 {
   m_btType = kValue.m_btType;
@@ -165,13 +206,14 @@ void CValue::Set(CValue const &kValue)
 
 CValue &CValue::operator =(CValue const &kValue) 
 { 
-  CStrHeader const *pOldHeader = m_btType == VT_STRING ? m_pStrValue : 0;
-  m_btType = kValue.m_btType;
-  m_Value = kValue.m_Value;
-  AcquireValue();
-  if (pOldHeader)
-    pOldHeader->Release();
+	CValue oldVal;
+	// Manually copy the value to a temp without acquiring, it will be autoreleased when the temp goes out of scope
+	oldVal.m_btType = m_btType;
+	oldVal.m_Value = m_Value;
+	// Set acquires the new value
+	Set(kValue);
   return *this;
+	// Original value gets autoreleased
 }
 
 CStrAny CValue::GetStr() const
@@ -197,6 +239,10 @@ CStrAny CValue::GetStr() const
       sprintf(chBuf, "<Ref:%x>", m_pReference);
       s = CStrAny(ST_CONST, chBuf);
       break;
+		case VT_FRAGMENT:
+			sprintf(chBuf, "<Fragment:%x>", m_pFragment);
+			s = CStrAny(ST_CONST, chBuf);
+			break;
   }
   return s;
 }

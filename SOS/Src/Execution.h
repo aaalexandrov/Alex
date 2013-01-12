@@ -21,6 +21,7 @@ public:
     IT_ASSIGN,
     IT_RESOLVE_VAR,
     IT_RESOLVE_REF,
+		IT_CALL,
 
     IT_LAST
   };
@@ -45,6 +46,7 @@ public:
   void SetAssign() { ReleaseData(); m_eType = IT_ASSIGN; }
   void SetResolveVar() { ReleaseData(); m_eType = IT_RESOLVE_VAR; }
   void SetResolveRef() { ReleaseData(); m_eType = IT_RESOLVE_REF; }
+	void SetCall() { ReleaseData(); m_eType = IT_CALL; }
 
   EInterpretError Execute(CExecution *pExecution);
   int GetSize();
@@ -58,6 +60,7 @@ public:
   EInterpretError ExecAssign(CExecution *pExecution);
   EInterpretError ExecResolveValue(CExecution *pExecution);
   EInterpretError ExecResolveRef(CExecution *pExecution);
+	EInterpretError ExecCall(CExecution *pExecution);
 
   bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
   CValue &GetValue() { return *(CValue *) &m_btValue; }
@@ -68,19 +71,6 @@ public:
 
   static CValue2String::TValueString s_arrIT2Str[IT_LAST];
   static CValue2String s_IT2Str;
-};
-
-class CFragment {
-public:
-  CArray<CInstruction> m_arrCode;
-  CArray<CStrHeader *> m_arrInputs;
-
-  void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
-
-  EInterpretError Execute(CExecution *pExecution);
-  CInstruction *GetNextInstruction(CInstruction *pInstruction) const;
-
-  void Dump();
 };
 
 class CExecution {

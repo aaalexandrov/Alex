@@ -232,7 +232,7 @@ void CHash<T, K, H, P>::Resize(int iSize)
   Util::Swap(hash.m_arrLists.m_iMaxCount, m_arrLists.m_iMaxCount);
   Util::Swap(hash.m_iCount, m_iCount);
 
-  for (int i = 0; i < hash.m_iCount; ++i) {
+  for (int i = 0; i < hash.m_arrLists.m_iCount; ++i) {
     CList<T, K, P> *&pLstOld = hash.m_arrLists[i];
     if (!pLstOld)
       continue;
@@ -246,6 +246,7 @@ void CHash<T, K, H, P>::Resize(int iSize)
       pLstNew->PushNodeTail(pNode);
     }
   }
+	m_iCount = hash.m_iCount;
 }
 
 template <class T, class K, class H, class P>

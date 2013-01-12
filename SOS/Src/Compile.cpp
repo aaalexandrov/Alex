@@ -5,7 +5,6 @@
 
 CCompiler::CCompiler()
 {
-  m_pCode = 0;
 }
 
 CCompiler::~CCompiler()
@@ -15,7 +14,7 @@ CCompiler::~CCompiler()
 
 void CCompiler::Clear()
 {
-  SAFE_DELETE(m_pCode);
+	m_pCode = 0;
 }
 
 EInterpretError CCompiler::Compile(CGrammarParser::TOperatorNode *pNode)
@@ -26,7 +25,7 @@ EInterpretError CCompiler::Compile(CGrammarParser::TOperatorNode *pNode)
   EInterpretError res = CompileExpression(pNode);
 
   if (res != IERR_OK)
-    SAFE_DELETE(m_pCode);
+    m_pCode = 0;
 
   return res;
 }
@@ -43,6 +42,8 @@ EInterpretError CCompiler::CompileExpression(CGrammarParser::TOperatorNode *pExp
     return CompileNumber(pExpression);
   if (pExpression->m_pToken->m_eType == CToken::TT_STRING)
     return CompileString(pExpression);
+  if (pExpression->m_eType == CGrammarParser::NT_FUNCTIONCALL)
+    return CompileFunctionCall(pExpression);
   if (pExpression->m_pToken->m_eType == CToken::TT_VARIABLE)
     if (pExpression->m_eType == CGrammarParser::NT_LVALUE)
       return CompileLValue(pExpression);
@@ -150,6 +151,11 @@ EInterpretError CCompiler::CompileOperator(CGrammarParser::TOperatorNode *pNode)
   }
   m_pCode->Append(kInstr);
 
+  return IERR_OK;
+}
+
+EInterpretError CCompiler::CompileFunctionCall(CGrammarParser::TOperatorNode *pNode)
+{
   return IERR_OK;
 }
 

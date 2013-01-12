@@ -15,7 +15,9 @@ CValue2String::TValueString CGrammarParser::s_arrNT2Str[NT_LAST] = {
   VAL2STR(NT_BLOCK), 
   VAL2STR(NT_VARLIST),
   VAL2STR(NT_ARGLIST),
+  VAL2STR(NT_PARAMLIST),
   VAL2STR(NT_FRAGMENT),
+  VAL2STR(NT_FUNCTIONCALL),
 };
 
 CValue2String CGrammarParser::s_kNT2Str(s_arrNT2Str, ARRSIZE(s_arrNT2Str));
@@ -71,6 +73,11 @@ CGrammarParser::TOperatorNode *CGrammarParser::ParseOperand(CList<CToken *>::TNo
   TOperatorNode *pOpNode;
   if (!pFirstToken)
     return 0;
+  pOpNode = ParseFunctionCall(pFirstToken);
+  if (pOpNode) {
+    // Operand ::= FunctionCall
+    return pOpNode;
+  }
   if (pFirstToken->Data->m_eType == CToken::TT_VARIABLE || pFirstToken->Data->m_eClass == CToken::TC_LITERAL) {
     // Operand ::= Variable
     // Operand ::= Literal
@@ -332,8 +339,10 @@ CGrammarParser::TOperatorNode *CGrammarParser::ParseVarList(CList<CToken *>::TNo
 {
   if (!pFirstToken)
     return 0;
-  if (pFirstToken->Data->m_eType != CToken::TT_VARIABLE)
+  if (pFirstToken->Data->m_eType != CToken::TT_VARIABLE) {
+    // VarList ::= Nothing
     return 0;
+  }
   // VarList ::= Variable VarListSuffix
   TOperatorNode *pNode = new TOperatorNode(pFirstToken->Data, NT_VARLIST);
   pFirstToken = pFirstToken->pNext;
@@ -387,7 +396,54 @@ CGrammarParser::TOperatorNode *CGrammarParser::ParseFragment(CList<CToken *>::TN
   return pNode;
 }
 
-CGrammarParser::TOperatorNode *ParseFunctionCall(CList<CToken *>::TNode *&pFirstToken)
+CGrammarParser::TOperatorNode *CGrammarParser::ParseParamList(CList<CToken *>::TNode *&pFirstToken)
 {
-  return 0;
+  // ParamList ::= [ Expression { "," Expression } ]
+  if (!pFirstToken)
+    return 0;
+  CList<CToken *>::TNode *pOrgToken = pFirstToken;
+  TOperatorNode *pExpression = ParseExpression(pFirstToken);
+  if (!pExpression)
+    return 0;
+  TOperatorNode *pParamListNode = new TOperatorNode(0, NT_PARAMLIST);
+  pParamListNode->m_pOperand[0] = pExpression;
+  TOperatorNode *pParamNode = pParamListNode;
+  while (pFirstToken && pFirstToken->Data->m_eType == CToken::TT_COMMA) {
+    pFirstToken = pFirstToken->pNext;
+    pExpression = ParseExpression(pFirstToken);
+    if (!pExpression) {
+      // Error - Parameter list incorrectly terminated
+      pFirstToken = pOrgToken;
+      delete pParamListNode;
+      return 0;
+    }
+    pParamNode->m_pOperand[1] = new TOperatorNode(0, NT_PARAMLIST);
+    pParamNode->m_pOperand[1]->m_pOperand[0] = pExpression;
+    pParamNode = pParamNode->m_pOperand[1];
+  }
+  return pParamListNode;
+}
+
+CGrammarParser::TOperatorNode *CGrammarParser::ParseFunctionCall(CList<CToken *>::TNode *&pFirstToken)
+{
+  // FunctionCall ::= Variable ( ParamList )
+  if (!pFirstToken)
+    return 0;
+  if (pFirstToken->Data->m_eType != CToken::TT_VARIABLE)
+    return 0;
+  if (!pFirstToken->pNext || pFirstToken->pNext->Data->m_eType != CToken::TT_OPENBRACE)
+    return 0;
+  CList<CToken *>::TNode *pOrgToken = pFirstToken;
+  pFirstToken = pFirstToken->pNext->pNext;
+  TOperatorNode *pParamList = ParseParamList(pFirstToken);
+  if (!pFirstToken || pFirstToken->Data->m_eType != CToken::TT_CLOSEBRACE) {
+    // Error - Function call has no closing brace
+    pFirstToken = pOrgToken;
+    delete pParamList;
+    return 0;
+  }
+  pFirstToken = pFirstToken->pNext;
+  TOperatorNode *pNode = new TOperatorNode(pOrgToken->Data, NT_FUNCTIONCALL);
+  pNode->m_pOperand[0] = pParamList;
+  return pNode;
 }

@@ -20,7 +20,9 @@ public:
     NT_BLOCK, 
     NT_VARLIST,
     NT_ARGLIST,
+    NT_PARAMLIST,
     NT_FRAGMENT,
+    NT_FUNCTIONCALL,
 
     NT_LAST
   };
@@ -76,6 +78,8 @@ public:
   TOperatorNode *ParseArgList(CList<CToken *>::TNode *&pFirstToken);
 
   TOperatorNode *ParseFragment(CList<CToken *>::TNode *&pFirstToken);
+
+  TOperatorNode *ParseParamList(CList<CToken *>::TNode *&pFirstToken);
 
   TOperatorNode *ParseFunctionCall(CList<CToken *>::TNode *&pFirstToken);
 

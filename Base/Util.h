@@ -121,6 +121,9 @@ namespace Util {
   template <class T>
   inline int LeastSignificantBitSet(T a); // return the index of the least significant bit in the argument that is set to 1
 
+	template <class T>
+	inline T RoundUpToPow2Minus1(T a); // returns a number with the same most significant bit as the argument, and all less significant bits set to 1
+
   template <class T>
   inline T &IndexStride(T *pT, int iStride, int iIndex) { return *(T*)((BYTE *) pT + iStride * iIndex); }
 
@@ -259,6 +262,19 @@ int Util::LeastSignificantBitSet(T a)
     }
   }
   return iMin;
+}
+
+template <class T>
+inline T Util::RoundUpToPow2Minus1(T a)
+{
+	int iShift = 1;
+	while (1) {
+		T nNext = a | (a >> iShift);
+		if (nNext == a)
+			return a;
+		a = nNext;
+		iShift *= 2;
+	}
 }
 
 template <class T, class E, class P>

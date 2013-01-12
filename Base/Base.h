@@ -2,6 +2,7 @@
 #define __BASE_H
 
 #include "Debug.h"
+#include <new>
 
 #define ARRSIZE(ARR)      (sizeof(ARR) / sizeof((ARR)[0]))
 #define SAFE_RELEASE(p)   if (p) { p->Release(); p = 0; }
@@ -122,6 +123,126 @@ class CAutoReleasePtr: public CAutoFreePtr<T, CPtrReleaser<T> > {
 public:
   explicit CAutoReleasePtr(T *pPtr = 0): CAutoFreePtr(pPtr) {}
 };
+
+// Plain Old Data (POD) detection
+
+struct TTrue  { inline static bool Value() { return true; } };
+struct TFalse { inline static bool Value() { return false; } };
+
+template <class T>
+struct TIsPOD {
+	typedef TFalse TValue;
+};
+
+template<>
+struct TIsPOD<bool> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<signed char> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<unsigned char> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<wchar_t> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<signed short> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<unsigned short> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<signed int> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<unsigned int> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<signed long> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<unsigned long> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<signed __int64> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<unsigned __int64> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<float> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<double> {
+	typedef TTrue TValue;
+};
+
+template<>
+struct TIsPOD<long double> {
+	typedef TTrue TValue;
+};
+
+template <class T>
+struct TIsPOD<T*> {
+	typedef TTrue TValue;
+};
+
+template <class T, class P>
+struct TConDestructorVal {
+	static void Construct(T *pT)                 { COMPILE_ASSERT(0); }
+	static void ConstructCopy(T *pT, T const &t) { COMPILE_ASSERT(0); }
+	static void Destroy(T *pT)                   { COMPILE_ASSERT(0); }
+	static void Construct(T *pT, UINT uiCount)   { COMPILE_ASSERT(0); }
+	static void Destroy(T *pT, UINT uiCount)     { COMPILE_ASSERT(0); }
+};
+
+template <class T>
+struct TConDestructorVal<T, TFalse> {
+	static void Construct(T *pT)                 { new (pT) T; }
+	static void ConstructCopy(T *pT, T const &t) { new (pT) T(t); }
+	static void Destroy(T *pT)                   { pT->~T(); }
+	static void Construct(T *pT, UINT uiCount)   { while (uiCount--) { Construct(pT++); } }
+	static void Destroy(T *pT, UINT uiCount)     { while (uiCount--) { Destroy(pT++); } }
+};
+
+template<class T>
+struct TConDestructorVal<T, TTrue> {
+	static void Construct(T *pT)                 {}
+	static void ConstructCopy(T *pT, T const &t) { *pT = t; }
+	static void Destroy(T *pT)                   {}
+	static void Construct(T *pT, UINT uiCount)   {}
+	static void Destroy(T *pT, UINT uiCount)     {}
+};
+
+template <class T>
+struct TConDestructor: TConDestructorVal<T, typename TIsPOD<T>::TValue> {};
 
 // RTTI
 class CObject;
