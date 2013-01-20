@@ -91,10 +91,10 @@ public:
 };
 
 template <class M>
-inline typename M operator *(typename M::Num n, const typename M::Mat &m);
+inline M operator *(typename M::Num n, const typename M::Mat &m);
 
 template <class M>
-inline typename M::VecRow operator *(const typename M::VecCol &v, const typename M &m);
+inline typename M::VecRow operator *(const typename M::VecCol &v, const M &m);
 
 // Implementation -----------------------------------------------------------------
 
@@ -377,7 +377,7 @@ bool CMatrix<R, C, T>::MakeTriangular(bool bUnitDiagonal, CMatrix<R, K, T> *pMir
       if (pMirror)
         pMirror->MulRow(nCoef, r);
     }
-    for (i = r + 1; i < Rows; i++) 
+    for (i = r + 1; i < Rows; i++)
       if (!IsEqual(Val(i, r), 0)) {
         nCoef = -Val(i, r) / Val(r, r);
         AddRows(nCoef, r, i);
@@ -397,7 +397,7 @@ bool CMatrix<R, C, T>::MakeZeroAboveDiagonal(CMatrix<R, K, T> *pMirror)
   Num nCoef;
   for (r = Rows - 1; r >= 0; r--) {
     ASSERT(!MATRIX_CHECK_ARITHMETIC || !IsEqual(Val(r, r), 0));
-    for (i = 0; i < r; i++) 
+    for (i = 0; i < r; i++)
       if (!IsEqual(Val(i, r), 0)) {
         nCoef = -Val(i, r) / Val(r, r);
         AddRows(nCoef, r, i);
@@ -546,7 +546,7 @@ CMatrix<R, C, T> &CMatrix<R, C, T>::Normalize()
 }
 
 template <class M>
-typename M operator *(typename M::Num n, const typename M::Mat &m)
+M operator *(typename M::Num n, const typename M::Mat &m)
 {
   M mRes;
   for (int r = 0; r < M::Rows; r++)
@@ -556,9 +556,9 @@ typename M operator *(typename M::Num n, const typename M::Mat &m)
 }
 
 template <class M>
-typename M::VecRow operator *(const typename M::VecCol &v, const typename M &m)
+typename M::VecRow operator *(const typename M::VecCol &v, const M &m)
 {
-  M::VecRow vRes;
+  typename M::VecRow vRes;
   for (int c = 0; c < M::Cols; c++) {
     vRes[c] = v[0] * m.Val(0, c);
     for (int r = 1; r < M::Rows; r++)
@@ -676,7 +676,7 @@ static inline bool SetValue(CMatT<M> *val, const CBaseVar *vSrc)
 {
   const CVarValueBase<M> *pV = Cast<CVarValueBase<M> >(vSrc);
   if (pV) {
-    pV->GetValue().GetTransposed(* (M::MatT *) val);
+    pV->GetValue().GetTransposed(* (typename M::MatT *) val);
     return true;
   }
   return SetValueBase(val, vSrc);

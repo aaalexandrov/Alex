@@ -59,7 +59,7 @@ public:
 template <class K, class V, class H = Util::HashSize_T, class P = Util::Equal<K> >
 class CHashKV: public CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> > {
 public:
-  CHashKV(int iSize = 0): CHash(iSize) {}
+  CHashKV(int iSize = 0): CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize) {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -236,7 +236,7 @@ void CHash<T, K, H, P>::Resize(int iSize)
     CList<T, K, P> *&pLstOld = hash.m_arrLists[i];
     if (!pLstOld)
       continue;
-    CList<T, K, P>::TNode *pNode;
+    typename CList<T, K, P>::TNode *pNode;
     while (pNode = pLstOld->PopNode()) {
       size_t uiHash = H::Hash(pNode->Data);
       uiHash %= m_arrLists.m_iCount;
@@ -292,8 +292,8 @@ void CHash<T, K, H, P>::AddUnique(T t)
   CList<T, K, P> *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
     pLst = new CList<T, K, P>();
-  CList<T, K, P>::TNode *pNode = pLst->Find(t);
-  if (pNode) 
+  typename CList<T, K, P>::TNode *pNode = pLst->Find(t);
+  if (pNode)
     pNode->Data = t;
   else {
     pLst->PushTail(t);

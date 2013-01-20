@@ -6,8 +6,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="..\Output\bin\Debug\SOS" prefix_auto="1" extension_auto="1" />
-				<Option object_output="..\Output\obj\Debug\" />
+				<Option output="../Output/bin/Debug/SOS" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../Output/obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -16,8 +16,8 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="..\Output\bin\Release\SOS" prefix_auto="1" extension_auto="1" />
-				<Option object_output="..\Output\obj\Release\" />
+				<Option output="../Output/bin/Release/SOS" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../Output/obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -31,43 +31,90 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
-			<Add directory="..\Src" />
+			<Add directory="../Src" />
+			<Add directory="../../Base" />
 		</Compiler>
-		<Unit filename="..\Src\AVLTree.cpp" />
-		<Unit filename="..\Src\AVLTree.h" />
-		<Unit filename="..\Src\Array.cpp" />
-		<Unit filename="..\Src\Array.h" />
-		<Unit filename="..\Src\Base.cpp" />
-		<Unit filename="..\Src\Base.h" />
-		<Unit filename="..\Src\Debug.cpp" />
-		<Unit filename="..\Src\Debug.h" />
-		<Unit filename="..\Src\Expression.cpp" />
-		<Unit filename="..\Src\Expression.h" />
-		<Unit filename="..\Src\Frontend.cpp" />
-		<Unit filename="..\Src\Frontend.h" />
-		<Unit filename="..\Src\Hash.cpp" />
-		<Unit filename="..\Src\Hash.h" />
-		<Unit filename="..\Src\Interpreter.cpp" />
-		<Unit filename="..\Src\Interpreter.h" />
-		<Unit filename="..\Src\List.cpp" />
-		<Unit filename="..\Src\List.h" />
-		<Unit filename="..\Src\Parse.cpp" />
-		<Unit filename="..\Src\Parse.h" />
-		<Unit filename="..\Src\SOS.cpp" />
-		<Unit filename="..\Src\SOS.txt" />
-		<Unit filename="..\Src\Str.cpp" />
-		<Unit filename="..\Src\Str.h" />
-		<Unit filename="..\Src\Util.cpp" />
-		<Unit filename="..\Src\Util.h" />
-		<Unit filename="..\Src\Var.cpp" />
-		<Unit filename="..\Src\Var.h" />
-		<Unit filename="..\Src\stdafx.cpp" />
-		<Unit filename="..\Src\stdafx.h" />
+		<Unit filename="../../Base/AVLTree.cpp" />
+		<Unit filename="../../Base/AVLTree.h" />
+		<Unit filename="../../Base/Array.cpp" />
+		<Unit filename="../../Base/Array.h" />
+		<Unit filename="../../Base/Base.cpp" />
+		<Unit filename="../../Base/Base.h" />
+		<Unit filename="../../Base/Bits.cpp" />
+		<Unit filename="../../Base/Bits.h" />
+		<Unit filename="../../Base/Convex.cpp" />
+		<Unit filename="../../Base/Convex.h" />
+		<Unit filename="../../Base/Debug.cpp" />
+		<Unit filename="../../Base/Debug.h" />
+		<Unit filename="../../Base/Encode.cpp" />
+		<Unit filename="../../Base/Encode.h" />
+		<Unit filename="../../Base/File.cpp" />
+		<Unit filename="../../Base/File.h" />
+		<Unit filename="../../Base/Hash.cpp" />
+		<Unit filename="../../Base/Hash.h" />
+		<Unit filename="../../Base/HashInner.cpp" />
+		<Unit filename="../../Base/HashInner.h" />
+		<Unit filename="../../Base/List.cpp" />
+		<Unit filename="../../Base/List.h" />
+		<Unit filename="../../Base/Matrix.cpp" />
+		<Unit filename="../../Base/Matrix.h" />
+		<Unit filename="../../Base/Parse.cpp" />
+		<Unit filename="../../Base/Parse.h" />
+		<Unit filename="../../Base/Random.cpp" />
+		<Unit filename="../../Base/Random.h" />
+		<Unit filename="../../Base/Rect.cpp" />
+		<Unit filename="../../Base/Rect.h" />
+		<Unit filename="../../Base/Shape.cpp" />
+		<Unit filename="../../Base/Shape.h" />
+		<Unit filename="../../Base/Str.cpp" />
+		<Unit filename="../../Base/Str.h" />
+		<Unit filename="../../Base/Transform.cpp" />
+		<Unit filename="../../Base/Transform.h" />
+		<Unit filename="../../Base/Util.cpp" />
+		<Unit filename="../../Base/Util.h" />
+		<Unit filename="../../Base/Var.cpp" />
+		<Unit filename="../../Base/Var.h" />
+		<Unit filename="../../Base/VarUtil.cpp" />
+		<Unit filename="../../Base/VarUtil.h" />
+		<Unit filename="../../Base/Vector.cpp" />
+		<Unit filename="../../Base/Vector.h" />
+		<Unit filename="../Src/BNF.cpp" />
+		<Unit filename="../Src/BNF.h" />
+		<Unit filename="../Src/Compile.cpp" />
+		<Unit filename="../Src/Compile.h" />
+		<Unit filename="../Src/Error.h" />
+		<Unit filename="../Src/Execution.cpp" />
+		<Unit filename="../Src/Execution.h" />
+		<Unit filename="../Src/Expression.cpp" />
+		<Unit filename="../Src/Expression.h" />
+		<Unit filename="../Src/Frontend.cpp" />
+		<Unit filename="../Src/Frontend.h" />
+		<Unit filename="../Src/Grammar.cpp" />
+		<Unit filename="../Src/Grammar.h" />
+		<Unit filename="../Src/Interpreter.cpp" />
+		<Unit filename="../Src/Interpreter.h" />
+		<Unit filename="../Src/SOS.cpp" />
+		<Unit filename="../Src/SOS.txt" />
+		<Unit filename="../Src/Token.cpp" />
+		<Unit filename="../Src/Token.h" />
+		<Unit filename="../Src/Variable.cpp" />
+		<Unit filename="../Src/Variable.h" />
+		<Unit filename="../Src/stdafx.cpp" />
+		<Unit filename="../Src/stdafx.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

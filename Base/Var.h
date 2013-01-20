@@ -152,16 +152,18 @@ template <class T>
 class CVar: public CVarTpl<CVal<T> > {
 	DEFRTTI
 public:
-  CVar(): CVarTpl()            {}
-  CVar(T const &t): CVarTpl(t) {}
+  CVar(): CVarTpl<CVal<T> >()            {}
+  CVar(T const &t): CVarTpl<CVal<T> > (t) {}
 };
 
 template <class T>
 class CVarRef: public CVarTpl<CRef<T> > {
 	DEFRTTI
 public:
-  CVarRef(): CVarTpl()      {}
-  CVarRef(T &t): CVarTpl(t) {}
+  using CVarTpl<CRef<T> >::GetRef;
+
+  CVarRef(): CVarTpl<CRef<T> >()      {}
+  CVarRef(T &t): CVarTpl<CRef<T> >(t) {}
 
   CBaseVar *Clone() const { CVarRef<T> *pVar = new CVarRef<T>(*(T*) GetRef()); return pVar; }
 };
@@ -179,7 +181,7 @@ public:
     virtual CIter &Next()                     = 0;
     virtual CIter &Prev()                     = 0;
     virtual operator bool () const            = 0;
-                                              
+
 		virtual CStrAny GetName() const           = 0;
 		virtual bool GetVar(CBaseVar &vDst) const = 0;
 		virtual bool SetVar(CBaseVar const &vSrc) = 0;
@@ -294,10 +296,10 @@ public:
 // Data Conversion implementation - copying of values -----------------------------------------
 
 template <class T>
-static inline bool Set(T *dst, const T *src) 
-{ 
-  *dst = *src; 
-  return true; 
+static inline bool Set(T *dst, const T *src)
+{
+  *dst = *src;
+  return true;
 }
 
 inline bool Set(float *dst, const int *src)
@@ -381,7 +383,7 @@ static inline bool SetValue(CStrAny *val, const CBaseVar *vSrc)
 static inline bool SetValue(BYTE *val, const CBaseVar *vSrc)
 {
   int i;
-  bool bRes = vSrc->GetInt(i); 
+  bool bRes = vSrc->GetInt(i);
   *val = (BYTE) i;
   return bRes && *val == i;
 }

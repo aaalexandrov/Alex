@@ -4,8 +4,19 @@
 #include <time.h>
 #include <stdio.h>
 
+class A {
+public:
+    int i;
+    A() {
+        i = 0;
+    }
+    ~A() {
+        i = -1;
+    }
+};
+
 struct TTestHashInner {
-	TTestHashInner() 
+	TTestHashInner()
 	{
 		int i;
 		TConDestructor<int>::Construct(&i);
@@ -14,18 +25,6 @@ struct TTestHashInner {
 		int const *pI;
 		TConDestructor<int const*>::Construct(&pI);
 		TConDestructor<int const*>::Destroy(&pI);
-
-
-		class A {
-		public:
-			int i;
-			A() { 
-				i = 0;
-			}
-			~A() {
-				i = -1;
-			}
-		};
 
 		BYTE btBuf[sizeof(A)], btBuf1[sizeof(A)];
 		TConDestructor<A>::Construct((A*)btBuf);
@@ -57,7 +56,7 @@ struct TTestHashInner {
 
 		time_t tStart = time(0);
 
-		for (int i = 0; i < arrTest.m_iCount; i++) 
+		for (int i = 0; i < arrTest.m_iCount; i++)
 			kHash.Add(arrTest[i]);
 
 		double dElapsed = difftime(time(0), tStart);
@@ -65,7 +64,7 @@ struct TTestHashInner {
 
 		tStart = time(0);
 
-		for (int i = 0; i < arrTest.m_iCount; i++) 
+		for (int i = 0; i < arrTest.m_iCount; i++)
 			kHashI.Add(arrTest[i]);
 
 		dElapsed = difftime(time(0), tStart);

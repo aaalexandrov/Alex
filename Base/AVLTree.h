@@ -70,7 +70,7 @@ public:
 template <class K, class V, class L = Less<K> >
 class CAVLTreeKV: public CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> > {
 public:
-  CAVLTreeKV(): CAVLTree() {}
+  CAVLTreeKV(): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >() {}
 };
 
 // Implementation ------------------------------------------------------------------

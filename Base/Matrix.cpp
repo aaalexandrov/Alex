@@ -25,7 +25,7 @@ CMatrixVar::Num &CMatrixVar::At(int iRow, int iCol)
 {
   iRow = Util::Bound(iRow, 0, m_iRows - 1);
   iCol = Util::Bound(iCol, 0, m_iCols - 1);
-  if (m_uiFlags & MVF_TRANSPOSED) 
+  if (m_uiFlags & MVF_TRANSPOSED)
     return m_pVal[iCol * m_iRows + iRow];
   else
     return m_pVal[iRow * m_iCols + iCol];
@@ -35,7 +35,7 @@ const CMatrixVar::Num &CMatrixVar::At(int iRow, int iCol) const
 {
   iRow = Util::Bound(iRow, 0, m_iRows - 1);
   iCol = Util::Bound(iCol, 0, m_iCols - 1);
-  if (m_uiFlags & MVF_TRANSPOSED) 
+  if (m_uiFlags & MVF_TRANSPOSED)
     return m_pVal[iCol * m_iRows + iRow];
   else
     return m_pVal[iRow * m_iCols + iCol];
@@ -54,9 +54,15 @@ bool CMatrixVar::SetVar(const CBaseVar &vSrc)
 
 // Matrix Vars ----------------------------------------------------------------
 
+#define COMMA ,
+//#define IMP_MAT_VAR_RTTI(ROWS, COLS) \
+//  IMP_VAR_RTTI(ID(CONCAT(CMatrix<ROWS COMMA COLS>))) \
+//  IMP_VAR_RTTI(ID(CONCAT(CMatT<CMatrix<ROWS COMMA COLS>>)))
+
 #define IMP_MAT_VAR_RTTI(ROWS, COLS) \
-  IMP_VAR_RTTI(ID(CONCAT(CMatrix<ROWS, COLS>))) \
-  IMP_VAR_RTTI(ID(CONCAT(CMatT<CMatrix<ROWS, COLS>>)))
+  IMP_VAR_RTTI(CMatrix<ROWS COMMA COLS>) \
+  IMP_VAR_RTTI(CMatT<CMatrix<ROWS COMMA COLS> >)
+
 
 IMP_MAT_VAR_RTTI(2, 2)
 IMP_MAT_VAR_RTTI(2, 3)
@@ -70,7 +76,7 @@ IMP_MAT_VAR_RTTI(4, 4)
 
 const CRTTI *GetMatrixVarRTTI(int iRows, int iCols, bool bVarRef)
 {
-  static CRTTI *pMatrixRTTI[2][4][4] = 
+  static CRTTI *pMatrixRTTI[2][4][4] =
     { { { 0, 0,                             0,                             0                             },
         { 0, &CVar<CMatrix<2, 2> >::s_RTTI, &CVar<CMatrix<2, 3> >::s_RTTI, &CVar<CMatrix<2, 4> >::s_RTTI },
         { 0, &CVar<CMatrix<3, 2> >::s_RTTI, &CVar<CMatrix<3, 3> >::s_RTTI, &CVar<CMatrix<3, 4> >::s_RTTI },
@@ -101,7 +107,7 @@ const CRTTI *GetMatrixVarRTTI(int iRows, int iCols, bool bVarRef)
 
 const CRTTI *GetMatTVarRTTI(int iRows, int iCols, bool bVarRef)
 {
-  static CRTTI *pMatTRTTI[2][4][4] = 
+  static CRTTI *pMatTRTTI[2][4][4] =
     { { { 0, 0,                                     0,                                     0                                     },
         { 0, &CVar<CMatT<CMatrix<2, 2> > >::s_RTTI, &CVar<CMatT<CMatrix<2, 3> > >::s_RTTI, &CVar<CMatT<CMatrix<2, 4> > >::s_RTTI },
         { 0, &CVar<CMatT<CMatrix<3, 2> > >::s_RTTI, &CVar<CMatT<CMatrix<3, 3> > >::s_RTTI, &CVar<CMatT<CMatrix<3, 4> > >::s_RTTI },

@@ -78,7 +78,7 @@ public:
   class CFileIter {
   public:
     intptr_t       m_hFind;
-    __finddata64_t m_FindData;
+    _finddatai64_t m_FindData;
 
     CFileIter(CStrAny const &sPath) { m_hFind = -1; operator =(sPath); }
     ~CFileIter();

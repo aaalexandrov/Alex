@@ -49,15 +49,33 @@ const CRTTI *CRTTI::Find(const char *pClassName)
 }
 
 
-CRTTI::CRTTI(char *pClassName, FObjectCreate fnCreate, const CRTTI *pParent) 
-{ 
-	m_pClassName = pClassName; 
+CRTTI::CRTTI(char *pClassName, FObjectCreate fnCreate, const CRTTI *pParent)
+{
+	m_pClassName = pClassName;
 	m_fnCreate = fnCreate;
-	m_pParent = pParent; 
+	m_pParent = pParent;
   m_uiClassData = 0;
 	Add(this);
 }
 
 CRTTI CObject::s_RTTI("CObject", CObject::CreateInstance, 0);
 
+class CTest: public CObject {
+public:
+};
 
+template<class T, class B>
+class CRTTI1 {
+public:
+  typedef CTest   Type;
+  typedef CObject Base;
+
+  char const *m_pClassName;
+
+  CRTTI1(char const *pClassName);
+  inline Type *CreateInstance() const { return new Type(); }
+
+  CRTTI1<Base> const *GetBase() const {  }
+
+  inline static CRTTI1 const *Get() {  }
+};

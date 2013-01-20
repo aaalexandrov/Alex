@@ -90,7 +90,7 @@ public:
   inline CVector& SetVal(Num nVal, int iIndex = -1);
   inline CVector& SetZero();
   inline CVector& SetUnit(int iIndex = -1);
-  
+
   inline CVector &Set(Num nX);
   inline CVector &Set(Num nX, Num nY);
   inline CVector &Set(Num nX, Num nY, Num nZ);
@@ -360,13 +360,13 @@ CVector<D, T> CVector<D, T>::GetNormalized() const
 }
 
 template <int D, class T>
-bool CVector<D, T>::IsParallel(const CVector &v, Num *pFactor = 0) const
+bool CVector<D, T>::IsParallel(const CVector &v, Num *pFactor) const
 {
   int i;
   Num nFactor;
   if (!pFactor)
     pFactor = &nFactor;
-  for (i = 0; i < Dim; i++) 
+  for (i = 0; i < Dim; i++)
     if (!IsEqual(Val(i), 0))
       break;
   if (i >= Dim) {
@@ -374,7 +374,7 @@ bool CVector<D, T>::IsParallel(const CVector &v, Num *pFactor = 0) const
     return true;
   }
   *pFactor = v.Val(i) / Val(i);
-  while (++i < Dim) 
+  while (++i < Dim)
     if (!IsEqual(Val(i) * (*pFactor), v.Val(i)))
       return false;
   return true;
@@ -398,7 +398,7 @@ CVector<D, T> CVector<D, T>::Perpendicular() const
     }
   }
   nDot = Dot(vPerp) / LengthSqr();
-  v = *this * nDot; 
+  v = *this * nDot;
   vPerp -= v;
   ASSERT(IsEqual(Dot(vPerp), 0));
   return vPerp;

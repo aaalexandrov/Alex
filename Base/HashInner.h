@@ -83,7 +83,7 @@ public:
 template <class K, class V, class H = Util::HashSize_T, class P = Util::Equal<K> >
 class CHashInnerKV: public CHashInner<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> > {
 public:
-  CHashInnerKV(int iSize = 0): CHashInner(iSize) {}
+  CHashInnerKV(int iSize = 0): CHashInner<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize) {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -197,7 +197,7 @@ T const &CHashInner<T, K, H, P>::TIter::operator ->() const
 // CHashInner ----------------------------------------------------------------------
 
 template <class T, class K, class H, class P>
-CHashInner<T, K, H, P>::CHashInner(int iSize) 
+CHashInner<T, K, H, P>::CHashInner(int iSize)
 {
 	if (!iSize)
 		iSize = INITIAL_SIZE;
@@ -279,7 +279,7 @@ void CHashInner<T, K, H, P>::Resize(int iSize)
   Util::Swap(hash.m_iMaxCount, m_iMaxCount);
   Util::Swap(hash.m_iLastFree, m_iLastFree);
 
-	for (int i = 0; i < hash.m_iMaxCount; i++) 
+	for (int i = 0; i < hash.m_iMaxCount; i++)
 		if (!hash.m_pElements[i].IsFree())
 			Add(hash.m_pElements[i].GetData());
 }
@@ -295,7 +295,7 @@ int CHashInner<T, K, H, P>::GetFreeIndex()
 template <class T, class K, class H, class P>
 void CHashInner<T, K, H, P>::Add(T t)
 {
-	if (m_iCount >= m_iMaxCount) 
+	if (m_iCount >= m_iMaxCount)
 		Resize(GetNextSize(m_iMaxCount + 1));
   size_t uiHash = H::Hash(t) % m_iMaxCount;
 	CTableElem *pPos = m_pElements + uiHash;

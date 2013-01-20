@@ -40,13 +40,7 @@ public:
   const T &PreLast() const   { return At(m_iCount - 2); }
   void Append(const T &t);
 
-  template <bool bLinear>
-  int GetGrowInc();
-
-  template <>
-  int GetGrowInc<true>()  { return GROW_INC; }
-  template <>
-  int GetGrowInc<false>() { return Util::Max(GROW_MIN, m_iMaxCount / -GROW_INC); }
+  int GetGrowInc() { if (GROW_INC >= 0) return GROW_INC; else return Util::Max(GROW_MIN, m_iMaxCount / -GROW_INC); }
 };
 
 template <class T, class K = T, class P = Util::Less<T>, int G = -4>
@@ -68,6 +62,11 @@ public:
 template <class T, class K = T, class P = Util::Less<T>, int G = -4>
 class CHeap: public CArray<T, G> {
 public:
+  using CArray<T, G>::m_iCount;
+  using CArray<T, G>::m_pArray;
+  using CArray<T, G>::Append;
+  using CArray<T, G>::SetCount;
+
   CHeap(int iMaxCount = 16);
 
   void InitHeap();
@@ -160,7 +159,7 @@ void CArray<T, G>::SetCount(int iCount)
 {
   if (iCount > m_iMaxCount) {
     int iInc;
-    iInc = GetGrowInc<GROW_INC >= 0>();
+    iInc = GetGrowInc();
     if (iCount <= m_iMaxCount + iInc)
       SetMaxCount(m_iMaxCount + iInc);
     else
@@ -340,7 +339,7 @@ int CHeap<T, K, P, G>::SiftUp(int i)
     int iUp = UpIndex(i);
     if (P::Lt(m_pArray[i], m_pArray[iUp]))
       Util::Swap(m_pArray[i], m_pArray[iUp]);
-    else 
+    else
       break;
     i = iUp;
   }

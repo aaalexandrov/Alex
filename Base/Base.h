@@ -109,19 +109,19 @@ public:
 template <class T>
 class CAutoDeletePtr: public CAutoFreePtr<T, CPtrDeleter<T> > {
 public:
-  explicit CAutoDeletePtr(T *pPtr = 0): CAutoFreePtr(pPtr) {}
+  explicit CAutoDeletePtr(T *pPtr = 0): CAutoFreePtr<T, CPtrDeleter<T> >(pPtr) {}
 };
 
 template <class T>
 class CAutoDeleteArrayPtr: public CAutoFreePtr<T, CPtrArrayDeleter<T> > {
 public:
-  explicit CAutoDeleteArrayPtr(T *pPtr = 0): CAutoFreePtr(pPtr) {}
+  explicit CAutoDeleteArrayPtr(T *pPtr = 0): CAutoFreePtr<T, CPtrArrayDeleter<T> >(pPtr) {}
 };
 
 template <class T>
 class CAutoReleasePtr: public CAutoFreePtr<T, CPtrReleaser<T> > {
 public:
-  explicit CAutoReleasePtr(T *pPtr = 0): CAutoFreePtr(pPtr) {}
+  explicit CAutoReleasePtr(T *pPtr = 0): CAutoFreePtr<T, CPtrReleaser<T> >(pPtr) {}
 };
 
 // Plain Old Data (POD) detection

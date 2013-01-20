@@ -28,7 +28,7 @@ CFileBase::ERRCODE CFileBase::ReadBuf(void *&pBuf, int &iBytes)
   if (err)
     return err;
   ASSERT(!pBuf || iSize <= iBytes);
-  if (pBuf && iSize > iBytes) 
+  if (pBuf && iSize > iBytes)
     return -1;
   iBytes = iSize;
   if (!iSize)
@@ -86,8 +86,8 @@ CFile::FILESIZE CFile::GetSize() const
 CFile::ERRCODE CFile::SetSize(FILESIZE iSize)
 {
   ASSERT(IsValid());
-  int iRes = _chsize_s(m_hFile, iSize);
-  return (iRes < 0) ? (ERRCODE) errno : 0; 
+  int iRes = _chsize(m_hFile, iSize);
+  return (iRes < 0) ? (ERRCODE) errno : 0;
 }
 
 CFile::FILESIZE CFile::GetPos() const
@@ -100,7 +100,7 @@ CFile::ERRCODE CFile::SetPos(FILESIZE iPos)
 {
   ASSERT(IsValid());
   FILESIZE iRes = _lseeki64(m_hFile, iPos, SEEK_SET);
-  return (iRes < 0) ? (ERRCODE) errno : 0; 
+  return (iRes < 0) ? (ERRCODE) errno : 0;
 }
 
 CFile::ERRCODE CFile::Read(void *pBuf, int iBytes, int *pProcessedBytes)
@@ -110,7 +110,7 @@ CFile::ERRCODE CFile::Read(void *pBuf, int iBytes, int *pProcessedBytes)
   if (!pProcessedBytes)
     pProcessedBytes = &iRead;
   *pProcessedBytes = _read(m_hFile, pBuf, iBytes);
-  return (*pProcessedBytes == iBytes) ? 0 : (errno ? (ERRCODE) errno : EIO); 
+  return (*pProcessedBytes == iBytes) ? 0 : (errno ? (ERRCODE) errno : EIO);
 }
 
 CFile::ERRCODE CFile::Write(void const *pBuf, int iBytes, int *pProcessedBytes)
@@ -120,7 +120,7 @@ CFile::ERRCODE CFile::Write(void const *pBuf, int iBytes, int *pProcessedBytes)
   if (!pProcessedBytes)
     pProcessedBytes = &iWritten;
   *pProcessedBytes = _write(m_hFile, pBuf, iBytes);
-  return (*pProcessedBytes == iBytes) ? 0 : (ERRCODE) errno; 
+  return (*pProcessedBytes == iBytes) ? 0 : (ERRCODE) errno;
 }
 
 // CFileSystem ----------------------------------------------------------------
@@ -137,7 +137,7 @@ CFileSystem::CFileIter::operator bool() const
 
 CFileSystem::CFileIter &CFileSystem::CFileIter::operator ++()
 {
-  int iRes = _findnext64(m_hFind, &m_FindData);
+  int iRes = _findnexti64(m_hFind, &m_FindData);
   if (iRes)
     m_FindData.name[0] = 0;
   return *this;
@@ -146,7 +146,7 @@ CFileSystem::CFileIter &CFileSystem::CFileIter::operator ++()
 CFileSystem::CFileIter &CFileSystem::CFileIter::operator =(CStrAny const &sPath)
 {
   _findclose(m_hFind);
-  m_hFind = _findfirst64(sPath.m_pBuf, &m_FindData);
+  m_hFind = _findfirsti64(sPath.m_pBuf, &m_FindData);
   return *this;
 }
 
@@ -195,7 +195,7 @@ CFileBase::ERRCODE CFileSystem::DeleteFile(CStrAny const &sFile)
 {
   CStrAny sPath = ResolvePath(sFile);
   int iRes = _unlink(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
+  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
 }
 
 CFileBase::ERRCODE CFileSystem::GetCurrentDirectory(CStrAny &sDir)
@@ -214,21 +214,21 @@ CFileBase::ERRCODE CFileSystem::SetCurrentDirectory(CStrAny const &sDir)
 {
   CStrAny sPath = ResolvePath(sDir);
   int iRes = _chdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
+  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
 }
 
 CFileBase::ERRCODE CFileSystem::CreateDirectory(CStrAny const &sDir)
 {
   CStrAny sPath = ResolvePath(sDir);
   int iRes = _mkdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
+  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
 }
 
 CFileBase::ERRCODE CFileSystem::DeleteDirectory(CStrAny const &sDir)
 {
   CStrAny sPath = ResolvePath(sDir);
   int iRes = _rmdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0; 
+  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
 }
 
 CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
@@ -240,7 +240,7 @@ CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
     char ch = sFile[i];
     if (ch == '\\')
       ch = '/';
-    if (ch != '/' || !bSkipSlash) 
+    if (ch != '/' || !bSkipSlash)
       sPath += CStrAny(ST_PART, &ch, 1);
     bSkipSlash = (ch == '/');
   }
@@ -254,8 +254,8 @@ CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
     sRootDir += sRootName;
     sRootDir += sRootExt;
   }
-  
-  if (!sDrive) 
+
+  if (!sDrive)
     sDrive = sRootDrive;
 
   if (!sDir)
@@ -270,7 +270,7 @@ CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
       iPos = sTempDir.Find(CStrAny(ST_WHOLE, "/.."));
       if (iPos < 0)
         break;
-      if (!iPos) 
+      if (!iPos)
         sTempDir = CStrAny(ST_WHOLE, "/") + sTempDir.SubStr(3, sTempDir.Length());
       else {
         for (iPrev = iPos - 1; iPrev >= 0; iPrev--)
@@ -323,7 +323,7 @@ bool CFileSystem::ParsePath(CStrAny const &sFile, CStrAny *pDrive, CStrAny *pPat
     pExtension = &sExt;
   else
     pExtension->Clear();
-  if (sFile.Length() >= 2 && sFile[1] == ':' && isalpha(sFile[0])) 
+  if (sFile.Length() >= 2 && sFile[1] == ':' && isalpha(sFile[0]))
     *pDrive = sFile.SubStr(0, 2);
   for (i = sFile.Length() - 1; i >= pDrive->Length(); i--) {
     if (sFile[i] == '.' && !*pExtension)
