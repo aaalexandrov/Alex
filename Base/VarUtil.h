@@ -4,10 +4,10 @@
 #include "Var.h"
 
 class CVarMerge: public CVarValueObj {
-  DEFRTTI_NOCREATE
+  DEFRTTI(CVarMerge, CVarValueObj, false)
 public:
   class CIter: public CVarObj::CIter {
-    DEFRTTI_NOCREATE
+    DEFRTTI(CVarMerge::CIter, CVarObj::CIter, false)
   public:
     CVarMerge const *m_pMerge;
     int              m_iVar;
@@ -50,7 +50,7 @@ public:
 };
 
 class CVarTemplate: public CObject {
-  DEFRTTI
+  DEFRTTI(CVarTemplate, CObject, true)
 public:
   CVarObj *m_pVars;
 
@@ -86,10 +86,10 @@ public:
 
 // Var contexts
 
-inline bool Set(CVarObj *dst, int const *src) { ASSERT(0); return false; } 
-inline bool Set(CVarObj *dst, float const *src) { ASSERT(0); return false; } 
-inline bool Set(int *dst,  CVarObj const *src) { ASSERT(0); return false; } 
-inline bool Set(float *dst, CVarObj const *src) { ASSERT(0); return false; } 
+inline bool Set(CVarObj *dst, int const *src) { ASSERT(0); return false; }
+inline bool Set(CVarObj *dst, float const *src) { ASSERT(0); return false; }
+inline bool Set(int *dst,  CVarObj const *src) { ASSERT(0); return false; }
+inline bool Set(float *dst, CVarObj const *src) { ASSERT(0); return false; }
 
 bool Set(CStrAny *dst, CVarObj const *src);
 bool Set(CVarObj *dst, CStrAny const *src);

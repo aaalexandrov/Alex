@@ -66,6 +66,9 @@
     <ClCompile Include="..\..\Base\HashInner.cpp">
       <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Base\RTTI.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Expression.h" />
@@ -131,6 +134,9 @@
     </ClInclude>
     <ClInclude Include="..\Src\BNF.h" />
     <ClInclude Include="..\..\Base\HashInner.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\RTTI.h">
       <Filter>Base</Filter>
     </ClInclude>
   </ItemGroup>

@@ -97,9 +97,9 @@ void CGeometryMerge::AddGeometry(CGeometry *pGeom, UINT uiVertices, UINT uiIndic
 CGeometry *CGeometryMerge::CreateGeometry(CRTTI const *pGeomRTTI, UINT uiVBFlags, UINT uiIBFlags, UINT uiExtraVertices, UINT uiExtraIndices, CRTTI const *pBoundRTTI)
 {
   if (!pGeomRTTI)
-    pGeomRTTI = &CGeometry::s_RTTI;
-  ASSERT(pGeomRTTI->IsKindOf(&CGeometry::s_RTTI));
-  if (!pGeomRTTI->IsKindOf(&CGeometry::s_RTTI))
+    pGeomRTTI = CGeometry::GetRTTI_s();
+  ASSERT(pGeomRTTI->IsKindOf(CGeometry::GetRTTI_s()));
+  if (!pGeomRTTI->IsKindOf(CGeometry::GetRTTI_s()))
     return 0;
   CGeometry *pGeom = (CGeometry *) pGeomRTTI->CreateInstance();
   bool bRes = pGeom->Init(m_pInputDesc, CGeometry::PT_TRIANGLELIST, 

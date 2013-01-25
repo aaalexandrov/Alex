@@ -5,7 +5,7 @@
 
 // CResource --------------------------------------------------------------------
 
-IMPRTTI_NOCREATE(CResource, CObject)
+CRTTIRegisterer<CResource> g_RegResource;
 
 bool CResource::Init(EType eType, UINT uiFlags)
 {
@@ -16,7 +16,7 @@ bool CResource::Init(EType eType, UINT uiFlags)
 
 // CD3DResource ---------------------------------------------------------------
 
-IMPRTTI_NOCREATE(CD3DResource, CResource)
+CRTTIRegisterer<CD3DResource> g_RegD3DResource;
 
 CD3DResource::CD3DResource()
 {
@@ -280,7 +280,7 @@ void CD3DResource::CopyRegion(UINT uiRowSize, UINT uiRows, UINT uiSlices,
 
 // CD3DBuffer -----------------------------------------------------------------
 
-IMPRTTI(CD3DBuffer, CD3DResource)
+CRTTIRegisterer<CD3DBuffer> g_RegD3DBuffer;
 
 UINT CD3DBuffer::s_uiTotalMemory = 0, 
      CD3DBuffer::s_uiDeviceMemory = 0;

@@ -332,7 +332,7 @@ UINT CTerrain::CPatch::CEdgedGeom::FirstEdgeIndexBetween(UINT uiEdgeInd0, UINT u
 }
 
 // CTerrain::CPatch::CPatchGeom -----------------------------------------------
-IMPRTTI_NOCREATE(CTerrain::CPatch::CPatchGeom, CObject)
+CRTTIRegisterer<CTerrain::CPatch::CPatchGeom> g_RegTerrainPatchPatchGeom;
 
 bool CTerrain::CPatch::CPatchGeom::DetermineActiveEdgeIndices(CBitArray<EDGE_INDICES> &kActive, bool bAdjacentMinDetail)
 {
@@ -400,7 +400,7 @@ void CTerrain::CPatch::CPatchGeom::UpdateAdjacentEdges()
 }
 
 // CTerrain::CPatch::CFullGeom ------------------------------------------------
-IMPRTTI(CTerrain::CPatch::CFullGeom, CTerrain::CPatch::CPatchGeom)
+CRTTIRegisterer<CTerrain::CPatch::CFullGeom> g_RegTerrainPatchFullGeom;
 
 CTerrain::CPatch::CFullGeom::CFullGeom()
 {
@@ -636,7 +636,7 @@ CTerrain::CPatch::CProgGeom::TMaterialModel::~TMaterialModel()
 
 // CTerrain::CPatch::CProgGeom ------------------------------------------------
 
-IMPRTTI(CTerrain::CPatch::CProgGeom, CTerrain::CPatch::CPatchGeom)
+CRTTIRegisterer<CTerrain::CPatch::CProgGeom> g_RegTerrainPatchProgGeom;
 
 CTerrain::CPatch::CProgGeom::CProgGeom()
 {

@@ -393,7 +393,7 @@ bool CTerrain::CPatch::InitModel(UINT uiReservedVertices)
   if (uiReservedVertices == EDGE_INDICES)
     InitEdgeVertices(pOrgVert);
 
-  pGeom->SetBoundType(&CAABB::s_RTTI, pOrgVert);
+  pGeom->SetBoundType(CAABB::GetRTTI_s(), pOrgVert);
 
   pGeom->m_pVB->Unmap();
 

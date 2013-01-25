@@ -4,7 +4,7 @@
 #include "Base.h"
 
 class CResource: public CObject {
-  DEFRTTI_NOCREATE
+	DEFRTTI(CResource, CObject, false)
   DEFREFCOUNT
 public:
   enum EType {
@@ -52,7 +52,7 @@ public:
 
 struct ID3D11Resource;
 class CD3DResource: public CResource {
-  DEFRTTI
+	DEFRTTI(CD3DResource, CResource, false)
 public:
   BYTE *m_pSystemCopy;
   UINT  m_uiMappedSubresource;
@@ -91,7 +91,7 @@ public:
 
 struct ID3D11Buffer;
 class CD3DBuffer: public CD3DResource {
-  DEFRTTI
+  DEFRTTI(CD3DBuffer, CD3DResource, true)
 public:
   static UINT s_uiTotalMemory, s_uiDeviceMemory;
 

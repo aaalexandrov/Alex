@@ -57,7 +57,7 @@ public:
 };
 
 class CConstantTemplate: public CVarTemplate {
-  DEFRTTI
+  DEFRTTI(CConstantTemplate, CVarTemplate, true)
 public:
   CStrAny m_sName, m_sCacheName;
   int     m_iSize;

@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "Vector.h"
 
-IMP_VAR_RTTI(CVector<2>)
-IMP_VAR_RTTI(CVector<3>)
-IMP_VAR_RTTI(CVector<4>)
+CVarRTTIRegisterer<CVector<2> > g_RegVarVector2;
+CVarRTTIRegisterer<CVector<3> > g_RegVarVector3;
+CVarRTTIRegisterer<CVector<4> > g_RegVarVector4;
 
 const CRTTI *GetVectorVarRTTI(int iDim, bool bVarRef)
 {
-  static CRTTI *pVectorRTTI[2][4] = 
-    { { 0, &CVar<CVector<2> >::s_RTTI,    &CVar<CVector<3> >::s_RTTI,    &CVar<CVector<4> >::s_RTTI    },
+  static CRTTI const *pVectorRTTI[2][4] =
+    { { 0, CVar<CVector<2> >::GetRTTI_s(),    CVar<CVector<3> >::GetRTTI_s(),    CVar<CVector<4> >::GetRTTI_s()    },
 
-      { 0, &CVarRef<CVector<2> >::s_RTTI, &CVarRef<CVector<3> >::s_RTTI, &CVarRef<CVector<4> >::s_RTTI } };
+      { 0, CVarRef<CVector<2> >::GetRTTI_s(), CVarRef<CVector<3> >::GetRTTI_s(), CVarRef<CVector<4> >::GetRTTI_s() } };
 
   if (iDim < 1 || iDim > ARRSIZE(pVectorRTTI[0]))
     return 0;

@@ -4,6 +4,16 @@
 #include "Debug.h"
 #include "Util.h"
 
+template <int G, int M, bool N>
+struct TArrayGrow {
+  static int GetGrowInc(int iMaxCount) { return G; }
+};
+
+template <int G, int M>
+struct TArrayGrow<G, M, true> {
+  static int GetGrowInc(int iMaxCount) { return Util::Max(M, iMaxCount / -G); }
+};
+
 template <class T, int G = -4>
 class CArray {
 public:
@@ -40,7 +50,7 @@ public:
   const T &PreLast() const   { return At(m_iCount - 2); }
   void Append(const T &t);
 
-  int GetGrowInc() { if (GROW_INC >= 0) return GROW_INC; else return Util::Max(GROW_MIN, m_iMaxCount / -GROW_INC); }
+  int GetGrowInc() { return TArrayGrow<GROW_INC, GROW_MIN, GROW_INC < 0>::GetGrowInc(m_iMaxCount); /*if (GROW_INC >= 0) return GROW_INC; else return Util::Max(GROW_MIN, m_iMaxCount / -GROW_INC);*/ }
 };
 
 template <class T, class K = T, class P = Util::Less<T>, int G = -4>

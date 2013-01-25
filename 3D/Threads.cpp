@@ -2,10 +2,10 @@
 #include "Threads.h"
 
 // CThreadBase ----------------------------------------------------------------
-IMPRTTI_NOCREATE(CThreadBase, CObject)
+CRTTIRegisterer<CThreadBase> g_RegThreadBase;
 
 // CThreadWin -----------------------------------------------------------------
-IMPRTTI(CThreadWin, CThreadBase)
+CRTTIRegisterer<CThreadWin> g_RegThreadWin;
 
 CThreadWin::CThreadWin()
 {
@@ -108,10 +108,10 @@ DWORD WINAPI CThreadWin::ThreadFunc(LPVOID lpParam)
 }
 
 // CLockBase ------------------------------------------------------------------
-IMPRTTI_NOCREATE(CLockBase, CObject)
+CRTTIRegisterer<CLockBase> g_RegLockBase;
 
 // CLockWin -------------------------------------------------------------------
-IMPRTTI_NOCREATE(CLockWin, CLockBase)
+CRTTIRegisterer<CLockWin> g_RegLockWin;
 
 CLockWin::CLockWin(UINT uiSpinCount)
 {

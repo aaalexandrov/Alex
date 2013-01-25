@@ -17,6 +17,7 @@
 
 #include "Debug.h"
 #include "Base.h"
+#include "RTTI.h"
 #include "Util.h"
 using namespace Util;
 

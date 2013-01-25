@@ -140,7 +140,7 @@ size_t CInputDesc::GetHash() const
 }
 
 // CConstantTemplate ---------------------------------------------------------
-IMPRTTI(CConstantTemplate, CVarTemplate)
+CRTTIRegisterer<CConstantTemplate> g_RegConstantTemplate;
 
 CConstantTemplate::CConstantTemplate()
 {
@@ -191,7 +191,7 @@ bool CConstantTemplate::Init(CTechnique *pTechnique, ID3D11ShaderReflectionConst
     switch (std.Class) {
       case D3D10_SVC_SCALAR:
         if (std.Type == D3D10_SVT_FLOAT) 
-          pVarRTTI = &CVarRef<float>::s_RTTI;
+          pVarRTTI = CVarRef<float>::GetRTTI_s();
         break;
       case D3D10_SVC_VECTOR:
         if (std.Type == D3D10_SVT_FLOAT)
@@ -404,7 +404,7 @@ bool CConstantBuffer::SetMatrixVar(CMatrixVar *pDst, CMatrixVar const *pSrc, CSt
 }
 
 // CConstantCache ------------------------------------------------------------
-IMP_VAR_RTTI(CConstantCache *)
+CVarRTTIRegisterer<CConstantCache *> g_RegConstantCachePtr;
 IMPLEMENT_BASE_SET(CConstantCache *)
 
 CConstantCache::CConstantCache()

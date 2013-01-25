@@ -3,7 +3,7 @@
 #include "Graphics.h"
 
 // CStateVarObj ---------------------------------------------------------------
-IMPRTTI_NOCREATE(CStateVarObj, CVarObj)
+CRTTIRegisterer<CStateVarObj> g_RegStateVarObj;
 
 bool CStateVarObj::Init()
 {
@@ -110,16 +110,16 @@ inline CBaseVar const *CStateVarObj::TranslateStr2Int(CBaseVar const *pValue, TS
 inline bool CStateVarObj::EqualVars(CBaseVar const *pVar0, CBaseVar const *pVar1)
 {
   ASSERT(pVar0 && pVar1);
-  if (pVar0->GetRTTI()->IsKindOf(&CVarValueBase<int>::s_RTTI) && pVar1->GetRTTI()->IsKindOf(&CVarValueBase<int>::s_RTTI)) 
+  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<int>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<int>::GetRTTI_s())) 
     return ((CVarValueBase<int> *) pVar0)->GetValue() == ((CVarValueBase<int> *) pVar1)->GetValue();
 
-  if (pVar0->GetRTTI()->IsKindOf(&CVarValueBase<float>::s_RTTI) && pVar1->GetRTTI()->IsKindOf(&CVarValueBase<float>::s_RTTI)) 
+  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<float>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<float>::GetRTTI_s())) 
     return ((CVarValueBase<float> *) pVar0)->GetValue() == ((CVarValueBase<float> *) pVar1)->GetValue();
 
-  if (pVar0->GetRTTI()->IsKindOf(&CVarValueBase<BYTE>::s_RTTI) && pVar1->GetRTTI()->IsKindOf(&CVarValueBase<BYTE>::s_RTTI)) 
+  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<BYTE>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<BYTE>::GetRTTI_s())) 
     return ((CVarValueBase<BYTE> *) pVar0)->GetValue() == ((CVarValueBase<BYTE> *) pVar1)->GetValue();
 
-  if (pVar0->GetRTTI()->IsKindOf(&CVarValueBase<CVector<4> >::s_RTTI) && pVar1->GetRTTI()->IsKindOf(&CVarValueBase<CVector<4> >::s_RTTI)) 
+  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<CVector<4> >::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<CVector<4> >::GetRTTI_s())) 
     return ((CVarValueBase<CVector<4> > *) pVar0)->GetValue() == ((CVarValueBase<CVector<4> > *) pVar1)->GetValue();
 
   return false;
@@ -127,9 +127,9 @@ inline bool CStateVarObj::EqualVars(CBaseVar const *pVar0, CBaseVar const *pVar1
 
 
 // CRasterizerState -----------------------------------------------------------
-IMPRTTI(CRasterizerState, CStateVarObj)
-IMP_VAR_RTTI(CRasterizerState *)
-IMP_VAR_RTTI(CRasterizerState)
+CRTTIRegisterer<CRasterizerState> g_RegRasterizerState;
+CVarRTTIRegisterer<CRasterizerState *> g_RegVarRasterizerStatePtr;
+CVarRTTIRegisterer<CRasterizerState> g_RegVarRasterizerState;
 
 bool CRasterizerState::Init()
 {
@@ -253,9 +253,9 @@ bool CRasterizerState::Commit(bool bOnlyIfChanged)
 }
 
 // CBlendState ----------------------------------------------------------------
-IMPRTTI(CBlendState, CStateVarObj)
-IMP_VAR_RTTI(CBlendState *)
-IMP_VAR_RTTI(CBlendState)
+CRTTIRegisterer<CBlendState> g_RegBlendState;
+CVarRTTIRegisterer<CBlendState *> g_RegVarBlendStatePtr;
+CVarRTTIRegisterer<CBlendState> g_RegVarBlendState;
 
 bool CBlendState::Init()
 {
@@ -432,9 +432,9 @@ bool CBlendState::Commit(bool bOnlyIfChanged)
 }
 
 // CDepthStencilState ---------------------------------------------------------
-IMPRTTI(CDepthStencilState, CStateVarObj)
-IMP_VAR_RTTI(CDepthStencilState *)
-IMP_VAR_RTTI(CDepthStencilState)
+CRTTIRegisterer<CDepthStencilState> g_RegDepthStencilState;
+CVarRTTIRegisterer<CDepthStencilState *> g_RegVarDepthStencilStatePtr;
+CVarRTTIRegisterer<CDepthStencilState> g_RegVarDepthStencilState;
 
 bool CDepthStencilState::Init()
 {

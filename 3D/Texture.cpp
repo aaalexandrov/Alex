@@ -42,11 +42,11 @@ bool CSampler::Init(const TDesc &kDesc)
 
 // Sampler pointer var
 
-IMP_VAR_RTTI(CSampler *)
+CVarRTTIRegisterer<CSampler *> g_RegVarSamplerPtr;
 
 // CTexture -------------------------------------------------------------------
 
-IMPRTTI(CTexture, CD3DResource)
+CRTTIRegisterer<CTexture> g_RegTexture;
 
 UINT CTexture::s_uiTotalMemory = 0, 
      CTexture::s_uiDeviceMemory = 0;
@@ -687,4 +687,4 @@ bool CTexture::CopyLevelData(int iWidth, int iHeight, DXGI_FORMAT eFormat, int i
 
 // Texture pointer var
 
-IMP_VAR_RTTI(CTexture *)
+CVarRTTIRegisterer<CTexture *> g_RegVarTexturePtr;

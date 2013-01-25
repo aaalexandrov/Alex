@@ -4,11 +4,11 @@
 
 // CRandom --------------------------------------------------------------------
 
-IMPRTTI(CRandom, CObject)
+CRTTIRegisterer<CRandom> g_RegRandom;
 
 // CNoise2D -------------------------------------------------------------------
 
-IMPRTTI(CNoise2D, CObject)
+CRTTIRegisterer<CNoise2D> g_RegNoise2D;
 
 CNoise2D::CNoise2D()
 {

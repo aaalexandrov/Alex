@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-IMPRTTI_NOCREATE(CFileBase, CObject)
+CRTTIRegisterer<CFileBase> g_RegFileBase;
 // CFileBase ---------------------------------------------------------
 
 CFileBase::ERRCODE CFileBase::WriteBuf(void const *pBuf, int iBytes)
@@ -40,7 +40,7 @@ CFileBase::ERRCODE CFileBase::ReadBuf(void *&pBuf, int &iBytes)
 }
 
 // CFile -------------------------------------------------------------
-IMPRTTI_NOCREATE(CFile, CFileBase)
+CRTTIRegisterer<CFile> g_RegFile;
 
 CFile::CFile(CStrAny const &sName, unsigned int uiFlags)
 {
@@ -86,7 +86,7 @@ CFile::FILESIZE CFile::GetSize() const
 CFile::ERRCODE CFile::SetSize(FILESIZE iSize)
 {
   ASSERT(IsValid());
-  int iRes = _chsize(m_hFile, iSize);
+  int iRes = _chsize(m_hFile, (long) iSize);
   return (iRes < 0) ? (ERRCODE) errno : 0;
 }
 
@@ -165,7 +165,7 @@ UINT CFileSystem::CFileIter::GetAttributes() const
   return m_FindData.attrib;
 }
 
-IMPRTTI(CFileSystem, CObject)
+CRTTIRegisterer<CFileSystem> g_RegFileSystem;
 
 CFileSystem *CFileSystem::s_pFileSystem = 0;
 

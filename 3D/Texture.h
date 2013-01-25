@@ -67,7 +67,7 @@ IMPLEMENT_BASE_SET(CSampler *)
 // CTexture -------------------------------------------------------------------
 
 class CTexture: public CD3DResource {
-  DEFRTTI
+	DEFRTTI(CTexture, CD3DResource, true)
 public:
   static UINT s_uiTotalMemory, s_uiDeviceMemory;
 

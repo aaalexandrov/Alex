@@ -46,14 +46,14 @@ typedef CList<CStackValue *>  TExecutionStack;
 // Execution commands ---------------------------------------------------------
 
 class CCmd: public CObject {
-	DEFRTTI_NOCREATE
+  DEFRTTI(CCmd, CObject, false)
 public:
 	virtual ~CCmd() {}
 	virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext) = 0;
 };
 
 class CCmdPushLiteral: public CCmd {
-	DEFRTTI_NOCREATE
+  DEFRTTI(CCmdPushLiteral, CCmd, false)
 public:
   CBaseVar *m_pVar;
 
@@ -64,7 +64,7 @@ public:
 };
 
 class CCmdPushVar: public CCmd {
-	DEFRTTI_NOCREATE
+  DEFRTTI(CCmdPushVar, CCmd, false)
 public:
 	CStrAny m_sVarName;
 
@@ -74,43 +74,43 @@ public:
 };
 
 class CCmdPlus: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdPlus, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdMinus: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdMinus, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdMultiply: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdMultiply, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdDivide: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdDivide, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdNegate: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdNegate, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdPower: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdPower, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };
 
 class CCmdAssign: public CCmd {
-	DEFRTTI
+	DEFRTTI(CCmdPower, CCmd, true)
 public:
   virtual EInterpretError Execute(TExecutionStack &kStack, CVarObj &kContext);
 };

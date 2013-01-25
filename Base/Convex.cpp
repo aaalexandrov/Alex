@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Convex.h"
 
-IMPRTTI(CConvex, CObject)
+CRTTIRegisterer<CConvex> g_RegConvex;
 
 CConvex::CConvex()
 {
@@ -119,7 +119,7 @@ bool CConvex::InitFromPoints(CVector<3, Num> const *pPoints, UINT uiCount)
       }
     }
     ASSERT(i < (int) uiCount); // Couldn't find a second plane that an edge is incident to, are the input points all on a single plane?
-    if (i >= (int) uiCount) 
+    if (i >= (int) uiCount)
       return false;
   }
   return true;
@@ -212,7 +212,7 @@ int CConvex::AddEdge(int iVert0, int iVert1)
 {
   int i;
   ASSERT(iVert0 != iVert1);
-  if (iVert0 > iVert1) 
+  if (iVert0 > iVert1)
     Util::Swap(iVert0, iVert1);
   for (i = 0; i < m_arrEdges.m_iCount; i++)
     if (m_arrEdges[i].iVert0 == iVert0 && m_arrEdges[i].iVert1 == iVert1)
@@ -265,7 +265,7 @@ bool CConvex::Intersects(CShape3D const *pShape, bool bPrecise)
   if (pPoint)
     return true;
   CLine3D const *pLine = Cast<CLine3D>(pShape);
-  if (pLine) 
+  if (pLine)
     return Intersects(pLine, kActivePlanes);
   CPlane const *pPlane = Cast<CPlane>(pShape);
   if (pPlane)
@@ -323,7 +323,7 @@ bool CConvex::Intersects(CPlane const *pPlane)
       else
         if (nEqVal < 0)
           bNegative = true;
-        else 
+        else
           return true;
       if (bPositive & bNegative)
         return true;
@@ -360,7 +360,7 @@ bool CConvex::Intersects(CSphere const *pSphere, CArray<int> const &kActivePlane
       nEqVal = CPlane::CalcValue(m_arrPlanes[iOtherPlane], vPoint);
       if (nEqVal >= 0)
         bPointIntoSide = false;
-      nEdgeDist = CSphere::Dist2Line(pSphere->m_vCenter, pSphere->m_nRadius, 
+      nEdgeDist = CSphere::Dist2Line(pSphere->m_vCenter, pSphere->m_nRadius,
                                      m_arrVertices[kEdge.iVert0], m_arrVertices[kEdge.iVert1], kEdge.nMin, kEdge.nMax);
       if (IsEqual(nEdgeDist, 0)) // Sphere intersects an edge of the convex
         return true;

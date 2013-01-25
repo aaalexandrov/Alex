@@ -108,6 +108,7 @@
     <ClCompile Include="..\..\Base\Matrix.cpp" />
     <ClCompile Include="..\..\Base\Parse.cpp" />
     <ClCompile Include="..\..\Base\Rect.cpp" />
+    <ClCompile Include="..\..\Base\RTTI.cpp" />
     <ClCompile Include="..\..\Base\Str.cpp" />
     <ClCompile Include="..\..\Base\Util.cpp" />
     <ClCompile Include="..\..\Base\Var.cpp" />
@@ -142,6 +143,7 @@
     <ClInclude Include="..\..\Base\Matrix.h" />
     <ClInclude Include="..\..\Base\Parse.h" />
     <ClInclude Include="..\..\Base\Rect.h" />
+    <ClInclude Include="..\..\Base\RTTI.h" />
     <ClInclude Include="..\..\Base\Str.h" />
     <ClInclude Include="..\..\Base\Util.h" />
     <ClInclude Include="..\..\Base\Var.h" />

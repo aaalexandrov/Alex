@@ -6,7 +6,7 @@
 
 // CMaterial -------------------------------------------------------------------------
 
-IMPRTTI(CMaterial, CVarObj)
+CRTTIRegisterer<CMaterial> g_RegMaterial;
 
 CMaterial::CMaterial()
 {
@@ -140,7 +140,7 @@ bool CMaterial::SetVar(const CStrAny &sVar, const CBaseVar &vSrc)
 
 // CGeometry -------------------------------------------------------------------------
 
-IMPRTTI(CGeometry, CObject)
+CRTTIRegisterer<CGeometry> g_RegGeometry;
 
 CGeometry::CGeometry()
 {
@@ -216,7 +216,7 @@ void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, WORD *pIn
 {
   SAFE_DELETE(m_pBound);
   if (pBoundRTTI) {
-    ASSERT(pBoundRTTI->IsKindOf(&CShape3D::s_RTTI));
+    ASSERT(pBoundRTTI->IsKindOf(CShape3D::GetRTTI_s()));
     m_pBound = (CShape3D *) pBoundRTTI->CreateInstance();
     ASSERT(m_uiVertices);
     CVector<3> *pPoints;
@@ -325,7 +325,7 @@ D3D11_PRIMITIVE_TOPOLOGY CGeometry::GetD3DPrimitiveTopology(EPrimitiveType ePT)
 
 // CProgressiveGeometry -------------------------------------------------------------
 
-IMPRTTI(CProgressiveGeometry, CGeometry)
+CRTTIRegisterer<CProgressiveGeometry> g_RegProgressiveGeometry;
 
 CProgressiveGeometry::CProgressiveGeometry()
 {
@@ -536,7 +536,7 @@ bool CProgressiveGeometry::UncollapseVertex(UINT uiVertThreshold, WORD *&pIndice
 
 // CModel ---------------------------------------------------------------------------
 
-IMPRTTI(CModel, CVarObj)
+CRTTIRegisterer<CModel> g_RegModel;
 
 CModel::CModel()
 {
@@ -581,7 +581,7 @@ bool CModel::Init(CGeometry *pGeom, CMaterial *pMaterial, CVarObj *pInitParams, 
 
   if (!pBoundRTTI && pGeom->m_pBound)
     pBoundRTTI = pGeom->m_pBound->GetRTTI();
-  ASSERT(!pBoundRTTI || pBoundRTTI->IsKindOf(&CShape3D::s_RTTI));
+  ASSERT(!pBoundRTTI || pBoundRTTI->IsKindOf(CShape3D::GetRTTI_s()));
   if (pBoundRTTI) 
     m_pBound = (CShape3D *) pBoundRTTI->CreateInstance();
 

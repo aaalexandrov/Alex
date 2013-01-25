@@ -5,7 +5,7 @@
 #include <D3D11.h>
 
 class CStateVarObj: public CVarObj {
-  DEFRTTI_NOCREATE
+	DEFRTTI(CStateVarObj, CVarObj, false)
 public:
   struct TStr2Int {
     CStrAny sName;
@@ -41,7 +41,7 @@ public:
 };
 
 class CRasterizerState: public CStateVarObj {
-  DEFRTTI
+  DEFRTTI(CRasterizerState, CStateVarObj, true)
 public:
   D3D11_RASTERIZER_DESC m_RSDesc;
   ID3D11RasterizerState *m_pRS;
@@ -60,7 +60,7 @@ public:
 };
 
 class CBlendState: public CStateVarObj {
-  DEFRTTI
+  DEFRTTI(CBlendState, CStateVarObj, true)
 public:
   D3D11_BLEND_DESC m_BSDesc;
   ID3D11BlendState *m_pBS;
@@ -81,7 +81,7 @@ public:
 };
 
 class CDepthStencilState: public CStateVarObj {
-  DEFRTTI
+  DEFRTTI(CDepthStencilState, CStateVarObj, true)
 public:
   D3D11_DEPTH_STENCIL_DESC m_DSDesc;
   ID3D11DepthStencilState *m_pDS;

@@ -210,6 +210,7 @@
     <ClCompile Include="..\..\Base\Parse.cpp" />
     <ClCompile Include="..\..\Base\Random.cpp" />
     <ClCompile Include="..\..\Base\Rect.cpp" />
+    <ClCompile Include="..\..\Base\RTTI.cpp" />
     <ClCompile Include="..\..\Base\Shape.cpp" />
     <ClCompile Include="..\..\Base\Str.cpp" />
     <ClCompile Include="..\..\Base\Transform.cpp" />
@@ -257,6 +258,7 @@
     <ClInclude Include="..\..\Base\Parse.h" />
     <ClInclude Include="..\..\Base\Random.h" />
     <ClInclude Include="..\..\Base\Rect.h" />
+    <ClInclude Include="..\..\Base\RTTI.h" />
     <ClInclude Include="..\..\Base\Shape.h" />
     <ClInclude Include="..\..\Base\Str.h" />
     <ClInclude Include="..\..\Base\Transform.h" />

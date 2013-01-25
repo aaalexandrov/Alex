@@ -570,7 +570,7 @@ typename M::VecRow operator *(const typename M::VecCol &v, const M &m)
 // CVarMatrix -----------------------------------------------------------------
 
 class CMatrixVar: public CBaseVar {
-  DEFRTTI_NOCREATE
+  DEFRTTI(CMatrixVar, CBaseVar, false)
 public:
   typedef float Num;
 

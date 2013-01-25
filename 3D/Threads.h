@@ -7,7 +7,7 @@
 
 // Threads
 class CThreadBase: public CObject {
-  DEFRTTI
+  DEFRTTI(CThreadBase, CObject, false)
 public:
   CThreadBase()          {}
   virtual ~CThreadBase() {}
@@ -30,7 +30,7 @@ public:
 };
 
 class CThreadWin: public CThreadBase {
-  DEFRTTI
+  DEFRTTI(CThreadWin, CThreadBase, true)
 public:
   HANDLE  m_hThread;
   DWORD   m_dwThreadID;
@@ -62,7 +62,7 @@ typedef CThreadWin CThread;
 
 // Locks
 class CLockBase: public CObject {
-  DEFRTTI
+  DEFRTTI(CLockBase, CObject, false)
 public:
   virtual void Lock() = 0;
   virtual bool TryLock() = 0;
@@ -72,7 +72,7 @@ public:
 };
 
 class CLockWin: public CLockBase {
-  DEFRTTI
+  DEFRTTI(CLockWin, CLockBase, true)
 public:
   CRITICAL_SECTION m_CS;
 

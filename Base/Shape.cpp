@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "Shape.h"
 
-IMPRTTI_NOCREATE(CShape3D, CObject)
-IMPRTTI(CPoint3D, CShape3D)
-IMPRTTI(CLine3D, CShape3D)
-IMPRTTI(CSegment3D, CLine3D)
-IMPRTTI(CRay3D, CLine3D)
-IMPRTTI(CPlane, CShape3D)
-IMPRTTI(CHalfSpace, CPlane)
-IMPRTTI(CSphere, CShape3D)
-IMPRTTI(CAABB, CShape3D)
-IMPRTTI(COBB, CShape3D)
+CRTTIRegisterer<CShape3D> g_RegShape3D;
+CRTTIRegisterer<CPoint3D> g_RegPoint3D;
+CRTTIRegisterer<CLine3D> g_RegLine3D;
+CRTTIRegisterer<CSegment3D> g_RegSegment3D;
+CRTTIRegisterer<CRay3D> g_RegRay3D;
+CRTTIRegisterer<CPlane> g_RegPlane;
+CRTTIRegisterer<CHalfSpace> g_RegHalfSpace;
+CRTTIRegisterer<CSphere> g_RegSphere;
+CRTTIRegisterer<CAABB> g_RegAABB;
+CRTTIRegisterer<COBB> g_RegOBB;
 
 // CShape3D -------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ CShape3D *CPoint3D::GetTransformed(CXForm const &kXForm, CShape3D *pDstShape) co
   if (pDstShape) {
     pPoint = Cast<CPoint3D>(pDstShape);
     ASSERT(pPoint);
-    if (!pPoint) 
+    if (!pPoint)
       return 0;
   } else
     pPoint = new CPoint3D();
@@ -136,7 +136,7 @@ bool CLine3D::Dist(const CShape3D *pShape, Num &nDist) const
   }
   const CLine3D *pLine = Cast<CLine3D>(pShape);
   if (pLine) {
-    nDist = Dist2Line(m_vPoints[0], m_vPoints[1], GetMinLimit(), GetMaxLimit(), 
+    nDist = Dist2Line(m_vPoints[0], m_vPoints[1], GetMinLimit(), GetMaxLimit(),
                       pLine->m_vPoints[0], pLine->m_vPoints[1], pLine->GetMinLimit(), pLine->GetMaxLimit());
     return true;
   }
@@ -164,7 +164,7 @@ void CLine3D::Transform(CVector<3, Num> const &vPoint0, CVector<3, Num> const &v
   vXPoint1 = kXForm.TransformPoint(vPoint1);
 }
 
-CShape3D::Num CLine3D::Dist2Line(const CVector<3, Num> &vLine0Point0, const CVector<3, Num> &vLine0Point1, Num nLine0Min, Num nLine0Max, 
+CShape3D::Num CLine3D::Dist2Line(const CVector<3, Num> &vLine0Point0, const CVector<3, Num> &vLine0Point1, Num nLine0Min, Num nLine0Max,
                                  const CVector<3, Num> &vLine1Point0, const CVector<3, Num> &vLine1Point1, Num nLine1Min, Num nLine1Max)
 {
   CVector<3, Num> vDelta = vLine0Point1 - vLine0Point0;
@@ -341,7 +341,7 @@ CShape3D::Num CPlane::GetIntersectionFactor(CVector<4, Num> const &vPlane, CVect
   nNormDotLine = vNorm % vDirection;
   if (IsEqual(nNormDotLine, 0)) { // Line is parallel to the plane
     nDist = vOrigin.x() * vPlane.x() + vOrigin.y() * vPlane.y() + vOrigin.z() * vPlane.z() + vPlane.w();
-    if (IsEqual(nDist, 0)) 
+    if (IsEqual(nDist, 0))
       return 0;
     return Util::F_QNAN;
   }
@@ -349,7 +349,7 @@ CShape3D::Num CPlane::GetIntersectionFactor(CVector<4, Num> const &vPlane, CVect
   return t;
 }
 
-bool CPlane::Intersect2Planes(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1, 
+bool CPlane::Intersect2Planes(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1,
                               CVector<4, Num> const &vPlane2, CVector<3, Num> &vPoint)
 {
   CMatrix<3, 4, Num> mLinearEq;
@@ -375,7 +375,7 @@ bool CPlane::Intersect2Planes(CVector<4, Num> const &vPlane0, CVector<4, Num> co
   return true;
 }
 
-bool CPlane::IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1, 
+bool CPlane::IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1,
                             CVector<3, Num> &vLine0, CVector<3, Num> &vLine1)
 {
   CVector<3, Num> vBasis[3] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
@@ -408,7 +408,7 @@ bool CPlane::IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> cons
   return true;
 }
 
-bool CPlane::IntersectLine(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1, 
+bool CPlane::IntersectLine(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                            Num nLineMin, Num nLineMax, CVector<3, Num> &vPoint)
 {
   CVector<3, Num> vLine;
@@ -449,7 +449,7 @@ CShape3D::Num CPlane::Dist2Plane(const CVector<4, Num> &vPlane0, bool bHalfSpace
   return nDist;
 }
 
-CShape3D::Num CPlane::Dist2Line(const CVector<4, Num> &vPlane, bool bHalfSpace, 
+CShape3D::Num CPlane::Dist2Line(const CVector<4, Num> &vPlane, bool bHalfSpace,
                                 const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax)
 {
   CVector<3, Num> vLine, vPoint;
@@ -591,7 +591,7 @@ void CSphere::Transform(CVector<3, Num> const &vCenter, Num nRadius, CXForm cons
   nXRadius = nRadius * vScale.x();
 }
 
-bool CSphere::IntersectLine(CVector<3, Num> const &vCenter, Num nRadius, 
+bool CSphere::IntersectLine(CVector<3, Num> const &vCenter, Num nRadius,
                             CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                             Num nLineMin, Num nLineMax, Num &nMinFactor, Num &nMaxFactor)
 {
@@ -602,7 +602,7 @@ bool CSphere::IntersectLine(CVector<3, Num> const &vCenter, Num nRadius,
   vLine = vPoint1 - vPoint0;
   if (IsEqual(vLine.LengthSqr(), 0)) { // Line is actually a point
     nDist = Dist2Point(vCenter, nRadius, vPoint0);
-    if (nDist > 0) 
+    if (nDist > 0)
       return false;
     nMinFactor = nMaxFactor = 0;
     return true;
@@ -640,14 +640,14 @@ CShape3D::Num CSphere::Dist2Plane(const CVector<3, Num> &vCenter, Num nRadius, c
   nDist = CPlane::Dist2Point(vPlane, bHalfSpace, vCenter);
   // No check is made for half-space case since the distance will already be clamped to 0 in this case
   ASSERT(nDist >= 0 || !bHalfSpace);
-  if (nDist < 0) 
+  if (nDist < 0)
     nDist = Util::Min<Num>(nDist + nRadius, 0);
   else
     nDist = Util::Max<Num>(nDist - nRadius, 0);
   return nDist;
 }
 
-CShape3D::Num CSphere::Dist2Line(const CVector<3, Num> &vCenter, Num nRadius, 
+CShape3D::Num CSphere::Dist2Line(const CVector<3, Num> &vCenter, Num nRadius,
                                  const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax)
 {
   Num nDist;
@@ -809,7 +809,7 @@ void CAABB::Transform(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax, 
 }
 
 
-CShape3D::Num CAABB::Dist2AABB(const CVector<3, Num> &vMin0, const CVector<3, Num> &vMax0, 
+CShape3D::Num CAABB::Dist2AABB(const CVector<3, Num> &vMin0, const CVector<3, Num> &vMax0,
                                const CVector<3, Num> &vMin1, const CVector<3, Num> &vMax1)
 {
   CVector<3, Num> vClosest0, vClosest1;
@@ -830,7 +830,7 @@ CShape3D::Num CAABB::Dist2AABB(const CVector<3, Num> &vMin0, const CVector<3, Nu
   return nDist;
 }
 
-CShape3D::Num CAABB::Dist2Sphere(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+CShape3D::Num CAABB::Dist2Sphere(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                                  const CVector<3, Num> &vCenter, Num nRadius)
 {
   Num nDist = Dist2Point(vMin, vMax, vCenter) - nRadius;
@@ -863,7 +863,7 @@ CShape3D::Num CAABB::Dist2Plane(const CVector<3, Num> &vMin, const CVector<3, Nu
   return nDist;
 }
 
-bool CAABB::TestLineCoordinate(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+bool CAABB::TestLineCoordinate(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                                const CVector<3, Num> &vOrigin, const CVector<3, Num> &vDirection,
                                Num nLineMin, Num nLineMax, Num nCoordinate, int iDim, Num &nFactor)
 {
@@ -902,7 +902,7 @@ CShape3D::Num CAABB::Edge2LineDist(const CVector<3, Num> &vMin, const CVector<3,
   return nDist;
 }
 
-bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax, 
+bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax,
                           CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                           Num nLineMin, Num nLineMax, Num &nMinFactor, Num &nMaxFactor)
 {
@@ -921,7 +921,7 @@ bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vM
   // Check for intersections with the sides
   nMinFactor = Util::F_INFINITY;
   nMaxFactor = Util::F_NEG_INFINITY;
-  for (i = 0; i < 3; i++) { 
+  for (i = 0; i < 3; i++) {
     if (IsEqual(vLine[i], 0)) { // Line is parallel to the AABB sides in this dimension
       if (vPoint0[i] >= vMin[i] && vPoint0[i] <= vMax[i]) // Coordinate is within bounds, continue checking the other dimensions
         continue;
@@ -930,7 +930,7 @@ bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vM
     if (TestLineCoordinate(vMin, vMax, vPoint0, vLine, Util::F_NEG_INFINITY, Util::F_INFINITY, vMin[i], i, nFactor)) { // Line intersects the Min plane of the dimension inside the AABB side
       if (nMinFactor == Util::F_INFINITY)
         nMinFactor = nMaxFactor = nFactor;
-      else 
+      else
         if (nFactor < nMinFactor)
           nMinFactor = nFactor;
         else
@@ -959,7 +959,7 @@ bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vM
 }
 
 
-CShape3D::Num CAABB::Dist2Line(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+CShape3D::Num CAABB::Dist2Line(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                                const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax)
 {
   CVector<3, Num> vLine;
@@ -970,7 +970,7 @@ CShape3D::Num CAABB::Dist2Line(const CVector<3, Num> &vMin, const CVector<3, Num
   if (IsEqual(vLine.LengthSqr(), 0))
     return Dist2Point(vMin, vMax, vPoint0);
   // Check for intersections with the sides
-  for (i = 0; i < 3; i++) { 
+  for (i = 0; i < 3; i++) {
     if (IsEqual(vLine[i], 0)) { // Line is parallel to the AABB sides in this dimension
       if (vPoint0[i] >= vMin[i] && vPoint0[i] <= vMax[i]) // Coordinate is within bounds, continue checking the other dimensions
         continue;
@@ -1148,11 +1148,11 @@ void COBB::Transform(CVector<3, Num> const &vCenter, CVector<3, Num> const (&vEx
 {
   int i;
   vXCenter = kXForm.TransformPoint(vCenter);
-  for (i = 0; i < 3; i++) 
+  for (i = 0; i < 3; i++)
     vXExtent[i] = kXForm.TransformVector(vExtent[i]);
 }
 
-void COBB::Untransform(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+void COBB::Untransform(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                        CVector<3, Num> &vMin, CVector<3, Num> &vMax, CXForm &kXForm)
 {
   int i;
@@ -1175,8 +1175,8 @@ void COBB::Untransform(const CVector<3, Num> &vCenter, const CVector<3, Num> (&v
 #endif
 }
 
-CShape3D::Num COBB::CheckSidePoint(int iSide, int iPoint, CVector<4, Num> const (&vPlanes)[2], 
-                                   CVector<3, Num> const (&vPoints)[2][4], Num const (&nLen)[2][2], 
+CShape3D::Num COBB::CheckSidePoint(int iSide, int iPoint, CVector<4, Num> const (&vPlanes)[2],
+                                   CVector<3, Num> const (&vPoints)[2][4], Num const (&nLen)[2][2],
                                    CVector<3, Num> const (&vBasis)[2][2])
 {
   // Return the distance from a point to the other side's plane, if a point's projection is inside the other side
@@ -1194,9 +1194,9 @@ CShape3D::Num COBB::CheckSidePoint(int iSide, int iPoint, CVector<4, Num> const 
   return nDist;
 }
 
-CShape3D::Num COBB::Side2SideDist(CVector<3, Num> const &vOrigin0, CVector<3, Num> const &vX0, 
+CShape3D::Num COBB::Side2SideDist(CVector<3, Num> const &vOrigin0, CVector<3, Num> const &vX0,
                                   CVector<3, Num> const &vY0, CVector<4, Num> const &vPlane0,
-                                  CVector<3, Num> const &vOrigin1, CVector<3, Num> const &vX1, 
+                                  CVector<3, Num> const &vOrigin1, CVector<3, Num> const &vX1,
                                   CVector<3, Num> const &vY1, CVector<4, Num> const &vPlane1)
 {
   CVector<4, Num> vPlanes[2];
@@ -1289,7 +1289,7 @@ void COBB::GetSideData(const CVector<3, Num> &vCenter, const CVector<3, Num> (&v
   ASSERT(ID(CONCAT(CVector<4, Num>::Get(vCenter.x(), vCenter.y(), vCenter.z(), 1) % vPlane < 0)));
 }
 
-CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, Num> (&vExtent0)[3], 
+CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, Num> (&vExtent0)[3],
                              const CVector<3, Num> &vCenter1, const CVector<3, Num> (&vExtent1)[3])
 {
   CVector<3, Num> vPoints[2][8];
@@ -1302,7 +1302,7 @@ CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, N
   for (i = 0; i < 8; i++) {
     vPoints[0][i] = vCenter0;
     vPoints[1][i] = vCenter1;
-    for (j = 0; j < 3; j++) 
+    for (j = 0; j < 3; j++)
       if (i & (1 << j)) {
         vPoints[0][i] += vExtent0[j];
         vPoints[1][i] += vExtent1[j];
@@ -1337,7 +1337,7 @@ CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, N
     return 0;
   if (iDividingSide[0] >= 0)
     iDividingBox = 0;
-  else 
+  else
     iDividingBox = 1;
 
   if (iDividingSide[!iDividingBox] >= 0) { // Both boxes have dividing sides so only they need to be checked against each other
@@ -1349,7 +1349,7 @@ CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, N
   const CVector<3, Num> (&vExtent)[3] = *(const CVector<3, Num> (*)[3]) (!iDividingBox ? vExtent1 : vExtent0);
   CVector<3, Num> vDivNorm;
   nDist = Util::F_INFINITY;
-  vDivNorm.Set(vPlane[iDividingBox]); 
+  vDivNorm.Set(vPlane[iDividingBox]);
   for (j = 0; j < 6; j++) {
     GetSideData(vCenter, vExtent, j, vO[!iDividingBox], vX[!iDividingBox], vY[!iDividingBox], vPlane[!iDividingBox]);
     CVector<3, Num> vNorm;
@@ -1364,7 +1364,7 @@ CShape3D::Num COBB::Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, N
   return nDist;
 }
 
-CShape3D::Num COBB::Dist2AABB(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+CShape3D::Num COBB::Dist2AABB(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                               const CVector<3, Num> &vMin, const CVector<3, Num> &vMax)
 {
   // It is cheaper to convert an AABB to an OBB than the other way around, that's why we do so
@@ -1380,7 +1380,7 @@ CShape3D::Num COBB::Dist2AABB(const CVector<3, Num> &vCenter, const CVector<3, N
   return nDist;
 }
 
-CShape3D::Num COBB::Dist2Sphere(const CVector<3, Num> &vOBBCenter, const CVector<3, Num> (&vExtent)[3], 
+CShape3D::Num COBB::Dist2Sphere(const CVector<3, Num> &vOBBCenter, const CVector<3, Num> (&vExtent)[3],
                                 const CVector<3, Num> &vSphereCenter, Num nRadius)
 {
   Num nDist;
@@ -1408,7 +1408,7 @@ CShape3D::Num COBB::Dist2Plane(const CVector<3, Num> &vCenter, const CVector<3, 
   return nDist;
 }
 
-CShape3D::Num COBB::Dist2Line(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+CShape3D::Num COBB::Dist2Line(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                               const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax)
 {
   Num nDist;

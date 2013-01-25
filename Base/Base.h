@@ -130,98 +130,58 @@ struct TTrue  { inline static bool Value() { return true; } };
 struct TFalse { inline static bool Value() { return false; } };
 
 template <class T>
-struct TIsPOD {
-	typedef TFalse TValue;
-};
+struct TIsPOD {	typedef TFalse TValue; };
 
-template<>
-struct TIsPOD<bool> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<bool> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<signed char> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<signed char> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<unsigned char> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<unsigned char> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<wchar_t> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<wchar_t> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<signed short> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<signed short> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<unsigned short> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<unsigned short> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<signed int> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<signed int> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<unsigned int> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<unsigned int> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<signed long> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<signed long> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<unsigned long> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<unsigned long> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<signed __int64> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<signed __int64> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<unsigned __int64> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<unsigned __int64> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<float> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<float> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<double> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<double> { typedef TTrue TValue; };
 
-template<>
-struct TIsPOD<long double> {
-	typedef TTrue TValue;
-};
+template <>
+struct TIsPOD<long double> { typedef TTrue TValue; };
 
 template <class T>
-struct TIsPOD<T*> {
-	typedef TTrue TValue;
-};
+struct TIsPOD<T*> { typedef TTrue TValue; };
 
 template <class T, class P>
-struct TConDestructorVal {
-	static void Construct(T *pT)                 { COMPILE_ASSERT(0); }
-	static void ConstructCopy(T *pT, T const &t) { COMPILE_ASSERT(0); }
-	static void Destroy(T *pT)                   { COMPILE_ASSERT(0); }
-	static void Construct(T *pT, UINT uiCount)   { COMPILE_ASSERT(0); }
-	static void Destroy(T *pT, UINT uiCount)     { COMPILE_ASSERT(0); }
-};
+struct TConDestructorVal {};
 
 template <class T>
 struct TConDestructorVal<T, TFalse> {
@@ -243,124 +203,5 @@ struct TConDestructorVal<T, TTrue> {
 
 template <class T>
 struct TConDestructor: TConDestructorVal<T, typename TIsPOD<T>::TValue> {};
-
-// RTTI
-class CObject;
-
-class CRTTI {
-public:
-	static const int MAX_CLASSES = 512;
-
-  typedef CObject *(*FObjectCreate)();
-
-public:
-	static int s_iClasses;
-	static bool s_bSorted;
-	static const CRTTI *s_pRTTIs[MAX_CLASSES];
-
-	// Predicates for sorting / searching the RTTI array
-	static inline bool Lt(const CRTTI *pRTTI1, const CRTTI *pRTTI2);
-	static inline bool Lt(const char *pClassName, const CRTTI *pRTTI2);
-	static inline bool Lt(const CRTTI *pRTTI1, const char *pClassName);
-
-	static void Add(const CRTTI *pRTTI);
-	static const CRTTI *Find(const char *pClassName);
-
-public:
-	char          *m_pClassName;
-	const CRTTI   *m_pParent;
-	FObjectCreate  m_fnCreate;
-  QWORD          m_uiClassData;
-
-	CRTTI(char *pClassName, FObjectCreate fnCreate, const CRTTI *pParent);
-  inline CObject *CreateInstance() const;
-
-	inline bool IsEqual(const CRTTI *pRTTI) const { return this == pRTTI; }
-	inline bool IsKindOf(const CRTTI *pRTTI) const;
-};
-
-
-class CObject {
-public:
-	static CRTTI s_RTTI;
-	static CObject *CreateInstance() { return new CObject(); }
-	virtual const CRTTI *GetRTTI() const { return &s_RTTI; }
-};
-
-template <class T>
-inline T *Cast(CObject *pObj)
-{
-	if (pObj && pObj->GetRTTI()->IsKindOf(&T::s_RTTI))
-		return static_cast<T *>(pObj);
-  return 0;
-}
-
-template <class T>
-inline const T *Cast(const CObject *pObj)
-{
-	if (pObj && pObj->GetRTTI()->IsKindOf(&T::s_RTTI))
-		return static_cast<const T *>(pObj);
-  return 0;
-}
-
-template <class T>
-inline bool IsKindOf(const CObject *pObj)
-{
-  return pObj && pObj->GetRTTI()->IsKindOf(&T::s_RTTI);
-}
-
-#define DEFRTTI_NOCREATE                                                \
-	public:                                                               \
-    static CRTTI s_RTTI;                                                \
-		virtual const CRTTI *GetRTTI() const { return &s_RTTI; }
-
-#define DEFRTTI                                                         \
-  DEFRTTI_NOCREATE                                                      \
-  static CObject *CreateInstance();
-
-#define IMP_RTTI(Class, FCreate, RTTI)                                  \
-    CRTTI Class::s_RTTI(#Class, FCreate, RTTI);
-
-#define IMP_CREATE(Class)                                               \
-  CObject *Class::CreateInstance() { return new Class(); }
-
-#define IMPRTTI(Class, Base)                                            \
-  IMP_CREATE(Class)                                                     \
-  IMP_RTTI(Class, Class::CreateInstance, &Base::s_RTTI)
-
-#define IMPRTTI_NOCREATE(Class, Base)                                   \
-  IMP_RTTI(Class, 0, &Base::s_RTTI)
-
-// Macro for template instantiations
-
-#define IMPRTTI_T(Class, Base)                                          \
-	template <>                                                           \
-  IMP_CREATE(Class)                                                     \
-	template <>                                                           \
-  IMP_RTTI(Class, Class::CreateInstance, &Base::s_RTTI)
-
-#define IMPRTTI_NOCREATE_T(Class, Base)                                 \
-  template <>                                                           \
-  IMP_RTTI(Class, 0, &Base::s_RTTI)
-
-// RTTI Implementation --------------------------------------------------------
-
-inline CObject *CRTTI::CreateInstance() const
-{
-	ASSERT(m_fnCreate);
-	if (m_fnCreate)
-		return m_fnCreate();
-	return 0;
-}
-
-inline bool CRTTI::IsKindOf(const CRTTI *pRTTI) const
-{
-  const CRTTI *pRTTICur;
-	for (pRTTICur = this; pRTTICur; pRTTICur = pRTTICur->m_pParent)
-		if (pRTTI == pRTTICur)
-			return true;
-  return false;
-}
-
 
 #endif

@@ -6,7 +6,7 @@
 
 class CModel;
 class CFrameSorter: public CObject {
-  DEFRTTI
+  DEFRTTI(CFrameSorter, CObject, false)
 public:
   virtual ~CFrameSorter() {}
 
@@ -18,7 +18,7 @@ public:
 };
 
 class CSimpleSorter: public CFrameSorter {
-  DEFRTTI
+  DEFRTTI(CSimpleSorter, CFrameSorter, true)
 public:
   CSimpleSorter()          {}
   virtual ~CSimpleSorter() {}
@@ -54,7 +54,7 @@ struct TSortDistancePriority {
 
 template<class T = TSortDistancePriority>
 class CPrioritySorter: public CFrameSorter {
-  DEFRTTI
+  DEFRTTI(CPrioritySorter, CFrameSorter, false)
 public:
   typedef T TModelData;
 
@@ -72,7 +72,7 @@ public:
 };
 
 class CGroupSorter: public CFrameSorter {
-  DEFRTTI
+  DEFRTTI(CGroupSorter, CFrameSorter, true)
 public:
   struct TGroupData {
     CFrameSorter *m_pSorter;

@@ -29,7 +29,6 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 			<Add directory="../Src" />
 			<Add directory="../../Base" />
@@ -60,6 +59,8 @@
 		<Unit filename="../../Base/Matrix.h" />
 		<Unit filename="../../Base/Parse.cpp" />
 		<Unit filename="../../Base/Parse.h" />
+		<Unit filename="../../Base/RTTI.cpp" />
+		<Unit filename="../../Base/RTTI.h" />
 		<Unit filename="../../Base/Random.cpp" />
 		<Unit filename="../../Base/Random.h" />
 		<Unit filename="../../Base/Rect.cpp" />

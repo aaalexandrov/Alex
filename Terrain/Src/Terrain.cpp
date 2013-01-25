@@ -115,7 +115,7 @@ CGeometry *CTerrain::CPatchModelBuilder::BuildMinLODGeometry(CProgressiveGeometr
 }
 
 // CTerrain::CMeshBuildThread -------------------------------------------------
-IMPRTTI_NOCREATE(CTerrain::CMeshBuildThread, CThread)
+CRTTIRegisterer<CTerrain::CMeshBuildThread> g_RegTerrainMeshBuildThread;
 
 CTerrain::CMeshBuildThread::CMeshBuildThread(CTerrain *pTerrain):
   CThread()

@@ -5,20 +5,20 @@
 
 // Var classes RTTI -----------------------------------------------------
 
-IMPRTTI_NOCREATE(CBaseVar, CObject)
-IMPRTTI(CDummyVar, CBaseVar)
+CRTTIRegisterer<CBaseVar> g_RegBaseVar;
+CRTTIRegisterer<CDummyVar> g_RegDummyVar;
 
-IMP_VAR_RTTI(int)
-IMP_VAR_RTTI(float)
-IMP_VAR_RTTI(CStrAny)
-IMP_VAR_RTTI(BYTE)
+CVarRTTIRegisterer<int> g_RegVarInt;
+CVarRTTIRegisterer<float> g_RegVarFloat;
+CVarRTTIRegisterer<CStrAny> g_RegVarStrAny;
+CVarRTTIRegisterer<BYTE> g_RegVarBYTE;
 
-IMPRTTI_NOCREATE_T(CVarValueBase<CVarObj>, CBaseVar) 
-IMPRTTI_T(CVarRef<CVarObj>, CVarValueBase<CVarObj>)
+CRTTIRegisterer<CVarValueBase<CVarObj> > g_RegVarValueBaseVarObj;
+CRTTIRegisterer<CVarRef<CVarObj> > g_RegVarRefVarObj;
 
 // CVarObj --------------------------------------------------------------
-IMPRTTI_NOCREATE(CVarObj, CObject)
-IMPRTTI_NOCREATE(CVarObj::CIter, CObject)
+CRTTIRegisterer<CVarObj> g_RegVarObj;
+CRTTIRegisterer<CVarObj::CIter> g_RegVarObjIter;
 
 bool CVarObj::GetStr(CStrAny const &sVar, CStrAny &s) const
 {
@@ -105,7 +105,7 @@ bool CVarObj::SetVar(CStrAny const &sVar, const CBaseVar &vSrc)
 }
 
 // CVarValueObj ---------------------------------------------------------------
-IMPRTTI_NOCREATE(CVarValueObj, CVarObj)
+CRTTIRegisterer<CVarValueObj> g_RegVarValueObj;
 
 bool CVarValueObj::GetStr(CStrAny const &sVar, CStrAny &s) const
 {
@@ -243,7 +243,7 @@ bool Set(float *dst, const CStrAny *src)
 
 // CVarHash ----------------------------------------------------------------------
 
-IMPRTTI(CVarHash, CVarObj)
+CRTTIRegisterer<CVarHash> g_RegVarHash;
 
 CVarHash::CVarHash()
 {
@@ -258,7 +258,7 @@ CVarObj::CIter *CVarHash::GetIter(CStrAny const &sVar) const
 {
   THash::TIter it;
   if (!!sVar) {
-    if (sVar == GetLastIterConst()) 
+    if (sVar == GetLastIterConst())
       it.Init(&m_Vars, -1);
     else {
       it = m_Vars.Find(sVar);
@@ -300,7 +300,7 @@ bool CVarHash::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
   if (bAdding) {
     pVarName = new TVarName(sVar, pSrc);
     m_Vars.Add(pVarName);
-  } else 
+  } else
     it->pVar = pSrc;
 
   return true;

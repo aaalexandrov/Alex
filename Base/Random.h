@@ -5,7 +5,7 @@
 #include <time.h>
 
 class CRandom: public CObject {
-  DEFRTTI
+  DEFRTTI(CRandom, CObject, true)
 public:
   static const UINT MAX_NUMBER = 65536;
   UINT m_uiSeed;
@@ -20,7 +20,7 @@ public:
   int   GetRanged(int iMin, int iMax)          { return MapToRange(Generate(), iMin, iMax); }
   float GetFloat()                             { return MapToRange(Generate(), 0.0f, 1.0f); }
   float GetFloatRanged(float fMin, float fMax) { return MapToRange(Generate(), fMin, fMax); }
-  
+
   static inline int   MapToRange(UINT uiRandom, int iMin, int iMax);
   static inline float MapToRange(UINT uiRandom, float fMin, float fMax);
 
@@ -28,7 +28,7 @@ public:
 };
 
 class CNoise2D: public CObject {
-  DEFRTTI
+  DEFRTTI(CNoise2D, CObject, true)
 public:
   static const int MAX_OCTAVES = 16;
   float m_fOctaveWeights[MAX_OCTAVES];

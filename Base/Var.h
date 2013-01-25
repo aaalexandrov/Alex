@@ -1,12 +1,13 @@
 #ifndef __VAR_H
 #define __VAR_H
 
+#include "RTTI.h"
 #include "Str.h"
 
 // Var values -------------------------------------------------------------------------
 
 class CBaseVar: public CObject {
-	DEFRTTI_NOCREATE
+  DEFRTTI(CBaseVar, CObject, false)
   DEFREFCOUNT_DUMMY
 public:
   static const unsigned int REF_INVALID = (unsigned int) -1;
@@ -37,7 +38,7 @@ public:
 
 // Dummy var - just a method sink
 class CDummyVar: public CBaseVar {
-	DEFRTTI
+	DEFRTTI(CDummyVar, CBaseVar, true)
 public:
   virtual void *GetPtr()  const             { return 0;                          }
   virtual int   GetSize() const             { return 0;                          }
@@ -99,200 +100,6 @@ public:
 
 // Variable template
 
-template <class T>
-class CVarValueBase: public CBaseVar {
-  DEFRTTI_NOCREATE
-public:
-  virtual       T& GetValue()       = 0;
-  virtual const T& GetValue() const = 0;
-};
-
-template <class V>
-class CVarTpl: public CVarValueBase<typename V::TYPE> {
-public:
-  typedef typename V::TYPE TYPE;
-
-  V m_Val;
-
-  CVarTpl()                        {}
-  CVarTpl(      TYPE &t): m_Val(t) {}
-  CVarTpl(const TYPE &t): m_Val(t) {}
-
-  inline       TYPE &Val()       { return m_Val.Val(); }
-  inline const TYPE &Val() const { return m_Val.Val(); }
-
-  TYPE& GetValue()             { return Val(); }
-  const TYPE& GetValue() const { return Val(); }
-
-  bool ValueHasRTTI() const { return HasRTTI(&Val()); }
-
-  void *GetPtr()  const { return (void *) &Val(); }
-  int   GetSize() const { return sizeof(Val());   }
-
-  bool GetStr(CStrAny &s) const  { return Set(&s, &Val()); }
-  bool SetStr(CStrAny const &s)  { return Set(&Val(), &s); }
-
-  bool GetInt(int &i) const      { return Set(&i, &Val()); }
-  bool SetInt(int i)             { return Set(&Val(), &i); }
-
-  bool GetFloat(float &f) const  { return Set(&f, &Val()); }
-  bool SetFloat(float f)         { return Set(&Val(), &f); }
-
-  bool SetVar(CBaseVar const &vSrc) { return SetValue(&Val(), &vSrc); }
-
-  void *GetRef() const     { return m_Val.GetRef();     }
-  bool  SetRef(void *pPtr) { return m_Val.SetRef(pPtr); }
-
-  CBaseVar *Clone() const { CVarTpl<V> *pVar = new CVarTpl<V>(); Set(&pVar->Val(), &Val()); return pVar; }
-};
-
-// Variable with value and variable with reference to a value
-
-template <class T>
-class CVar: public CVarTpl<CVal<T> > {
-	DEFRTTI
-public:
-  CVar(): CVarTpl<CVal<T> >()            {}
-  CVar(T const &t): CVarTpl<CVal<T> > (t) {}
-};
-
-template <class T>
-class CVarRef: public CVarTpl<CRef<T> > {
-	DEFRTTI
-public:
-  using CVarTpl<CRef<T> >::GetRef;
-
-  CVarRef(): CVarTpl<CRef<T> >()      {}
-  CVarRef(T &t): CVarTpl<CRef<T> >(t) {}
-
-  CBaseVar *Clone() const { CVarRef<T> *pVar = new CVarRef<T>(*(T*) GetRef()); return pVar; }
-};
-
-// Var Objects - collections of named values ----------------------------------
-
-class CVarObj: public CObject {
-	DEFRTTI_NOCREATE
-public:
-	class CIter: public CObject {
-    DEFRTTI_NOCREATE
-	public:
-		virtual ~CIter() {}
-
-    virtual CIter &Next()                     = 0;
-    virtual CIter &Prev()                     = 0;
-    virtual operator bool () const            = 0;
-
-		virtual CStrAny GetName() const           = 0;
-		virtual bool GetVar(CBaseVar &vDst) const = 0;
-		virtual bool SetVar(CBaseVar const &vSrc) = 0;
-
-    virtual CBaseVar *GetValue()              = 0;
-		virtual bool SetValue(CBaseVar *pVar)     = 0;
-	};
-
-  virtual ~CVarObj() {}
-
-  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
-  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
-
-  virtual bool GetInt(CStrAny const &sVar, int &i) const;
-  virtual bool SetInt(CStrAny const &sVar, int i);
-
-  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
-  virtual bool SetFloat(CStrAny const &sVar, float f);
-
-  virtual CVarObj *GetContext(const CStrAny &sVar);
-
-  // Empty string gets iterator to the first element, "@last" gets iterator to the last element
-  virtual CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const = 0;
-
-	virtual CBaseVar *FindVar(const CStrAny &sVar) const                               = 0;
-  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) = 0;
-
-  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
-  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
-
-  static const CStrAny &GetLastIterConst() { static const CStrAny sLast(ST_WHOLE, "@last"); return sLast; }
-};
-
-// Collection of CVar objects -------------------------------------------------
-
-class CVarValueObj: public CVarObj {
-  DEFRTTI_NOCREATE
-public:
-  virtual ~CVarValueObj() {}
-
-  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
-  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
-
-  virtual bool GetInt(CStrAny const &sVar, int &i) const;
-  virtual bool SetInt(CStrAny const &sVar, int i);
-
-  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
-  virtual bool SetFloat(CStrAny const &sVar, float f);
-
-  virtual CVarObj *GetContext(const CStrAny &sVar);
-
-  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
-  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
-};
-
-class CVarHash: public CVarValueObj {
-	DEFRTTI
-public:
-  struct TVarName {
-    CSmartPtr<CStrHeader const> pName;
-    CSmartPtr<CBaseVar>         pVar;
-
-    TVarName(const CStrAny &sN, CBaseVar *pV): pName(sN.GetHeaderForContents(true)), pVar(pV) {}
-    ~TVarName() {}
-
-    static inline bool Eq(CStrAny const &s, TVarName *pVarName)          { return CStrAny::Eq(pVarName->pName, s);          }
-    static inline bool Eq(CStrHeader const *pHeader, TVarName *pVarName) { return CStrHeader::Eq(pHeader, pVarName->pName); }
-    static inline size_t Hash(const CStrAny &s)                          { return s.GetHash();                              }
-    static inline size_t Hash(CStrHeader const *pHeader)                 { return pHeader->GetHash();                       }
-    static inline size_t Hash(TVarName *pVarName)                        { return pVarName->pName->GetHash();               }
-  };
-
-  typedef CHash<TVarName *, const CStrAny &, TVarName, TVarName> THash;
-
-public:
-  THash m_Vars;
-
-public:
-	class CIter: public CVarObj::CIter {
-	public:
-	  THash::TIter m_it;
-
-    CIter()                          {}
-    CIter(THash::TIter it): m_it(it) {}
-    CIter(CVarObj &kObj)             { Set(&kObj); }
-
-    void Set(CVarObj *pObj) { CVarHash *pHash = Cast<CVarHash>(pObj); ASSERT(pHash); if (pHash) m_it = pHash->m_Vars; }
-
-    virtual CIter &operator =(CVarObj &kVarHash) { Set(&kVarHash); return *this; }
-
-    virtual CIter &Next() { ++m_it; return *this; }
-    virtual CIter &Prev() { --m_it; return *this; }
-    virtual operator bool () const { return (bool) m_it; }
-
-    virtual CStrAny GetName() const           { return CStrAny(m_it->pName); }
-    virtual bool GetVar(CBaseVar &vDst) const { return vDst.SetVar(*m_it->pVar); }
-    virtual bool SetVar(CBaseVar const &vSrc) { return m_it->pVar->SetVar(vSrc); }
-
-		virtual CBaseVar *GetValue()              { return m_it->pVar; }
-		virtual bool SetValue(CBaseVar *pVar)     { m_it->pVar = pVar; return true; }
-	};
-
-public:
-  CVarHash();
-  virtual ~CVarHash();
-
-	virtual CVarObj::CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const;
-	virtual CBaseVar *FindVar(const CStrAny &sVar) const;
-  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false);
-};
-
 // Data Conversion implementation - copying of values -----------------------------------------
 
 template <class T>
@@ -353,6 +160,206 @@ inline bool Set(CStrAny *dst, const CStrAny *src)
   return true;
 }
 
+// HasRTTI implementation ---------------------------------------------------------------------
+
+inline bool HasRTTI(void const *)    { return false; }
+inline bool HasRTTI(CObject const *) { return true;  }
+
+
+template <class T>
+class CVarValueBase: public CBaseVar {
+  DEFRTTI(CVarValueBase<T>, CBaseVar, false)
+public:
+  virtual       T& GetValue()       = 0;
+  virtual const T& GetValue() const = 0;
+};
+
+template <class V>
+class CVarTpl: public CVarValueBase<typename V::TYPE> {
+public:
+  typedef typename V::TYPE TYPE;
+
+  V m_Val;
+
+  CVarTpl()                        {}
+  CVarTpl(      TYPE &t): m_Val(t) {}
+  CVarTpl(const TYPE &t): m_Val(t) {}
+
+  inline       TYPE &Val()       { return m_Val.Val(); }
+  inline const TYPE &Val() const { return m_Val.Val(); }
+
+  TYPE& GetValue()             { return Val(); }
+  const TYPE& GetValue() const { return Val(); }
+
+  bool ValueHasRTTI() const { return HasRTTI(&Val()); }
+
+  void *GetPtr()  const { return (void *) &Val(); }
+  int   GetSize() const { return sizeof(Val());   }
+
+  bool GetStr(CStrAny &s) const  { return Set(&s, &Val()); }
+  bool SetStr(CStrAny const &s)  { return Set(&Val(), &s); }
+
+  bool GetInt(int &i) const      { return Set(&i, &Val()); }
+  bool SetInt(int i)             { return Set(&Val(), &i); }
+
+  bool GetFloat(float &f) const  { return Set(&f, &Val()); }
+  bool SetFloat(float f)         { return Set(&Val(), &f); }
+
+  bool SetVar(CBaseVar const &vSrc) { return SetValue(&Val(), &vSrc); }
+
+  void *GetRef() const     { return m_Val.GetRef();     }
+  bool  SetRef(void *pPtr) { return m_Val.SetRef(pPtr); }
+
+  CBaseVar *Clone() const { CVarTpl<V> *pVar = new CVarTpl<V>(); Set(&pVar->Val(), &Val()); return pVar; }
+};
+
+// Variable with value and variable with reference to a value
+
+template <class T>
+class CVar: public CVarTpl<CVal<T> > {
+	DEFRTTI(CVar<T>, CVarTpl<CVal<T> >, true)
+public:
+  CVar(): CVarTpl<CVal<T> >()            {}
+  CVar(T const &t): CVarTpl<CVal<T> > (t) {}
+};
+
+template <class T>
+class CVarRef: public CVarTpl<CRef<T> > {
+	DEFRTTI(CVarRef<T>, CVarTpl<CRef<T> >, true)
+public:
+  using CVarTpl<CRef<T> >::GetRef;
+
+  CVarRef(): CVarTpl<CRef<T> >()      {}
+  CVarRef(T &t): CVarTpl<CRef<T> >(t) {}
+
+  CBaseVar *Clone() const { CVarRef<T> *pVar = new CVarRef<T>(*(T*) GetRef()); return pVar; }
+};
+
+// Var Objects - collections of named values ----------------------------------
+
+class CVarObj: public CObject {
+	DEFRTTI(CVarObj, CObject, false)
+public:
+	class CIter: public CObject {
+    DEFRTTI(CVarObj::CIter, CObject, false)
+	public:
+		virtual ~CIter() {}
+
+    virtual CIter &Next()                     = 0;
+    virtual CIter &Prev()                     = 0;
+    virtual operator bool () const            = 0;
+
+		virtual CStrAny GetName() const           = 0;
+		virtual bool GetVar(CBaseVar &vDst) const = 0;
+		virtual bool SetVar(CBaseVar const &vSrc) = 0;
+
+    virtual CBaseVar *GetValue()              = 0;
+		virtual bool SetValue(CBaseVar *pVar)     = 0;
+	};
+
+  virtual ~CVarObj() {}
+
+  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
+  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
+
+  virtual bool GetInt(CStrAny const &sVar, int &i) const;
+  virtual bool SetInt(CStrAny const &sVar, int i);
+
+  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
+  virtual bool SetFloat(CStrAny const &sVar, float f);
+
+  virtual CVarObj *GetContext(const CStrAny &sVar);
+
+  // Empty string gets iterator to the first element, "@last" gets iterator to the last element
+  virtual CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const = 0;
+
+	virtual CBaseVar *FindVar(const CStrAny &sVar) const                               = 0;
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false) = 0;
+
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
+
+  static const CStrAny &GetLastIterConst() { static const CStrAny sLast(ST_WHOLE, "@last"); return sLast; }
+};
+
+// Collection of CVar objects -------------------------------------------------
+
+class CVarValueObj: public CVarObj {
+  DEFRTTI(CVarValueObj, CVarObj, false)
+public:
+  virtual ~CVarValueObj() {}
+
+  virtual bool GetStr(CStrAny const &sVar, CStrAny &s) const;
+  virtual bool SetStr(CStrAny const &sVar, const CStrAny &s);
+
+  virtual bool GetInt(CStrAny const &sVar, int &i) const;
+  virtual bool SetInt(CStrAny const &sVar, int i);
+
+  virtual bool GetFloat(CStrAny const &sVar, float &f) const;
+  virtual bool SetFloat(CStrAny const &sVar, float f);
+
+  virtual CVarObj *GetContext(const CStrAny &sVar);
+
+  virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
+  virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
+};
+
+class CVarHash: public CVarValueObj {
+	DEFRTTI(CVarHash, CVarValueObj, true)
+public:
+  struct TVarName {
+    CSmartPtr<CStrHeader const> pName;
+    CSmartPtr<CBaseVar>         pVar;
+
+    TVarName(const CStrAny &sN, CBaseVar *pV): pName(sN.GetHeaderForContents(true)), pVar(pV) {}
+    ~TVarName() {}
+
+    static inline bool Eq(CStrAny const &s, TVarName *pVarName)          { return CStrAny::Eq(pVarName->pName, s);          }
+    static inline bool Eq(CStrHeader const *pHeader, TVarName *pVarName) { return CStrHeader::Eq(pHeader, pVarName->pName); }
+    static inline size_t Hash(const CStrAny &s)                          { return s.GetHash();                              }
+    static inline size_t Hash(CStrHeader const *pHeader)                 { return pHeader->GetHash();                       }
+    static inline size_t Hash(TVarName *pVarName)                        { return pVarName->pName->GetHash();               }
+  };
+
+  typedef CHash<TVarName *, const CStrAny &, TVarName, TVarName> THash;
+
+public:
+  THash m_Vars;
+
+public:
+	class CIter: public CVarObj::CIter {
+	public:
+	  THash::TIter m_it;
+
+    CIter()                          {}
+    CIter(THash::TIter it): m_it(it) {}
+    CIter(CVarObj &kObj)             { Set(&kObj); }
+
+    void Set(CVarObj *pObj) { CVarHash *pHash = Cast<CVarHash>(pObj); ASSERT(pHash); if (pHash) m_it = pHash->m_Vars; }
+
+    virtual CIter &operator =(CVarObj &kVarHash) { Set(&kVarHash); return *this; }
+
+    virtual CIter &Next() { ++m_it; return *this; }
+    virtual CIter &Prev() { --m_it; return *this; }
+    virtual operator bool () const { return (bool) m_it; }
+
+    virtual CStrAny GetName() const           { return CStrAny(m_it->pName); }
+    virtual bool GetVar(CBaseVar &vDst) const { return vDst.SetVar(*m_it->pVar); }
+    virtual bool SetVar(CBaseVar const &vSrc) { return m_it->pVar->SetVar(vSrc); }
+
+		virtual CBaseVar *GetValue()              { return m_it->pVar; }
+		virtual bool SetValue(CBaseVar *pVar)     { m_it->pVar = pVar; return true; }
+	};
+
+public:
+  CVarHash();
+  virtual ~CVarHash();
+
+	virtual CVarObj::CIter *GetIter(const CStrAny &sVar = CStrAny(ST_PART)) const;
+	virtual CBaseVar *FindVar(const CStrAny &sVar) const;
+  virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false);
+};
+
 // SetValue implementation - initialization of a value from a var ----------------------------
 
 // Catch-all template that can assign a value from a var holding the same value type
@@ -388,11 +395,6 @@ static inline bool SetValue(BYTE *val, const CBaseVar *vSrc)
   return bRes && *val == i;
 }
 
-// HasRTTI implementation ---------------------------------------------------------------------
-
-inline bool HasRTTI(const void *)    { return false; }
-inline bool HasRTTI(const CObject *) { return true;  }
-
 // Macros for implementing trivial Var set methods, i.e. no conversion to basic types and setting from its own type value or Var
 #define IMPLEMENT_NO_BASIC_SET(TYPE) \
   inline bool Set(TYPE *dst, int const *src) { ASSERT(0); return false; } \
@@ -414,10 +416,11 @@ inline bool HasRTTI(const CObject *) { return true;  }
 
 // Var RTTI ---------------------------------------------------------
 
-#define IMP_VAR_RTTI(Type)                          \
-  IMPRTTI_NOCREATE_T(CVarValueBase<Type>, CBaseVar) \
-  IMPRTTI_T(CVar<Type>, CVarValueBase<Type>)        \
-  IMPRTTI_T(CVarRef<Type>, CVarValueBase<Type>)
-
+template <class T>
+class CVarRTTIRegisterer {
+  CRTTIRegisterer<CVarValueBase<T> > m_RegVarValueBase;
+  CRTTIRegisterer<CVar<T> > m_RegVar;
+  CRTTIRegisterer<CVarRef<T> > m_RegVarRef;
+};
 
 #endif

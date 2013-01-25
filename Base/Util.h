@@ -104,9 +104,9 @@ namespace Util {
   inline T SmoothLerp(T a, T b, S w) { return Lerp(a, b, SmoothStep(w)); }
 
   template <class T>
-  inline int SolveQuadratic(T a, T b, T c, T &x1, T &x2); // Solve the equation ax^2+bx+c=0. Returns the number of real roots, and sets x1 and x2 to those roots, where x1 <= x2. 
+  inline int SolveQuadratic(T a, T b, T c, T &x1, T &x2); // Solve the equation ax^2+bx+c=0. Returns the number of real roots, and sets x1 and x2 to those roots, where x1 <= x2.
 
-  template <class T> 
+  template <class T>
   bool IsEqual(T a, T b, T delta) { return abs(a - b) <= delta; }
 
   template <class T>
@@ -144,9 +144,9 @@ namespace Util {
 
   // Floating point constants & functions
   static const DWORD s_dwQNAN = 0xffffffff, s_dwSNAN = 0xffbfffff, s_dwINFINITY = 0x7f800000, s_dwNEG_INFINITY = 0xff800000;
-  static const float F_QNAN = *(float *) &s_dwQNAN, 
+  static const float F_QNAN = *(float *) &s_dwQNAN,
                      F_SNAN = *(float *) &s_dwSNAN,
-                     F_INFINITY = *(float *) &s_dwINFINITY, 
+                     F_INFINITY = *(float *) &s_dwINFINITY,
                      F_NEG_INFINITY = *(float *) &s_dwNEG_INFINITY;
 
   inline bool IsEqual(float a, float b) { return IsEqual<float>(a, b, GetEqualDelta<float>()); }
@@ -228,7 +228,7 @@ int Util::MostSignificantBitSet(T a)
     if (!iShift)
       break;
     nMask = (nMask << iShift) & nMask;
-    if (a & nMask) 
+    if (a & nMask)
       iMin += iShift;
     else {
       iMax -= iShift;
@@ -254,7 +254,7 @@ int Util::LeastSignificantBitSet(T a)
     if (!iShift)
       break;
     nMask = ~(nMask << iShift) & nMask;
-    if (a & nMask) 
+    if (a & nMask)
       iMax -= iShift;
     else {
       iMin += iShift;
@@ -278,7 +278,7 @@ inline T Util::RoundUpToPow2Minus1(T a)
 }
 
 template <class T, class E, class P>
-int Util::BinSearch(const T &arr, int iCount, E elem)
+int Util::BinSearch(T const &arr, int iCount, E elem)
 {
   int iLeft, iRight, iMid;
   iLeft = 0;

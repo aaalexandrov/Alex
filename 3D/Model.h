@@ -9,7 +9,7 @@
 class CShape3D;
 
 class CMaterial: public CVarObj {
-  DEFRTTI
+  DEFRTTI(CMaterial, CVarObj, true)
   DEFREFCOUNT
 public:
   CTechnique *m_pTechnique;
@@ -44,7 +44,7 @@ public:
 };
 
 class CGeometry: public CObject {
-  DEFRTTI
+  DEFRTTI(CGeometry, CObject, true)
   DEFREFCOUNT
 public:
   enum EPrimitiveType {
@@ -87,7 +87,7 @@ public:
 };
 
 class CProgressiveGeometry: public CGeometry {
-  DEFRTTI
+  DEFRTTI(CProgressiveGeometry, CGeometry, true)
 public:
   static const UINT INVALID_INDEX = (UINT) -1;
   enum EFlags {
@@ -131,7 +131,7 @@ public:
 };
 
 class CModel: public CVarObj {
-  DEFRTTI
+	DEFRTTI(CModel, CVarObj, true)
   DEFREFCOUNT
 public:
   CSmartPtr<CGeometry>  m_pGeometry;

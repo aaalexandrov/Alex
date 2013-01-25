@@ -3,8 +3,8 @@
 
 // Execution commands ---------------------------------------------------------
 
-IMPRTTI_NOCREATE(CCmd, CObject)
-IMPRTTI_NOCREATE(CCmdPushLiteral, CCmd)
+CRTTIRegisterer<CCmd> g_RegCmd;
+CRTTIRegisterer<CCmdPushLiteral> g_RegCmdPushLiteral;
 
 EInterpretError CCmdPushLiteral::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -12,7 +12,7 @@ EInterpretError CCmdPushLiteral::Execute(TExecutionStack &kStack, CVarObj &kCont
 	return IERR_OK;
 }
 
-IMPRTTI_NOCREATE(CCmdPushVar, CCmd)
+CRTTIRegisterer<CCmdPushVar> g_RegCmdPushVar;
 
 EInterpretError CCmdPushVar::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -27,7 +27,7 @@ EInterpretError CCmdPushVar::Execute(TExecutionStack &kStack, CVarObj &kContext)
   return IERR_OK;
 }
 
-IMPRTTI(CCmdPlus, CCmd)
+CRTTIRegisterer<CCmdPlus> g_RegCmdPlus;
 
 EInterpretError CCmdPlus::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -39,7 +39,7 @@ EInterpretError CCmdPlus::Execute(TExecutionStack &kStack, CVarObj &kContext)
   pVal1 = kStack.Pop();
   pVal2 = kStack.Pop();
 
-	if (pVal1->GetVar()->GetRTTI()->IsKindOf(&CVar<CStrAny>::s_RTTI) || pVal2->GetVar()->GetRTTI()->IsKindOf(&CVar<CStrAny>::s_RTTI)) {
+	if (pVal1->GetVar()->GetRTTI()->IsKindOf(CVar<CStrAny>::GetRTTI_s()) || pVal2->GetVar()->GetRTTI()->IsKindOf(CVar<CStrAny>::GetRTTI_s())) {
     CStrAny s1, s2;
     pVal1->GetVar()->GetStr(s1);
     pVal2->GetVar()->GetStr(s2);
@@ -56,7 +56,7 @@ EInterpretError CCmdPlus::Execute(TExecutionStack &kStack, CVarObj &kContext)
   return IERR_OK;
 }
 
-IMPRTTI(CCmdMinus, CCmd)
+CRTTIRegisterer<CCmdMinus> g_RegCmdMinus;
 
 EInterpretError CCmdMinus::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -79,7 +79,7 @@ EInterpretError CCmdMinus::Execute(TExecutionStack &kStack, CVarObj &kContext)
   return IERR_OK;
 }
 
-IMPRTTI(CCmdMultiply, CCmd)
+CRTTIRegisterer<CCmdMultiply> g_RegCmdMultiply;
 
 EInterpretError CCmdMultiply::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -102,7 +102,7 @@ EInterpretError CCmdMultiply::Execute(TExecutionStack &kStack, CVarObj &kContext
   return IERR_OK;
 }
 
-IMPRTTI(CCmdDivide, CCmd)
+CRTTIRegisterer<CCmdDivide> g_RegCmdDivide;
 
 EInterpretError CCmdDivide::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -125,7 +125,7 @@ EInterpretError CCmdDivide::Execute(TExecutionStack &kStack, CVarObj &kContext)
   return IERR_OK;
 }
 
-IMPRTTI(CCmdNegate, CCmd)
+CRTTIRegisterer<CCmdNegate> g_RegCmdNegate;
 
 EInterpretError CCmdNegate::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -144,7 +144,7 @@ EInterpretError CCmdNegate::Execute(TExecutionStack &kStack, CVarObj &kContext)
 	return IERR_OK;
 }
 
-IMPRTTI(CCmdPower, CCmd)
+CRTTIRegisterer<CCmdPower> g_RegCmdPower;
 
 EInterpretError CCmdPower::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {
@@ -167,7 +167,7 @@ EInterpretError CCmdPower::Execute(TExecutionStack &kStack, CVarObj &kContext)
   return IERR_OK;
 }
 
-IMPRTTI(CCmdAssign, CCmd)
+CRTTIRegisterer<CCmdAssign> g_RegCmdAssign;
 
 EInterpretError CCmdAssign::Execute(TExecutionStack &kStack, CVarObj &kContext)
 {

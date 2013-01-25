@@ -6,7 +6,7 @@
 #include <io.h>
 
 class CFileBase: public CObject {
-  DEFRTTI_NOCREATE
+  DEFRTTI(CFileBase, CObject, false)
 public:
   typedef __int64 FILESIZE;
   typedef int ERRCODE;
@@ -53,7 +53,7 @@ public:
 };
 
 class CFile: public CFileBase {
-  DEFRTTI_NOCREATE
+  DEFRTTI(CFile, CFileBase, false)
 public:
   CStrAny    m_sFileName;
   int        m_hFile;
@@ -73,7 +73,7 @@ public:
 };
 
 class CFileSystem: public CObject {
-  DEFRTTI
+  DEFRTTI(CFileSystem, CObject, true)
 public:
   class CFileIter {
   public:

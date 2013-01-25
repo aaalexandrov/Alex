@@ -160,22 +160,22 @@ public:
   int m_iPriority;
 	bool m_bLeftAssociative;
 	FOperatorExecute m_fnExecute;
-	CRTTI *m_pCmdRTTI;
+	CRTTI const *m_pCmdRTTI;
 
-	COperatorInfo(CToken::ETokenType eType, int iPriority, bool bLeftAssociative, FOperatorExecute fnExecute, CRTTI *pCmdRTTI):
+	COperatorInfo(CToken::ETokenType eType, int iPriority, bool bLeftAssociative, FOperatorExecute fnExecute, CRTTI const *pCmdRTTI):
 	  m_eType(eType), m_iPriority(iPriority), m_bLeftAssociative(bLeftAssociative), m_fnExecute(fnExecute), m_pCmdRTTI(pCmdRTTI) {}
 
 	inline bool Cmp(const COperatorInfo &kInfo) const { if (m_bLeftAssociative) return m_iPriority <= kInfo.m_iPriority; else return m_iPriority < kInfo.m_iPriority; }
 };
 
 COperatorInfo g_Operators[CToken::OPERATOR_NUM + 1] = {
-	COperatorInfo(CToken::TT_PLUS,          0, true,  OperatorPlus,     &CCmdPlus::s_RTTI),
-  COperatorInfo(CToken::TT_MINUS,         0, true,  OperatorMinus,    &CCmdMinus::s_RTTI),
-	COperatorInfo(CToken::TT_MULTIPLY,     10, true,  OperatorMultiply, &CCmdMultiply::s_RTTI),
-	COperatorInfo(CToken::TT_DIVIDE,       10, true,  OperatorDivide,   &CCmdDivide::s_RTTI),
-	COperatorInfo(CToken::TT_POWER,        15, false, OperatorPower,    &CCmdPower::s_RTTI),
-	COperatorInfo(CToken::TT_NEGATE,       20, true,  OperatorNegate,   &CCmdNegate::s_RTTI),
-	COperatorInfo(CToken::TT_ASSIGN,      -10, false, OperatorAssign,   &CCmdAssign::s_RTTI),
+	COperatorInfo(CToken::TT_PLUS,          0, true,  OperatorPlus,     CCmdPlus::GetRTTI_s()),
+  COperatorInfo(CToken::TT_MINUS,         0, true,  OperatorMinus,    CCmdMinus::GetRTTI_s()),
+	COperatorInfo(CToken::TT_MULTIPLY,     10, true,  OperatorMultiply, CCmdMultiply::GetRTTI_s()),
+	COperatorInfo(CToken::TT_DIVIDE,       10, true,  OperatorDivide,   CCmdDivide::GetRTTI_s()),
+	COperatorInfo(CToken::TT_POWER,        15, false, OperatorPower,    CCmdPower::GetRTTI_s()),
+	COperatorInfo(CToken::TT_NEGATE,       20, true,  OperatorNegate,   CCmdNegate::GetRTTI_s()),
+	COperatorInfo(CToken::TT_ASSIGN,      -10, false, OperatorAssign,   CCmdAssign::GetRTTI_s()),
 
 	COperatorInfo(CToken::TT_OPENBRACE, -1000, true,  0,                0)
 };

@@ -5,7 +5,7 @@
 #include "Shape.h"
 
 class CConvex: public CObject {
-  DEFRTTI
+  DEFRTTI(CConvex, CObject, true)
 public:
   typedef CShape3D::Num Num;
 
@@ -21,7 +21,7 @@ public:
 
   CConvex();
   ~CConvex();
-  
+
   void Reset();
   bool AddPlane(CVector<4, Num> const &vPlane);
   // Initialize to the convex hull of a set of points

@@ -8,7 +8,7 @@
 #include "Transform.h"
 
 class CShape3D: public CObject {
-  DEFRTTI_NOCREATE
+  DEFRTTI(CShape3D, CObject, false)
 public:
   typedef float Num;
   static const Num INVALID;
@@ -33,7 +33,7 @@ public:
 };
 
 class CPoint3D: public CShape3D {
-  DEFRTTI
+  DEFRTTI(CPoint3D, CShape3D, true)
 public:
   CVector<3, Num> m_vPoint;
 
@@ -59,7 +59,7 @@ public:
 };
 
 class CLine3D: public CShape3D {
-  DEFRTTI
+  DEFRTTI(CLine3D, CShape3D, true)
 public:
   CVector<3, Num> m_vPoints[2];
 
@@ -87,14 +87,14 @@ public:
   static void Transform(CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1, CXForm const &kXForm,
                         CVector<3, Num> &vXPoint0, CVector<3, Num> &vXPoint1);
 
-  static Num Dist2Line(const CVector<3, Num> &vLine0Point0, const CVector<3, Num> &vLine0Point1, Num nLine0Min, Num nLine0Max, 
+  static Num Dist2Line(const CVector<3, Num> &vLine0Point0, const CVector<3, Num> &vLine0Point1, Num nLine0Min, Num nLine0Max,
                        const CVector<3, Num> &vLine1Point0, const CVector<3, Num> &vLine1Point1, Num nLine1Min, Num nLine1Max);
-  static Num Dist2Point(const CVector<3, Num> &vLinePoint0, const CVector<3, Num> &vLinePoint1, Num nLineMin, Num nLineMax, 
+  static Num Dist2Point(const CVector<3, Num> &vLinePoint0, const CVector<3, Num> &vLinePoint1, Num nLineMin, Num nLineMax,
                         const CVector<3, Num> &vPoint);
 };
 
 class CSegment3D: public CLine3D {
-  DEFRTTI
+  DEFRTTI(CSegment3D, CLine3D, true)
 public:
   CSegment3D(): CLine3D() {}
   CSegment3D(const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1): CLine3D(vPoint0, vPoint1) {}
@@ -104,7 +104,7 @@ public:
 };
 
 class CRay3D: public CLine3D {
-  DEFRTTI
+  DEFRTTI(CRay3D, CLine3D, true)
 public:
   CRay3D(): CLine3D() {}
   CRay3D(const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1): CLine3D(vPoint0, vPoint1) {}
@@ -114,7 +114,7 @@ public:
 };
 
 class CPlane: public CShape3D { // A plane shape occupies the points directly on the plane
-  DEFRTTI
+  DEFRTTI(CPlane, CShape3D, true)
 public:
   CVector<4, Num> m_vPlane;
 
@@ -138,31 +138,31 @@ public:
 
   static void Transform(CVector<4, Num> const &vPlane, CXForm const &kXForm, CVector<4, Num> &vXPlane);
 
-  static inline Num CalcValue(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint) 
+  static inline Num CalcValue(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint)
     { return vPoint.x() * vPlane.x() + vPoint.y() * vPlane.y() + vPoint.z() * vPlane.z() + vPlane.w(); }
 
   static inline CVector<4, Num> CalcFromPoints(CVector<3, Num> const &v0, CVector<3, Num> const &v1, CVector<3, Num> const &v2)
     { CVector<3, Num> vNormal = ((v1 - v0) ^ (v2 - v0)).GetNormalized(); return CVector<4, Num>::Get(vNormal.x(), vNormal.y(), vNormal.z(), -(vNormal % v0)); }
 
   // Get the point on the plane that's closest to (0, 0, 0)
-  static CVector<3, Num> GetPoint(const CVector<4, Num> &vPlane); 
+  static CVector<3, Num> GetPoint(const CVector<4, Num> &vPlane);
   // Get value of parameter t of the intersection point P between plane and line, where P = vOrigin + t * vDirection
   static Num GetIntersectionFactor(CVector<4, Num> const &vPlane, CVector<3, Num> const &vOrigin, CVector<3, Num> const &vDirection);
-  static bool Intersect2Planes(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1, 
+  static bool Intersect2Planes(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1,
                                CVector<4, Num> const &vPlane2, CVector<3, Num> &vPoint);
-  static bool IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1, 
+  static bool IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> const &vPlane1,
                              CVector<3, Num> &vLine0, CVector<3, Num> &vLine1);
-  static bool IntersectLine(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1, 
+  static bool IntersectLine(CVector<4, Num> const &vPlane, CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                             Num nLineMin, Num nLineMax, CVector<3, Num> &vPoint);
 
   static Num Dist2Plane(const CVector<4, Num> &vPlane0, bool bHalfSpace0, const CVector<4, Num> &vPlane1, bool bHalfSpace1);
-  static Num Dist2Line(const CVector<4, Num> &vPlane, bool bHalfSpace, 
+  static Num Dist2Line(const CVector<4, Num> &vPlane, bool bHalfSpace,
                        const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax);
   static Num Dist2Point(const CVector<4, Num> &vPlane, bool bHalfSpace, const CVector<3, Num> &vPoint);
 };
 
 class CHalfSpace: public CPlane { // A half space shape occupies the all points on the negative side of the defining plane
-  DEFRTTI
+  DEFRTTI(CHalfSpace, CPlane, true)
 public:
   CHalfSpace(): CPlane() {}
   CHalfSpace(CVector<4, Num> const &vPlane): CPlane(vPlane) {}
@@ -171,7 +171,7 @@ public:
 };
 
 class CSphere: public CShape3D {
-  DEFRTTI
+  DEFRTTI(CSphere, CShape3D, true)
 public:
   CVector<3, Num> m_vCenter;
   Num m_nRadius;
@@ -195,19 +195,19 @@ public:
   static void Transform(CVector<3, Num> const &vCenter, Num nRadius, CXForm const &kXForm,
                         CVector<3, Num> &vXCenter, Num &nXRadius);
 
-  static bool IntersectLine(CVector<3, Num> const &vCenter, Num nRadius, 
+  static bool IntersectLine(CVector<3, Num> const &vCenter, Num nRadius,
                             CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                             Num nLineMin, Num nLineMax, Num &nMinFactor, Num &nMaxFactor);
 
   static Num Dist2Sphere(const CVector<3, Num> &vCenter0, Num nRadius0, const CVector<3, Num> &vCenter1, Num nRadius1);
   static Num Dist2Plane(const CVector<3, Num> &vCenter, Num nRadius, const CVector<4, Num> &vPlane, bool bHalfSpace);
-  static Num Dist2Line(const CVector<3, Num> &vCenter, Num nRadius, 
+  static Num Dist2Line(const CVector<3, Num> &vCenter, Num nRadius,
                        const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax);
   static Num Dist2Point(const CVector<3, Num> &vCenter, Num nRadius, const CVector<3, Num> &vPoint);
 };
 
 class CAABB: public CShape3D {
-  DEFRTTI
+  DEFRTTI(CAABB, CShape3D, true)
 public:
   CVector<3, Num> m_vMin, m_vMax;
 
@@ -237,23 +237,23 @@ public:
   static void Transform(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax, CXForm const &kXForm,
                         CVector<3, Num> &vXMin, CVector<3, Num> &vXMax);
 
-  static bool TestLineCoordinate(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+  static bool TestLineCoordinate(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                                  const CVector<3, Num> &vOrigin, const CVector<3, Num> &vDirection,
                                  Num nLineMin, Num nLineMax, Num nCoordinate, int iDim, Num &nFactor);
   static Num Edge2LineDist(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, int iDim, int iNumEdge,
                            const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax);
 
-  static bool IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax, 
+  static bool IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax,
                             CVector<3, Num> const &vPoint0, CVector<3, Num> const &vPoint1,
                             Num nLineMin, Num nLineMax, Num &nMinFactor, Num &nMaxFactor);
 
-  static Num Dist2AABB(const CVector<3, Num> &vMin0, const CVector<3, Num> &vMax0, 
+  static Num Dist2AABB(const CVector<3, Num> &vMin0, const CVector<3, Num> &vMax0,
                        const CVector<3, Num> &vMin1, const CVector<3, Num> &vMax1);
-  static Num Dist2Sphere(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+  static Num Dist2Sphere(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                          const CVector<3, Num> &vCenter, Num nRadius);
-  static Num Dist2Plane(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+  static Num Dist2Plane(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                         const CVector<4, Num> &vPlane, bool bHalfSpace);
-  static Num Dist2Line(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, 
+  static Num Dist2Line(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax,
                        const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax);
   static Num Dist2Point(const CVector<3, Num> &vMin, const CVector<3, Num> &vMax, const CVector<3, Num> &vPoint);
 
@@ -262,7 +262,7 @@ public:
 };
 
 class COBB: public CShape3D {
-  DEFRTTI
+  DEFRTTI(COBB, CShape3D, true)
 public:
   CVector<3, Num> m_vCenter,
                   m_vExtent[3];
@@ -271,7 +271,7 @@ public:
   COBB(const CVector<3, Num> &vCenter, const CVector<3, Num> &vExt0, const CVector<3, Num> &vExt1, const CVector<3, Num> &vExt2) { Init(vCenter, vExt0, vExt1, vExt2); }
   virtual ~COBB() {}
 
-  void Init(const CVector<3, Num> &vCenter, const CVector<3, Num> &vExt0, 
+  void Init(const CVector<3, Num> &vCenter, const CVector<3, Num> &vExt0,
             const CVector<3, Num> &vExt1, const CVector<3, Num> &vExt2) { m_vCenter = vCenter; m_vExtent[0] = vExt0; m_vExtent[1] = vExt1; m_vExtent[2] = vExt2; }
 
   virtual void Init(CVector<3, Num> const *pPoints, int iStride, unsigned int uiCount);
@@ -288,29 +288,29 @@ public:
                         CVector<3, Num> &vXCenter, CVector<3, Num> (&vXExtent)[3]);
 
   // Convert OBB to AABB + transform such that OBB = transform(AABB)
-  static void Untransform(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+  static void Untransform(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                           CVector<3, Num> &vMin, CVector<3, Num> &vMax, CXForm &kXForm);
 
-  static CShape3D::Num CheckSidePoint(int iSide, int iPoint, CVector<4, Num> const (&vPlanes)[2], 
-                                      CVector<3, Num> const (&vPoints)[2][4], Num const (&nLen)[2][2], 
+  static CShape3D::Num CheckSidePoint(int iSide, int iPoint, CVector<4, Num> const (&vPlanes)[2],
+                                      CVector<3, Num> const (&vPoints)[2][4], Num const (&nLen)[2][2],
                                       CVector<3, Num> const (&vBasis)[2][2]);
-  static Num Side2SideDist(CVector<3, Num> const &vOrigin0, CVector<3, Num> const &vX0, 
+  static Num Side2SideDist(CVector<3, Num> const &vOrigin0, CVector<3, Num> const &vX0,
                            CVector<3, Num> const &vY0, CVector<4, Num> const &vPlane0,
-                           CVector<3, Num> const &vOrigin1, CVector<3, Num> const &vX1, 
+                           CVector<3, Num> const &vOrigin1, CVector<3, Num> const &vX1,
                            CVector<3, Num> const &vY1, CVector<4, Num> const &vPlane1);
   static void GetSideData(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], int iSide,
                           CVector<3, Num> &vOrigin, CVector<3, Num> &vX, CVector<3, Num> &vY, CVector<4, Num> &vPlane);
-                          
 
-  static Num Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, Num> (&vExtent0)[3], 
+
+  static Num Dist2OBB(const CVector<3, Num> &vCenter0, const CVector<3, Num> (&vExtent0)[3],
                       const CVector<3, Num> &vCenter1, const CVector<3, Num> (&vExtent1)[3]);
-  static Num Dist2AABB(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+  static Num Dist2AABB(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                        const CVector<3, Num> &vMin, const CVector<3, Num> &vMax);
-  static Num Dist2Sphere(const CVector<3, Num> &vOBBCenter, const CVector<3, Num> (&vExtent)[3], 
+  static Num Dist2Sphere(const CVector<3, Num> &vOBBCenter, const CVector<3, Num> (&vExtent)[3],
                          const CVector<3, Num> &vSphereCenter, Num nRadius);
-  static Num Dist2Plane(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+  static Num Dist2Plane(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                         const CVector<4, Num> &vPlane, bool bHalfSpace);
-  static Num Dist2Line(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], 
+  static Num Dist2Line(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3],
                        const CVector<3, Num> &vPoint0, const CVector<3, Num> &vPoint1, Num nLineMin, Num nLineMax);
   static Num Dist2Point(const CVector<3, Num> &vCenter, const CVector<3, Num> (&vExtent)[3], const CVector<3, Num> &vPoint);
 };

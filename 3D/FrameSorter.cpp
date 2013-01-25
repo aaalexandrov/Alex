@@ -3,7 +3,7 @@
 #include "Graphics.h"
 
 // CFrameSorter ---------------------------------------------------------------
-IMPRTTI_NOCREATE(CFrameSorter, CObject)
+CRTTIRegisterer<CFrameSorter> g_RegFrameSorter;
 
 bool CFrameSorter::Present()
 {
@@ -15,7 +15,7 @@ bool CFrameSorter::Present()
 }
 
 // CSimpleSorter --------------------------------------------------------------
-IMPRTTI(CSimpleSorter, CFrameSorter)
+CRTTIRegisterer<CSimpleSorter> g_RegSimpleSorter;
 
 bool CSimpleSorter::Add(CModel *pModel)
 {
@@ -24,12 +24,12 @@ bool CSimpleSorter::Add(CModel *pModel)
 }
 
 // CPrioritySorter ------------------------------------------------------------
-IMPRTTI_NOCREATE_T(CPrioritySorter<TSortPriority>, CFrameSorter)
-IMPRTTI_NOCREATE_T(CPrioritySorter<TSortDistancePriority>, CFrameSorter)
+CRTTIRegisterer<CPrioritySorter<TSortPriority> > g_RegPrioritySorterSortPriority;
+CRTTIRegisterer<CPrioritySorter<TSortDistancePriority> > g_RegPrioritySorterSortDistancePriority;
 
 
 // CGroupSorter ---------------------------------------------------------------
-IMPRTTI(CGroupSorter, CFrameSorter)
+CRTTIRegisterer<CGroupSorter> g_RegGroupSorter;
 
 CGroupSorter::CGroupSorter(int iGroups): m_arrGroups(iGroups)
 {

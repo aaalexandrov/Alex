@@ -100,7 +100,7 @@ public:
     };
 
     class CPatchGeom: public CObject {
-      DEFRTTI
+      DEFRTTI(CPatchGeom, CObject, false)
       DEFREFCOUNT
     public:
       CPatch *m_pPatch;
@@ -128,7 +128,7 @@ public:
     };
 
     class CFullGeom: public CPatchGeom {
-      DEFRTTI
+      DEFRTTI(CFullGeom, CPatchGeom, true)
     public:
       struct TMatModel {
         CSmartPtr<CModel> m_pModel;
@@ -168,7 +168,7 @@ public:
     };
 
     class CProgGeom: public CPatchGeom {
-      DEFRTTI
+      DEFRTTI(CProgGeom, CPatchGeom, true)
     public:
       struct TMaterialModel {
         CSmartPtr<CModel> m_pModel;
@@ -296,7 +296,7 @@ public:
     inline CLODPatch *GetLODPatch();
     inline float GetMinLODDistance() { if (!m_pMinLODModel) return Util::F_INFINITY; return Vertices2Dist(m_pMinLODModel->m_pGeometry->m_uiVertices); }
 
-    bool IsProgressiveGeom() { return m_pGeom->GetRTTI()->IsKindOf(&CProgGeom::s_RTTI); }
+    bool IsProgressiveGeom() { return m_pGeom->GetRTTI()->IsKindOf(CProgGeom::GetRTTI_s()); }
     void GetAdjacentPatches(CPatch *&pLeft, CPatch *&pUp, CPatch *&pRight, CPatch *&pDown);
 
     void RecordMeshData(CMesh &kMesh, UINT uiMaterialCollapses);
@@ -421,7 +421,7 @@ public:
   };
 
   class CMeshBuildThread: public CThread {
-    DEFRTTI
+    DEFRTTI(CMeshBuildThread, CThread, false)
   public:
     CTerrain *m_pTerrain;
 

@@ -4,8 +4,8 @@
 #include "Parse.h"
 
 // CVarMerge ------------------------------------------------------------------
-IMPRTTI_NOCREATE(CVarMerge, CVarObj)
-IMPRTTI_NOCREATE(CVarMerge::CIter, CVarObj::CIter)
+CRTTIRegisterer<CVarMerge> g_RegVarMerge;
+CRTTIRegisterer<CVarMerge::CIter> g_RegVarMergeIter;
 
 CVarMerge::CIter::CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, int iDirection)
 {
@@ -15,7 +15,7 @@ CVarMerge::CIter::CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, 
     m_pIt = pIt;
   else {
     m_pIt = pMerge->m_Vars[m_iVar].m_pVar->GetIter(iDirection > 0 ? CStrAny() : GetLastIterConst());
-    if (!*m_pIt) 
+    if (!*m_pIt)
       if (iDirection > 0)
         Next();
       else
@@ -29,7 +29,7 @@ CVarMerge::CIter &CVarMerge::CIter::Next()
     return *this;
   do {
     m_pIt->Next();
-    if (!*m_pIt) 
+    if (!*m_pIt)
       if (m_iVar < m_pMerge->m_Vars.m_iCount - 1) {
         m_iVar++;
         delete m_pIt;
@@ -46,7 +46,7 @@ CVarMerge::CIter &CVarMerge::CIter::Prev()
     return *this;
   do {
     m_pIt->Prev();
-    if (!*m_pIt) 
+    if (!*m_pIt)
       if (m_iVar > 0) {
         m_iVar--;
         delete m_pIt;
@@ -111,9 +111,9 @@ void CVarMerge::ClearBaseVars()
 CVarObj::CIter *CVarMerge::GetIter(CStrAny const &sVar) const
 {
   int i;
-  if (!sVar) 
+  if (!sVar)
     return new CIter(this, 0, 0);
-  if (sVar == GetLastIterConst()) 
+  if (sVar == GetLastIterConst())
     return new CIter(this, m_Vars.m_iCount - 1, 0, -1);
   CVarObj::CIter *pIt;
   for (i = 0; i < m_Vars.m_iCount; i++) {
@@ -150,7 +150,7 @@ bool CVarMerge::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
 }
 
 // CVarTemplate --------------------------------------------------------------
-IMPRTTI(CVarTemplate, CObject)
+CRTTIRegisterer<CVarTemplate> g_RegVarTemplate;
 
 void CVarTemplate::Remap(BYTE *pNewBufBase, BYTE *pOldBufBase, CVarObj *pDstVars)
 {
@@ -266,7 +266,7 @@ bool CVarFile::Write(CVarObj *pVars, int iIndent)
         bRes &= Write(pContext, iIndent + 2);
         bRes &= WriteIndent(iIndent);
         sRes = "";
-      } 
+      }
       delete pItContext;
       sRes += CStrAny(ST_WHOLE, "}\r\n");
       err = m_pFile->Write((void *) sRes.m_pBuf, sRes.Length());
@@ -299,7 +299,7 @@ bool CVarFile::WriteIndent(int iIndent)
 }
 
 // Context var ----------------------------------------------------------------
-IMP_VAR_RTTI(CVarHash)
+CVarRTTIRegisterer<CVarHash> g_RegVarVarHash;
 
 CStrAny EncodeValStr(CStrAny const &s)
 {
@@ -319,7 +319,7 @@ CStrAny EncodeValStr(CStrAny const &s)
     sTemp = Parse::ReadUntilChars(sTemp, sSpecial);
     bEncode = sTemp.Length() < s.Length();
   }
-  
+
   if (!bEncode)
     return s;
 
@@ -327,7 +327,7 @@ CStrAny EncodeValStr(CStrAny const &s)
   CStrAny sQuote(ST_WHOLE, "\"");
 
   sRes = sQuote;
-  
+
   for (sTemp = s; sTemp.Length(); sTemp >>= 1) {
     char ch = sTemp[0];
     if (ch == '"' || ch == '\\')
@@ -424,7 +424,7 @@ bool Set(CVarObj *dst, CStrAny const *src)
       continue;
     if (!sSrc)
       bRes = false;
-    CStrAny sVarName(DecodeValStr(sStart), ST_CONST); 
+    CStrAny sVarName(DecodeValStr(sStart), ST_CONST);
     Parse::ReadChar(sSrc, '=');
     Parse::ReadWhitespace(sSrc);
     sBlock = Parse::MatchDelimiters(sSrc, arrDelim, ARRSIZE(arrDelim), &iInd);
@@ -439,7 +439,7 @@ bool Set(CVarObj *dst, CStrAny const *src)
       if (!!sNum && !sRest) {
         sRest = sNum;
         Parse::ReadUntilChar(sRest, '.');
-        if (!!sRest) 
+        if (!!sRest)
           pVar = new CVar<float>();
         else
           pVar = new CVar<int>();
@@ -460,13 +460,13 @@ bool Set(CVarObj *dst, CVarObj const *src)
 {
   bool bRes = true;
   CVarObj::CIter *pIt;
-  for (pIt = src->GetIter(); *pIt; pIt->Next()) 
+  for (pIt = src->GetIter(); *pIt; pIt->Next())
     bRes &= dst->SetVar(pIt->GetName(), *pIt->GetValue());
   delete pIt;
   return bRes;
 }
 
-bool SetValue(CVarObj *val, CBaseVar const *vSrc) 
+bool SetValue(CVarObj *val, CBaseVar const *vSrc)
 {
   if (!vSrc->ValueHasRTTI())
     return false;
@@ -476,7 +476,7 @@ bool SetValue(CVarObj *val, CBaseVar const *vSrc)
   if (pVO) {
     bRes = true;
     CVarObj::CIter *pIt;
-    for (pIt = pVO->GetIter(); *pIt; pIt->Next()) 
+    for (pIt = pVO->GetIter(); *pIt; pIt->Next())
       bRes &= val->SetVar(pIt->GetName(), *pIt->GetValue());
     delete pIt;
   } else

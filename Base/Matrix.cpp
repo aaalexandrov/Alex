@@ -6,7 +6,7 @@
 
 // CVarMatrix -----------------------------------------------------------------
 
-IMPRTTI_NOCREATE(CMatrixVar, CBaseVar)
+CRTTIRegisterer<CMatrixVar> g_RegMatrixVar;
 
 CMatrixVar::CMatrixVar(int iRows, int iCols, UINT uiFlags, Num *pVal)
 {
@@ -54,15 +54,9 @@ bool CMatrixVar::SetVar(const CBaseVar &vSrc)
 
 // Matrix Vars ----------------------------------------------------------------
 
-#define COMMA ,
-//#define IMP_MAT_VAR_RTTI(ROWS, COLS) \
-//  IMP_VAR_RTTI(ID(CONCAT(CMatrix<ROWS COMMA COLS>))) \
-//  IMP_VAR_RTTI(ID(CONCAT(CMatT<CMatrix<ROWS COMMA COLS>>)))
-
 #define IMP_MAT_VAR_RTTI(ROWS, COLS) \
-  IMP_VAR_RTTI(CMatrix<ROWS COMMA COLS>) \
-  IMP_VAR_RTTI(CMatT<CMatrix<ROWS COMMA COLS> >)
-
+  CRTTIRegisterer<CVar<CMatrix<ROWS, COLS> > > g_RegVarMatrix##ROWS##COLS; \
+  CRTTIRegisterer<CVar<CMatT<CMatrix<ROWS, COLS> > > > g_RegVarMatT##ROWS##COLS;
 
 IMP_MAT_VAR_RTTI(2, 2)
 IMP_MAT_VAR_RTTI(2, 3)
@@ -76,18 +70,18 @@ IMP_MAT_VAR_RTTI(4, 4)
 
 const CRTTI *GetMatrixVarRTTI(int iRows, int iCols, bool bVarRef)
 {
-  static CRTTI *pMatrixRTTI[2][4][4] =
-    { { { 0, 0,                             0,                             0                             },
-        { 0, &CVar<CMatrix<2, 2> >::s_RTTI, &CVar<CMatrix<2, 3> >::s_RTTI, &CVar<CMatrix<2, 4> >::s_RTTI },
-        { 0, &CVar<CMatrix<3, 2> >::s_RTTI, &CVar<CMatrix<3, 3> >::s_RTTI, &CVar<CMatrix<3, 4> >::s_RTTI },
-        { 0, &CVar<CMatrix<4, 2> >::s_RTTI, &CVar<CMatrix<4, 3> >::s_RTTI, &CVar<CMatrix<4, 4> >::s_RTTI } },
+  static CRTTI const *pMatrixRTTI[2][4][4] =
+    { { { 0, 0,                                 0,                                 0                                 },
+        { 0, CVar<CMatrix<2, 2> >::GetRTTI_s(), CVar<CMatrix<2, 3> >::GetRTTI_s(), CVar<CMatrix<2, 4> >::GetRTTI_s() },
+        { 0, CVar<CMatrix<3, 2> >::GetRTTI_s(), CVar<CMatrix<3, 3> >::GetRTTI_s(), CVar<CMatrix<3, 4> >::GetRTTI_s() },
+        { 0, CVar<CMatrix<4, 2> >::GetRTTI_s(), CVar<CMatrix<4, 3> >::GetRTTI_s(), CVar<CMatrix<4, 4> >::GetRTTI_s() } },
 
-      { { 0, 0,                                0,                                0                                },
-        { 0, &CVarRef<CMatrix<2, 2> >::s_RTTI, &CVarRef<CMatrix<2, 3> >::s_RTTI, &CVarRef<CMatrix<2, 4> >::s_RTTI },
-        { 0, &CVarRef<CMatrix<3, 2> >::s_RTTI, &CVarRef<CMatrix<3, 3> >::s_RTTI, &CVarRef<CMatrix<3, 4> >::s_RTTI },
-        { 0, &CVarRef<CMatrix<4, 2> >::s_RTTI, &CVarRef<CMatrix<4, 3> >::s_RTTI, &CVarRef<CMatrix<4, 4> >::s_RTTI } } };
+      { { 0, 0,                                    0,                                    0                                    },
+        { 0, CVarRef<CMatrix<2, 2> >::GetRTTI_s(), CVarRef<CMatrix<2, 3> >::GetRTTI_s(), CVarRef<CMatrix<2, 4> >::GetRTTI_s() },
+        { 0, CVarRef<CMatrix<3, 2> >::GetRTTI_s(), CVarRef<CMatrix<3, 3> >::GetRTTI_s(), CVarRef<CMatrix<3, 4> >::GetRTTI_s() },
+        { 0, CVarRef<CMatrix<4, 2> >::GetRTTI_s(), CVarRef<CMatrix<4, 3> >::GetRTTI_s(), CVarRef<CMatrix<4, 4> >::GetRTTI_s() } } };
 
-  class CMatRTTIInit {
+/*  class CMatRTTIInit {
   public:
     CMatRTTIInit() {
       for (int ref = 0; ref < 2; ref++)
@@ -99,7 +93,7 @@ const CRTTI *GetMatrixVarRTTI(int iRows, int iCols, bool bVarRef)
   };
 
   static CMatRTTIInit kMatRTTIInit;
-
+*/
   if (iRows < 1 || iRows > ARRSIZE(pMatrixRTTI[0]) || iCols < 1 || iCols > ARRSIZE(pMatrixRTTI[0][0]))
     return 0;
   return pMatrixRTTI[!!bVarRef][iRows - 1][iCols - 1];
@@ -107,18 +101,18 @@ const CRTTI *GetMatrixVarRTTI(int iRows, int iCols, bool bVarRef)
 
 const CRTTI *GetMatTVarRTTI(int iRows, int iCols, bool bVarRef)
 {
-  static CRTTI *pMatTRTTI[2][4][4] =
-    { { { 0, 0,                                     0,                                     0                                     },
-        { 0, &CVar<CMatT<CMatrix<2, 2> > >::s_RTTI, &CVar<CMatT<CMatrix<2, 3> > >::s_RTTI, &CVar<CMatT<CMatrix<2, 4> > >::s_RTTI },
-        { 0, &CVar<CMatT<CMatrix<3, 2> > >::s_RTTI, &CVar<CMatT<CMatrix<3, 3> > >::s_RTTI, &CVar<CMatT<CMatrix<3, 4> > >::s_RTTI },
-        { 0, &CVar<CMatT<CMatrix<4, 2> > >::s_RTTI, &CVar<CMatT<CMatrix<4, 3> > >::s_RTTI, &CVar<CMatT<CMatrix<4, 4> > >::s_RTTI } },
+  static CRTTI const *pMatTRTTI[2][4][4] =
+    { { { 0, 0,                                         0,                                         0                                         },
+        { 0, CVar<CMatT<CMatrix<2, 2> > >::GetRTTI_s(), CVar<CMatT<CMatrix<2, 3> > >::GetRTTI_s(), CVar<CMatT<CMatrix<2, 4> > >::GetRTTI_s() },
+        { 0, CVar<CMatT<CMatrix<3, 2> > >::GetRTTI_s(), CVar<CMatT<CMatrix<3, 3> > >::GetRTTI_s(), CVar<CMatT<CMatrix<3, 4> > >::GetRTTI_s() },
+        { 0, CVar<CMatT<CMatrix<4, 2> > >::GetRTTI_s(), CVar<CMatT<CMatrix<4, 3> > >::GetRTTI_s(), CVar<CMatT<CMatrix<4, 4> > >::GetRTTI_s() } },
 
-      { { 0, 0,                                        0,                                        0                                        },
-        { 0, &CVarRef<CMatT<CMatrix<2, 2> > >::s_RTTI, &CVarRef<CMatT<CMatrix<2, 3> > >::s_RTTI, &CVarRef<CMatT<CMatrix<2, 4> > >::s_RTTI },
-        { 0, &CVarRef<CMatT<CMatrix<3, 2> > >::s_RTTI, &CVarRef<CMatT<CMatrix<3, 3> > >::s_RTTI, &CVarRef<CMatT<CMatrix<3, 4> > >::s_RTTI },
-        { 0, &CVarRef<CMatT<CMatrix<4, 2> > >::s_RTTI, &CVarRef<CMatT<CMatrix<4, 3> > >::s_RTTI, &CVarRef<CMatT<CMatrix<4, 4> > >::s_RTTI } } };
+      { { 0, 0,                                            0,                                            0                                            },
+        { 0, CVarRef<CMatT<CMatrix<2, 2> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<2, 3> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<2, 4> > >::GetRTTI_s() },
+        { 0, CVarRef<CMatT<CMatrix<3, 2> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<3, 3> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<3, 4> > >::GetRTTI_s() },
+        { 0, CVarRef<CMatT<CMatrix<4, 2> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<4, 3> > >::GetRTTI_s(), CVarRef<CMatT<CMatrix<4, 4> > >::GetRTTI_s() } } };
 
-  class CMatTRTTIInit {
+/*  class CMatTRTTIInit {
   public:
     CMatTRTTIInit() {
       for (int ref = 0; ref < 2; ref++)
@@ -130,7 +124,7 @@ const CRTTI *GetMatTVarRTTI(int iRows, int iCols, bool bVarRef)
   };
 
   static CMatTRTTIInit kMatTRTTIInit;
-
+*/
   if (iRows < 1 || iRows > ARRSIZE(pMatTRTTI[0]) || iCols < 1 || iCols > ARRSIZE(pMatTRTTI[0][0]))
     return 0;
   return pMatTRTTI[!!bVarRef][iRows - 1][iCols - 1];
