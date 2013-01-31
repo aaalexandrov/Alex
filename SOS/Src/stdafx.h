@@ -31,9 +31,8 @@ using namespace Util;
 #include "Var.h"
 
 #include "Error.h"
-#include "Interpreter.h"
 #include "Token.h"
-#include "Expression.h"
+#include "BNFGrammar.h"
 
 // TODO: reference additional headers your program requires here
 

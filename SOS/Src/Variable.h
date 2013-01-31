@@ -65,16 +65,14 @@ public:
 };
 
 class CValueTable;
-class CEnvTable;
 
 class CEnvRegistry {
 public:
   typedef CHash<CValueTable *> THashValues;
-  typedef CHash<CEnvTable *>   THashEnv;
 
 public:
   THashValues m_hashValues;
-  THashEnv    m_hashEnvironments;
+  THashValues m_hashEnvironments;
   BYTE        m_btLastMark;
   int         m_iMarked;
 
@@ -85,9 +83,6 @@ public:
 
   void Add(CValueTable *pValueTable)    { m_hashValues.Add(pValueTable); }
   void Remove(CValueTable *pValueTable) { m_hashValues.RemoveValue(pValueTable); }
-
-  void Add(CEnvTable *pEnvTable)    { m_hashEnvironments.Add(pEnvTable); }
-  void Remove(CEnvTable *pEnvTable) { m_hashEnvironments.RemoveValue(pEnvTable); }
 
   void Clear();
 
@@ -101,16 +96,6 @@ public:
 
   CValueTable(): m_btMark(0) { CEnvRegistry::Get().Add(this); }
   ~CValueTable()             { CEnvRegistry::Get().Remove(this); }
-
-  inline void Mark(BYTE btMark);
-};
-
-class CEnvTable {
-public:
-  CValue::THash m_Hash;
-
-  CEnvTable()  { CEnvRegistry::Get().Add(this); }
-  ~CEnvTable() { CEnvRegistry::Get().Remove(this); }
 
   inline void Mark(BYTE btMark);
 };
@@ -255,17 +240,6 @@ void CValueTable::Mark(BYTE btMark)
     return;
   m_btMark = btMark;
   CEnvRegistry::Get().m_iMarked++;
-  CValue::THash::TIter it;
-  for (it = m_Hash; it; ++it) {
-    if ((*it).m_Val.m_btType == CValue::VT_TABLE)
-      (*it).m_Val.m_pTableValue->Mark(btMark);
-  }
-}
-
-// CEnvTable ------------------------------------------------------------------
-
-void CEnvTable::Mark(BYTE btMark)
-{
   CValue::THash::TIter it;
   for (it = m_Hash; it; ++it) {
     if ((*it).m_Val.m_btType == CValue::VT_TABLE)

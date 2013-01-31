@@ -3,6 +3,6 @@
 
 class CInterpreter;
 
-int ProcessInput(CInterpreter &kInterp);
+int ProcessInput();
 
 #endif

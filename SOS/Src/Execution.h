@@ -13,7 +13,8 @@ public:
 
     IT_PUSH_VALUE,
 
-    IT_ADD,
+    IT_NEGATE,
+		IT_ADD,
     IT_SUBTRACT,
     IT_MULTIPLY,
     IT_DIVIDE,
@@ -37,6 +38,7 @@ public:
   void ReleaseData();
 
   void SetNop() { ReleaseData(); }
+	void SetNegate() { ReleaseData(); m_eType = IT_NEGATE; }
   void SetPushValue(CValue const &kValue) { ReleaseData(); m_eType = IT_PUSH_VALUE; GetValue().Set(kValue); }
   void SetAdd() { ReleaseData(); m_eType = IT_ADD; }
   void SetSubtract() { ReleaseData(); m_eType = IT_SUBTRACT; }
@@ -52,6 +54,7 @@ public:
   int GetSize();
 
   EInterpretError ExecPushValue(CExecution *pExecution);
+	EInterpretError ExecNegate(CExecution *pExecution);
   EInterpretError ExecAdd(CExecution *pExecution);
   EInterpretError ExecSubtract(CExecution *pExecution);
   EInterpretError ExecMultiply(CExecution *pExecution);
@@ -76,9 +79,12 @@ public:
 class CExecution {
 public:
   TValueStack   m_kStack;
-  CEnvTable     m_kEnvironment;
+  CValueTable  *m_pEnvironment;
   CFragment    *m_pCode;
   CInstruction *m_pNextInstruction;
+
+	CExecution();
+	~CExecution();
 
   EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
 };

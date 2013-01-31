@@ -13,7 +13,7 @@ void CEnvRegistry::Clear()
 
 void CEnvRegistry::MarkAndSweep()
 {
-  THashEnv::TIter itEnv;
+  THashValues::TIter itEnv;
 
   // Mark
   m_btLastMark++;

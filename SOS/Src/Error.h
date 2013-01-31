@@ -26,6 +26,8 @@ enum EInterpretError {
   IERR_INVALID_OPERATOR,
 
   IERR_PARSING_FAILED,
+
+	IERR_COMPILE_FAILED,
 };
 
 #endif

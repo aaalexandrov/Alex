@@ -135,10 +135,11 @@ EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
 		pTemplate = GetTemplateToken(CStrAny(ST_PART, sInp.m_pBuf, 1));
     if (pTemplate) { // Operator or separator
 			if (pTemplate->m_eType == CToken::TT_MINUS) {
-				if (!m_lstTokens.m_iCount || m_lstTokens.Tail()->m_eClass != CToken::TC_IDENTIFIER &&
+/*				if (!m_lstTokens.m_iCount || m_lstTokens.Tail()->m_eClass != CToken::TC_IDENTIFIER &&
 					  m_lstTokens.Tail()->m_eClass != CToken::TC_LITERAL && m_lstTokens.Tail()->m_eType != CToken::TT_CLOSEBRACE)
 					// Also should check for uniary postfix operators here if there are such
 					pTemplate = GetTemplateToken(CToken::TT_NEGATE);
+*/
 			}
       sToken.m_pBuf = sInp.m_pBuf;
       sToken.m_iLen = 1;

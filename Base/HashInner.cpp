@@ -4,6 +4,8 @@
 #include <time.h>
 #include <stdio.h>
 
+/*
+
 class A {
 public:
     int i;
@@ -113,3 +115,4 @@ struct TTestHashInner {
 
 	}
 } g_TestHashInner;
+ */

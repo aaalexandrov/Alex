@@ -5,6 +5,7 @@
 
 CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
   VAL2STR(IT_NOP),
+	VAL2STR(IT_NEGATE),
   VAL2STR(IT_PUSH_VALUE),
   VAL2STR(IT_ADD),
   VAL2STR(IT_SUBTRACT),
@@ -31,6 +32,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
   switch (m_eType) {
     case IT_PUSH_VALUE:
       return ExecPushValue(pExecution);
+		case IT_NEGATE:
+			return ExecNegate(pExecution);
     case IT_ADD:
       return ExecAdd(pExecution);
     case IT_SUBTRACT:
@@ -67,6 +70,17 @@ EInterpretError CInstruction::ExecPushValue(CExecution *pExecution)
 {
   pExecution->m_kStack.Append(GetValue());
   return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecNegate(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 1)
+		return IERR_NOT_ENOUGH_OPERANDS;
+	CValue &kVal = pExecution->m_kStack.Last();
+	if (kVal.m_btType != CValue::VT_FLOAT)
+		return IERR_OPERAND_TYPE;
+	kVal.Set(-kVal.m_fValue);
+	return IERR_OK;
 }
 
 EInterpretError CInstruction::ExecAdd(CExecution *pExecution)
@@ -177,7 +191,7 @@ EInterpretError CInstruction::ExecResolveValue(CExecution *pExecution)
   CValue &kVal = pExecution->m_kStack.Last();
   if (kVal.m_btType != CValue::VT_STRING)
     return IERR_OPERAND_TYPE;
-  CValue::THash::TIter it = pExecution->m_kEnvironment.m_Hash.Find(kVal.m_pStrValue);
+  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
   if (it) 
     kVal = (*it).m_Val;
   else
@@ -192,10 +206,10 @@ EInterpretError CInstruction::ExecResolveRef(CExecution *pExecution)
   CValue &kVal = pExecution->m_kStack.Last();
   if (kVal.m_btType != CValue::VT_STRING)
     return IERR_OPERAND_TYPE;
-  CValue::THash::TIter it = pExecution->m_kEnvironment.m_Hash.Find(kVal.m_pStrValue);
+  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
   if (!it) {
-    pExecution->m_kEnvironment.m_Hash.Add(CValue::THash::Elem(kVal.m_pStrValue, CValue()));
-    it = pExecution->m_kEnvironment.m_Hash.Find(kVal.m_pStrValue);
+    pExecution->m_pEnvironment->m_Hash.Add(CValue::THash::Elem(kVal.m_pStrValue, CValue()));
+    it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
   }
   if (it) 
     kVal.Set(&(*it).m_Val);
@@ -241,12 +255,22 @@ CStrAny CInstruction::ToStr()
 
 // CExecution -----------------------------------------------------------------
 
+CExecution::CExecution()
+{
+	m_pEnvironment = new CValueTable();
+}
+
+CExecution::~CExecution()
+{
+	delete m_pEnvironment;
+}
+
 EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams)
 {
   m_pCode = pCode;
   m_pNextInstruction = m_pCode->GetFirstInstruction();
   m_kStack.Clear();
   for (int i = 0; i < Util::Min(m_pCode->m_arrInputs.m_iCount, arrParams.m_iCount); ++i) 
-    m_kEnvironment.m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i], arrParams[i]));
+    m_pEnvironment->m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i], arrParams[i]));
   return m_pCode->Execute(this);
 }
