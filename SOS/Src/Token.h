@@ -41,6 +41,12 @@ public:
     // Identifiers
     TT_VARIABLE,
     TT_KEYWORD,
+		TT_FUNCTION,
+		TT_END,
+		TT_IF,
+		TT_THEN,
+		TT_ELSE,
+		TT_WHILE,
 
     // Literals
     TT_NUMBER,

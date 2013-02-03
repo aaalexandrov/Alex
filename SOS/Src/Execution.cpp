@@ -97,7 +97,7 @@ EInterpretError CInstruction::ExecAdd(CExecution *pExecution)
     return IERR_OK;
   } else
     if (kVal1.m_btType == CValue::VT_STRING) {
-      CStrAny s = CStrAny(kVal1.m_pStrValue) + CStrAny(kVal2.m_pStrValue);
+      CStrAny s = CStrAny(kVal2.m_pStrValue) + CStrAny(kVal1.m_pStrValue);
       s.AssureInRepository();
       kVal2.Set(s.GetHeader());
       pExecution->m_kStack.m_iCount--;
@@ -115,7 +115,7 @@ EInterpretError CInstruction::ExecSubtract(CExecution *pExecution)
   if (kVal1.m_btType != kVal2.m_btType)
     return IERR_OPERAND_TYPE;
   if (kVal1.m_btType == CValue::VT_FLOAT) {
-    kVal2.Set(kVal1.m_fValue - kVal2.m_fValue);
+    kVal2.Set(kVal2.m_fValue - kVal1.m_fValue);
     pExecution->m_kStack.m_iCount--;
     return IERR_OK;
   }
@@ -147,7 +147,7 @@ EInterpretError CInstruction::ExecDivide(CExecution *pExecution)
   if (kVal1.m_btType != kVal2.m_btType)
     return IERR_OPERAND_TYPE;
   if (kVal1.m_btType == CValue::VT_FLOAT) {
-    kVal2.Set(kVal1.m_fValue / kVal2.m_fValue);
+    kVal2.Set(kVal2.m_fValue / kVal1.m_fValue);
     pExecution->m_kStack.m_iCount--;
     return IERR_OK;
   }

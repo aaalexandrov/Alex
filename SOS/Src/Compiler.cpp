@@ -35,6 +35,10 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode)
 	switch (pNode->m_pRule->m_iID) {
 	  case CBNFGrammar::RID_Value:
 			return CompileValue(pNode);
+		case CBNFGrammar::RID_FunctionDef:
+			return CompileFunctionDef(pNode);
+		case CBNFGrammar::RID_FunctionCall:
+			return CompileFunctionCall(pNode);
 		case CBNFGrammar::RID_Operand:
 			return CompileOperand(pNode);
 		case CBNFGrammar::RID_Power:
@@ -49,6 +53,8 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode)
 			return CompileLValue(pNode);
 		case CBNFGrammar::RID_Assignment:
 			return CompileAssignment(pNode);
+		case CBNFGrammar::RID_Operator:
+			return CompileOperator(pNode);
 		case CBNFGrammar::RID_Program:
 			return CompileProgram(pNode);
 		default:
@@ -89,6 +95,18 @@ EInterpretError CCompiler::CompileValue(CBNFGrammar::CNode *pNode)
   return IERR_OK;
 }
 
+EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_FunctionDef);
+	return IERR_COMPILE_FAILED;
+}
+
+EInterpretError CCompiler::CompileFunctionCall(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall);
+	return IERR_COMPILE_FAILED;
+}
+
 EInterpretError CCompiler::CompileOperand(CBNFGrammar::CNode *pNode)
 {
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Operand);
@@ -101,12 +119,10 @@ EInterpretError CCompiler::CompilePower(CBNFGrammar::CNode *pNode)
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Power);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	EInterpretError err;
-	err = CompileNode(pNode->m_arrChildren[0]);
+	err = CompileNode(pNode->m_arrChildren[1]);
 	if (err != IERR_OK)
 		return err;
-	if (pNode->m_arrChildren.m_iCount <= 1)
-		return IERR_OK;
-	err = CompileNode(pNode->m_arrChildren[1]);
+	err = CompileNode(pNode->m_arrChildren[0]);
 	if (err != IERR_OK)
 		return err;
 	CInstruction kInstr;
@@ -225,6 +241,13 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode)
   return IERR_OK;
 }
 
+EInterpretError CCompiler::CompileOperator(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Operator);
+	ASSERT(!"This shouldn't happen, renaming only rules shouldn't generate nodes");
+	return IERR_COMPILE_FAILED;
+}
+
 EInterpretError CCompiler::CompileProgram(CBNFGrammar::CNode *pNode)
 {
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Program);
@@ -239,6 +262,13 @@ EInterpretError CCompiler::CompileProgram(CBNFGrammar::CNode *pNode)
 
 // CCompileChain --------------------------------------------------------------
 
+void CCompileChain::Clear()
+{
+	m_kTokenizer.Clear();
+	m_kGrammar.Clear();
+	m_kCompiler.Clear();
+}
+
 EInterpretError CCompileChain::Compile(CStrAny sCode)
 {
   EInterpretError err;
@@ -247,11 +277,10 @@ EInterpretError CCompileChain::Compile(CStrAny sCode)
   if (err != IERR_OK)
     return err;
 
-	CAutoDeletePtr<CBNFGrammar::CNode> pParsed;
-	if (!m_kGrammar.Parse(m_kTokenizer.m_lstTokens, pParsed.m_pPtr))
+	if (!m_kGrammar.Parse(m_kTokenizer.m_lstTokens))
 		return IERR_PARSING_FAILED;
 
-  err = m_kCompiler.Compile(pParsed);
+  err = m_kCompiler.Compile(m_kGrammar.m_pParsed);
   if (err != IERR_OK)
     return err;
 

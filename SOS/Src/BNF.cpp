@@ -58,8 +58,8 @@ CBNFParser::CRule *CBNFParser::CNonTerminal::AddChild(CRule const *pChild)
 bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const
 {
 	CNode *pNode;
-	if (m_iID > 0 && pFirstToken) {
-		pNode = new CNode(pFirstToken->Data, this);
+	if ((m_iID > 0 || m_eOutput == O_Output) && pFirstToken) {
+		pNode = new CNode(pFirstToken->Data, m_iID > 0 ? this : kParent.m_pRule);
 		kParent.m_arrChildren.Append(pNode);
 	} else
 		pNode = &kParent;
@@ -99,7 +99,7 @@ bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode
 			delete pNode;
 			--kParent.m_arrChildren.m_iCount;
 		} else {
-			if (eOutput == O_NoRenaming && pNode->m_arrChildren.m_iCount == 1) {
+			if (m_eOutput != O_Output && eOutput == O_NoRenaming && pNode->m_arrChildren.m_iCount == 1) {
   			ASSERT(kParent.m_arrChildren.Last() == pNode);
 				kParent.m_arrChildren.Last() = pNode->m_arrChildren[0];
 				pNode->m_arrChildren.SetCount(0);
@@ -134,6 +134,7 @@ bool CBNFParser::Parse(CList<CToken *> &lstTokens, CNode *&pParsed)
 	if (!bMatch || pFirst) {
 		delete pParsed;
 		pParsed = 0;
+		bMatch = false;
 	}
 	return bMatch;
 }
