@@ -2,6 +2,7 @@
 #define __EXECUTION_H
 
 #include "Variable.h"
+#include "Token.h"
 
 typedef CArray<CValue> TValueStack;
 
@@ -23,6 +24,10 @@ public:
     IT_RESOLVE_VAR,
     IT_RESOLVE_REF,
 		IT_CALL,
+		IT_RETURN,
+		IT_POP_ALL,
+		IT_POP_TO_MARKER,
+		IT_JUMP_IF_FALSE,
 
     IT_LAST
   };
@@ -33,6 +38,7 @@ public:
   };
 
   CInstruction(): m_eType(IT_NOP) {}
+	CInstruction(CInstruction const &kInstr) { m_eType = kInstr.m_eType; if (HasValue()) GetValue().Set(const_cast<CInstruction *>(&kInstr)->GetValue()); }
   ~CInstruction() { ReleaseData(); }
 
   void ReleaseData();
@@ -49,6 +55,10 @@ public:
   void SetResolveVar() { ReleaseData(); m_eType = IT_RESOLVE_VAR; }
   void SetResolveRef() { ReleaseData(); m_eType = IT_RESOLVE_REF; }
 	void SetCall() { ReleaseData(); m_eType = IT_CALL; }
+	void SetReturn() { ReleaseData(); m_eType = IT_RETURN; }
+	void SetPopAll() { ReleaseData(); m_eType = IT_POP_ALL; }
+	void SetPopToMarker() { ReleaseData(); m_eType = IT_POP_TO_MARKER; }
+	void SetJumpIfFalse() { ReleaseData(); m_eType = IT_JUMP_IF_FALSE; }
 
   EInterpretError Execute(CExecution *pExecution);
   int GetSize();
@@ -64,6 +74,10 @@ public:
   EInterpretError ExecResolveValue(CExecution *pExecution);
   EInterpretError ExecResolveRef(CExecution *pExecution);
 	EInterpretError ExecCall(CExecution *pExecution);
+	EInterpretError ExecReturn(CExecution *pExecution);
+	EInterpretError ExecPopAll(CExecution *pExecution);
+	EInterpretError ExecPopToMarker(CExecution *pExecution);
+	EInterpretError ExecJumpIfFalse(CExecution *pExecution);
 
   bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
   CValue &GetValue() { return *(CValue *) &m_btValue; }
@@ -86,7 +100,8 @@ public:
 	CExecution();
 	~CExecution();
 
-  EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
+  void ClearStack();
+	EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
 };
 
 #endif

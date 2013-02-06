@@ -16,6 +16,10 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
   VAL2STR(IT_RESOLVE_VAR),
   VAL2STR(IT_RESOLVE_REF),
 	VAL2STR(IT_CALL),
+	VAL2STR(IT_RETURN),
+	VAL2STR(IT_POP_ALL),
+	VAL2STR(IT_POP_TO_MARKER),
+	VAL2STR(IT_JUMP_IF_FALSE),
 };
 
 CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
@@ -52,6 +56,14 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
       return ExecResolveRef(pExecution);
 		case IT_CALL:
 			return ExecCall(pExecution);
+		case IT_RETURN:
+			return ExecReturn(pExecution);
+		case IT_POP_ALL:
+			return ExecPopAll(pExecution);
+		case IT_POP_TO_MARKER:
+			return ExecPopToMarker(pExecution);
+		case IT_JUMP_IF_FALSE:
+			return ExecJumpIfFalse(pExecution);
     default:
       ASSERT(!"Invalid instruction");
       return IERR_INVALID_INSTRUCTION;
@@ -176,11 +188,16 @@ EInterpretError CInstruction::ExecAssign(CExecution *pExecution)
     return IERR_NOT_ENOUGH_OPERANDS;
   CValue &kVal1 = pExecution->m_kStack.Last();
   CValue &kVal2 = pExecution->m_kStack.PreLast();
-  if (kVal1.m_btType == CValue::VT_REF) {
-    (*kVal1.m_pReference) = kVal2;
-    pExecution->m_kStack.m_iCount--;
-    return IERR_OK;
-  }
+	if (kVal1.m_btType == CValue::VT_REF) {
+		if (kVal2.m_btType != CValue::VT_MARKER) {
+			*kVal1.m_pReference = kVal2;
+			pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 2);
+		} else {
+			kVal1.m_pReference->SetNone();
+			pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 1);
+		}
+		return IERR_OK;
+	}
   return IERR_OPERAND_TYPE;
 }
 
@@ -220,28 +237,69 @@ EInterpretError CInstruction::ExecResolveRef(CExecution *pExecution)
 
 EInterpretError CInstruction::ExecCall(CExecution *pExecution)
 {
-  if (pExecution->m_kStack.m_iCount < 1)
-    return IERR_NOT_ENOUGH_OPERANDS;
-	CArray<CValue> arrParams;
-	int i = pExecution->m_kStack.m_iCount - 1;
-	while (i >= 0 && pExecution->m_kStack[i].m_btType != CValue::VT_NONE) {
-		arrParams.Append(pExecution->m_kStack[i]);
-		pExecution->m_kStack[i].ClearValue();
-		--i;
-	}
-	if (i < 1)
+	if (pExecution->m_kStack.m_iCount < 2)
 		return IERR_NOT_ENOUGH_OPERANDS;
-	CValue &kVal = pExecution->m_kStack[i - 1];
-	if (kVal.m_btType != CValue::VT_FRAGMENT)
+	CValue &kFrag = pExecution->m_kStack.Last();
+	if (kFrag.m_btType != CValue::VT_FRAGMENT)
 		return IERR_OPERAND_TYPE;
-
+	int i;
+	CArray<CValue> arrInputs;
+	CFragment *pFrag = kFrag.GetFragment();
+	for (i = pExecution->m_kStack.m_iCount - 2; i >= 0 && pExecution->m_kStack[i].m_btType != CValue::VT_MARKER; --i) {
+		if (arrInputs.m_iCount < pFrag->m_arrInputs.m_iCount)
+			arrInputs.Append(pExecution->m_kStack[i]);
+	}
+	if (i < 0)
+		return IERR_NOT_ENOUGH_OPERANDS;
+	ASSERT(pExecution->m_kStack[i].m_btType == CValue::VT_MARKER);
+	ASSERT(pFrag->GetRefCount() > 1);
+	pExecution->m_kStack.SetCount(i);
 	CExecution kExecution;
-	EInterpretError err = kExecution.Execute(kVal.m_pFragment, arrParams);
+	EInterpretError err = kExecution.Execute(pFrag, arrInputs);
 	if (err != IERR_OK)
 		return err;
 	for (i = 0; i < kExecution.m_kStack.m_iCount; ++i)
 		pExecution->m_kStack.Append(kExecution.m_kStack[i]);
+	
+	return IERR_OK;
+}
 
+EInterpretError CInstruction::ExecReturn(CExecution *pExecution)
+{
+	pExecution->m_pNextInstruction = 0;
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecPopAll(CExecution *pExecution)
+{
+	pExecution->ClearStack();
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecPopToMarker(CExecution *pExecution)
+{
+	int i;
+	for (i = pExecution->m_kStack.m_iCount - 1; i > 0 && pExecution->m_kStack[i].m_btType != CValue::VT_MARKER; --i);
+	pExecution->m_kStack.SetCount(i);
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecJumpIfFalse(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 2)
+		return IERR_NOT_ENOUGH_OPERANDS;
+  CValue &kVal1 = pExecution->m_kStack.Last();
+  CValue &kVal2 = pExecution->m_kStack.PreLast();
+	if (kVal1.m_btType != CValue::VT_FLOAT || kVal2.m_btType != CValue::VT_FLOAT)
+		return IERR_OPERAND_TYPE;
+	if (!kVal2.m_fValue) {
+		int iJumpIndex = (int) kVal1.m_fValue;
+		if (iJumpIndex >= 0 && iJumpIndex < pExecution->m_pCode->m_arrCode.m_iCount)
+			pExecution->m_pNextInstruction = &pExecution->m_pCode->m_arrCode[(int) kVal1.m_fValue];
+		else
+			pExecution->m_pNextInstruction = 0;
+	}
+	pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 2);
 	return IERR_OK;
 }
 
@@ -265,12 +323,17 @@ CExecution::~CExecution()
 	delete m_pEnvironment;
 }
 
+void CExecution::ClearStack()
+{
+	m_kStack.SetCount(0);
+}
+
 EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams)
 {
   m_pCode = pCode;
   m_pNextInstruction = m_pCode->GetFirstInstruction();
   m_kStack.Clear();
   for (int i = 0; i < Util::Min(m_pCode->m_arrInputs.m_iCount, arrParams.m_iCount); ++i) 
-    m_pEnvironment->m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i], arrParams[i]));
+    m_pEnvironment->m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i].GetHeader(), arrParams[i]));
   return m_pCode->Execute(this);
 }

@@ -45,8 +45,9 @@ def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
 
 -------------------------------------------------------------------------------
 
-Value ::= Constant | Identifier
-Call ::= (Identifier | FunctionDef) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
+Value ::= String | Number | Variable
+Variable ::= Identifier
+Call ::= (Variable | FunctionDef) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
 Operand ::= Call | Value | "(" Expression ")"  
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ("*" | "/") Power }
@@ -58,4 +59,8 @@ ExpressionList ::= Expression { "," Expression }
 LValue ::= Identifier
 Assignment ::= LValue { "," LValue } "=" ExpressionList
 
-Operator ::= Assignment | Call
+Return ::= "return" [ ExpressionList ]
+
+If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
+
+Operator ::= If | Return | Assignment | Call

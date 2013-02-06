@@ -94,7 +94,7 @@ bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode
 		}
 	} while (m_eRepeat == R_ZeroInfinity && bMatchFound);
 	if (pNode != &kParent) {
-		if (!bAnyMatch) {
+		if (!bAnyMatch && (m_eOutput != O_Output || m_eRepeat != R_ZeroOne && m_eRepeat != R_ZeroInfinity)) {
 			ASSERT(kParent.m_arrChildren.Last() == pNode && !pNode->m_arrChildren.m_iCount);
 			delete pNode;
 			--kParent.m_arrChildren.m_iCount;

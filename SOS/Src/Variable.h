@@ -10,6 +10,7 @@ class CValue {
 public:
   enum EValueType {
     VT_NONE,
+		VT_MARKER,
     VT_FLOAT,
     VT_STRING,
     VT_TABLE,
@@ -30,7 +31,7 @@ public:
   };
   BYTE m_btType;
 
-  CValue()                             { SetNone(); }
+  CValue(EValueType eVT = VT_NONE)     { if (eVT == VT_MARKER) SetMarker(); else SetNone(); }
   CValue(float fValue)                 { Set(fValue); }
   CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   CValue(CValueTable *pTable)          { Set(pTable); }
@@ -41,6 +42,7 @@ public:
   ~CValue() { ReleaseValue(); }
 
   inline void SetNone();
+	inline void SetMarker();
   inline void Set(float fValue);
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
@@ -106,7 +108,10 @@ class CFragment {
 	DEFREFCOUNT
 public:
   CArray<CInstruction> m_arrCode;
-  CArray<CStrHeader *> m_arrInputs;
+  CArray<CStrAny> m_arrInputs;
+
+	CFragment() {}
+	~CFragment() {}
 
   void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
 
@@ -147,6 +152,12 @@ void CValue::ReleaseValue()
 void CValue::SetNone() 
 { 
   m_btType = VT_NONE; 
+  m_Value = 0; 
+}
+
+void CValue::SetMarker() 
+{ 
+  m_btType = VT_MARKER; 
   m_Value = 0; 
 }
 
@@ -208,6 +219,9 @@ CStrAny CValue::GetStr() const
   switch (m_btType) {
     case VT_NONE:
       s = CStrAny(ST_CONST, "<null>");
+      break;
+    case VT_MARKER:
+      s = CStrAny(ST_CONST, "<marker>");
       break;
     case VT_FLOAT:
       sprintf(chBuf, "%g", m_fValue);

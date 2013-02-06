@@ -64,6 +64,8 @@ CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const
 
 void CFragment::Dump()
 {
+	for (int i = 0; i < m_arrInputs.m_iCount; ++i)
+		printf("Input %d: %s\n", i, m_arrInputs[i].m_pBuf);
   for (int i = 0; i < m_arrCode.m_iCount; ++i) 
-    printf("%s\n", m_arrCode[i].ToStr().m_pBuf);
+    printf("%04d: %s\n", i, m_arrCode[i].ToStr().m_pBuf);
 }

@@ -21,12 +21,15 @@ int ProcessInput()
       if (err == IERR_OK) {
         kChain.m_kCompiler.m_pCode->Dump();
         err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams);
-        if (kExecution.m_kStack.m_iCount != 1)
-          err = IERR_UNKNOWN;
-        if (err == IERR_OK) {
-			    CStrAny sRes = kExecution.m_kStack.Last().GetStr();
-			    fprintf(stdout, "<< %s\n", sRes.m_pBuf);
-        }
+				if (err == IERR_OK) {
+					while (kExecution.m_kStack.m_iCount) {
+						CStrAny sRes = kExecution.m_kStack.Last().GetStr();
+						fprintf(stdout, "<< %s\n", sRes.m_pBuf);
+						if (kExecution.m_kStack.Last().m_btType == CValue::VT_FRAGMENT)
+							kExecution.m_kStack.Last().GetFragment()->Dump();
+						kExecution.m_kStack.SetCount(kExecution.m_kStack.m_iCount - 1);
+					}
+				}
       } else
 				if (err == IERR_COMPILE_FAILED) {
 					kChain.m_kGrammar.Dump();

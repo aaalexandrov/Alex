@@ -43,6 +43,7 @@ public:
     TT_KEYWORD,
 		TT_FUNCTION,
 		TT_END,
+		TT_RETURN,
 		TT_IF,
 		TT_THEN,
 		TT_ELSE,
