@@ -48,13 +48,25 @@ public:
 		TT_THEN,
 		TT_ELSE,
 		TT_WHILE,
+		TT_DO,
+		TT_TRUE,
+		TT_FALSE,
+		TT_NOT,
+		TT_AND,
+		TT_OR,
 
     // Literals
     TT_NUMBER,
     TT_STRING,
 
     // Operators
-    TT_PLUS, TT_OPERATOR_BASE = TT_PLUS,
+		TT_EQUAL, TT_OPERATOR_BASE = TT_EQUAL,
+		TT_NOT_EQUAL,
+		TT_LESS_EQUAL,
+		TT_GREAT_EQUAL,
+		TT_LESS,
+		TT_GREAT,
+    TT_PLUS, 
     TT_MINUS,
     TT_MULTIPLY,
     TT_DIVIDE,

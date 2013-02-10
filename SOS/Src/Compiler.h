@@ -25,10 +25,15 @@ public:
 	EInterpretError CompilePower(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileMult(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileSum(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileComparison(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileNot(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileAnd(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileOr(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileExpression(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileLValue(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileAssignment(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileIf(CBNFGrammar::CNode *pNode);
+  EInterpretError CompileWhile(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileOperator(CBNFGrammar::CNode *pNode);
 
 	EInterpretError CompileNode(CBNFGrammar::CNode *pNode);

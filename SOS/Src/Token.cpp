@@ -46,6 +46,12 @@ CValue2String::TValueString CToken::s_arrTT2Str[TT_LAST] = {
 	VAL2STR(TT_THEN),
 	VAL2STR(TT_ELSE),
 	VAL2STR(TT_WHILE),
+	VAL2STR(TT_DO),
+	VAL2STR(TT_TRUE),
+	VAL2STR(TT_FALSE),
+	VAL2STR(TT_NOT),
+	VAL2STR(TT_AND),
+	VAL2STR(TT_OR),
   VAL2STR(TT_NUMBER),
   VAL2STR(TT_STRING),
   VAL2STR(TT_PLUS),
@@ -139,18 +145,11 @@ EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
       m_lstTokens.PushTail(pToken);
       continue;
     }
-		pTemplate = GetTemplateToken(CStrAny(ST_PART, sInp.m_pBuf, 1));
+		pTemplate = GetTemplateToken(sInp);
     if (pTemplate) { // Operator or separator
-			if (pTemplate->m_eType == CToken::TT_MINUS) {
-/*				if (!m_lstTokens.m_iCount || m_lstTokens.Tail()->m_eClass != CToken::TC_IDENTIFIER &&
-					  m_lstTokens.Tail()->m_eClass != CToken::TC_LITERAL && m_lstTokens.Tail()->m_eType != CToken::TT_CLOSEBRACE)
-					// Also should check for uniary postfix operators here if there are such
-					pTemplate = GetTemplateToken(CToken::TT_NEGATE);
-*/
-			}
       sToken.m_pBuf = sInp.m_pBuf;
-      sToken.m_iLen = 1;
-      sInp >>= 1;
+			sToken.m_iLen = pTemplate->m_sToken.m_iLen;
+      sInp >>= sToken.m_iLen;
       pToken = new CToken(sToken, pTemplate->m_eClass, pTemplate->m_eType);
       m_lstTokens.PushTail(pToken);
       continue;
@@ -215,9 +214,21 @@ CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = {
 	CToken(CStrAny(ST_WHOLE, "then"),     CToken::TC_KEYWORD,    CToken::TT_THEN),
 	CToken(CStrAny(ST_WHOLE, "else"),     CToken::TC_KEYWORD,    CToken::TT_ELSE),
 	CToken(CStrAny(ST_WHOLE, "while"),    CToken::TC_KEYWORD,    CToken::TT_WHILE),
+	CToken(CStrAny(ST_WHOLE, "do"),       CToken::TC_KEYWORD,    CToken::TT_DO),
+	CToken(CStrAny(ST_WHOLE, "true"),     CToken::TC_KEYWORD,    CToken::TT_TRUE),
+	CToken(CStrAny(ST_WHOLE, "false"),    CToken::TC_KEYWORD,    CToken::TT_FALSE),
+	CToken(CStrAny(ST_WHOLE, "not"),      CToken::TC_KEYWORD,    CToken::TT_NOT),
+	CToken(CStrAny(ST_WHOLE, "and"),      CToken::TC_KEYWORD,    CToken::TT_AND),
+	CToken(CStrAny(ST_WHOLE, "or"),       CToken::TC_KEYWORD,    CToken::TT_OR),
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_LITERAL,    CToken::TT_NUMBER),
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_LITERAL,    CToken::TT_STRING),
-  CToken(CStrAny(ST_WHOLE, "+"),        CToken::TC_OPERATOR,   CToken::TT_PLUS),
+  CToken(CStrAny(ST_WHOLE, "=="),       CToken::TC_OPERATOR,   CToken::TT_EQUAL),
+  CToken(CStrAny(ST_WHOLE, "~="),       CToken::TC_OPERATOR,   CToken::TT_NOT_EQUAL),
+  CToken(CStrAny(ST_WHOLE, "<="),       CToken::TC_OPERATOR,   CToken::TT_LESS_EQUAL),
+  CToken(CStrAny(ST_WHOLE, ">="),       CToken::TC_OPERATOR,   CToken::TT_GREAT_EQUAL),
+  CToken(CStrAny(ST_WHOLE, "<"),        CToken::TC_OPERATOR,   CToken::TT_LESS),
+  CToken(CStrAny(ST_WHOLE, ">"),        CToken::TC_OPERATOR,   CToken::TT_GREAT),
+	CToken(CStrAny(ST_WHOLE, "+"),        CToken::TC_OPERATOR,   CToken::TT_PLUS),
   CToken(CStrAny(ST_WHOLE, "-"),        CToken::TC_OPERATOR,   CToken::TT_MINUS),
   CToken(CStrAny(ST_WHOLE, "*"),        CToken::TC_OPERATOR,   CToken::TT_MULTIPLY),
   CToken(CStrAny(ST_WHOLE, "/"),        CToken::TC_OPERATOR,   CToken::TT_DIVIDE),
@@ -235,9 +246,14 @@ CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = {
 
 CToken const *CTokenizer::GetTemplateToken(CStrAny const &sToken)
 {
-  for (int i = 0; i < CToken::TT_LAST; i++) 
-    if (sToken == s_TemplateTokens[i].m_sToken)
-      return &s_TemplateTokens[i];
+  for (int i = 0; i < CToken::TT_LAST; i++) {
+		if (s_TemplateTokens[i].m_eClass == CToken::TC_KEYWORD) {
+			if (s_TemplateTokens[i].m_sToken == sToken)
+				return &s_TemplateTokens[i];
+		} else
+			if (!!s_TemplateTokens[i].m_sToken && sToken.StartsWith(s_TemplateTokens[i].m_sToken))
+				return &s_TemplateTokens[i];
+	}
   return 0;
 }
 

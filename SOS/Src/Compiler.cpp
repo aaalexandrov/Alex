@@ -53,6 +53,14 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode)
 			return CompileMult(pNode);
 		case CBNFGrammar::RID_Sum:
 			return CompileSum(pNode);
+		case CBNFGrammar::RID_Comparison:
+			return CompileComparison(pNode);
+		case CBNFGrammar::RID_Not:
+			return CompileNot(pNode);
+		case CBNFGrammar::RID_And:
+			return CompileAnd(pNode);
+		case CBNFGrammar::RID_Or:
+			return CompileOr(pNode);
 		case CBNFGrammar::RID_Expression:
 			return CompileExpression(pNode);
 		case CBNFGrammar::RID_LValue:
@@ -63,6 +71,8 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode)
 			return CompileOperator(pNode);
 		case CBNFGrammar::RID_If:
 			return CompileIf(pNode);
+		case CBNFGrammar::RID_While:
+			return CompileWhile(pNode);
 		default:
 			ASSERT(0);
 			return IERR_COMPILE_FAILED;
@@ -78,6 +88,12 @@ EInterpretError CCompiler::CompileValue(CBNFGrammar::CNode *pNode)
 	CStrAny sVal;
 	bool bRes;
 	switch (pNode->m_pToken->m_eType) {
+	  case CToken::TT_TRUE:
+			kInstr.SetPushValue(CValue(true));
+			break;
+		case CToken::TT_FALSE:
+			kInstr.SetPushValue(CValue(false));
+			break;
 		case CToken::TT_NUMBER: 
 			bRes = Parse::Str2Float(fVal, pNode->m_pToken->m_sToken);
 			ASSERT(bRes);
@@ -263,6 +279,122 @@ EInterpretError CCompiler::CompileSum(CBNFGrammar::CNode *pNode)
   return IERR_OK;
 }
 
+EInterpretError CCompiler::CompileComparison(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Comparison);
+	ASSERT(pNode->m_arrChildren.m_iCount == 3);
+	EInterpretError err;
+	CInstruction kInstr;
+
+	switch (pNode->m_arrChildren[1]->m_pToken->m_eType) {
+	  case CToken::TT_EQUAL:
+		case CToken::TT_NOT_EQUAL:
+			err = CompileNode(pNode->m_arrChildren[0]);
+			if (err != IERR_OK)
+				return err;
+			err = CompileNode(pNode->m_arrChildren[2]);
+			if (err != IERR_OK)
+				return err;
+			kInstr.SetCompareEq();
+			m_pCode->Append(kInstr);
+			break;
+		case CToken::TT_GREAT_EQUAL:
+		case CToken::TT_LESS:
+			err = CompileNode(pNode->m_arrChildren[0]);
+			if (err != IERR_OK)
+				return err;
+			err = CompileNode(pNode->m_arrChildren[2]);
+			if (err != IERR_OK)
+				return err;
+			kInstr.SetCompareLess();
+			m_pCode->Append(kInstr);
+			break;
+		case CToken::TT_LESS_EQUAL:
+		case CToken::TT_GREAT:
+			err = CompileNode(pNode->m_arrChildren[2]);
+			if (err != IERR_OK)
+				return err;
+			err = CompileNode(pNode->m_arrChildren[0]);
+			if (err != IERR_OK)
+				return err;
+			kInstr.SetCompareLess();
+			m_pCode->Append(kInstr);
+      break;
+	}
+	if (pNode->m_arrChildren[1]->m_pToken->m_eType == CToken::TT_NOT_EQUAL || 
+		  pNode->m_arrChildren[1]->m_pToken->m_eType == CToken::TT_GREAT_EQUAL || 
+			pNode->m_arrChildren[1]->m_pToken->m_eType == CToken::TT_LESS_EQUAL) {
+		kInstr.SetNot();
+		m_pCode->Append(kInstr);
+	}
+
+  return IERR_OK;
+}
+
+EInterpretError CCompiler::CompileNot(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Not);
+	ASSERT(pNode->m_arrChildren.m_iCount == 2 && pNode->m_arrChildren[0]->m_pToken->m_eType == CToken::TT_NOT);
+	EInterpretError err;
+	CInstruction kInstr;
+
+	err = CompileNode(pNode->m_arrChildren[1]);
+	if (err != IERR_OK)
+		return err;
+	kInstr.SetNot();
+	m_pCode->Append(kInstr);
+
+  return IERR_OK;
+}
+
+EInterpretError CCompiler::CompileAnd(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_And);
+	ASSERT(pNode->m_arrChildren.m_iCount > 1);
+	EInterpretError err;
+	CInstruction kInstr;
+
+	err = CompileNode(pNode->m_arrChildren[0]);
+	if (err != IERR_OK)
+		return err;
+	kInstr.SetAnd();
+	for (int i = 1; i < pNode->m_arrChildren.m_iCount; ++i) {
+		err = CompileNode(pNode->m_arrChildren[i]);
+		if (err != IERR_OK)
+			return err;
+		m_pCode->Append(kInstr);
+	}
+
+  return IERR_OK;
+}
+
+EInterpretError CCompiler::CompileOr(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Or);
+	ASSERT(pNode->m_arrChildren.m_iCount > 1);
+	EInterpretError err;
+	CInstruction kInstr;
+
+	err = CompileNode(pNode->m_arrChildren[0]);
+	if (err != IERR_OK)
+		return err;
+	kInstr.SetNot();
+	m_pCode->Append(kInstr);
+	for (int i = 1; i < pNode->m_arrChildren.m_iCount; ++i) {
+		err = CompileNode(pNode->m_arrChildren[i]);
+		if (err != IERR_OK)
+			return err;
+		kInstr.SetNot();
+		m_pCode->Append(kInstr);
+		kInstr.SetAnd();
+		m_pCode->Append(kInstr);
+	}
+	kInstr.SetNot();
+	m_pCode->Append(kInstr);
+
+  return IERR_OK;
+}
+
 EInterpretError CCompiler::CompileExpression(CBNFGrammar::CNode *pNode)
 {
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Expression);
@@ -323,7 +455,7 @@ EInterpretError CCompiler::CompileIf(CBNFGrammar::CNode *pNode)
 	if (err != IERR_OK)
 		return err;
 	iJumpValIndex = m_pCode->m_arrCode.m_iCount;
-	kInstr.SetPushValue(CValue(0.0f));
+	kInstr.SetPushValue(CValue(0.0f)); // destination address instruction
 	m_pCode->Append(kInstr);
 	kInstr.SetJumpIfFalse();
 	m_pCode->Append(kInstr);
@@ -333,8 +465,10 @@ EInterpretError CCompiler::CompileIf(CBNFGrammar::CNode *pNode)
 			return err;
 	}
 	if (pNode->m_arrChildren.m_iCount > 2) {
-		kInstr.SetPushValue(CValue(1.0f));
+		kInstr.SetPushValue(CValue(false)); // FALSE value
+		m_pCode->Append(kInstr);
 		int iNewJumpValIndex = m_pCode->m_arrCode.m_iCount;
+		m_pCode->Append(kInstr); // destination address instruction
 		kInstr.SetJumpIfFalse();
 		m_pCode->Append(kInstr);
 		m_pCode->m_arrCode[iJumpValIndex].GetValue().Set((float) m_pCode->m_arrCode.m_iCount);
@@ -350,6 +484,38 @@ EInterpretError CCompiler::CompileIf(CBNFGrammar::CNode *pNode)
 	return IERR_OK;
 }
 
+EInterpretError CCompiler::CompileWhile(CBNFGrammar::CNode *pNode)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_While);
+	ASSERT(pNode->m_arrChildren.m_iCount == 2);
+	EInterpretError err;
+	CInstruction kInstr;
+	int i, iJumpValIndex, iStartIndex;
+
+	iStartIndex = m_pCode->m_arrCode.m_iCount;
+	err = CompileNode(pNode->m_arrChildren[0]);
+	if (err != IERR_OK)
+		return err;
+	iJumpValIndex = m_pCode->m_arrCode.m_iCount;
+	kInstr.SetPushValue(CValue(0.0f)); // destination address instruction
+	m_pCode->Append(kInstr);
+	kInstr.SetJumpIfFalse();
+	m_pCode->Append(kInstr);
+	for (i = 0; i < pNode->m_arrChildren[1]->m_arrChildren.m_iCount; ++i) {
+		err = CompileNode(pNode->m_arrChildren[1]->m_arrChildren[i]);
+		if (err != IERR_OK)
+			return err;
+	}
+	kInstr.SetPushValue(CValue(false)); // FALSE value
+	m_pCode->Append(kInstr);
+	kInstr.SetPushValue(CValue((float) iStartIndex));
+	m_pCode->Append(kInstr);
+	kInstr.SetJumpIfFalse();
+	m_pCode->Append(kInstr);
+	m_pCode->m_arrCode[iJumpValIndex].GetValue().Set((float) m_pCode->m_arrCode.m_iCount);
+
+	return IERR_OK;
+}
 
 EInterpretError CCompiler::CompileOperator(CBNFGrammar::CNode *pNode)
 {

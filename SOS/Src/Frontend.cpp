@@ -20,7 +20,7 @@ int ProcessInput()
       err = kChain.Compile(sInput);
       if (err == IERR_OK) {
         kChain.m_kCompiler.m_pCode->Dump();
-        err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams);
+        err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams, 0);
 				if (err == IERR_OK) {
 					while (kExecution.m_kStack.m_iCount) {
 						CStrAny sRes = kExecution.m_kStack.Last().GetStr();

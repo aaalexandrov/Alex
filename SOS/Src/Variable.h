@@ -11,6 +11,7 @@ public:
   enum EValueType {
     VT_NONE,
 		VT_MARKER,
+		VT_BOOL,
     VT_FLOAT,
     VT_STRING,
     VT_TABLE,
@@ -22,6 +23,7 @@ public:
 
 public:
   union {
+		bool              m_bValue;
     float             m_fValue;
     CStrHeader const *m_pStrValue;
     CValueTable      *m_pTableValue;
@@ -32,6 +34,7 @@ public:
   BYTE m_btType;
 
   CValue(EValueType eVT = VT_NONE)     { if (eVT == VT_MARKER) SetMarker(); else SetNone(); }
+	CValue(bool bValue)                  { Set(bValue); }
   CValue(float fValue)                 { Set(fValue); }
   CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   CValue(CValueTable *pTable)          { Set(pTable); }
@@ -43,6 +46,7 @@ public:
 
   inline void SetNone();
 	inline void SetMarker();
+	inline void Set(bool bValue);
   inline void Set(float fValue);
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
@@ -59,7 +63,8 @@ public:
 
   inline CValue &operator =(CValue const &kValue);
 
-  inline float        GetFloat() const     { return m_btType == VT_FLOAT ? m_fValue : 0; }
+	inline bool         GetBool() const      { return m_btType == VT_BOOL ? m_bValue : false; }
+	inline float        GetFloat() const     { return m_btType == VT_FLOAT ? m_fValue : 0; }
   inline CStrAny      GetStr() const;
   inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
   inline CValue      *GetReference() const { return m_btType == VT_REF ? m_pReference : 0; }
@@ -161,6 +166,12 @@ void CValue::SetMarker()
   m_Value = 0; 
 }
 
+void CValue::Set(bool bValue)
+{
+	m_btType = VT_BOOL;
+	m_bValue = bValue;
+}
+
 void CValue::Set(float fValue)
 { 
   m_btType = VT_FLOAT; 
@@ -223,12 +234,15 @@ CStrAny CValue::GetStr() const
     case VT_MARKER:
       s = CStrAny(ST_CONST, "<marker>");
       break;
+		case VT_BOOL:
+			s = CStrAny(ST_CONST, m_bValue ? "<true>" : "<false>");
+			break;
     case VT_FLOAT:
       sprintf(chBuf, "%g", m_fValue);
       s = CStrAny(ST_CONST, chBuf);
       break;
     case VT_STRING:
-      s = CStrAny(m_pStrValue);
+      s = CStrAny(ST_CONST, '"') + CStrAny(m_pStrValue) + CStrAny(ST_CONST, '"');
       break;
     case VT_TABLE:
       sprintf(chBuf, "<Table:%x>", m_pTableValue);

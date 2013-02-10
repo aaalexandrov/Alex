@@ -16,10 +16,15 @@ public:
 		RID_Power,
 		RID_Mult,
 		RID_Sum,
+		RID_Comparison,
+		RID_Not,
+		RID_And,
+		RID_Or,
 		RID_Expression,
 		RID_LValue,
 		RID_Assignment,
 		RID_If,
+		RID_While,
 		RID_Operator,
 	};
 

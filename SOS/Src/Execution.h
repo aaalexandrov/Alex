@@ -28,6 +28,10 @@ public:
 		IT_POP_ALL,
 		IT_POP_TO_MARKER,
 		IT_JUMP_IF_FALSE,
+		IT_COMPARE_EQ,
+		IT_COMPARE_LESS,
+		IT_NOT,
+		IT_AND,
 
     IT_LAST
   };
@@ -59,6 +63,11 @@ public:
 	void SetPopAll() { ReleaseData(); m_eType = IT_POP_ALL; }
 	void SetPopToMarker() { ReleaseData(); m_eType = IT_POP_TO_MARKER; }
 	void SetJumpIfFalse() { ReleaseData(); m_eType = IT_JUMP_IF_FALSE; }
+	void SetCompareEq() { ReleaseData(); m_eType = IT_COMPARE_EQ; }
+	void SetCompareLess() { ReleaseData(); m_eType = IT_COMPARE_LESS; }
+	void SetNot() { ReleaseData(); m_eType = IT_NOT; }
+	void SetAnd() { ReleaseData(); m_eType = IT_AND; }
+
 
   EInterpretError Execute(CExecution *pExecution);
   int GetSize();
@@ -78,6 +87,11 @@ public:
 	EInterpretError ExecPopAll(CExecution *pExecution);
 	EInterpretError ExecPopToMarker(CExecution *pExecution);
 	EInterpretError ExecJumpIfFalse(CExecution *pExecution);
+	EInterpretError ExecCompareEq(CExecution *pExecution);
+	EInterpretError ExecCompareLess(CExecution *pExecution);
+	EInterpretError ExecNot(CExecution *pExecution);
+	EInterpretError ExecAnd(CExecution *pExecution);
+
 
   bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
   CValue &GetValue() { return *(CValue *) &m_btValue; }
@@ -93,7 +107,7 @@ public:
 class CExecution {
 public:
   TValueStack   m_kStack;
-  CValueTable  *m_pEnvironment;
+  CValueTable  *m_pEnvironment, *m_pGlobalEnvironment;
   CFragment    *m_pCode;
   CInstruction *m_pNextInstruction;
 
@@ -101,7 +115,8 @@ public:
 	~CExecution();
 
   void ClearStack();
-	EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
+	CValueTable *GetGlobalEnvironment();
+	EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams, CValueTable *pGlobalEnvironment);
 };
 
 #endif

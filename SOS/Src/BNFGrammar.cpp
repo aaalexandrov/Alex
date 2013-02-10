@@ -14,10 +14,15 @@ CValue2String::TValueString CBNFGrammar::s_arrRID2Str[] = {
 	VAL2STR(RID_Power),
 	VAL2STR(RID_Mult),
 	VAL2STR(RID_Sum),
+	VAL2STR(RID_Comparison),
+	VAL2STR(RID_Not),
+	VAL2STR(RID_And),
+	VAL2STR(RID_Or),
 	VAL2STR(RID_Expression),
 	VAL2STR(RID_LValue),
 	VAL2STR(RID_Assignment),
 	VAL2STR(RID_If),
+	VAL2STR(RID_While),
 	VAL2STR(RID_Operator),
 };
 
@@ -41,16 +46,23 @@ void CBNFGrammar::InitRules()
 	CRule *pPower = NewNT()->SetID(RID_Power);
 	CRule *pMult = NewNT()->SetID(RID_Mult);
 	CRule *pSum = NewNT()->SetID(RID_Sum);
+	CRule *pComparison = NewNT()->SetID(RID_Comparison);
+	CRule *pNot = NewNT()->SetID(RID_Not);
+	CRule *pAnd = NewNT()->SetID(RID_And);
+	CRule *pOr = NewNT()->SetID(RID_Or);
 	CRule *pExpression = NewNT()->SetID(RID_Expression);
 	CRule *pLValue = NewNT()->SetID(RID_LValue);
 	CRule *pAssignment = NewNT()->SetID(RID_Assignment);
 	CRule *pIf = NewNT()->SetID(RID_If);
+	CRule *pWhile = NewNT()->SetID(RID_While);
 	CRule *pOperator = NewNT()->SetID(RID_Operator);
 
 	CRule *pFunctionArgs = NewNT();
 	CRule *pExpressionList = NewNT();
 
 	pValue->Set(S_Alternative)->
+		AddChild(NewT(CToken::TT_TRUE))->
+		AddChild(NewT(CToken::TT_FALSE))->
 		AddChild(NewT(CToken::TT_NUMBER))->
 		AddChild(NewT(CToken::TT_STRING))->
 		AddChild(pVariable);
@@ -123,8 +135,37 @@ void CBNFGrammar::InitRules()
 				AddChild(NewT(CToken::TT_MINUS)))->
 			AddChild(pMult));
 
-	pExpression->Set(S_Alternative)->
+	pComparison->
 		AddChild(pSum)->
+		AddChild(NewNT()->Set(R_ZeroOne)->
+		  AddChild(NewNT()->Set(S_Alternative)->
+			  AddChild(NewT(CToken::TT_EQUAL))->
+        AddChild(NewT(CToken::TT_NOT_EQUAL))->
+        AddChild(NewT(CToken::TT_LESS_EQUAL))->
+        AddChild(NewT(CToken::TT_GREAT_EQUAL))->
+        AddChild(NewT(CToken::TT_LESS))->
+        AddChild(NewT(CToken::TT_GREAT)))->
+			AddChild(pSum));
+
+	pNot->
+		AddChild(NewNT()->Set(R_ZeroOne)->
+		  AddChild(NewT(CToken::TT_NOT)))->
+		AddChild(pComparison);
+
+	pAnd->
+		AddChild(pNot)->
+		AddChild(NewNT()->Set(R_ZeroInfinity)->
+		  AddChild(NewT(CToken::TT_AND)->Set(O_NoOutput))->
+			AddChild(pNot));
+
+	pOr->
+		AddChild(pAnd)->
+		AddChild(NewNT()->Set(R_ZeroInfinity)->
+		  AddChild(NewT(CToken::TT_OR)->Set(O_NoOutput))->
+			AddChild(pAnd));
+
+	pExpression->Set(S_Alternative)->
+		AddChild(pOr)->
 		AddChild(pFunctionDef);
 
 	pExpressionList->
@@ -158,8 +199,17 @@ void CBNFGrammar::InitRules()
 			  AddChild(pOperator)))->
 		AddChild(NewT(CToken::TT_END)->Set(O_NoOutput));
 
+	pWhile->
+		AddChild(NewT(CToken::TT_WHILE)->Set(O_NoOutput))->
+		AddChild(pExpression)->
+		AddChild(NewT(CToken::TT_DO)->Set(O_NoOutput))->
+		AddChild(NewNT()->Set(R_ZeroInfinity)->Set(O_Output)->
+		  AddChild(pOperator))->
+		AddChild(NewT(CToken::TT_END)->Set(O_NoOutput));
+
 	pOperator->Set(S_Alternative)->
 		AddChild(pIf)->
+		AddChild(pWhile)->
 		AddChild(pReturn)->
 		AddChild(pAssignment)->
 		AddChild(pFunctionCall);

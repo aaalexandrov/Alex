@@ -45,15 +45,21 @@ def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
 
 -------------------------------------------------------------------------------
 
-Value ::= String | Number | Variable
+Value ::= "true | "false" | String | Number | Variable
 Variable ::= Identifier
 Call ::= (Variable | FunctionDef) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
 Operand ::= Call | Value | "(" Expression ")"  
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ("*" | "/") Power }
 Sum ::= ["+" | "-"] Mult { ("+" | "-") Mult }
+
+Comparison ::= Sum [ ("==" | "~=" | "<" | ">" | "<=" | ">=") Sum ]
+Not ::= [ "not" ] Comparison
+And ::= Not { "and" Not }
+Or ::= And { "or" And }
+
 FunctionDef ::= "function" "(" [ Identifier { "," Identifier } ] ")" { Operator } "end"
-Expression ::= Sum | FunctionDef
+Expression ::= Or | FunctionDef
 ExpressionList ::= Expression { "," Expression }
 
 LValue ::= Identifier
@@ -62,5 +68,7 @@ Assignment ::= LValue { "," LValue } "=" ExpressionList
 Return ::= "return" [ ExpressionList ]
 
 If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
+
+While ::= "while" Expression "do" { Operator } "end"
 
 Operator ::= If | Return | Assignment | Call
