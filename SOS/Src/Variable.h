@@ -19,28 +19,28 @@ public:
 		VT_FRAGMENT,
   };
 
-  typedef CHashKV<CStrHeader const *, CValue, CStrHeader, CStrHeader> THash;
+  typedef CHashKV<CValue, CValue, CValue, CValue> THash;
 
 public:
   union {
-		bool              m_bValue;
-    float             m_fValue;
-    CStrHeader const *m_pStrValue;
-    CValueTable      *m_pTableValue;
-    CValue           *m_pReference; 
-		CFragment        *m_pFragment;
-    void             *m_Value;
+		bool                     m_bValue;
+    float                    m_fValue;
+    CStrHeader const        *m_pStrValue;
+    CValueTable             *m_pTableValue;
+		CValue                  *m_pReference; 
+		CFragment               *m_pFragment;
+    void                    *m_Value;
   };
   BYTE m_btType;
 
-  CValue(EValueType eVT = VT_NONE)     { if (eVT == VT_MARKER) SetMarker(); else SetNone(); }
-	CValue(bool bValue)                  { Set(bValue); }
-  CValue(float fValue)                 { Set(fValue); }
-  CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
-  CValue(CValueTable *pTable)          { Set(pTable); }
-  CValue(CValue *pReference)           { Set(pReference); }
-	CValue(CFragment *pFragment)         { Set(pFragment); }
-  CValue(CValue const &kValue)         { Set(kValue); }
+  explicit CValue(EValueType eVT = VT_NONE)     { if (eVT == VT_MARKER) SetMarker(); else SetNone(); }
+	explicit CValue(bool bValue)                  { Set(bValue); }
+  explicit CValue(float fValue)                 { Set(fValue); }
+  explicit CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
+  explicit CValue(CValueTable *pTable)          { Set(pTable); }
+  explicit CValue(CValue *pReference)           { Set(pReference); }
+	explicit CValue(CFragment *pFragment)         { Set(pFragment); }
+  CValue(CValue const &kValue)                  { Set(kValue); }
 
   ~CValue() { ReleaseValue(); }
 
@@ -69,6 +69,11 @@ public:
   inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
   inline CValue      *GetReference() const { return m_btType == VT_REF ? m_pReference : 0; }
 	inline CFragment   *GetFragment() const  { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
+
+	inline size_t GetHash() const { return (size_t) m_btType ^ (size_t) m_Value; }
+
+	static inline size_t Hash(CValue const &kVal)                   { return kVal.GetHash(); }
+  static inline bool Eq(CValue const &kVal0, CValue const &kVal1) { return kVal0 == kVal1; }
 };
 
 class CValueTable;

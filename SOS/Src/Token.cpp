@@ -38,7 +38,6 @@ CValue2String CToken::s_kTC2Str(s_arrTC2Str, ARRSIZE(s_arrTC2Str));
 CValue2String::TValueString CToken::s_arrTT2Str[TT_LAST] = {
   VAL2STR(TT_UNKNOWN),
   VAL2STR(TT_VARIABLE),
-  VAL2STR(TT_KEYWORD),
 	VAL2STR(TT_FUNCTION),
 	VAL2STR(TT_END),
 	VAL2STR(TT_RETURN),
@@ -206,7 +205,6 @@ void CTokenizer::Dump(CList<CToken *> *pList)
 CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = { 
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_UNKNOWN,    CToken::TT_UNKNOWN),
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_IDENTIFIER, CToken::TT_VARIABLE),
-  CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_KEYWORD,    CToken::TT_KEYWORD),
 	CToken(CStrAny(ST_WHOLE, "function"), CToken::TC_KEYWORD,    CToken::TT_FUNCTION),
 	CToken(CStrAny(ST_WHOLE, "end"),      CToken::TC_KEYWORD,    CToken::TT_END),
 	CToken(CStrAny(ST_WHOLE, "return"),   CToken::TC_KEYWORD,    CToken::TT_RETURN),
@@ -260,5 +258,6 @@ CToken const *CTokenizer::GetTemplateToken(CStrAny const &sToken)
 CToken const *CTokenizer::GetTemplateToken(CToken::ETokenType eType)
 {
   ASSERT(eType >= 0 && eType < CToken::TT_LAST);
+	ASSERT(s_TemplateTokens[eType].m_eType == eType);
   return &s_TemplateTokens[eType];
 }

@@ -14,11 +14,14 @@ public:
 
   typedef T Elem;
 
+	typedef CList<T, K, P> CHashList;
+	typedef CArray<CHashList *, 0> CHashArray;
+
   class TIter {
   public:
     const CHash *m_pHash;
     int m_iList;
-    typename CList<T, K, P>::TNode *m_pNode;
+    typename CHashList::TNode *m_pNode;
 
     TIter(const CHash *pHash = 0, int iDirection = 1);
     TIter(const TIter &it);
@@ -34,7 +37,6 @@ public:
     T const &operator ->() const;
   };
 
-  typedef CArray<CList<T, K, P> *, 0> CHashArray;
   CHashArray m_arrLists;
   int m_iCount;
 
@@ -198,7 +200,7 @@ void CHash<T, K, H, P>::DeleteAll(int iSize)
   if (!iSize)
     iSize = g_iHashSizes[0];
   for (i = 0; i < m_arrLists.m_iCount; i++) {
-    CList<T, K, P> *&pLst = m_arrLists[i];
+    CHashList *&pLst = m_arrLists[i];
     if (pLst)
       pLst->DeleteAll();
   }
@@ -233,16 +235,16 @@ void CHash<T, K, H, P>::Resize(int iSize)
   Util::Swap(hash.m_iCount, m_iCount);
 
   for (int i = 0; i < hash.m_arrLists.m_iCount; ++i) {
-    CList<T, K, P> *&pLstOld = hash.m_arrLists[i];
+    CHashList *&pLstOld = hash.m_arrLists[i];
     if (!pLstOld)
       continue;
-    typename CList<T, K, P>::TNode *pNode;
+    typename CHashList::TNode *pNode;
     while (pNode = pLstOld->PopNode()) {
       size_t uiHash = H::Hash(pNode->Data);
       uiHash %= m_arrLists.m_iCount;
-      CList<T, K, P> *&pLstNew = m_arrLists[(int) uiHash];
+      CHashList *&pLstNew = m_arrLists[(int) uiHash];
       if (!pLstNew)
-        pLstNew = new CList<T, K, P>();
+        pLstNew = new CHashList();
       pLstNew->PushNodeTail(pNode);
     }
   }
@@ -269,11 +271,11 @@ void CHash<T, K, H, P>::Add(T t)
 {
   size_t uiHash = H::Hash(t);
   uiHash %= m_arrLists.m_iCount;
-  CList<T, K, P> *&pLst = m_arrLists[(int) uiHash];
+  CHashList *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
-    pLst = new CList<T, K, P>();
+    pLst = new CHashList();
 /*
-  typename CList<T, K, P>::TNode *pNode;
+  typename CHashList::TNode *pNode;
   pNode = pLst->m_pHead;
   while (pNode && pNode->Data < t)
     pNode = pNode->pNext;
@@ -289,10 +291,10 @@ void CHash<T, K, H, P>::AddUnique(T t)
 {
   size_t uiHash = H::Hash(t);
   uiHash %= m_arrLists.m_iCount;
-  CList<T, K, P> *&pLst = m_arrLists[(int) uiHash];
+  CHashList *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
-    pLst = new CList<T, K, P>();
-  typename CList<T, K, P>::TNode *pNode = pLst->Find(t);
+    pLst = new CHashList();
+  typename CHashList::TNode *pNode = pLst->Find(t);
   if (pNode)
     pNode->Data = t;
   else {
@@ -308,7 +310,7 @@ void CHash<T, K, H, P>::Remove(TIter it)
   ASSERT(it.m_pHash == this);
   if (!it)
     return;
-  CList<T, K, P> *pLst = m_arrLists[it.m_iList];
+  CHashList *pLst = m_arrLists[it.m_iList];
   pLst->Remove(it.m_pNode);
   m_iCount--;
 }
@@ -330,7 +332,7 @@ typename CHash<T, K, H, P>::TIter CHash<T, K, H, P>::Find(K1 k) const
   it.m_pHash = this;
   uiHash %= m_arrLists.m_iCount;
   it.m_iList = (int) uiHash;
-  CList<T, K, P> *pLst = m_arrLists[(int) uiHash];
+  CHashList *pLst = m_arrLists[(int) uiHash];
   if (!pLst) {
     it.m_pNode = 0;
     return it;

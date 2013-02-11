@@ -32,6 +32,7 @@ public:
 		IT_COMPARE_LESS,
 		IT_NOT,
 		IT_AND,
+		IT_DUP,
 
     IT_LAST
   };
@@ -67,6 +68,7 @@ public:
 	void SetCompareLess() { ReleaseData(); m_eType = IT_COMPARE_LESS; }
 	void SetNot() { ReleaseData(); m_eType = IT_NOT; }
 	void SetAnd() { ReleaseData(); m_eType = IT_AND; }
+	void SetDup() { ReleaseData(); m_eType = IT_DUP; }
 
 
   EInterpretError Execute(CExecution *pExecution);
@@ -91,7 +93,7 @@ public:
 	EInterpretError ExecCompareLess(CExecution *pExecution);
 	EInterpretError ExecNot(CExecution *pExecution);
 	EInterpretError ExecAnd(CExecution *pExecution);
-
+	EInterpretError ExecDup(CExecution *pExecution);
 
   bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
   CValue &GetValue() { return *(CValue *) &m_btValue; }

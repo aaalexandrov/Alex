@@ -316,7 +316,7 @@ bool Parse::Str2Float(float &fResult, CStrAny const &sFloat, int iRadix, bool bS
     }
   }
   while (s.Length()) {
-    int iVal = Numeral2Value(s[0]);
+    iVal = Numeral2Value(s[0]);
     if (iVal < 0 || iVal >= iRadix)
       break;
     fResult = fResult * iRadix + iVal;

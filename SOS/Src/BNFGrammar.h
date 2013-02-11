@@ -11,8 +11,8 @@ public:
 		RID_Variable,
 		RID_FunctionDef,
 		RID_FunctionCall,
+		RID_Table,
 		RID_Return,
-		RID_Operand,
 		RID_Power,
 		RID_Mult,
 		RID_Sum,
@@ -20,12 +20,10 @@ public:
 		RID_Not,
 		RID_And,
 		RID_Or,
-		RID_Expression,
 		RID_LValue,
 		RID_Assignment,
 		RID_If,
 		RID_While,
-		RID_Operator,
 	};
 
 public:

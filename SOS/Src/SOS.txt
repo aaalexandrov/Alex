@@ -45,10 +45,10 @@ def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
 
 -------------------------------------------------------------------------------
 
-Value ::= "true | "false" | String | Number | Variable
+Value ::= "true" | "false" | String | Number | Variable
 Variable ::= Identifier
 Call ::= (Variable | FunctionDef) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
-Operand ::= Call | Value | "(" Expression ")"  
+Operand ::= Call | Value | "(" Expression ")" | Table
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ("*" | "/") Power }
 Sum ::= ["+" | "-"] Mult { ("+" | "-") Mult }
@@ -57,6 +57,9 @@ Comparison ::= Sum [ ("==" | "~=" | "<" | ">" | "<=" | ">=") Sum ]
 Not ::= [ "not" ] Comparison
 And ::= Not { "and" Not }
 Or ::= And { "or" And }
+
+TableValue = [ Value "=" ] Expression
+Table ::= "{" [ TableValue { "," TableValue } [ "," ] ] "}"
 
 FunctionDef ::= "function" "(" [ Identifier { "," Identifier } ] ")" { Operator } "end"
 Expression ::= Or | FunctionDef

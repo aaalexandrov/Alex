@@ -24,6 +24,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
 	VAL2STR(IT_COMPARE_LESS),
 	VAL2STR(IT_NOT),
 	VAL2STR(IT_AND),
+	VAL2STR(IT_DUP),
 };
 
 CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
@@ -76,6 +77,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
 			return ExecNot(pExecution);
 		case IT_AND:
 			return ExecAnd(pExecution);
+		case IT_DUP:
+			return ExecDup(pExecution);
     default:
       ASSERT(!"Invalid instruction");
       return IERR_INVALID_INSTRUCTION;
@@ -220,9 +223,9 @@ EInterpretError CInstruction::ExecResolveValue(CExecution *pExecution)
   CValue &kVal = pExecution->m_kStack.Last();
   if (kVal.m_btType != CValue::VT_STRING)
     return IERR_OPERAND_TYPE;
-  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
+  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal);
 	if (!it && pExecution->m_pGlobalEnvironment)
-		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal.m_pStrValue);
+		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal);
   if (it)
     kVal = (*it).m_Val;
   else
@@ -237,12 +240,12 @@ EInterpretError CInstruction::ExecResolveRef(CExecution *pExecution)
   CValue &kVal = pExecution->m_kStack.Last();
   if (kVal.m_btType != CValue::VT_STRING)
     return IERR_OPERAND_TYPE;
-  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
+  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal);
 	if (!it && pExecution->m_pGlobalEnvironment)
-		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal.m_pStrValue);
+		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal);
   if (!it) {
-    pExecution->m_pEnvironment->m_Hash.Add(CValue::THash::Elem(kVal.m_pStrValue, CValue()));
-    it = pExecution->m_pEnvironment->m_Hash.Find(kVal.m_pStrValue);
+    pExecution->m_pEnvironment->m_Hash.Add(CValue::THash::Elem(kVal, CValue()));
+    it = pExecution->m_pEnvironment->m_Hash.Find(kVal);
   }
   if (it)
     kVal.Set(&(*it).m_Val);
@@ -373,6 +376,15 @@ EInterpretError CInstruction::ExecAnd(CExecution *pExecution)
 	return IERR_OK;
 }
 
+EInterpretError CInstruction::ExecDup(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 2)
+		return IERR_NOT_ENOUGH_OPERANDS;
+  CValue &kVal1 = pExecution->m_kStack.Last();
+	pExecution->m_kStack.Append(kVal1);
+	return IERR_OK;
+}
+
 CStrAny CInstruction::ToStr()
 {
   CStrAny sRes = CStrAny(ST_WHOLE, "Instruction: ") + s_IT2Str.GetStr(m_eType);
@@ -413,6 +425,6 @@ EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams,
   m_kStack.Clear();
 	m_pGlobalEnvironment = pGlobalEnvironment;
   for (int i = 0; i < Util::Min(m_pCode->m_arrInputs.m_iCount, arrParams.m_iCount); ++i)
-    m_pEnvironment->m_Hash.Add(CValue::THash::Elem(m_pCode->m_arrInputs[i].GetHeader(), arrParams[i]));
+    m_pEnvironment->m_Hash.Add(CValue::THash::Elem(CValue(m_pCode->m_arrInputs[i].GetHeader()), arrParams[i]));
   return m_pCode->Execute(this);
 }
