@@ -5,10 +5,11 @@
 
 CValue2String::TValueString CBNFGrammar::s_arrRID2Str[] = {
 	VAL2STR(RID_Program),
-	VAL2STR(RID_Value),
+	VAL2STR(RID_Constant),
 	VAL2STR(RID_Variable),
 	VAL2STR(RID_FunctionDef),
 	VAL2STR(RID_FunctionCall),
+	VAL2STR(RID_Operand),
 	VAL2STR(RID_Table),
 	VAL2STR(RID_Return),
 	VAL2STR(RID_Power),
@@ -35,10 +36,11 @@ CBNFGrammar::CBNFGrammar()
 void CBNFGrammar::InitRules()
 {
 	CRule *pProgram = NewNT()->SetID(RID_Program);
-	CRule *pValue = NewNT()->SetID(RID_Value);
+	CRule *pConstant = NewNT()->SetID(RID_Constant);
 	CRule *pVariable = NewNT()->SetID(RID_Variable);
 	CRule *pFunctionDef = NewNT()->SetID(RID_FunctionDef);
 	CRule *pFunctionCall = NewNT()->SetID(RID_FunctionCall);
+	CRule *pOperand = NewNT()->SetID(RID_Operand);
 	CRule *pTable = NewNT()->SetID(RID_Table);
 	CRule *pReturn = NewNT()->SetID(RID_Return);
 	CRule *pPower = NewNT()->SetID(RID_Power);
@@ -53,19 +55,21 @@ void CBNFGrammar::InitRules()
 	CRule *pIf = NewNT()->SetID(RID_If);
 	CRule *pWhile = NewNT()->SetID(RID_While);
 
+	CRule *pIndexable = NewNT();
+	CRule *pIndex = NewNT();
 	CRule *pFunctionArgs = NewNT();
+	CRule *pTableKey = NewNT();
 	CRule *pTableValue = NewNT();
-	CRule *pOperand = NewNT();
 	CRule *pExpression = NewNT();
 	CRule *pExpressionList = NewNT();
 	CRule *pOperator = NewNT();
 
-	pValue->Set(S_Alternative)->
+	pConstant->Set(S_Alternative)->
 		AddChild(NewT(CToken::TT_TRUE))->
 		AddChild(NewT(CToken::TT_FALSE))->
 		AddChild(NewT(CToken::TT_NUMBER))->
 		AddChild(NewT(CToken::TT_STRING))->
-		AddChild(pVariable);
+		AddChild(pTable);
 
 	pVariable->
 		AddChild(NewT(CToken::TT_VARIABLE));
@@ -97,15 +101,19 @@ void CBNFGrammar::InitRules()
 		AddChild(NewNT()->Set(R_ZeroInfinity)->
 		  AddChild(pFunctionArgs));
 
+	pTableKey->Set(S_Alternative)->
+		AddChild(NewT(CToken::TT_VARIABLE))->
+		AddChild(pConstant);
+
 	pTableValue->Set(O_Output)->
 		AddChild(NewNT()->Set(R_ZeroOne)->
-		  AddChild(pValue)->
+		  AddChild(pTableKey)->
 			AddChild(NewT(CToken::TT_ASSIGN)->Set(O_NoOutput)))->
 		AddChild(pExpression);
 
 	pTable->
 		AddChild(NewT(CToken::TT_OPENCURLY)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroOne)->
+		AddChild(NewNT()->Set(R_ZeroOne)->Set(O_Output)->
 		  AddChild(pTableValue)->
 			AddChild(NewNT()->Set(R_ZeroInfinity)->
 			  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
@@ -119,14 +127,25 @@ void CBNFGrammar::InitRules()
 		AddChild(NewNT()->Set(R_ZeroOne)->
 		  AddChild(pExpressionList));
 
-	pOperand->Set(S_Alternative)->
+	pIndexable->Set(S_Alternative)->
 		AddChild(pFunctionCall)->
-		AddChild(pValue)->
+		AddChild(pVariable)->
 		AddChild(NewNT()->
 		  AddChild(NewT(CToken::TT_OPENBRACE)->Set(O_NoOutput))->
 			AddChild(pExpression)->
-			AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput)))->
-		AddChild(pTable);
+			AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput)));
+
+	pIndex->
+		AddChild(NewT(CToken::TT_OPENBRACKET)->Set(O_NoOutput))->
+		AddChild(pExpression)->
+		AddChild(NewT(CToken::TT_CLOSEBRACKET)->Set(O_NoOutput));
+
+	pOperand->Set(S_Alternative)->
+		AddChild(pConstant)->
+		AddChild(NewNT()->
+		  AddChild(pIndexable)->
+			AddChild(NewNT()->Set(R_ZeroInfinity)->
+			  AddChild(pIndex)));
 
 	pPower->
 		AddChild(pOperand)->
@@ -192,7 +211,12 @@ void CBNFGrammar::InitRules()
 		  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
 			AddChild(pExpression));
 
-	pLValue->
+	pLValue->Set(S_Alternative)->
+		AddChild(NewNT()->
+		  AddChild(pIndexable)->
+			AddChild(pIndex)->
+			AddChild(NewNT()->Set(R_ZeroInfinity)->
+			  AddChild(pIndex)))->
 		AddChild(NewT(CToken::TT_VARIABLE));
 
 	pAssignment->

@@ -102,6 +102,7 @@ public:
 };
 
 class CValueTable {
+	DEFREFCOUNT
 public:
   CValue::THash m_Hash;
   BYTE          m_btMark;
@@ -144,6 +145,9 @@ void CValue::AcquireValue()
 		case VT_FRAGMENT:
 			m_pFragment->Acquire();
 			break;
+		case VT_TABLE:
+			m_pTableValue->Acquire();
+			break;
 	}
 }
 
@@ -155,6 +159,9 @@ void CValue::ReleaseValue()
 			break;
 		case VT_FRAGMENT:
 			m_pFragment->Release();
+			break;
+		case VT_TABLE:
+			m_pTableValue->Release();
 			break;
 	}
 }
@@ -187,13 +194,14 @@ void CValue::Set(CStrHeader const *pStrHeader)
 { 
   m_btType = VT_STRING; 
   m_pStrValue = pStrHeader; 
-  pStrHeader->Acquire(); 
+  m_pStrValue->Acquire(); 
 }
 
 void CValue::Set(CValueTable *pTable)    
 { 
   m_btType = VT_TABLE; 
   m_pTableValue = pTable; 
+	m_pTableValue->Acquire();
 }
 
 void CValue::Set(CValue *pReference)    

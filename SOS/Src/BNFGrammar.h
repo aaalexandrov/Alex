@@ -7,10 +7,11 @@ class CBNFGrammar: public CBNFParser {
 public:
 	enum ERuleID {
 		RID_Program = -1,
-		RID_Value = 1,
+		RID_Constant = 1,
 		RID_Variable,
 		RID_FunctionDef,
 		RID_FunctionCall,
+		RID_Operand,
 		RID_Table,
 		RID_Return,
 		RID_Power,

@@ -20,9 +20,11 @@ public:
     IT_MULTIPLY,
     IT_DIVIDE,
     IT_POWER,
-    IT_ASSIGN,
     IT_RESOLVE_VAR,
-    IT_RESOLVE_REF,
+		IT_RESOLVE_INDEX,
+		IT_SET_VALUE,
+		IT_SET_TABLE_VALUE,
+		IT_CREATE_TABLE,
 		IT_CALL,
 		IT_RETURN,
 		IT_POP_ALL,
@@ -33,6 +35,7 @@ public:
 		IT_NOT,
 		IT_AND,
 		IT_DUP,
+		IT_DUP2,
 
     IT_LAST
   };
@@ -56,9 +59,11 @@ public:
   void SetMultiply() { ReleaseData(); m_eType = IT_MULTIPLY; }
   void SetDivide() { ReleaseData(); m_eType = IT_DIVIDE; }
   void SetPower() { ReleaseData(); m_eType = IT_POWER; }
-  void SetAssign() { ReleaseData(); m_eType = IT_ASSIGN; }
   void SetResolveVar() { ReleaseData(); m_eType = IT_RESOLVE_VAR; }
-  void SetResolveRef() { ReleaseData(); m_eType = IT_RESOLVE_REF; }
+  void SetResolveIndex() { ReleaseData(); m_eType = IT_RESOLVE_INDEX; }
+  void SetSetValue() { ReleaseData(); m_eType = IT_SET_VALUE; }
+	void SetSetTableValue() { ReleaseData(); m_eType = IT_SET_TABLE_VALUE; }
+	void SetCreateTable() { ReleaseData(); m_eType = IT_CREATE_TABLE; }
 	void SetCall() { ReleaseData(); m_eType = IT_CALL; }
 	void SetReturn() { ReleaseData(); m_eType = IT_RETURN; }
 	void SetPopAll() { ReleaseData(); m_eType = IT_POP_ALL; }
@@ -69,6 +74,7 @@ public:
 	void SetNot() { ReleaseData(); m_eType = IT_NOT; }
 	void SetAnd() { ReleaseData(); m_eType = IT_AND; }
 	void SetDup() { ReleaseData(); m_eType = IT_DUP; }
+	void SetDup2() { ReleaseData(); m_eType = IT_DUP2; }
 
 
   EInterpretError Execute(CExecution *pExecution);
@@ -81,9 +87,11 @@ public:
   EInterpretError ExecMultiply(CExecution *pExecution);
   EInterpretError ExecDivide(CExecution *pExecution);
   EInterpretError ExecPower(CExecution *pExecution);
-  EInterpretError ExecAssign(CExecution *pExecution);
   EInterpretError ExecResolveValue(CExecution *pExecution);
-  EInterpretError ExecResolveRef(CExecution *pExecution);
+  EInterpretError ExecResolveIndex(CExecution *pExecution);
+  EInterpretError ExecSetValue(CExecution *pExecution);
+  EInterpretError ExecSetTableValue(CExecution *pExecution);
+  EInterpretError ExecCreateTable(CExecution *pExecution);
 	EInterpretError ExecCall(CExecution *pExecution);
 	EInterpretError ExecReturn(CExecution *pExecution);
 	EInterpretError ExecPopAll(CExecution *pExecution);
@@ -94,6 +102,7 @@ public:
 	EInterpretError ExecNot(CExecution *pExecution);
 	EInterpretError ExecAnd(CExecution *pExecution);
 	EInterpretError ExecDup(CExecution *pExecution);
+	EInterpretError ExecDup2(CExecution *pExecution);
 
   bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
   CValue &GetValue() { return *(CValue *) &m_btValue; }

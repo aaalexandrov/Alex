@@ -45,10 +45,12 @@ def FOR(#init, #c, #inc, #op): for(#init; #c; #inc) #op [
 
 -------------------------------------------------------------------------------
 
-Value ::= "true" | "false" | String | Number | Variable
+Constant ::= "true" | "false" | String | Number | Table
 Variable ::= Identifier
-Call ::= (Variable | FunctionDef) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
-Operand ::= Call | Value | "(" Expression ")" | Table
+Call ::= ( Variable | FunctionDef ) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
+Indexable ::= Call | Variable | "(" Expression ")" 
+Index ::= "[" Expression "]"
+Operand ::= Constant | ( Indexable { Index } )
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ("*" | "/") Power }
 Sum ::= ["+" | "-"] Mult { ("+" | "-") Mult }
@@ -58,20 +60,19 @@ Not ::= [ "not" ] Comparison
 And ::= Not { "and" Not }
 Or ::= And { "or" And }
 
-TableValue = [ Value "=" ] Expression
+TableKey = Identifier | Constant
+TableValue = [ TableKey "=" ] Expression
 Table ::= "{" [ TableValue { "," TableValue } [ "," ] ] "}"
 
 FunctionDef ::= "function" "(" [ Identifier { "," Identifier } ] ")" { Operator } "end"
 Expression ::= Or | FunctionDef
 ExpressionList ::= Expression { "," Expression }
 
-LValue ::= Identifier
+LValue ::= ( Indexable Index { Index } ) | Variable
 Assignment ::= LValue { "," LValue } "=" ExpressionList
 
 Return ::= "return" [ ExpressionList ]
-
 If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
-
 While ::= "while" Expression "do" { Operator } "end"
 
 Operator ::= If | Return | Assignment | Call

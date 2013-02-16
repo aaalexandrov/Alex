@@ -12,9 +12,11 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
   VAL2STR(IT_MULTIPLY),
   VAL2STR(IT_DIVIDE),
   VAL2STR(IT_POWER),
-  VAL2STR(IT_ASSIGN),
   VAL2STR(IT_RESOLVE_VAR),
-  VAL2STR(IT_RESOLVE_REF),
+  VAL2STR(IT_RESOLVE_INDEX),
+  VAL2STR(IT_SET_VALUE),
+  VAL2STR(IT_SET_TABLE_VALUE),
+	VAL2STR(IT_CREATE_TABLE),
 	VAL2STR(IT_CALL),
 	VAL2STR(IT_RETURN),
 	VAL2STR(IT_POP_ALL),
@@ -25,6 +27,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
 	VAL2STR(IT_NOT),
 	VAL2STR(IT_AND),
 	VAL2STR(IT_DUP),
+	VAL2STR(IT_DUP2),
 };
 
 CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
@@ -53,12 +56,16 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
       return ExecDivide(pExecution);
     case IT_POWER:
       return ExecPower(pExecution);
-    case IT_ASSIGN:
-      return ExecAssign(pExecution);
     case IT_RESOLVE_VAR:
       return ExecResolveValue(pExecution);
-    case IT_RESOLVE_REF:
-      return ExecResolveRef(pExecution);
+    case IT_RESOLVE_INDEX:
+      return ExecResolveIndex(pExecution);
+    case IT_SET_VALUE:
+      return ExecSetValue(pExecution);
+    case IT_SET_TABLE_VALUE:
+      return ExecSetTableValue(pExecution);
+    case IT_CREATE_TABLE:
+      return ExecCreateTable(pExecution);
 		case IT_CALL:
 			return ExecCall(pExecution);
 		case IT_RETURN:
@@ -79,6 +86,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution)
 			return ExecAnd(pExecution);
 		case IT_DUP:
 			return ExecDup(pExecution);
+		case IT_DUP2:
+			return ExecDup2(pExecution);
     default:
       ASSERT(!"Invalid instruction");
       return IERR_INVALID_INSTRUCTION;
@@ -197,25 +206,6 @@ EInterpretError CInstruction::ExecPower(CExecution *pExecution)
   return IERR_OPERAND_TYPE;
 }
 
-EInterpretError CInstruction::ExecAssign(CExecution *pExecution)
-{
-  if (pExecution->m_kStack.m_iCount < 2)
-    return IERR_NOT_ENOUGH_OPERANDS;
-  CValue &kVal1 = pExecution->m_kStack.Last();
-  CValue &kVal2 = pExecution->m_kStack.PreLast();
-	if (kVal1.m_btType == CValue::VT_REF) {
-		if (kVal2.m_btType != CValue::VT_MARKER) {
-			*kVal1.m_pReference = kVal2;
-			pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 2);
-		} else {
-			kVal1.m_pReference->SetNone();
-			pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 1);
-		}
-		return IERR_OK;
-	}
-  return IERR_OPERAND_TYPE;
-}
-
 EInterpretError CInstruction::ExecResolveValue(CExecution *pExecution)
 {
   if (pExecution->m_kStack.m_iCount < 1)
@@ -233,25 +223,71 @@ EInterpretError CInstruction::ExecResolveValue(CExecution *pExecution)
   return IERR_OK;
 }
 
-EInterpretError CInstruction::ExecResolveRef(CExecution *pExecution)
+EInterpretError CInstruction::ExecResolveIndex(CExecution *pExecution)
 {
-  if (pExecution->m_kStack.m_iCount < 1)
+  if (pExecution->m_kStack.m_iCount < 2)
     return IERR_NOT_ENOUGH_OPERANDS;
-  CValue &kVal = pExecution->m_kStack.Last();
-  if (kVal.m_btType != CValue::VT_STRING)
+  CValue &kVal1 = pExecution->m_kStack.Last();
+	CValue &kVal2 = pExecution->m_kStack.PreLast();
+  if (kVal2.m_btType != CValue::VT_TABLE)
     return IERR_OPERAND_TYPE;
-  CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal);
-	if (!it && pExecution->m_pGlobalEnvironment)
-		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal);
-  if (!it) {
-    pExecution->m_pEnvironment->m_Hash.Add(CValue::THash::Elem(kVal, CValue()));
-    it = pExecution->m_pEnvironment->m_Hash.Find(kVal);
-  }
+	CValue::THash::TIter it = kVal2.m_pTableValue->m_Hash.Find(kVal1);
   if (it)
-    kVal.Set(&(*it).m_Val);
+    kVal2 = (*it).m_Val;
   else
-    kVal.SetNone();
+    kVal2.SetNone();
+	pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 1);
   return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecSetValue(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 2)
+		return IERR_NOT_ENOUGH_OPERANDS;
+	CValue &kVal1 = pExecution->m_kStack.Last();
+	CValue &kVal2 = pExecution->m_kStack.PreLast();
+	if (kVal1.m_btType != CValue::VT_STRING)
+		return IERR_OPERAND_TYPE;
+	CValue::THash::TIter it = pExecution->m_pEnvironment->m_Hash.Find(kVal1);
+	if (!it && pExecution->m_pGlobalEnvironment)
+		it = pExecution->m_pGlobalEnvironment->m_Hash.Find(kVal1);
+	if (it) {
+		if (kVal2.m_btType != CValue::VT_NONE)
+			(*it).m_Val = kVal2;
+		else
+			((CValue::THash *) (it.m_pHash))->Remove(it);
+	} else
+		if (kVal2.m_btType != CValue::VT_NONE)
+			pExecution->m_pEnvironment->m_Hash.Add(CValue::THash::Elem(kVal1, kVal2));
+	pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 2);
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecSetTableValue(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 3)
+		return IERR_NOT_ENOUGH_OPERANDS;
+	CValue &kVal1 = pExecution->m_kStack.Last();
+	CValue &kVal2 = pExecution->m_kStack.PreLast();
+	CValue &kVal3 = pExecution->m_kStack[pExecution->m_kStack.m_iCount - 3];
+	if (kVal2.m_btType != CValue::VT_TABLE)
+		return IERR_OPERAND_TYPE;
+	CValue::THash::TIter it = kVal2.m_pTableValue->m_Hash.Find(kVal1);
+	if (it) {
+		if (kVal3.m_btType == CValue::VT_NONE)
+			kVal2.m_pTableValue->m_Hash.Remove(it);
+		else
+		  (*it).m_Val = kVal3;
+	} else
+		kVal2.m_pTableValue->m_Hash.Add(CValue::THash::Elem(kVal1, kVal3));
+	pExecution->m_kStack.SetCount(pExecution->m_kStack.m_iCount - 3);
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecCreateTable(CExecution *pExecution)
+{
+	pExecution->m_kStack.Append(CValue(new CValueTable()));
+	return IERR_OK;
 }
 
 EInterpretError CInstruction::ExecCall(CExecution *pExecution)
@@ -299,7 +335,7 @@ EInterpretError CInstruction::ExecPopToMarker(CExecution *pExecution)
 {
 	int i;
 	for (i = pExecution->m_kStack.m_iCount - 1; i > 0 && pExecution->m_kStack[i].m_btType != CValue::VT_MARKER; --i);
-	pExecution->m_kStack.SetCount(i);
+	pExecution->m_kStack.SetCount(Util::Max(i, 0));
 	return IERR_OK;
 }
 
@@ -378,12 +414,22 @@ EInterpretError CInstruction::ExecAnd(CExecution *pExecution)
 
 EInterpretError CInstruction::ExecDup(CExecution *pExecution)
 {
-	if (pExecution->m_kStack.m_iCount < 2)
+	if (pExecution->m_kStack.m_iCount < 1)
 		return IERR_NOT_ENOUGH_OPERANDS;
   CValue &kVal1 = pExecution->m_kStack.Last();
 	pExecution->m_kStack.Append(kVal1);
 	return IERR_OK;
 }
+
+EInterpretError CInstruction::ExecDup2(CExecution *pExecution)
+{
+	if (pExecution->m_kStack.m_iCount < 2)
+		return IERR_NOT_ENOUGH_OPERANDS;
+  CValue &kVal1 = pExecution->m_kStack.PreLast();
+	pExecution->m_kStack.Append(kVal1);
+	return IERR_OK;
+}
+
 
 CStrAny CInstruction::ToStr()
 {

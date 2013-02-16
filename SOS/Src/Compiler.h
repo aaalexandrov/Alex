@@ -16,10 +16,11 @@ public:
   EInterpretError Compile(CBNFGrammar::CNode *pNode);
 
 	EInterpretError CompileProgram(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileValue(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileConstant(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileVariable(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileFunctionDef(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileFunctionCall(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileOperand(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileTable(CBNFGrammar::CNode *pNode);
 	EInterpretError CompileReturn(CBNFGrammar::CNode *pNode);
 	EInterpretError CompilePower(CBNFGrammar::CNode *pNode);
