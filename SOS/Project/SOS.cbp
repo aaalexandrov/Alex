@@ -85,6 +85,7 @@
 		<Unit filename="../Src/BNFGrammar.h" />
 		<Unit filename="../Src/Compiler.cpp" />
 		<Unit filename="../Src/Compiler.h" />
+		<Unit filename="../Src/Error.cpp" />
 		<Unit filename="../Src/Error.h" />
 		<Unit filename="../Src/Execution.cpp" />
 		<Unit filename="../Src/Execution.h" />

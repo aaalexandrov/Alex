@@ -67,6 +67,7 @@
     </ClCompile>
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
+    <ClCompile Include="..\Src\Error.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />

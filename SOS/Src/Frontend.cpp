@@ -7,6 +7,7 @@ int ProcessInput()
 {
   char chBuf[1024];
   CExecution kExecution;
+	kExecution.m_pGlobalEnvironment = new CValueTable();
 
 	while (1) {
 		fputs("> ", stdout);
@@ -20,15 +21,17 @@ int ProcessInput()
       err = kChain.Compile(sInput);
       if (err == IERR_OK) {
         kChain.m_kCompiler.m_pCode->Dump();
-        err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams, 0);
+        err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams, kExecution.m_pGlobalEnvironment);
 				if (err == IERR_OK) {
-					while (kExecution.m_kStack.m_iCount) {
-						CStrAny sRes = kExecution.m_kStack.Last().GetStr();
+					for (int i = 0; i < kExecution.m_nReturnCount; ++i) {
+						CValue const &kVal = kExecution.m_arrLocal[kExecution.m_nReturnBase + i];
+						CStrAny sRes = kVal.GetStr();
 						fprintf(stdout, "<< %s\n", sRes.m_pBuf);
-						if (kExecution.m_kStack.Last().m_btType == CValue::VT_FRAGMENT)
-							kExecution.m_kStack.Last().GetFragment()->Dump();
-						kExecution.m_kStack.SetCount(kExecution.m_kStack.m_iCount - 1);
+						if (kVal.m_btType == CValue::VT_FRAGMENT)
+							kVal.GetFragment()->Dump();
 					}
+				} else {
+					fprintf(stdout, "<< %s\n", g_IERR2Str.GetStr(err).m_pBuf);
 				}
       } else
 				if (err == IERR_COMPILE_FAILED) {

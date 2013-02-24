@@ -94,10 +94,13 @@ public:
   void AssureHasHeader();
   void AssureInRepository();
 
-  bool operator !() const                  { return EndsAt(0);  }
-  bool operator ==(CStrAny const &s) const { return !Cmp(s);    }
-  bool operator <(CStrAny const &s) const  { return Cmp(s) < 0; }
-  bool operator >(CStrAny const &s) const  { return Cmp(s) > 0; }
+  bool operator !() const                  { return EndsAt(0);   }
+  bool operator ==(CStrAny const &s) const { return !Cmp(s);     }
+	bool operator !=(CStrAny const &s) const { return !!Cmp(s);    }
+  bool operator <(CStrAny const &s) const  { return Cmp(s) < 0;  }
+  bool operator >(CStrAny const &s) const  { return Cmp(s) > 0;  }
+	bool operator <=(CStrAny const &s) const { return Cmp(s) <= 0; }
+	bool operator >=(CStrAny const &s) const { return Cmp(s) >= 0; }
 
   CStrAny &operator =(CStrAny const &s);
   CStrAny &operator =(const char *pStr);
@@ -142,6 +145,7 @@ public:
   static inline size_t Hash(const char *pStr) { return ::GetHash(pStr, (int) strlen(pStr)); }
 
   static inline bool Eq(CStrHeader const *pHeader, CStrAny const &s) { if (s.GetHeader()) return CStrHeader::Eq(pHeader, s.GetHeader()); if (pHeader->m_iLen != s.m_iLen) return false; return !memcmp(pHeader + 1, s.m_pBuf, pHeader->m_iLen); }
+	static inline bool Eq(CStrAny const &s0, CStrAny const &s1)        { return s0 == s1; }
 
 protected:
   CStrHeader *GetConcatenationHeader(CStrAny const &s, bool bForceNew) const;

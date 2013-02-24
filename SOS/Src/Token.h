@@ -3,23 +3,6 @@
 
 #include "Error.h"
 
-class CValue2String {
-public:
-  struct TValueString {
-    int     m_iVal;
-    CStrAny m_sStr;
-  };
-
-public:
-  TValueString *m_pTable;
-  int m_iCount;
-
-  CValue2String(TValueString *pTable, int iCount): m_pTable(pTable), m_iCount(iCount) {}
-  CStrAny GetStr(int iVal);
-};
-
-#define VAL2STR(V) { V, CStrAny(ST_WHOLE, #V) }
-
 class CToken {
 public:
 

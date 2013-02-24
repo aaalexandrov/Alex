@@ -274,14 +274,11 @@ void CHash<T, K, H, P>::Add(T t)
   CHashList *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
     pLst = new CHashList();
-/*
-  typename CHashList::TNode *pNode;
-  pNode = pLst->m_pHead;
-  while (pNode && pNode->Data < t)
-    pNode = pNode->pNext;
-  pLst->PushBefore(pNode, t);
-*/
-  pLst->PushTail(t);
+	typename CHashList::TNode *pNode = pLst->Find(t);
+	if (pNode)
+    pLst->PushBefore(pNode, t);
+	else
+	  pLst->PushTail(t);
   m_iCount++;
   CheckForResize();
 }

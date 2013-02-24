@@ -117,6 +117,7 @@
     <ClCompile Include="..\Src\BNF.cpp" />
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
+    <ClCompile Include="..\Src\Error.cpp" />
     <ClCompile Include="..\Src\Execution.cpp" />
     <ClCompile Include="..\Src\Frontend.cpp" />
     <ClCompile Include="..\Src\SOS.cpp" />

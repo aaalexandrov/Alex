@@ -2,17 +2,20 @@
 #define __EXECUTION_H
 
 #include "Variable.h"
-#include "Token.h"
-
-typedef CArray<CValue> TValueStack;
+#include "Error.h"
 
 class CExecution;
 class CInstruction {
 public:
   enum EType {
-    IT_NOP,
+		IT_NOP,
 
-    IT_PUSH_VALUE,
+    IT_MOVE_VALUE,
+		IT_GET_GLOBAL,
+		IT_SET_GLOBAL,
+		IT_CREATE_TABLE,
+		IT_GET_TABLE_VALUE,
+		IT_SET_TABLE_VALUE,
 
     IT_NEGATE,
 		IT_ADD,
@@ -20,96 +23,94 @@ public:
     IT_MULTIPLY,
     IT_DIVIDE,
     IT_POWER,
-    IT_RESOLVE_VAR,
-		IT_RESOLVE_INDEX,
-		IT_SET_VALUE,
-		IT_SET_TABLE_VALUE,
-		IT_CREATE_TABLE,
-		IT_CALL,
-		IT_RETURN,
-		IT_POP_ALL,
-		IT_POP_TO_MARKER,
-		IT_JUMP_IF_FALSE,
+
 		IT_COMPARE_EQ,
+		IT_COMPARE_NOT_EQ,
 		IT_COMPARE_LESS,
+		IT_COMPARE_LESS_EQ,
 		IT_NOT,
 		IT_AND,
-		IT_DUP,
-		IT_DUP2,
+
+		IT_MOVE_AND_JUMP_IF_FALSE,
+		IT_MOVE_AND_JUMP_IF_TRUE,
+		IT_CALL,
+		IT_RETURN,
 
     IT_LAST
   };
+
+	static const short INVALID_OPERAND = (short) 0x8000;
 public:
   EType m_eType;
-  union {
-    BYTE m_btValue[sizeof(CValue)];
-  };
+	short m_nDest, m_nSrc0, m_nSrc1;
 
-  CInstruction(): m_eType(IT_NOP) {}
-	CInstruction(CInstruction const &kInstr) { m_eType = kInstr.m_eType; if (HasValue()) GetValue().Set(const_cast<CInstruction *>(&kInstr)->GetValue()); }
-  ~CInstruction() { ReleaseData(); }
+  CInstruction() { SetNop(); }
+	CInstruction(CInstruction const &kInstr) { Set(kInstr); }
+  ~CInstruction() {}
 
-  void ReleaseData();
+	void Set(CInstruction const &kInstr) { m_eType = kInstr.m_eType; m_nDest = kInstr.m_nDest; m_nSrc0 = kInstr.m_nSrc0; m_nSrc1 = kInstr.m_nSrc1; }
+	void Set(EType eType, short nDest = INVALID_OPERAND, short nSrc0 = INVALID_OPERAND, short nSrc1 = INVALID_OPERAND) { m_eType = eType; m_nDest = nDest; m_nSrc0 = nSrc0; m_nSrc1 = nSrc1; }
 
-  void SetNop() { ReleaseData(); }
-	void SetNegate() { ReleaseData(); m_eType = IT_NEGATE; }
-  void SetPushValue(CValue const &kValue) { ReleaseData(); m_eType = IT_PUSH_VALUE; GetValue().Set(kValue); }
-  void SetAdd() { ReleaseData(); m_eType = IT_ADD; }
-  void SetSubtract() { ReleaseData(); m_eType = IT_SUBTRACT; }
-  void SetMultiply() { ReleaseData(); m_eType = IT_MULTIPLY; }
-  void SetDivide() { ReleaseData(); m_eType = IT_DIVIDE; }
-  void SetPower() { ReleaseData(); m_eType = IT_POWER; }
-  void SetResolveVar() { ReleaseData(); m_eType = IT_RESOLVE_VAR; }
-  void SetResolveIndex() { ReleaseData(); m_eType = IT_RESOLVE_INDEX; }
-  void SetSetValue() { ReleaseData(); m_eType = IT_SET_VALUE; }
-	void SetSetTableValue() { ReleaseData(); m_eType = IT_SET_TABLE_VALUE; }
-	void SetCreateTable() { ReleaseData(); m_eType = IT_CREATE_TABLE; }
-	void SetCall() { ReleaseData(); m_eType = IT_CALL; }
-	void SetReturn() { ReleaseData(); m_eType = IT_RETURN; }
-	void SetPopAll() { ReleaseData(); m_eType = IT_POP_ALL; }
-	void SetPopToMarker() { ReleaseData(); m_eType = IT_POP_TO_MARKER; }
-	void SetJumpIfFalse() { ReleaseData(); m_eType = IT_JUMP_IF_FALSE; }
-	void SetCompareEq() { ReleaseData(); m_eType = IT_COMPARE_EQ; }
-	void SetCompareLess() { ReleaseData(); m_eType = IT_COMPARE_LESS; }
-	void SetNot() { ReleaseData(); m_eType = IT_NOT; }
-	void SetAnd() { ReleaseData(); m_eType = IT_AND; }
-	void SetDup() { ReleaseData(); m_eType = IT_DUP; }
-	void SetDup2() { ReleaseData(); m_eType = IT_DUP2; }
+  void SetNop() { Set(IT_NOP); }
+  void SetMoveValue(short nDest, short nSrc0) { Set(IT_MOVE_VALUE, nDest, nSrc0); }
+  void SetGetGlobal(short nDest, short nSrc0) { Set(IT_GET_GLOBAL, nDest, nSrc0); }
+  void SetSetGlobal(short nDest, short nSrc0) { Set(IT_SET_GLOBAL, nDest, nSrc0); }
+	void SetGetTableValue(short nDest, short nSrc0, short nSrc1) { Set(IT_GET_TABLE_VALUE, nDest, nSrc0, nSrc1); }
+	void SetSetTableValue(short nDest, short nSrc0, short nSrc1) { Set(IT_SET_TABLE_VALUE, nDest, nSrc0, nSrc1); }
+	void SetCreateTable(short nDest) { Set(IT_CREATE_TABLE, nDest); }
+	void SetNegate(short nDest, short nSrc0) { Set(IT_NEGATE, nDest, nSrc0); }
+  void SetAdd(short nDest, short nSrc0, short nSrc1) { Set(IT_ADD, nDest, nSrc0, nSrc1); }
+  void SetSubtract(short nDest, short nSrc0, short nSrc1) { Set(IT_SUBTRACT, nDest, nSrc0, nSrc1); }
+  void SetMultiply(short nDest, short nSrc0, short nSrc1) { Set(IT_MULTIPLY, nDest, nSrc0, nSrc1); }
+  void SetDivide(short nDest, short nSrc0, short nSrc1) { Set(IT_DIVIDE, nDest, nSrc0, nSrc1); }
+  void SetPower(short nDest, short nSrc0, short nSrc1) { Set(IT_POWER, nDest, nSrc0, nSrc1); }
+  void SetCompareNotEq(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_NOT_EQ, nDest, nSrc0, nSrc1); }
+	void SetCompareEq(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_EQ, nDest, nSrc0, nSrc1); }
+	void SetCompareLess(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS, nDest, nSrc0, nSrc1); }
+	void SetCompareLessEq(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS_EQ, nDest, nSrc0, nSrc1); }
+	void SetNot(short nDest, short nSrc0) { Set(IT_NOT, nDest, nSrc0); }
+	void SetAnd(short nDest, short nSrc0, short nSrc1) { Set(IT_AND, nDest, nSrc0, nSrc1); }
+	void SetMoveAndJumpIfFalse(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_FALSE, nDest, nSrc0, nSrc1); } 
+	void SetMoveAndJumpIfTrue(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_TRUE, nDest, nSrc0, nSrc1); }
+	void SetCall(short nDest, short nSrc0, short nSrc1) { Set(IT_CALL, nDest, nSrc0, nSrc1); }
+	void SetReturn(short nDest, short nSrc0) { Set(IT_RETURN, nDest, nSrc0); }
 
+	CValue *GetOperand(CExecution *pExecution, short nOperand) const;
+	CValue *GetDest(CExecution *pExecution) const { ASSERT(m_nDest >= 0); return GetOperand(pExecution, m_nDest); }
+	CValue *GetSrc0(CExecution *pExecution) const { return GetOperand(pExecution, m_nSrc0); }
+	CValue *GetSrc1(CExecution *pExecution) const { return GetOperand(pExecution, m_nSrc1); }
 
-  EInterpretError Execute(CExecution *pExecution);
-  int GetSize();
+  EInterpretError Execute(CExecution *pExecution) const;
 
-  EInterpretError ExecPushValue(CExecution *pExecution);
-	EInterpretError ExecNegate(CExecution *pExecution);
-  EInterpretError ExecAdd(CExecution *pExecution);
-  EInterpretError ExecSubtract(CExecution *pExecution);
-  EInterpretError ExecMultiply(CExecution *pExecution);
-  EInterpretError ExecDivide(CExecution *pExecution);
-  EInterpretError ExecPower(CExecution *pExecution);
-  EInterpretError ExecResolveValue(CExecution *pExecution);
-  EInterpretError ExecResolveIndex(CExecution *pExecution);
-  EInterpretError ExecSetValue(CExecution *pExecution);
-  EInterpretError ExecSetTableValue(CExecution *pExecution);
-  EInterpretError ExecCreateTable(CExecution *pExecution);
-	EInterpretError ExecCall(CExecution *pExecution);
-	EInterpretError ExecReturn(CExecution *pExecution);
-	EInterpretError ExecPopAll(CExecution *pExecution);
-	EInterpretError ExecPopToMarker(CExecution *pExecution);
-	EInterpretError ExecJumpIfFalse(CExecution *pExecution);
-	EInterpretError ExecCompareEq(CExecution *pExecution);
-	EInterpretError ExecCompareLess(CExecution *pExecution);
-	EInterpretError ExecNot(CExecution *pExecution);
-	EInterpretError ExecAnd(CExecution *pExecution);
-	EInterpretError ExecDup(CExecution *pExecution);
-	EInterpretError ExecDup2(CExecution *pExecution);
+  EInterpretError ExecNop(CExecution *pExecution) const;
+  EInterpretError ExecMoveValue(CExecution *pExecution) const;
+  EInterpretError ExecGetGlobal(CExecution *pExecution) const;
+  EInterpretError ExecSetGlobal(CExecution *pExecution) const;
+	EInterpretError ExecGetTableValue(CExecution *pExecution) const;
+	EInterpretError ExecSetTableValue(CExecution *pExecution) const;
+	EInterpretError ExecCreateTable(CExecution *pExecution) const;
+	EInterpretError ExecNegate(CExecution *pExecution) const;
+  EInterpretError ExecAdd(CExecution *pExecution) const;
+  EInterpretError ExecSubtract(CExecution *pExecution) const;
+  EInterpretError ExecMultiply(CExecution *pExecution) const;
+  EInterpretError ExecDivide(CExecution *pExecution) const;
+  EInterpretError ExecPower(CExecution *pExecution) const;
+	EInterpretError ExecCompareEq(CExecution *pExecution) const;
+  EInterpretError ExecCompareNotEq(CExecution *pExecution) const;
+  EInterpretError ExecCompareLess(CExecution *pExecution) const;
+	EInterpretError ExecCompareLessEq(CExecution *pExecution) const;
+	EInterpretError ExecNot(CExecution *pExecution) const;
+	EInterpretError ExecAnd(CExecution *pExecution) const;
+	EInterpretError ExecMoveAndJumpIfFalse(CExecution *pExecution) const;
+	EInterpretError ExecMoveAndJumpIfTrue(CExecution *pExecution) const;
+	EInterpretError ExecCall(CExecution *pExecution) const;
+	EInterpretError ExecReturn(CExecution *pExecution) const;
 
-  bool HasValue() const { return m_eType == IT_PUSH_VALUE; }
-  CValue &GetValue() { return *(CValue *) &m_btValue; }
+  CStrAny GetOperandStr(short nOperand) const;
+	CStrAny GetOperandConstStr(CFragment *pFragment, short nOperand) const;
+	CStrAny ToStr(CFragment *pFragment) const;
 
-  CStrAny ToStr();
-
-  CInstruction &operator =(CInstruction const &kInstr) { ReleaseData(); m_eType = kInstr.m_eType; if (HasValue()) GetValue().Set(const_cast<CInstruction *>(&kInstr)->GetValue()); return *this; }
+  CInstruction &operator =(CInstruction const &kInstr) { Set(kInstr); return *this; }
 
   static CValue2String::TValueString s_arrIT2Str[IT_LAST];
   static CValue2String s_IT2Str;
@@ -117,16 +118,15 @@ public:
 
 class CExecution {
 public:
-  TValueStack   m_kStack;
-  CValueTable  *m_pEnvironment, *m_pGlobalEnvironment;
-  CFragment    *m_pCode;
-  CInstruction *m_pNextInstruction;
+  CArray<CValue>          m_arrLocal;
+	short                   m_nReturnBase, m_nReturnCount;
+	CSmartPtr<CValueTable>  m_pGlobalEnvironment;
+  CFragment              *m_pCode;
+  CInstruction           *m_pNextInstruction;
 
 	CExecution();
 	~CExecution();
 
-  void ClearStack();
-	CValueTable *GetGlobalEnvironment();
 	EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams, CValueTable *pGlobalEnvironment);
 };
 

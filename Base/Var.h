@@ -314,11 +314,12 @@ public:
     TVarName(const CStrAny &sN, CBaseVar *pV): pName(sN.GetHeaderForContents(true)), pVar(pV) {}
     ~TVarName() {}
 
-    static inline bool Eq(CStrAny const &s, TVarName *pVarName)          { return CStrAny::Eq(pVarName->pName, s);          }
-    static inline bool Eq(CStrHeader const *pHeader, TVarName *pVarName) { return CStrHeader::Eq(pHeader, pVarName->pName); }
-    static inline size_t Hash(const CStrAny &s)                          { return s.GetHash();                              }
-    static inline size_t Hash(CStrHeader const *pHeader)                 { return pHeader->GetHash();                       }
-    static inline size_t Hash(TVarName *pVarName)                        { return pVarName->pName->GetHash();               }
+    static inline bool Eq(CStrAny const &s, TVarName *pVarName)          { return CStrAny::Eq(pVarName->pName, s);                    }
+    static inline bool Eq(CStrHeader const *pHeader, TVarName *pVarName) { return CStrHeader::Eq(pHeader, pVarName->pName);           }
+		static inline bool Eq(TVarName *pVarName0, TVarName *pVarName1)      { return CStrHeader::Eq(pVarName0->pName, pVarName1->pName); }
+    static inline size_t Hash(const CStrAny &s)                          { return s.GetHash();                                        }
+    static inline size_t Hash(CStrHeader const *pHeader)                 { return pHeader->GetHash();                                 }
+    static inline size_t Hash(TVarName *pVarName)                        { return pVarName->pName->GetHash();                         }
   };
 
   typedef CHash<TVarName *, const CStrAny &, TVarName, TVarName> THash;

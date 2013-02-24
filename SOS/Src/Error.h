@@ -7,27 +7,35 @@ enum EInterpretError {
 	IERR_OK,
 	IERR_UNKNOWN,
 
-	IERR_UNINITIALIZED,
-
-  IERR_UNKNOWN_TOKEN,
-
-	IERR_NO_CLOSE_BRACE,
-	IERR_NO_OPEN_BRACE,
-
-	IERR_NOT_LVALUE,
-
-	IERR_NOT_ENOUGH_OPERANDS,
-	IERR_TOO_MANY_OPERANDS,
+	IERR_INVALID_OPERAND,
   IERR_OPERAND_TYPE,
-
   IERR_INVALID_INSTRUCTION,
 
-  IERR_INVALID_TOKEN,
-  IERR_INVALID_OPERATOR,
-
-  IERR_PARSING_FAILED,
+	IERR_UNKNOWN_TOKEN,
+	IERR_PARSING_FAILED,
 
 	IERR_COMPILE_FAILED,
+	IERR_DUPLICATE_VARIABLE,
+	IERR_TOO_MANY_INSTRUCTIONS,
 };
+
+class CValue2String {
+public:
+  struct TValueString {
+    int     m_iVal;
+    CStrAny m_sStr;
+  };
+
+public:
+  TValueString *m_pTable;
+  int m_iCount;
+
+  CValue2String(TValueString *pTable, int iCount): m_pTable(pTable), m_iCount(iCount) {}
+  CStrAny GetStr(int iVal);
+};
+
+#define VAL2STR(V) { V, CStrAny(ST_WHOLE, #V) }
+
+extern CValue2String g_IERR2Str;
 
 #endif

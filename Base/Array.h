@@ -36,19 +36,22 @@ public:
 	bool IsEmpty() const { return !m_iCount; }
 
   T &operator [](int i);
-  const T &operator [](int i) const;
+  T const &operator [](int i) const;
 
   T &At(int i);
-  const T &At(int i) const;
+  T const &At(int i) const;
+
+	T *PtrAt(int i);
+	T const *PtrAt(int i) const;
 
   void SetCount(int iCount);
   void SetMaxCount(int iMaxCount);
 
 	T &Last()               { return At(m_iCount - 1); }
-  const T &Last() const   { return At(m_iCount - 1); }
+  T const &Last() const   { return At(m_iCount - 1); }
   T &PreLast()               { return At(m_iCount - 2); }
-  const T &PreLast() const   { return At(m_iCount - 2); }
-  void Append(const T &t);
+  T const &PreLast() const   { return At(m_iCount - 2); }
+  void Append(T const &t);
 
   int GetGrowInc() { return TArrayGrow<GROW_INC, GROW_MIN, GROW_INC < 0>::GetGrowInc(m_iMaxCount); /*if (GROW_INC >= 0) return GROW_INC; else return Util::Max(GROW_MIN, m_iMaxCount / -GROW_INC);*/ }
 };
@@ -144,7 +147,7 @@ T &CArray<T, G>::operator [](int i)
 }
 
 template <class T, int G>
-const T &CArray<T, G>::operator [](int i) const
+T const &CArray<T, G>::operator [](int i) const
 {
   ASSERT(i >= 0 && i < m_iCount);
   return m_pArray[i];
@@ -158,10 +161,26 @@ T &CArray<T, G>::At(int i)
 }
 
 template <class T, int G>
-const T &CArray<T, G>::At(int i) const
+T const &CArray<T, G>::At(int i) const
 {
   ASSERT(i >= 0 && i < m_iCount);
   return m_pArray[i];
+}
+
+template <class T, int G>
+T *CArray<T, G>::PtrAt(int i)
+{
+	if (i < 0 || i >= m_iCount)
+		return 0;
+	return m_pArray + i;
+}
+
+template <class T, int G>
+T const *CArray<T, G>::PtrAt(int i) const
+{
+	if (i < 0 || i >= m_iCount)
+		return 0;
+	return m_pArray + i;
 }
 
 template <class T, int G>
@@ -202,7 +221,7 @@ void CArray<T, G>::SetMaxCount(int iMaxCount)
 }
 
 template <class T, int G>
-void CArray<T, G>::Append(const T &t)
+void CArray<T, G>::Append(T const &t)
 {
   SetCount(m_iCount + 1);
   m_pArray[m_iCount - 1] = t;

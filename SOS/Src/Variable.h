@@ -10,12 +10,10 @@ class CValue {
 public:
   enum EValueType {
     VT_NONE,
-		VT_MARKER,
 		VT_BOOL,
     VT_FLOAT,
     VT_STRING,
     VT_TABLE,
-    VT_REF,
 		VT_FRAGMENT,
   };
 
@@ -27,30 +25,26 @@ public:
     float                    m_fValue;
     CStrHeader const        *m_pStrValue;
     CValueTable             *m_pTableValue;
-		CValue                  *m_pReference; 
 		CFragment               *m_pFragment;
     void                    *m_Value;
   };
   BYTE m_btType;
 
-  explicit CValue(EValueType eVT = VT_NONE)     { if (eVT == VT_MARKER) SetMarker(); else SetNone(); }
+  explicit CValue()                             { SetNone(); }
 	explicit CValue(bool bValue)                  { Set(bValue); }
   explicit CValue(float fValue)                 { Set(fValue); }
   explicit CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   explicit CValue(CValueTable *pTable)          { Set(pTable); }
-  explicit CValue(CValue *pReference)           { Set(pReference); }
 	explicit CValue(CFragment *pFragment)         { Set(pFragment); }
   CValue(CValue const &kValue)                  { Set(kValue); }
 
   ~CValue() { ReleaseValue(); }
 
   inline void SetNone();
-	inline void SetMarker();
 	inline void Set(bool bValue);
   inline void Set(float fValue);
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
-  inline void Set(CValue *pReference);
 	inline void Set(CFragment *pFragment);
 	inline void Set(CValue const &kValue);
 
@@ -67,7 +61,6 @@ public:
 	inline float        GetFloat() const     { return m_btType == VT_FLOAT ? m_fValue : 0; }
   inline CStrAny      GetStr() const;
   inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
-  inline CValue      *GetReference() const { return m_btType == VT_REF ? m_pReference : 0; }
 	inline CFragment   *GetFragment() const  { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
 
 	inline size_t GetHash() const { return (size_t) m_btType ^ (size_t) m_Value; }
@@ -119,9 +112,10 @@ class CFragment {
 	DEFREFCOUNT
 public:
   CArray<CInstruction> m_arrCode;
-  CArray<CStrAny> m_arrInputs;
+	CArray<CValue> m_arrConst;
+	short m_nLocalCount, m_nParamCount;
 
-	CFragment() {}
+	CFragment(): m_nLocalCount(0), m_nParamCount(0) {}
 	~CFragment() {}
 
   void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
@@ -172,12 +166,6 @@ void CValue::SetNone()
   m_Value = 0; 
 }
 
-void CValue::SetMarker() 
-{ 
-  m_btType = VT_MARKER; 
-  m_Value = 0; 
-}
-
 void CValue::Set(bool bValue)
 {
 	m_btType = VT_BOOL;
@@ -202,12 +190,6 @@ void CValue::Set(CValueTable *pTable)
   m_btType = VT_TABLE; 
   m_pTableValue = pTable; 
 	m_pTableValue->Acquire();
-}
-
-void CValue::Set(CValue *pReference)    
-{ 
-  m_btType = VT_REF; 
-  m_pReference = pReference; 
 }
 
 void CValue::Set(CFragment *pFragment)    
@@ -244,9 +226,6 @@ CStrAny CValue::GetStr() const
     case VT_NONE:
       s = CStrAny(ST_CONST, "<null>");
       break;
-    case VT_MARKER:
-      s = CStrAny(ST_CONST, "<marker>");
-      break;
 		case VT_BOOL:
 			s = CStrAny(ST_CONST, m_bValue ? "<true>" : "<false>");
 			break;
@@ -259,10 +238,6 @@ CStrAny CValue::GetStr() const
       break;
     case VT_TABLE:
       sprintf(chBuf, "<Table:%x>", m_pTableValue);
-      s = CStrAny(ST_CONST, chBuf);
-      break;
-    case VT_REF:
-      sprintf(chBuf, "<Ref:%x>", m_pReference);
       s = CStrAny(ST_CONST, chBuf);
       break;
 		case VT_FRAGMENT:

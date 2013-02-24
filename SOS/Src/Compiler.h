@@ -6,36 +6,76 @@
 
 class CCompiler {
 public:
+	struct TLocalInfo {
+		short m_nIndex, m_nContext;
+
+		TLocalInfo(short nIndex, short nContext): m_nIndex(nIndex), m_nContext(nContext) {}
+	};
+
+	class CLocalTracker {
+	public:
+		typedef CHashKV<CStrAny, TLocalInfo, CStrAny, CStrAny> THash;
+
+		CArray<int> m_arrLocals;
+		THash m_hashLocals;
+		short m_nCurContext;
+
+		CLocalTracker(): m_nCurContext(0) {}
+
+		void Clear();
+
+		short GetFreeLocal(short nCount = 1);
+		short AllocLocal(short nCount = 1);
+		void ReleaseLocal(short nBase, short nCount = 1);
+		void LockTemporary(short nIndex);
+		void ReleaseTemporary(short nIndex);
+
+    THash::TIter FindVar(CStrAny sVar);
+		short AllocVar(CStrAny sVar);
+		short GetVar(CStrAny sVar);
+
+		void StartContext();
+		void EndContext();
+	};
+public:
+	typedef CHashKV<CValue, short, CValue, CValue>  TConstantHash;
+
   CSmartPtr<CFragment> m_pCode;
+	TConstantHash m_hashConst;
+	CLocalTracker m_kLocals;
 
   CCompiler();
   ~CCompiler();
 
   void Clear();
+	short GetConstantIndex(CValue const &kValue);
+	void UpdateLocalNumber();
 
   EInterpretError Compile(CBNFGrammar::CNode *pNode);
 
-	EInterpretError CompileProgram(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileConstant(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileVariable(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileFunctionDef(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileFunctionCall(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileOperand(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileTable(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileReturn(CBNFGrammar::CNode *pNode);
-	EInterpretError CompilePower(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileMult(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileSum(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileComparison(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileNot(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileAnd(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileOr(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileLValue(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileAssignment(CBNFGrammar::CNode *pNode);
-	EInterpretError CompileIf(CBNFGrammar::CNode *pNode);
-  EInterpretError CompileWhile(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileProgram(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileConstant(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileVariable(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileFunctionDef(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileFunctionCall(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileOperand(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileTable(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileReturn(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompilePower(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileMult(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileSum(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileComparison(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileNot(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileAnd(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileOr(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileLValue(CBNFGrammar::CNode *pNode, short &nValue, short &nTable, bool &bGlobal);
+	EInterpretError CompileAssignment(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileIf(CBNFGrammar::CNode *pNode, short &nDest);
+  EInterpretError CompileWhile(CBNFGrammar::CNode *pNode, short &nDest);
 
-	EInterpretError CompileNode(CBNFGrammar::CNode *pNode);
+	EInterpretError CompileNode(CBNFGrammar::CNode *pNode, short &nDest);
+
+	EInterpretError CompileConstResult(CValue const &kValue, short &nDest);
 };
 
 class CCompileChain {
