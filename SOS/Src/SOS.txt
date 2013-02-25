@@ -1,4 +1,3 @@
-- Non-stack based instruction set
 - Real local variables / scoping
 - Lexical closures
 - Non-constant upvalues
@@ -11,7 +10,6 @@
 - String concatenation operator
 - nil value
 - For loops
-- Multiple return value rules for expressions
 
 - Garbage collection
 - Script to native code calls
@@ -19,6 +17,10 @@
 - Grammar optimizer
 
 - Automatic function execution parallelism
+
+
++ Non-stack based instruction set
++ Multiple return value rules for expressions
 
 -------------------------------------------------------------------------------
 
@@ -52,4 +54,4 @@ Return ::= "return" [ ExpressionList ]
 If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
 While ::= "while" Expression "do" { Operator } "end"
 
-Operator ::= If | Return | Assignment | Call
+Operator ::= While | If | Return | Assignment | Call

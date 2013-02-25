@@ -70,6 +70,18 @@ public:
 	}
 };
 
+class CLocalChecker {
+public:
+	CCompiler *m_pCompiler;
+	int m_iStartLocals;
+
+	CLocalChecker(CCompiler *pCompiler): m_pCompiler(pCompiler), m_iStartLocals(pCompiler->m_kLocals.m_iLocals) {}
+	~CLocalChecker() { CheckLocalCount(); }
+
+	void CheckLocalCount() { ASSERT(m_pCompiler->m_kLocals.m_iLocals == m_iStartLocals); }
+
+};
+
 // CCompiler::CLocalTracker ---------------------------------------------------
 
 void CCompiler::CLocalTracker::Clear()
@@ -107,16 +119,19 @@ short CCompiler::CLocalTracker::AllocLocal(short nCount)
 {
 	short nFree = GetFreeLocal(nCount);
 	for (short i = 0; i < nCount; ++i) 
-		++m_arrLocals[nFree + i];
+		if (!m_arrLocals[nFree + i]++)
+	    ++m_iLocals;
 	return nFree;
 }
 
 void CCompiler::CLocalTracker::ReleaseLocal(short nBase, short nCount)
 {
 	ASSERT(nCount);
+	ASSERT(m_iLocals >= nCount);
 	for (short i = 0; i < nCount; ++i) {
 		ASSERT(m_arrLocals[nBase + i] > 0);
-		--m_arrLocals[nBase + i];
+		if (!--m_arrLocals[nBase + i])
+			--m_iLocals;
 	}
 }
 
@@ -125,7 +140,8 @@ void CCompiler::CLocalTracker::LockTemporary(short nIndex)
 	if (nIndex < 0)
 		return;
 	ASSERT(m_arrLocals[nIndex] >= 0);
-	++m_arrLocals[nIndex];
+	if (!m_arrLocals[nIndex]++)
+	  ++m_iLocals;
 }
 
 void CCompiler::CLocalTracker::ReleaseTemporary(short nIndex)
@@ -133,7 +149,9 @@ void CCompiler::CLocalTracker::ReleaseTemporary(short nIndex)
 	if (nIndex < 0)
 		return;
 	ASSERT(m_arrLocals[nIndex] > 0);
-	--m_arrLocals[nIndex];
+	ASSERT(m_iLocals >= 1);
+	if (!--m_arrLocals[nIndex])
+	  --m_iLocals;
 }
 
 
@@ -251,6 +269,7 @@ EInterpretError CCompiler::Compile(CBNFGrammar::CNode *pNode)
 
 EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode, short &nDest)
 {
+	CLocalChecker kChecker(this);
 	switch (pNode->m_pRule->m_iID) {
 		case CBNFGrammar::RID_Program:
 			return CompileProgram(pNode, nDest);
@@ -842,31 +861,44 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &n
 	CArray<short> arrValues;
 	iCount = Util::Min(pNode->m_arrChildren[0]->m_arrChildren.m_iCount, pNode->m_arrChildren[1]->m_arrChildren.m_iCount);
 	for (i = 0; i < iCount; ++i) {
-		short nVal = -2;
+		short nVal, nReturns;
+		if (i == iCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall) 
+			nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - (iCount - 1);
+		else
+			nReturns = 1;
+		nVal = -nReturns - 1;
 		err = CompileNode(pNode->m_arrChildren[1]->m_arrChildren[i], nVal);
 		if (err != IERR_OK)
 			return err;
-		m_kLocals.LockTemporary(nVal);
-		arrValues.Append(nVal);
+		for (short nRet = 0; nRet < nReturns; ++nRet) {
+			m_kLocals.LockTemporary(nVal + nRet);
+			arrValues.Append(nVal + nRet);
+		}
 	}
 
+	iCount = pNode->m_arrChildren[0]->m_arrChildren.m_iCount;
 	for (i = 0; i < iCount; ++i) {
 		short nValue, nTable;
 		bool bGlobal;
 		err = CompileLValue(pNode->m_arrChildren[0]->m_arrChildren[i], nValue, nTable, bGlobal);
 		if (err != IERR_OK)
 			return err;
-		m_kLocals.ReleaseTemporary(arrValues[i]);
+		short nRes;
+		if (i < arrValues.m_iCount) {
+			nRes = arrValues[i];
+			m_kLocals.ReleaseTemporary(nRes);
+		} else
+			nRes = GetConstantIndex(CValue());
 		if (bGlobal) { // global
-			kInstr.SetSetGlobal(nValue, arrValues[i]);
+			kInstr.SetSetGlobal(nValue, nRes);
 			m_pCode->Append(kInstr);
 		} else 
 			if (nTable != CInstruction::INVALID_OPERAND) { // table value
-				kInstr.SetSetTableValue(nValue, nTable, arrValues[i]);
+				kInstr.SetSetTableValue(nValue, nTable, nRes);
 				m_pCode->Append(kInstr);
 			} else { // local
-				if (nValue != arrValues[i]) {
-					kInstr.SetMoveValue(nValue, arrValues[i]);
+				if (nValue != nRes) {
+					kInstr.SetMoveValue(nValue, nRes);
 					m_pCode->Append(kInstr);
 				}
 			}
