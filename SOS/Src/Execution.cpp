@@ -451,6 +451,7 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
 	while (i < m_nSrc1) {
 		pExecution->m_arrLocal[m_nDest + i].ReleaseValue();
 		pExecution->m_arrLocal[m_nDest + i].SetNone();
+		++i;
 	}
 
 	return IERR_OK;

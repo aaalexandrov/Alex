@@ -17,10 +17,11 @@ public:
 		typedef CHashKV<CStrAny, TLocalInfo, CStrAny, CStrAny> THash;
 
 		CArray<int> m_arrLocals;
+		int m_iLocals;
 		THash m_hashLocals;
 		short m_nCurContext;
 
-		CLocalTracker(): m_nCurContext(0) {}
+		CLocalTracker(): m_nCurContext(0), m_iLocals(0) {}
 
 		void Clear();
 
