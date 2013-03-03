@@ -1,4 +1,3 @@
-- Real local variables / scoping
 - Lexical closures
 - Non-constant upvalues
 - Co-routines
@@ -8,8 +7,10 @@
 - Compiled code optimizer
 
 - String concatenation operator
+- String length/element access operations
 - nil value
 - For loops
+- Tail function calls
 
 - Garbage collection
 - Script to native code calls
@@ -21,6 +22,7 @@
 
 + Non-stack based instruction set
 + Multiple return value rules for expressions
++ Real local variables / scoping
 
 -------------------------------------------------------------------------------
 
@@ -43,10 +45,12 @@ TableKey = Identifier | Constant
 TableValue = [ TableKey "=" ] Expression
 Table ::= "{" [ TableValue { "," TableValue } [ "," ] ] "}"
 
-FunctionDef ::= "function" "(" [ Identifier { "," Identifier } ] ")" { Operator } "end"
+IdentifierList ::= Identifier { "," Identifier }
+FunctionDef ::= "function" "(" [ IdentifierList ] ")" { Operator } "end"
 Expression ::= Or | FunctionDef
 ExpressionList ::= Expression { "," Expression }
 
+Locals ::= "local" IdentifierList [ "=" ExpressionList ]
 LValue ::= ( Indexable Index { Index } ) | Variable
 Assignment ::= LValue { "," LValue } "=" ExpressionList
 
@@ -54,4 +58,4 @@ Return ::= "return" [ ExpressionList ]
 If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
 While ::= "while" Expression "do" { Operator } "end"
 
-Operator ::= While | If | Return | Assignment | Call
+Operator ::= While | If | Return | Locals | Assignment | Call

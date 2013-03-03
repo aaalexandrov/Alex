@@ -58,8 +58,8 @@ CBNFParser::CRule *CBNFParser::CNonTerminal::AddChild(CRule const *pChild)
 bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const
 {
 	CNode *pNode;
-	if ((m_iID > 0 || m_eOutput == O_Output) && pFirstToken) {
-		pNode = new CNode(pFirstToken->Data, m_iID > 0 ? this : kParent.m_pRule);
+	if ((m_iID > 0 || m_eOutput == O_Output)) {
+		pNode = new CNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
 		kParent.m_arrChildren.Append(pNode);
 	} else
 		pNode = &kParent;

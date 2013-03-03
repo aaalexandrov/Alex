@@ -17,11 +17,11 @@ public:
 		typedef CHashKV<CStrAny, TLocalInfo, CStrAny, CStrAny> THash;
 
 		CArray<int> m_arrLocals;
-		int m_iLocals;
+		int m_iLocals, m_iVars;
 		THash m_hashLocals;
 		short m_nCurContext;
 
-		CLocalTracker(): m_nCurContext(0), m_iLocals(0) {}
+		CLocalTracker(): m_nCurContext(0), m_iLocals(0), m_iVars(0) {}
 
 		void Clear();
 
@@ -31,6 +31,7 @@ public:
 		void LockTemporary(short nIndex);
 		void ReleaseTemporary(short nIndex);
 
+		bool RegisterVar(CStrAny sVar, short nIndex);
     THash::TIter FindVar(CStrAny sVar);
 		short AllocVar(CStrAny sVar);
 		short GetVar(CStrAny sVar);
@@ -69,6 +70,7 @@ public:
 	EInterpretError CompileNot(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileAnd(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileOr(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileLocals(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileLValue(CBNFGrammar::CNode *pNode, short &nValue, short &nTable, bool &bGlobal);
 	EInterpretError CompileAssignment(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileIf(CBNFGrammar::CNode *pNode, short &nDest);

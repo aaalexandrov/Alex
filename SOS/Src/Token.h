@@ -23,6 +23,7 @@ public:
 
     // Identifiers
     TT_VARIABLE,
+		TT_LOCAL,
 		TT_FUNCTION,
 		TT_END,
 		TT_RETURN,

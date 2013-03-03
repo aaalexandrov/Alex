@@ -21,6 +21,7 @@ public:
 		RID_Not,
 		RID_And,
 		RID_Or,
+		RID_Locals,
 		RID_LValue,
 		RID_Assignment,
 		RID_If,
