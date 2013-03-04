@@ -11,6 +11,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
 	VAL2STR(IT_CREATE_TABLE),
 	VAL2STR(IT_GET_TABLE_VALUE),
 	VAL2STR(IT_SET_TABLE_VALUE),
+  VAL2STR(IT_CONCAT),
   VAL2STR(IT_NEGATE),
 	VAL2STR(IT_ADD),
   VAL2STR(IT_SUBTRACT),
@@ -22,7 +23,6 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
 	VAL2STR(IT_COMPARE_LESS),
 	VAL2STR(IT_COMPARE_LESS_EQ),
 	VAL2STR(IT_NOT),
-	VAL2STR(IT_AND),
 	VAL2STR(IT_MOVE_AND_JUMP_IF_FALSE),
 	VAL2STR(IT_MOVE_AND_JUMP_IF_TRUE),
 	VAL2STR(IT_CALL),
@@ -65,6 +65,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution) const
 			return ExecGetTableValue(pExecution);
 		case IT_SET_TABLE_VALUE: 
 			return ExecSetTableValue(pExecution);
+    case IT_CONCAT: 
+			return ExecConcat(pExecution);
     case IT_NEGATE: 
 			return ExecNegate(pExecution);
 		case IT_ADD: 
@@ -87,8 +89,6 @@ EInterpretError CInstruction::Execute(CExecution *pExecution) const
 			return ExecCompareLessEq(pExecution);
 		case IT_NOT: 
 			return ExecNot(pExecution);
-		case IT_AND: 
-			return ExecAnd(pExecution);
 		case IT_MOVE_AND_JUMP_IF_FALSE: 
 			return ExecMoveAndJumpIfFalse(pExecution);
 		case IT_MOVE_AND_JUMP_IF_TRUE: 
@@ -144,10 +144,14 @@ EInterpretError CInstruction::ExecSetGlobal(CExecution *pExecution) const
 	if (!pDst || !pSrc)
 		return IERR_INVALID_OPERAND;
 	CValue::THash::TIter it = pExecution->m_pGlobalEnvironment->m_Hash.Find(*pDst);
-	if (it)
-		(*it).m_Val = *pSrc;
-	else 
-		pExecution->m_pGlobalEnvironment->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc));
+	if (it) {
+		if (pSrc->m_btType == CValue::VT_NONE)
+			pExecution->m_pGlobalEnvironment->m_Hash.Remove(it);
+		else
+		  (*it).m_Val = *pSrc;
+	} else 
+    if (pSrc->m_btType != CValue::VT_NONE)
+		  pExecution->m_pGlobalEnvironment->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc));
 	return IERR_OK;
 }
 
@@ -182,10 +186,14 @@ EInterpretError CInstruction::ExecSetTableValue(CExecution *pExecution) const
 	if (pSrc0->m_btType != CValue::VT_TABLE)
 		return IERR_OPERAND_TYPE;
 	CValue::THash::TIter it = pSrc0->m_pTableValue->m_Hash.Find(*pDst);
-	if (it)
-		(*it).m_Val = *pSrc1;
-	else 
-		pSrc0->m_pTableValue->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc1));
+	if (it) {
+    if (pSrc1->m_btType == CValue::VT_NONE)
+      pSrc0->m_pTableValue->m_Hash.Remove(it);
+    else
+      (*it).m_Val = *pSrc1;
+  } else 
+    if (pSrc1->m_btType != CValue::VT_NONE)
+		  pSrc0->m_pTableValue->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc1));
 	return IERR_OK;
 }
 
@@ -197,6 +205,22 @@ EInterpretError CInstruction::ExecCreateTable(CExecution *pExecution) const
 		return IERR_INVALID_OPERAND;
 	pDst->ReleaseValue();
 	pDst->Set(new CValueTable());
+	return IERR_OK;
+}
+
+EInterpretError CInstruction::ExecConcat(CExecution *pExecution) const
+{
+	CValue *pDst, *pSrc0, *pSrc1;
+	pDst = GetDest(pExecution);
+	pSrc0 = GetSrc0(pExecution);
+	pSrc1 = GetSrc1(pExecution);
+	if (!pDst || !pSrc0 || !pSrc1)
+		return IERR_INVALID_OPERAND;
+	CStrAny sRes(pSrc0->GetStr(false));
+	sRes += CStrAny(pSrc1->GetStr(false));
+	sRes.AssureInRepository();
+	pDst->ReleaseValue();
+	pDst->Set(sRes.GetHeader());
 	return IERR_OK;
 }
 
@@ -227,14 +251,6 @@ EInterpretError CInstruction::ExecAdd(CExecution *pExecution) const
 	if (pSrc0->m_btType == CValue::VT_FLOAT) {
 		pDst->ReleaseValue();
 		pDst->Set(pSrc0->m_fValue + pSrc1->m_fValue);
-		return IERR_OK;
-	}
-	if (pSrc0->m_btType == CValue::VT_STRING) {
-		CStrAny sRes(pSrc0->m_pStrValue);
-		sRes += CStrAny(pSrc1->m_pStrValue);
-		sRes.AssureInRepository();
-		pDst->ReleaseValue();
-		pDst->Set(sRes.GetHeader());
 		return IERR_OK;
 	}
 	return IERR_OPERAND_TYPE;
@@ -308,8 +324,9 @@ EInterpretError CInstruction::ExecCompareEq(CExecution *pExecution) const
 	pSrc1 = GetSrc1(pExecution);
 	if (!pDst || !pSrc0 || !pSrc1)
 		return IERR_INVALID_OPERAND;
+  bool bRes = *pSrc0 == *pSrc1;
 	pDst->ReleaseValue();
-	pDst->Set(*pSrc0 == *pSrc1);
+	pDst->Set(bRes);
 	return IERR_OK;
 }
 
@@ -321,8 +338,9 @@ EInterpretError CInstruction::ExecCompareNotEq(CExecution *pExecution) const
 	pSrc1 = GetSrc1(pExecution);
 	if (!pDst || !pSrc0 || !pSrc1)
 		return IERR_INVALID_OPERAND;
+  bool bRes = *pSrc0 != *pSrc1;
 	pDst->ReleaseValue();
-	pDst->Set(*pSrc0 != *pSrc1);
+	pDst->Set(bRes);
 	return IERR_OK;
 }
 
@@ -342,8 +360,9 @@ EInterpretError CInstruction::ExecCompareLess(CExecution *pExecution) const
 		return IERR_OK;
 	}
 	if (pSrc0->m_btType == CValue::VT_STRING) {
+    bool bRes = pSrc0->GetStr(false) < pSrc1->GetStr(false);
 		pDst->ReleaseValue();
-		pDst->Set(pSrc0->GetStr() < pSrc1->GetStr());
+		pDst->Set(bRes);
 		return IERR_OK;
 	}
 	return IERR_OPERAND_TYPE;
@@ -365,8 +384,9 @@ EInterpretError CInstruction::ExecCompareLessEq(CExecution *pExecution) const
 		return IERR_OK;
 	}
 	if (pSrc0->m_btType == CValue::VT_STRING) {
-		pDst->ReleaseValue();
-		pDst->Set(pSrc0->GetStr() <= pSrc1->GetStr());
+    bool bRes = pSrc0->GetStr(false) <= pSrc1->GetStr(false);
+    pDst->ReleaseValue();
+		pDst->Set(bRes);
 		return IERR_OK;
 	}
 	return IERR_OPERAND_TYPE;
@@ -379,25 +399,8 @@ EInterpretError CInstruction::ExecNot(CExecution *pExecution) const
 	pSrc = GetSrc0(pExecution);
 	if (!pDst || !pSrc)
 		return IERR_INVALID_OPERAND;
-	if (pSrc->m_btType != CValue::VT_BOOL)
-		return IERR_OPERAND_TYPE;
 	pDst->ReleaseValue();
-	pDst->Set(!pSrc->m_bValue);
-	return IERR_OK;
-}
-
-EInterpretError CInstruction::ExecAnd(CExecution *pExecution) const
-{
-	CValue *pDst, *pSrc0, *pSrc1;
-	pDst = GetDest(pExecution);
-	pSrc0 = GetSrc0(pExecution);
-	pSrc1 = GetSrc1(pExecution);
-	if (!pDst || !pSrc0 || !pSrc1)
-		return IERR_INVALID_OPERAND;
-	if (pSrc0->m_btType != CValue::VT_BOOL || pSrc1->m_btType != CValue::VT_BOOL)
-		return IERR_OPERAND_TYPE;
-	pDst->ReleaseValue();
-	pDst->Set(pSrc0->m_bValue && pSrc1->m_bValue);
+  pDst->Set(pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue);
 	return IERR_OK;
 }
 
@@ -480,7 +483,7 @@ CStrAny CInstruction::GetOperandConstStr(CFragment *pFragment, short nOperand) c
 {
 	if (nOperand == INVALID_OPERAND || nOperand >= 0)
 		return CStrAny();
-	return pFragment->m_arrConst[-nOperand - 1].GetStr();
+	return pFragment->m_arrConst[-nOperand - 1].GetStr(true);
 }
 
 CStrAny CInstruction::ToStr(CFragment *pFragment) const

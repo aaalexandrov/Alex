@@ -3,18 +3,18 @@
 - Co-routines
 - Iteration
 - Number of elements in table
+- Struct-type table element accessors (.field)
 - Compiled fragment saving / loading
 - Compiled code optimizer
 
-- String concatenation operator
 - String length/element access operations
-- nil value
 - For loops
 - Tail function calls
 
 - Garbage collection
 - Script to native code calls
 - Native code to script calls
+- Error reporting & recovery
 - Grammar optimizer
 
 - Automatic function execution parallelism
@@ -23,21 +23,26 @@
 + Non-stack based instruction set
 + Multiple return value rules for expressions
 + Real local variables / scoping
++ nil value
++ String concatenation operator
+
 
 -------------------------------------------------------------------------------
 
-Constant ::= "true" | "false" | String | Number | Table
+Constant ::= "nil" | "true" | "false" | String | Number | Table
 Variable ::= Identifier
-Call ::= ( Variable | FunctionDef ) "(" [ ExpressionList ] ")" { "(" [ ExpressionList ] ")" }
+ParamList ::= "(" [ ExpressionList ] ")"
+Call ::= ( Variable { Index } | FunctionDef ) ParamList { { Index } ParamList }
 Indexable ::= Call | Variable | "(" Expression ")" 
 Index ::= "[" Expression "]"
 Operand ::= Constant | ( Indexable { Index } )
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ( "*" | "/" ) Power }
 Sum ::= ["+" | "-"] Mult { ( "+" | "-" ) Mult }
+Concat ::= Sum { ".." Sum }
 
-Comparison ::= Sum [ ("==" | "~=" | "<" | ">" | "<=" | ">=") Sum ]
-Not ::= [ "not" ] Comparison
+Comparison ::= Concat [ ("==" | "~=" | "<" | ">" | "<=" | ">=") Concat ]
+Not ::= { "not" } Comparison
 And ::= Not { "and" Not }
 Or ::= And { "or" And }
 

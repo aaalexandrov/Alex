@@ -17,6 +17,7 @@ public:
 		IT_GET_TABLE_VALUE,
 		IT_SET_TABLE_VALUE,
 
+    IT_CONCAT,
     IT_NEGATE,
 		IT_ADD,
     IT_SUBTRACT,
@@ -29,7 +30,6 @@ public:
 		IT_COMPARE_LESS,
 		IT_COMPARE_LESS_EQ,
 		IT_NOT,
-		IT_AND,
 
 		IT_MOVE_AND_JUMP_IF_FALSE,
 		IT_MOVE_AND_JUMP_IF_TRUE,
@@ -58,6 +58,7 @@ public:
 	void SetGetTableValue(short nDest, short nSrc0, short nSrc1) { Set(IT_GET_TABLE_VALUE, nDest, nSrc0, nSrc1); }
 	void SetSetTableValue(short nDest, short nSrc0, short nSrc1) { Set(IT_SET_TABLE_VALUE, nDest, nSrc0, nSrc1); }
 	void SetCreateTable(short nDest) { Set(IT_CREATE_TABLE, nDest); }
+  void SetConcat(short nDest, short nSrc0, short nSrc1) { Set(IT_CONCAT, nDest, nSrc0, nSrc1); }
 	void SetNegate(short nDest, short nSrc0) { Set(IT_NEGATE, nDest, nSrc0); }
   void SetAdd(short nDest, short nSrc0, short nSrc1) { Set(IT_ADD, nDest, nSrc0, nSrc1); }
   void SetSubtract(short nDest, short nSrc0, short nSrc1) { Set(IT_SUBTRACT, nDest, nSrc0, nSrc1); }
@@ -69,7 +70,6 @@ public:
 	void SetCompareLess(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS, nDest, nSrc0, nSrc1); }
 	void SetCompareLessEq(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS_EQ, nDest, nSrc0, nSrc1); }
 	void SetNot(short nDest, short nSrc0) { Set(IT_NOT, nDest, nSrc0); }
-	void SetAnd(short nDest, short nSrc0, short nSrc1) { Set(IT_AND, nDest, nSrc0, nSrc1); }
 	void SetMoveAndJumpIfFalse(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_FALSE, nDest, nSrc0, nSrc1); } 
 	void SetMoveAndJumpIfTrue(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_TRUE, nDest, nSrc0, nSrc1); }
 	void SetCall(short nDest, short nSrc0, short nSrc1) { Set(IT_CALL, nDest, nSrc0, nSrc1); }
@@ -89,6 +89,7 @@ public:
 	EInterpretError ExecGetTableValue(CExecution *pExecution) const;
 	EInterpretError ExecSetTableValue(CExecution *pExecution) const;
 	EInterpretError ExecCreateTable(CExecution *pExecution) const;
+  EInterpretError ExecConcat(CExecution *pExecution) const;
 	EInterpretError ExecNegate(CExecution *pExecution) const;
   EInterpretError ExecAdd(CExecution *pExecution) const;
   EInterpretError ExecSubtract(CExecution *pExecution) const;
@@ -100,7 +101,6 @@ public:
   EInterpretError ExecCompareLess(CExecution *pExecution) const;
 	EInterpretError ExecCompareLessEq(CExecution *pExecution) const;
 	EInterpretError ExecNot(CExecution *pExecution) const;
-	EInterpretError ExecAnd(CExecution *pExecution) const;
 	EInterpretError ExecMoveAndJumpIfFalse(CExecution *pExecution) const;
 	EInterpretError ExecMoveAndJumpIfTrue(CExecution *pExecution) const;
 	EInterpretError ExecCall(CExecution *pExecution) const;

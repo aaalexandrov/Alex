@@ -59,7 +59,7 @@ public:
 
 	inline bool         GetBool() const      { return m_btType == VT_BOOL ? m_bValue : false; }
 	inline float        GetFloat() const     { return m_btType == VT_FLOAT ? m_fValue : 0; }
-  inline CStrAny      GetStr() const;
+  inline CStrAny      GetStr(bool bDecorate) const;
   inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
 	inline CFragment   *GetFragment() const  { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
 
@@ -218,23 +218,29 @@ CValue &CValue::operator =(CValue const &kValue)
 	// Original value gets autoreleased
 }
 
-CStrAny CValue::GetStr() const
+CStrAny CValue::GetStr(bool bDecorate) const
 {
   char chBuf[64];
   CStrAny s;
   switch (m_btType) {
     case VT_NONE:
-      s = CStrAny(ST_CONST, "<null>");
+      s = CStrAny(ST_CONST, "nil");
+      if (bDecorate)
+        s = CStrAny(ST_CONST, '<') + s + CStrAny(ST_CONST, '>');
       break;
 		case VT_BOOL:
-			s = CStrAny(ST_CONST, m_bValue ? "<true>" : "<false>");
+			s = CStrAny(ST_CONST, m_bValue ? "true" : "false");
+      if (bDecorate)
+        s = CStrAny(ST_CONST, '<') + s + CStrAny(ST_CONST, '>');
 			break;
     case VT_FLOAT:
       sprintf(chBuf, "%g", m_fValue);
       s = CStrAny(ST_CONST, chBuf);
       break;
     case VT_STRING:
-      s = CStrAny(ST_CONST, '"') + CStrAny(m_pStrValue) + CStrAny(ST_CONST, '"');
+      s = CStrAny(m_pStrValue);
+      if (bDecorate)
+        s = CStrAny(ST_CONST, '"') + s + CStrAny(ST_CONST, '"');
       break;
     case VT_TABLE:
       sprintf(chBuf, "<Table:%x>", m_pTableValue);

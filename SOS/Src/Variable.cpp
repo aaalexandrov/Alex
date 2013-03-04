@@ -67,7 +67,7 @@ void CFragment::Dump()
 	printf("Instructions: %d, Constants: %d, Locals: %d, Parameters: %d\n", m_arrCode.m_iCount, m_arrConst.m_iCount, m_nLocalCount, m_nParamCount);
 	CStrAny s;
 	for (int i = 0; i < m_arrConst.m_iCount; ++i) {
-		s = m_arrConst[i].GetStr();
+		s = m_arrConst[i].GetStr(true);
 		printf("%04d: %s\n", i, s.m_pBuf);
 	}
   for (int i = 0; i < m_arrCode.m_iCount; ++i) {

@@ -25,7 +25,7 @@ int ProcessInput()
 				if (err == IERR_OK) {
 					for (int i = 0; i < kExecution.m_nReturnCount; ++i) {
 						CValue const &kVal = kExecution.m_arrLocal[kExecution.m_nReturnBase + i];
-						CStrAny sRes = kVal.GetStr();
+						CStrAny sRes = kVal.GetStr(true);
 						fprintf(stdout, "<< %s\n", sRes.m_pBuf);
 						if (kVal.m_btType == CValue::VT_FRAGMENT)
 							kVal.GetFragment()->Dump();

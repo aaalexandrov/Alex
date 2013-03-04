@@ -37,6 +37,7 @@ public:
 		TT_NOT,
 		TT_AND,
 		TT_OR,
+		TT_NIL,
 
     // Literals
     TT_NUMBER,
@@ -49,6 +50,7 @@ public:
 		TT_GREAT_EQUAL,
 		TT_LESS,
 		TT_GREAT,
+    TT_CONCAT,
     TT_PLUS, 
     TT_MINUS,
     TT_MULTIPLY,

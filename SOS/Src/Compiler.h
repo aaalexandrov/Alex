@@ -66,6 +66,7 @@ public:
 	EInterpretError CompilePower(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileMult(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileSum(CBNFGrammar::CNode *pNode, short &nDest);
+  EInterpretError CompileConcat(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileComparison(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileNot(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileAnd(CBNFGrammar::CNode *pNode, short &nDest);
