@@ -6,6 +6,7 @@
 
 class CValueTable;
 class CFragment;
+class CExecution;
 class CValue {
 public:
   enum EValueType {
@@ -15,9 +16,11 @@ public:
     VT_STRING,
     VT_TABLE,
 		VT_FRAGMENT,
+    VT_NATIVE_FUNC,
   };
 
   typedef CHashKV<CValue, CValue, CValue, CValue> THash;
+  typedef EInterpretError (FnNative)(CExecution &kExecution, CArray<CValue> &arrParamResults);
 
 public:
   union {
@@ -26,6 +29,7 @@ public:
     CStrHeader const        *m_pStrValue;
     CValueTable             *m_pTableValue;
 		CFragment               *m_pFragment;
+    FnNative                *m_pNativeFunc;
     void                    *m_Value;
   };
   BYTE m_btType;
@@ -36,6 +40,7 @@ public:
   explicit CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   explicit CValue(CValueTable *pTable)          { Set(pTable); }
 	explicit CValue(CFragment *pFragment)         { Set(pFragment); }
+  explicit CValue(FnNative *pNativeFunc)        { Set(pNativeFunc); }
   CValue(CValue const &kValue)                  { Set(kValue); }
 
   ~CValue() { ReleaseValue(); }
@@ -46,6 +51,7 @@ public:
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
 	inline void Set(CFragment *pFragment);
+  inline void Set(FnNative *pNativeFunc);
 	inline void Set(CValue const &kValue);
 
   inline void AcquireValue();
@@ -57,11 +63,12 @@ public:
 
   inline CValue &operator =(CValue const &kValue);
 
-	inline bool         GetBool() const      { return m_btType == VT_BOOL ? m_bValue : false; }
-	inline float        GetFloat() const     { return m_btType == VT_FLOAT ? m_fValue : 0; }
+	inline bool         GetBool() const       { return m_btType == VT_BOOL ? m_bValue : false; }
+	inline float        GetFloat() const      { return m_btType == VT_FLOAT ? m_fValue : 0; }
   inline CStrAny      GetStr(bool bDecorate) const;
-  inline CValueTable *GetTable() const     { return m_btType == VT_TABLE ? m_pTableValue : 0; }
-	inline CFragment   *GetFragment() const  { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
+  inline CValueTable *GetTable() const      { return m_btType == VT_TABLE ? m_pTableValue : 0; }
+	inline CFragment   *GetFragment() const   { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
+  inline FnNative    *GetNativeFunc() const { return m_btType == VT_NATIVE_FUNC ? m_pNativeFunc : 0; }
 
 	inline size_t GetHash() const { return (size_t) m_btType ^ (size_t) m_Value; }
 
@@ -160,10 +167,10 @@ void CValue::ReleaseValue()
 	}
 }
 
-void CValue::SetNone() 
-{ 
-  m_btType = VT_NONE; 
-  m_Value = 0; 
+void CValue::SetNone()
+{
+  m_btType = VT_NONE;
+  m_Value = 0;
 }
 
 void CValue::Set(bool bValue)
@@ -173,30 +180,36 @@ void CValue::Set(bool bValue)
 }
 
 void CValue::Set(float fValue)
-{ 
-  m_btType = VT_FLOAT; 
-  m_fValue = fValue; 
+{
+  m_btType = VT_FLOAT;
+  m_fValue = fValue;
 }
 
-void CValue::Set(CStrHeader const *pStrHeader) 
-{ 
-  m_btType = VT_STRING; 
-  m_pStrValue = pStrHeader; 
-  m_pStrValue->Acquire(); 
+void CValue::Set(CStrHeader const *pStrHeader)
+{
+  m_btType = VT_STRING;
+  m_pStrValue = pStrHeader;
+  m_pStrValue->Acquire();
 }
 
-void CValue::Set(CValueTable *pTable)    
-{ 
-  m_btType = VT_TABLE; 
-  m_pTableValue = pTable; 
+void CValue::Set(CValueTable *pTable)
+{
+  m_btType = VT_TABLE;
+  m_pTableValue = pTable;
 	m_pTableValue->Acquire();
 }
 
-void CValue::Set(CFragment *pFragment)    
-{ 
-  m_btType = VT_FRAGMENT; 
-  m_pFragment = pFragment; 
+void CValue::Set(CFragment *pFragment)
+{
+  m_btType = VT_FRAGMENT;
+  m_pFragment = pFragment;
 	AcquireValue();
+}
+
+void CValue::Set(FnNative *pNativeFunc)
+{
+  m_btType = VT_NATIVE_FUNC;
+  m_pNativeFunc = pNativeFunc;
 }
 
 void CValue::Set(CValue const &kValue)
@@ -206,8 +219,8 @@ void CValue::Set(CValue const &kValue)
   AcquireValue();
 }
 
-CValue &CValue::operator =(CValue const &kValue) 
-{ 
+CValue &CValue::operator =(CValue const &kValue)
+{
 	CValue oldVal;
 	// Manually copy the value to a temp without acquiring, it will be autoreleased when the temp goes out of scope
 	oldVal.m_btType = m_btType;
@@ -248,6 +261,10 @@ CStrAny CValue::GetStr(bool bDecorate) const
       break;
 		case VT_FRAGMENT:
 			sprintf(chBuf, "<Fragment:%x>", m_pFragment);
+			s = CStrAny(ST_CONST, chBuf);
+			break;
+		case VT_NATIVE_FUNC:
+			sprintf(chBuf, "<NativeFunc:%x>", m_pNativeFunc);
 			s = CStrAny(ST_CONST, chBuf);
 			break;
   }

@@ -9,11 +9,12 @@
 
 - String length/element access operations
 - For loops
+- Core function library
 - Tail function calls
+- Function result forwarding for multiple returns
+- Variable number of arguments
 
 - Garbage collection
-- Script to native code calls
-- Native code to script calls
 - Error reporting & recovery
 - Grammar optimizer
 
@@ -25,6 +26,8 @@
 + Real local variables / scoping
 + nil value
 + String concatenation operator
++ Script to native code calls
++ Native code to script calls
 
 
 -------------------------------------------------------------------------------

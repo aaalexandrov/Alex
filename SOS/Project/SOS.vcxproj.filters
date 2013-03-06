@@ -68,6 +68,8 @@
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
     <ClCompile Include="..\Src\Error.cpp" />
+    <ClCompile Include="..\Src\Interpreter.cpp" />
+    <ClCompile Include="..\Src\Library.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />
@@ -136,6 +138,8 @@
     </ClInclude>
     <ClInclude Include="..\Src\BNFGrammar.h" />
     <ClInclude Include="..\Src\Compiler.h" />
+    <ClInclude Include="..\Src\Interpreter.h" />
+    <ClInclude Include="..\Src\Library.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />

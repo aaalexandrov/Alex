@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "Frontend.h"
-#include "BNFGrammar.h"
+#include "Interpreter.h"
 #include "Compiler.h"
+
+CInterpreter g_kInterpreter;
 
 int ProcessInput()
 {
   char chBuf[1024];
-  CExecution kExecution;
-	kExecution.m_pGlobalEnvironment = new CValueTable();
 
 	while (1) {
 		fputs("> ", stdout);
@@ -20,15 +20,12 @@ int ProcessInput()
       CArray<CValue> arrParams;
       err = kChain.Compile(sInput);
       if (err == IERR_OK) {
-        kChain.m_kCompiler.m_pCode->Dump();
-        err = kExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams, kExecution.m_pGlobalEnvironment);
+        err = g_kInterpreter.Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
 				if (err == IERR_OK) {
-					for (int i = 0; i < kExecution.m_nReturnCount; ++i) {
-						CValue const &kVal = kExecution.m_arrLocal[kExecution.m_nReturnBase + i];
+          for (int i = 0; i < arrParams.m_iCount; ++i) {
+						CValue const &kVal = arrParams[i];
 						CStrAny sRes = kVal.GetStr(true);
 						fprintf(stdout, "<< %s\n", sRes.m_pBuf);
-						if (kVal.m_btType == CValue::VT_FRAGMENT)
-							kVal.GetFragment()->Dump();
 					}
 				} else {
 					fprintf(stdout, "<< %s\n", g_IERR2Str.GetStr(err).m_pBuf);

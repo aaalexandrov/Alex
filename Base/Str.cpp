@@ -6,8 +6,6 @@
 
 // CStrHeader ---------------------------------------------------------
 
-CStrHeader::THash CStrHeader::s_Repository;
-
 CStrHeader *CStrHeader::Get(const char *pSrc, int iLen, bool bInRepository)
 {
   if (!pSrc) {
@@ -18,15 +16,15 @@ CStrHeader *CStrHeader::Get(const char *pSrc, int iLen, bool bInRepository)
   if (iLen < 0)
     iLen = (int) strlen(pSrc);
   if (bInRepository) {
-    THash::TIter it = s_Repository.Find(CStrAny(ST_PART, pSrc, iLen));
-    if (it) 
+    THash::TIter it = GetRepository().Find(CStrAny(ST_PART, pSrc, iLen));
+    if (it)
       return *it;
-  } 
+  }
   CStrHeader *pHeader = CStrHeader::Alloc(iLen);
   pHeader->Init(iLen, pSrc);
   if (bInRepository) {
     pHeader->m_bInRepository = true;
-    s_Repository.Add(pHeader);
+    GetRepository().Add(pHeader);
   }
   return pHeader;
 }
@@ -50,7 +48,7 @@ bool CStrHeader::CheckRepository()
   THash::TIter it;
 
   bRes = true;
-  for (it = s_Repository; it; ++it) {
+  for (it = GetRepository(); it; ++it) {
     ASSERT(it->m_bInRepository && it->m_bHashInitialized);
     bRes &= it->m_bInRepository && it->m_bHashInitialized;
   }
@@ -126,7 +124,7 @@ void CStrAny::Init(EStrType eType, char const *pStr, int iLen)
     CStrHeader *pHeader = CStrHeader::Get(pStr, iLen, !!(eType & ST_INREPOSITORY));
     pHeader->Acquire();
     m_pBuf = (char const *) (pHeader + 1);
-  } else 
+  } else
     m_pBuf = pStr;
 }
 
@@ -139,7 +137,7 @@ void CStrAny::Init(EStrType eType, CStrAny const &s)
     m_bZeroTerminated = s.m_bZeroTerminated;
     if (m_bHasHeader)
       GetHeader()->Acquire();
-  } else 
+  } else
     Init(eType, s.m_pBuf, s.m_iLen);
 }
 
@@ -168,7 +166,7 @@ void CStrAny::MakeUnique()
     pNewHeader->Acquire();
     pHeader->Release();
     m_pBuf = (char const *) (pNewHeader + 1);
-  } else 
+  } else
     Init(ST_STR, m_pBuf, m_iLen);
 }
 
@@ -177,7 +175,7 @@ void CStrAny::AssureHasHeader()
   if (m_bHasHeader)
     return;
   ASSERT(m_pBuf || !m_iLen);
-  if (!m_pBuf) 
+  if (!m_pBuf)
     m_pBuf = "";
   Init(ST_STR, m_pBuf, m_iLen);
 }

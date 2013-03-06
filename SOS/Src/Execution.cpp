@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Execution.h"
+#include "Interpreter.h"
 
 // CInstruction ---------------------------------------------------------------
 
@@ -126,13 +127,7 @@ EInterpretError CInstruction::ExecGetGlobal(CExecution *pExecution) const
 	pSrc = GetSrc0(pExecution);
 	if (!pDst || !pSrc)
 		return IERR_INVALID_OPERAND;
-	CValue::THash::TIter it = pExecution->m_pGlobalEnvironment->m_Hash.Find(*pSrc);
-	if (it)
-		*pDst = (*it).m_Val;
-	else {
-		pDst->ReleaseValue();
-		pDst->SetNone();
-	}
+  GetTableValue(*pExecution->GetGlobalEnvironment(), *pSrc, *pDst);
 	return IERR_OK;
 }
 
@@ -143,15 +138,7 @@ EInterpretError CInstruction::ExecSetGlobal(CExecution *pExecution) const
 	pSrc = GetSrc0(pExecution);
 	if (!pDst || !pSrc)
 		return IERR_INVALID_OPERAND;
-	CValue::THash::TIter it = pExecution->m_pGlobalEnvironment->m_Hash.Find(*pDst);
-	if (it) {
-		if (pSrc->m_btType == CValue::VT_NONE)
-			pExecution->m_pGlobalEnvironment->m_Hash.Remove(it);
-		else
-		  (*it).m_Val = *pSrc;
-	} else 
-    if (pSrc->m_btType != CValue::VT_NONE)
-		  pExecution->m_pGlobalEnvironment->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc));
+  SetTableValue(*pExecution->GetGlobalEnvironment(), *pDst, *pSrc);
 	return IERR_OK;
 }
 
@@ -165,13 +152,7 @@ EInterpretError CInstruction::ExecGetTableValue(CExecution *pExecution) const
 		return IERR_INVALID_OPERAND;
 	if (pSrc0->m_btType != CValue::VT_TABLE)
 		return IERR_OPERAND_TYPE;
-	CValue::THash::TIter it = pSrc0->m_pTableValue->m_Hash.Find(*pSrc1);
-	if (it)
-		*pDst = (*it).m_Val;
-	else {
-		pDst->ReleaseValue();
-		pDst->SetNone();
-	}
+  GetTableValue(*pSrc0->m_pTableValue, *pSrc1, *pDst);
 	return IERR_OK;
 }
 
@@ -185,15 +166,7 @@ EInterpretError CInstruction::ExecSetTableValue(CExecution *pExecution) const
 		return IERR_INVALID_OPERAND;
 	if (pSrc0->m_btType != CValue::VT_TABLE)
 		return IERR_OPERAND_TYPE;
-	CValue::THash::TIter it = pSrc0->m_pTableValue->m_Hash.Find(*pDst);
-	if (it) {
-    if (pSrc1->m_btType == CValue::VT_NONE)
-      pSrc0->m_pTableValue->m_Hash.Remove(it);
-    else
-      (*it).m_Val = *pSrc1;
-  } else 
-    if (pSrc1->m_btType != CValue::VT_NONE)
-		  pSrc0->m_pTableValue->m_Hash.Add(CValue::THash::Elem(*pDst, *pSrc1));
+  SetTableValue(*pSrc0->m_pTableValue, *pDst, *pSrc1);
 	return IERR_OK;
 }
 
@@ -438,19 +411,37 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
 {
 	if (m_nDest < 0 || m_nSrc0 < 1 || m_nSrc1 < 0 || m_nDest + Util::Max(m_nSrc0, m_nSrc1) > pExecution->m_arrLocal.m_iCount)
 		return IERR_INVALID_OPERAND;
-	if (pExecution->m_arrLocal[m_nDest].m_btType != CValue::VT_FRAGMENT)
+  bool bNativeCall = pExecution->m_arrLocal[m_nDest].m_btType == CValue::VT_NATIVE_FUNC;
+	if (pExecution->m_arrLocal[m_nDest].m_btType != CValue::VT_FRAGMENT && !bNativeCall)
 		return IERR_OPERAND_TYPE;
 
 	short i;
-	CExecution kExecution;
+  CExecution kExecution(pExecution->m_pInterpreter);
 	CArray<CValue> arrParams(m_nSrc0 - 1);
 	for (i = 1; i < m_nSrc0; ++i)
 		arrParams.Append(pExecution->m_arrLocal[m_nDest + i]);
-	EInterpretError err = kExecution.Execute(pExecution->m_arrLocal[m_nDest].m_pFragment, arrParams, pExecution->m_pGlobalEnvironment);
-	if (err != IERR_OK)
-		return err;
-	for (i = 0; i < Util::Min(m_nSrc1, kExecution.m_nReturnCount); ++i)
-		pExecution->m_arrLocal[m_nDest + i] = kExecution.m_arrLocal[kExecution.m_nReturnBase + i];
+
+  CArray<CValue> *pResults;
+  short nReturnCount, nReturnBase;
+  if (bNativeCall) {
+	  EInterpretError err = kExecution.Execute(pExecution->m_arrLocal[m_nDest].m_pNativeFunc, arrParams);
+	  if (err != IERR_OK)
+		  return err;
+    pResults = &arrParams;
+    nReturnBase = 0;
+    nReturnCount = (short) arrParams.m_iCount;
+  } else {
+	  EInterpretError err = kExecution.Execute(pExecution->m_arrLocal[m_nDest].m_pFragment, arrParams);
+	  if (err != IERR_OK)
+		  return err;
+    pResults = &kExecution.m_arrLocal;
+    nReturnBase = kExecution.m_nReturnBase;
+    nReturnCount = kExecution.m_nReturnCount;
+  }
+
+  nReturnCount = Util::Min(m_nSrc1, nReturnCount);
+	for (i = 0; i < nReturnCount; ++i)
+		pExecution->m_arrLocal[m_nDest + i] = pResults->At(nReturnBase + i);
 	while (i < m_nSrc1) {
 		pExecution->m_arrLocal[m_nDest + i].ReleaseValue();
 		pExecution->m_arrLocal[m_nDest + i].SetNone();
@@ -496,27 +487,41 @@ CStrAny CInstruction::ToStr(CFragment *pFragment) const
 
 // CExecution -----------------------------------------------------------------
 
-CExecution::CExecution()
+CExecution::CExecution(CInterpreter *pInterpreter) : 
+  m_pInterpreter(pInterpreter)
 {
-	m_pGlobalEnvironment = 0;
 }
 
 CExecution::~CExecution()
 {
 }
 
-EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams, CValueTable *pGlobalEnvironment)
+CValueTable *CExecution::GetGlobalEnvironment()
+{
+  return m_pInterpreter->m_pGlobalEnvironment;
+}
+
+void CExecution::GetReturnValues(CArray<CValue> &arrReturns)
+{
+  arrReturns.SetCount(m_nReturnCount);
+  for (int i = 0; i < m_nReturnCount; ++i)
+    arrReturns[i] = m_arrLocal[m_nReturnBase + i];
+}
+
+EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams)
 {
 	m_nReturnCount = 0;
 	m_pCode = pCode;
   m_pNextInstruction = m_pCode->GetFirstInstruction();
 	m_arrLocal.SetCount(pCode->m_nLocalCount);
-	if (pGlobalEnvironment)
-	  m_pGlobalEnvironment = pGlobalEnvironment;
-	else
-		m_pGlobalEnvironment = new CValueTable();
 	ASSERT(pCode->m_nLocalCount >= pCode->m_nParamCount);
   for (int i = 0; i < Util::Min<int>(m_pCode->m_nParamCount, arrParams.m_iCount); ++i)
 		m_arrLocal[i] = arrParams[i];
   return m_pCode->Execute(this);
+}
+
+EInterpretError CExecution::Execute(CValue::FnNative *pNativeFunc, CArray<CValue> &arrParams)
+{
+  ASSERT(pNativeFunc);
+  return pNativeFunc(*this, arrParams);
 }

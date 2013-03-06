@@ -11,7 +11,7 @@ class CStrHeader {
 public:
   static const int ALLOC_GRANULARITY = 16;
 
-  mutable CRefCount m_RefCount;        
+  mutable CRefCount m_RefCount;
   struct {
     int m_iLen: 30;
     int m_bInRepository : 1;
@@ -19,8 +19,8 @@ public:
   };
   mutable size_t m_uiHash;
 
-  inline DWORD GetRef() const  { return m_RefCount.Get(); } 
-  inline void  Acquire() const { m_RefCount.Inc(); }        
+  inline DWORD GetRef() const  { return m_RefCount.Get(); }
+  inline void  Acquire() const { m_RefCount.Inc(); }
   inline void  Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
 
   static CStrHeader *Get(const char *pSrc, int iLen, bool bInRepository);
@@ -33,7 +33,7 @@ public:
   inline CStrHeader *AssureInRepository();
 
   inline void Init(int iLen, const char *pSrc) { m_iLen = iLen; m_bInRepository = false; m_bHashInitialized = false; if (pSrc) memcpy(this + 1, pSrc, iLen); ((char *) (this + 1))[pSrc ? iLen : 0] = 0; m_RefCount.m_dwCount = 0; }
-    
+
   inline size_t GetHash() const { if (!m_bHashInitialized) { m_uiHash = ::GetHash((const char *) (this + 1), m_iLen); m_bHashInitialized = true; } return m_uiHash; }
 
   // Hash functions
@@ -48,7 +48,7 @@ public:
 public:
   typedef CHash<CStrHeader *, const char *, CStrHeader, CStrHeader> THash;
 
-	static THash s_Repository;
+	static THash &GetRepository() { static THash s_Repository; return s_Repository; }
 
   static bool CheckRepository();
 };
@@ -154,30 +154,30 @@ protected:
 
 // ------------------------------------------
 
-inline int CStrHeader::GetMaxLen(int iLen)             
-{ 
+inline int CStrHeader::GetMaxLen(int iLen)
+{
   int iMod = iLen % ALLOC_GRANULARITY;
   if (iMod)
-    return iLen + ALLOC_GRANULARITY - iMod; 
+    return iLen + ALLOC_GRANULARITY - iMod;
   return iLen;
-} 
+}
 
 inline void CStrHeader::Delete(const CStrHeader *pHeader)
 {
-  if (pHeader->m_bInRepository) 
-    s_Repository.RemoveValue(const_cast<CStrHeader *>(pHeader)); 
-  delete [] (char *) pHeader; 
+  if (pHeader->m_bInRepository)
+    GetRepository().RemoveValue(const_cast<CStrHeader *>(pHeader));
+  delete [] (char *) pHeader;
 }
 
 inline CStrHeader *CStrHeader::AssureInRepository()
 {
   if (m_bInRepository)
     return this;
-  THash::TIter it = s_Repository.Find(this);
+  THash::TIter it = GetRepository().Find(this);
   if (it)
     return *it;
   m_bInRepository = true;
-  s_Repository.Add(this);
+  GetRepository().Add(this);
   return this;
 }
 

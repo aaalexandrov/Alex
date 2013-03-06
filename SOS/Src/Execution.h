@@ -112,22 +112,57 @@ public:
 
   CInstruction &operator =(CInstruction const &kInstr) { Set(kInstr); return *this; }
 
+  static void GetTableValue(CValueTable const &kTable, CValue const &kKey, CValue &kValue);
+  static void SetTableValue(CValueTable &kTable, CValue const &kKey, CValue const &kValue);
+
   static CValue2String::TValueString s_arrIT2Str[IT_LAST];
   static CValue2String s_IT2Str;
 };
 
+class CInterpreter;
 class CExecution {
 public:
+	CInterpreter           *m_pInterpreter;
   CArray<CValue>          m_arrLocal;
 	short                   m_nReturnBase, m_nReturnCount;
-	CSmartPtr<CValueTable>  m_pGlobalEnvironment;
   CFragment              *m_pCode;
   CInstruction           *m_pNextInstruction;
 
-	CExecution();
+	CExecution(CInterpreter *pInterpreter);
 	~CExecution();
 
-	EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams, CValueTable *pGlobalEnvironment);
+  CValueTable *GetGlobalEnvironment();
+
+  void GetReturnValues(CArray<CValue> &arrReturns);
+
+  EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
+  EInterpretError Execute(CValue::FnNative *pNativeFunc, CArray<CValue> &arrParams);
 };
+
+// Implementation -------------------------------------------------------------
+
+inline void CInstruction::GetTableValue(CValueTable const &kTable, CValue const &kKey, CValue &kValue)
+{
+  CValue::THash::TIter it = kTable.m_Hash.Find(kKey);
+	if (it)
+		kValue = (*it).m_Val;
+	else {
+		kValue.ReleaseValue();
+		kValue.SetNone();
+	}
+}
+
+inline void CInstruction::SetTableValue(CValueTable &kTable, CValue const &kKey, CValue const &kValue)
+{
+  CValue::THash::TIter it = kTable.m_Hash.Find(kKey);
+	if (it) {
+		if (kValue.m_btType == CValue::VT_NONE)
+			kTable.m_Hash.Remove(it);
+		else
+		  (*it).m_Val = kValue;
+	} else 
+    if (kValue.m_btType != CValue::VT_NONE) 
+      kTable.m_Hash.Add(CValue::THash::Elem(kKey, kValue));
+}
 
 #endif

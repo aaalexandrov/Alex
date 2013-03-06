@@ -120,6 +120,8 @@
     <ClCompile Include="..\Src\Error.cpp" />
     <ClCompile Include="..\Src\Execution.cpp" />
     <ClCompile Include="..\Src\Frontend.cpp" />
+    <ClCompile Include="..\Src\Interpreter.cpp" />
+    <ClCompile Include="..\Src\Library.cpp" />
     <ClCompile Include="..\Src\SOS.cpp" />
     <ClCompile Include="..\Src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -154,6 +156,8 @@
     <ClInclude Include="..\Src\Error.h" />
     <ClInclude Include="..\Src\Execution.h" />
     <ClInclude Include="..\Src\Frontend.h" />
+    <ClInclude Include="..\Src\Interpreter.h" />
+    <ClInclude Include="..\Src\Library.h" />
     <ClInclude Include="..\Src\stdafx.h" />
     <ClInclude Include="..\Src\Token.h" />
     <ClInclude Include="..\Src\Variable.h" />
