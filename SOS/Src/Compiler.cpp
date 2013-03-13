@@ -953,12 +953,11 @@ EInterpretError CCompiler::CompileLocals(CBNFGrammar::CNode *pNode, short &nDest
 
 	CArray<short> arrValues;
 	iExprCount = pNode->m_arrChildren.m_iCount > 1 ? pNode->m_arrChildren[1]->m_arrChildren.m_iCount : 0;
-	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; ++i) {
+  nReturns = 1;
+	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; i += nReturns) {
 		if (i < iExprCount) {
 			if (i == iExprCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall) 
 				nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - i;
-			else 
-				nReturns = 1;
 			nIndex = -nReturns - 1;
 			err = CompileNode(pNode->m_arrChildren[1]->m_arrChildren[i], nIndex);
 			if (err != IERR_OK)

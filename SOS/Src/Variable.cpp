@@ -2,42 +2,30 @@
 #include "Variable.h"
 #include "Execution.h"
 
-// CEnvRegistry ---------------------------------------------------------------
+// CValue ---------------------------------------------------------------------
 
-void CEnvRegistry::Clear()
+CValue2String::TValueString CValue::s_arrVT2Str[VT_LAST] = {
+	VAL2NAME(VT_NONE, "nil"),
+  VAL2NAME(VT_BOOL, "bool"),
+	VAL2NAME(VT_FLOAT, "float"),
+	VAL2NAME(VT_STRING, "string"),
+	VAL2NAME(VT_TABLE, "table"),
+	VAL2NAME(VT_FRAGMENT, "fragment"),
+	VAL2NAME(VT_NATIVE_FUNC, "native_func"),
+};
+
+CValue2String CValue::s_VT2Str(s_arrVT2Str, ARRSIZE(s_arrVT2Str));
+
+
+// CValueRegistry -------------------------------------------------------------
+
+void CValueRegistry::Clear()
 {
-  m_hashEnvironments.Clear();
   m_hashValues.DeleteAll();
-  m_btLastMark = 0;
 }
 
-void CEnvRegistry::MarkAndSweep()
+void CValueRegistry::CollectGarbage(CInterpreter *pInterpreter)
 {
-  THashValues::TIter itEnv;
-
-  // Mark
-  m_btLastMark++;
-  if (!m_btLastMark)
-    m_btLastMark = 1;
-  m_iMarked = 0;
-  for (itEnv = m_hashEnvironments; itEnv; ++itEnv) 
-    itEnv->Mark(m_btLastMark);
-
-  ASSERT(m_iMarked <= m_hashValues.m_iCount);
-  // Do we need to sweep?
-  if (m_iMarked == m_hashValues.m_iCount)
-    return;
-
-  // Sweep
-  // CArray<CValueTable *> arrValues(m_hashValues.m_iCount - m_iMarked);
-  THashValues::TIter itVal;
-  itVal = m_hashValues;
-  while (itVal) {
-    CValueTable *pValueTable = *itVal;
-    ++itVal;
-    if (pValueTable->m_btMark != m_btLastMark) // Deletion will also remove the table from the hash
-      delete pValueTable;
-  }
 }
 
 // CFragment ------------------------------------------------------------------

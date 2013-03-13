@@ -17,6 +17,8 @@ public:
     VT_TABLE,
 		VT_FRAGMENT,
     VT_NATIVE_FUNC,
+
+    VT_LAST
   };
 
   typedef CHashKV<CValue, CValue, CValue, CValue> THash;
@@ -74,43 +76,40 @@ public:
 
 	static inline size_t Hash(CValue const &kVal)                   { return kVal.GetHash(); }
   static inline bool Eq(CValue const &kVal0, CValue const &kVal1) { return kVal0 == kVal1; }
+
+  static CValue2String::TValueString s_arrVT2Str[VT_LAST];
+  static CValue2String s_VT2Str;
 };
 
 class CValueTable;
+class CInterpreter;
 
-class CEnvRegistry {
+class CValueRegistry {
 public:
   typedef CHash<CValueTable *> THashValues;
 
 public:
   THashValues m_hashValues;
-  THashValues m_hashEnvironments;
-  BYTE        m_btLastMark;
-  int         m_iMarked;
 
-  CEnvRegistry(): m_btLastMark(0), m_iMarked(0) {}
-  ~CEnvRegistry() { Clear(); }
-
-  static CEnvRegistry &Get() { static CEnvRegistry kRegistry; return kRegistry; }
+  CValueRegistry()  {}
+  ~CValueRegistry() { Clear(); }
 
   void Add(CValueTable *pValueTable)    { m_hashValues.Add(pValueTable); }
   void Remove(CValueTable *pValueTable) { m_hashValues.RemoveValue(pValueTable); }
 
   void Clear();
 
-  void MarkAndSweep();
+  void CollectGarbage(CInterpreter *pInterpreter);
 };
 
 class CValueTable {
 	DEFREFCOUNT
 public:
   CValue::THash m_Hash;
-  BYTE          m_btMark;
+  CValueRegistry *m_pRegistry;
 
-  CValueTable(): m_btMark(0) { CEnvRegistry::Get().Add(this); }
-  ~CValueTable()             { CEnvRegistry::Get().Remove(this); }
-
-  inline void Mark(BYTE btMark);
+  CValueTable(CValueRegistry *pRegistry): m_pRegistry(pRegistry)  { m_pRegistry->Add(this); }
+  ~CValueTable() { m_pRegistry->Remove(this); }
 };
 
 class CExecution;
@@ -269,21 +268,6 @@ CStrAny CValue::GetStr(bool bDecorate) const
 			break;
   }
   return s;
-}
-
-// CValueTable ----------------------------------------------------------------
-
-void CValueTable::Mark(BYTE btMark)
-{
-  if (m_btMark == btMark)
-    return;
-  m_btMark = btMark;
-  CEnvRegistry::Get().m_iMarked++;
-  CValue::THash::TIter it;
-  for (it = m_Hash; it; ++it) {
-    if ((*it).m_Val.m_btType == CValue::VT_TABLE)
-      (*it).m_Val.m_pTableValue->Mark(btMark);
-  }
 }
 
 #endif

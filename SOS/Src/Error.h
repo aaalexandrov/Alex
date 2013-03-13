@@ -35,6 +35,7 @@ public:
 };
 
 #define VAL2STR(V) { V, CStrAny(ST_WHOLE, #V) }
+#define VAL2NAME(V,N) { V, CStrAny(ST_CONST, N) }
 
 extern CValue2String g_IERR2Str;
 

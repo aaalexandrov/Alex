@@ -6,10 +6,11 @@
 
 class CInterpreter {
 public:
+  CValueRegistry m_kValueRegistry;
   CSmartPtr<CValueTable> m_pGlobalEnvironment;
   CExecution m_kExecution;
 
-  CInterpreter() : m_kExecution(this), m_pGlobalEnvironment(new CValueTable()) { CFunctionLibrary::Init(*this); }
+  CInterpreter() : m_kExecution(this), m_pGlobalEnvironment(new CValueTable(&m_kValueRegistry)) { CFunctionLibrary::Init(*this); }
   ~CInterpreter() {}
 
   void GetTableValue(CValueTable const &kTable, CValue const &kKey, CValue &kValue) { CInstruction::GetTableValue(kTable, kKey, kValue); }

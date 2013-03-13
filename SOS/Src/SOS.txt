@@ -1,7 +1,6 @@
 - Lexical closures
 - Non-constant upvalues
 - Co-routines
-- Iteration
 - Number of elements in table
 - Struct-type table element accessors (.field)
 - Compiled fragment saving / loading
@@ -28,6 +27,8 @@
 + String concatenation operator
 + Script to native code calls
 + Native code to script calls
++ Iteration
+
 
 
 -------------------------------------------------------------------------------
