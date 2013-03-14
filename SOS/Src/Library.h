@@ -13,6 +13,8 @@ public:
   static EInterpretError Dump(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Next(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Type(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError ToString(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError ToNumber(CExecution &kExecution, CArray<CValue> &arrParams);
 };
 
 #endif

@@ -18,7 +18,7 @@ int ProcessInput()
     if (err == IERR_OK) {
       CCompileChain kChain;
       CArray<CValue> arrParams;
-      err = kChain.Compile(sInput);
+      err = kChain.Compile(&g_kInterpreter, sInput);
       if (err == IERR_OK) {
         err = g_kInterpreter.Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
 				if (err == IERR_OK) {
@@ -30,6 +30,7 @@ int ProcessInput()
 				} else {
 					fprintf(stdout, "<< %s\n", g_IERR2Str.GetStr(err).m_pBuf);
 				}
+        g_kInterpreter.CollectGarbage();
       } else
 				if (err == IERR_COMPILE_FAILED) {
 					kChain.m_kGrammar.Dump();

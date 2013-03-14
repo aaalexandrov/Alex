@@ -443,8 +443,7 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
 	for (i = 0; i < nReturnCount; ++i)
 		pExecution->m_arrLocal[m_nDest + i] = pResults->At(nReturnBase + i);
 	while (i < m_nSrc1) {
-		pExecution->m_arrLocal[m_nDest + i].ReleaseValue();
-		pExecution->m_arrLocal[m_nDest + i].SetNone();
+		pExecution->m_arrLocal[m_nDest + i].ClearValue();
 		++i;
 	}
 

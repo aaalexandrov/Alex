@@ -13,7 +13,7 @@
 - Function result forwarding for multiple returns
 - Variable number of arguments
 
-- Garbage collection
+- Make the garbage collection incremental
 - Error reporting & recovery
 - Grammar optimizer
 
@@ -28,6 +28,8 @@
 + Script to native code calls
 + Native code to script calls
 + Iteration
++ Garbage collection
+
 
 
 

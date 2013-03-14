@@ -59,6 +59,7 @@ public:
   inline void AcquireValue();
   inline void ReleaseValue();
 	inline void ClearValue() { ReleaseValue(); SetNone(); }
+  inline void DeleteValue();
 
   inline bool operator ==(CValue const &kValue) const { return m_btType == kValue.m_btType && m_Value == kValue.m_Value; }
   inline bool operator !=(CValue const &kValue) const { return !(*this == kValue); }
@@ -86,42 +87,42 @@ class CInterpreter;
 
 class CValueRegistry {
 public:
-  typedef CHash<CValueTable *> THashValues;
+  typedef CHash<CValue, CValue, CValue, CValue> THashValues;
 
 public:
-  THashValues m_hashValues;
+  THashValues *m_pUnprocessed, *m_pProcessed; // White, black set for tri-color garbage collecting
+  CList<CValue> m_lstProcessing; // Grey set
 
-  CValueRegistry()  {}
-  ~CValueRegistry() { Clear(); }
+  CValueRegistry();
+  ~CValueRegistry();
 
-  void Add(CValueTable *pValueTable)    { m_hashValues.Add(pValueTable); }
-  void Remove(CValueTable *pValueTable) { m_hashValues.RemoveValue(pValueTable); }
+  void Add(CValue const &kValue);
+  void Remove(CValue const &kValue);
 
-  void Clear();
+  void DeleteValues(THashValues &hashValues);
 
+  void MoveToProcessing(CValue const &kValue);
+  void Process(CList<CValue>::TNode *pNode);
   void CollectGarbage(CInterpreter *pInterpreter);
 };
 
 class CValueTable {
-	DEFREFCOUNT
 public:
   CValue::THash m_Hash;
-  CValueRegistry *m_pRegistry;
 
-  CValueTable(CValueRegistry *pRegistry): m_pRegistry(pRegistry)  { m_pRegistry->Add(this); }
-  ~CValueTable() { m_pRegistry->Remove(this); }
+  CValueTable(CValueRegistry *pRegistry) { pRegistry->Add(CValue(this)); }
+  ~CValueTable() {}
 };
 
 class CExecution;
 class CInstruction;
 class CFragment {
-	DEFREFCOUNT
 public:
   CArray<CInstruction> m_arrCode;
 	CArray<CValue> m_arrConst;
 	short m_nLocalCount, m_nParamCount;
 
-	CFragment(): m_nLocalCount(0), m_nParamCount(0) {}
+	CFragment(CValueRegistry *pRegistry): m_nLocalCount(0), m_nParamCount(0) { pRegistry->Add(CValue(this)); }
 	~CFragment() {}
 
   void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
@@ -142,12 +143,6 @@ void CValue::AcquireValue()
 		case VT_STRING:
 			m_pStrValue->Acquire();
 			break;
-		case VT_FRAGMENT:
-			m_pFragment->Acquire();
-			break;
-		case VT_TABLE:
-			m_pTableValue->Acquire();
-			break;
 	}
 }
 
@@ -157,12 +152,21 @@ void CValue::ReleaseValue()
 		case VT_STRING:
 			m_pStrValue->Release();
 			break;
+	}
+}
+
+void CValue::DeleteValue()
+{
+	switch (m_btType) {
 		case VT_FRAGMENT:
-			m_pFragment->Release();
+			delete m_pFragment;
 			break;
 		case VT_TABLE:
-			m_pTableValue->Release();
+			delete m_pTableValue;
 			break;
+    default:
+      ASSERT(0);
+      break;
 	}
 }
 
@@ -195,14 +199,12 @@ void CValue::Set(CValueTable *pTable)
 {
   m_btType = VT_TABLE;
   m_pTableValue = pTable;
-	m_pTableValue->Acquire();
 }
 
 void CValue::Set(CFragment *pFragment)
 {
   m_btType = VT_FRAGMENT;
   m_pFragment = pFragment;
-	AcquireValue();
 }
 
 void CValue::Set(FnNative *pNativeFunc)

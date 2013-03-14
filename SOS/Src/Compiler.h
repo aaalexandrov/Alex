@@ -42,7 +42,8 @@ public:
 public:
 	typedef CHashKV<CValue, short, CValue, CValue>  TConstantHash;
 
-  CSmartPtr<CFragment> m_pCode;
+  CInterpreter *m_pInterpreter;
+  CFragment *m_pCode;
 	TConstantHash m_hashConst;
 	CLocalTracker m_kLocals;
 
@@ -53,7 +54,7 @@ public:
 	short GetConstantIndex(CValue const &kValue);
 	void UpdateLocalNumber();
 
-  EInterpretError Compile(CBNFGrammar::CNode *pNode);
+  EInterpretError Compile(CInterpreter *pInterpreter, CBNFGrammar::CNode *pNode);
 
 	EInterpretError CompileProgram(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileConstant(CBNFGrammar::CNode *pNode, short &nDest);
@@ -90,7 +91,7 @@ public:
 
 	void Clear();
 
-  EInterpretError Compile(CStrAny sCode);
+  EInterpretError Compile(CInterpreter *pInterpreter, CStrAny sCode);
 };
 
 #endif

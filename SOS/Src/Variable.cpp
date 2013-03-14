@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Variable.h"
 #include "Execution.h"
+#include "Interpreter.h"
 
 // CValue ---------------------------------------------------------------------
 
@@ -19,13 +20,74 @@ CValue2String CValue::s_VT2Str(s_arrVT2Str, ARRSIZE(s_arrVT2Str));
 
 // CValueRegistry -------------------------------------------------------------
 
-void CValueRegistry::Clear()
+CValueRegistry::CValueRegistry(): m_pUnprocessed(new THashValues()), m_pProcessed(new THashValues())
 {
-  m_hashValues.DeleteAll();
+}
+
+CValueRegistry::~CValueRegistry()
+{
+  DeleteValues(*m_pUnprocessed);
+  ASSERT(!m_pUnprocessed->m_iCount && !m_pProcessed->m_iCount && !m_lstProcessing.m_iCount);
+  delete m_pProcessed;
+  delete m_pUnprocessed;
+}
+
+void CValueRegistry::Add(CValue const &kValue)    
+{ 
+  m_pUnprocessed->Add(kValue); 
+}
+
+void CValueRegistry::Remove(CValue const &kValue) 
+{ 
+  m_pUnprocessed->RemoveValue(kValue); 
+}
+
+void CValueRegistry::DeleteValues(THashValues &hashValues)
+{
+  for (THashValues::TIter it(&hashValues); it; ++it) 
+    (*it).DeleteValue();
+  hashValues.Clear();
+}
+
+void CValueRegistry::MoveToProcessing(CValue const &kValue)
+{
+  if (kValue.m_btType != CValue::VT_TABLE && kValue.m_btType != CValue::VT_FRAGMENT)
+    return;
+  THashValues::TIter it = m_pUnprocessed->Find(kValue);
+  if (it) {
+    m_lstProcessing.PushTail(kValue);
+    m_pUnprocessed->Remove(it);
+  }
+}
+
+void CValueRegistry::Process(CList<CValue>::TNode *pNode)
+{
+  ASSERT(pNode->Data.m_btType == CValue::VT_TABLE || pNode->Data.m_btType == CValue::VT_FRAGMENT);
+  CValue kValue = pNode->Data;
+  m_pProcessed->Add(kValue);
+  m_lstProcessing.Remove(pNode);
+  if (kValue.m_btType == CValue::VT_TABLE) {
+    for (CValue::THash::TIter itVal(&kValue.m_pTableValue->m_Hash); itVal; ++itVal) {
+      MoveToProcessing((*itVal).m_Key);
+      MoveToProcessing((*itVal).m_Val);
+    }
+  } else 
+    if (kValue.m_btType == CValue::VT_FRAGMENT) {
+      for (int i = 0; i < kValue.m_pFragment->m_arrConst.m_iCount; ++i)
+        MoveToProcessing(kValue.m_pFragment->m_arrConst[i]);
+    }
 }
 
 void CValueRegistry::CollectGarbage(CInterpreter *pInterpreter)
 {
+  ASSERT(!m_pProcessed->m_iCount && !m_lstProcessing.m_iCount);
+  MoveToProcessing(CValue(pInterpreter->m_pGlobalEnvironment));
+  ASSERT(m_lstProcessing.m_iCount);
+  while (m_lstProcessing.m_iCount) 
+    Process(m_lstProcessing.m_pHead);
+
+  DeleteValues(*m_pUnprocessed);
+  Util::Swap(m_pUnprocessed, m_pProcessed);
 }
 
 // CFragment ------------------------------------------------------------------

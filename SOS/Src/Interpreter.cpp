@@ -17,3 +17,9 @@ EInterpretError CInterpreter::Execute(CValue const &kCode, CArray<CValue> &arrPa
     }
   return IERR_OK;
 }
+
+EInterpretError CInterpreter::CollectGarbage()
+{
+  m_kValueRegistry.CollectGarbage(this);
+  return IERR_OK;
+}

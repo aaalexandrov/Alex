@@ -8,6 +8,8 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "dump").GetHeader()), CValue(Dump));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "next").GetHeader()), CValue(Next));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "type").GetHeader()), CValue(Type));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tostring").GetHeader()), CValue(ToString));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
 
   return IERR_OK;
 }
@@ -67,5 +69,29 @@ EInterpretError CFunctionLibrary::Type(CExecution &kExecution, CArray<CValue> &a
 {
   for (int i = 0; i < arrParams.m_iCount; ++i)
     arrParams[i] = CValue(CValue::s_VT2Str.GetStr(arrParams[i].m_btType).GetHeader());
+  return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::ToString(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  for (int i = 0; i < arrParams.m_iCount; ++i)
+    arrParams[i] = CValue(arrParams[i].GetStr(false).GetHeader());
+  return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::ToNumber(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  for (int i = 0; i < arrParams.m_iCount; ++i) {
+    if (arrParams[i].m_btType == CValue::VT_FLOAT)
+      continue;
+    if (arrParams[i].m_btType == CValue::VT_STRING) {
+      float fVal;
+      if (Parse::Str2Float(fVal, CStrAny(arrParams[i].m_pStrValue)))
+        arrParams[i] = CValue(fVal);
+      else
+        arrParams[i].ClearValue();
+    } else
+      arrParams[i].ClearValue();
+  }
   return IERR_OK;
 }

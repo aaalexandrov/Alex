@@ -304,7 +304,7 @@ bool Parse::Str2Float(float &fResult, CStrAny const &sFloat, int iRadix, bool bS
 {
   bool bNegative = false;
   int iVal;
-  CStrAny s(sFloat);
+  CStrAny s(sFloat, ST_PART);
 
   fResult = 0;
   if (bSign && sFloat.Length()) {

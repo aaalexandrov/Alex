@@ -7,7 +7,7 @@
 class CInterpreter {
 public:
   CValueRegistry m_kValueRegistry;
-  CSmartPtr<CValueTable> m_pGlobalEnvironment;
+  CValueTable *m_pGlobalEnvironment;
   CExecution m_kExecution;
 
   CInterpreter() : m_kExecution(this), m_pGlobalEnvironment(new CValueTable(&m_kValueRegistry)) { CFunctionLibrary::Init(*this); }
@@ -20,6 +20,7 @@ public:
   void SetGlobal(CValue const &kKey, CValue const &kValue) { CInstruction::SetTableValue(*m_pGlobalEnvironment, kKey, kValue); }
 
   EInterpretError Execute(CValue const &kCode, CArray<CValue> &arrParams);
+  EInterpretError CollectGarbage();
 };
 
 

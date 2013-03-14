@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Compiler.h"
+#include "Interpreter.h"
 
 class CInstructionStream {
 public:
@@ -244,7 +245,8 @@ CCompiler::~CCompiler()
 
 void CCompiler::Clear()
 {
-	m_pCode = 0;
+  m_pInterpreter = 0;
+  m_pCode = 0;
 	m_hashConst.Clear();
 	m_kLocals.Clear();
 }
@@ -267,11 +269,12 @@ void CCompiler::UpdateLocalNumber()
   m_pCode->m_nLocalCount = m_kLocals.m_arrLocals.m_iCount;
 }
 
-EInterpretError CCompiler::Compile(CBNFGrammar::CNode *pNode)
+EInterpretError CCompiler::Compile(CInterpreter *pInterpreter, CBNFGrammar::CNode *pNode)
 {
   Clear();
 
-  m_pCode = new CFragment();
+  m_pInterpreter = pInterpreter;
+  m_pCode = new CFragment(&m_pInterpreter->m_kValueRegistry);
 	short nDest = CInstruction::INVALID_OPERAND;
   EInterpretError res = CompileNode(pNode, nDest);
 	UpdateLocalNumber();
@@ -440,7 +443,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 	int i;
 	EInterpretError err;
 	CCompiler kCompiler;
-	kCompiler.m_pCode = new CFragment();
+	kCompiler.m_pCode = new CFragment(&m_pInterpreter->m_kValueRegistry);
 	
 	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; ++i) {
 		ASSERT(pNode->m_arrChildren[0]->m_arrChildren[i]->m_pToken->m_eType == CToken::TT_VARIABLE);
@@ -459,7 +462,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 			return err;
 	}
 
-	err = CompileConstResult(CValue(kCompiler.m_pCode.m_pPtr), nDest);
+	err = CompileConstResult(CValue(kCompiler.m_pCode), nDest);
 	kCompiler.UpdateLocalNumber();
 
 	return err;
@@ -1147,7 +1150,7 @@ void CCompileChain::Clear()
 	m_kCompiler.Clear();
 }
 
-EInterpretError CCompileChain::Compile(CStrAny sCode)
+EInterpretError CCompileChain::Compile(CInterpreter *pInterpreter, CStrAny sCode)
 {
   EInterpretError err;
 
@@ -1158,7 +1161,7 @@ EInterpretError CCompileChain::Compile(CStrAny sCode)
 	if (!m_kGrammar.Parse(m_kTokenizer.m_lstTokens))
 		return IERR_PARSING_FAILED;
 
-  err = m_kCompiler.Compile(m_kGrammar.m_pParsed);
+  err = m_kCompiler.Compile(pInterpreter, m_kGrammar.m_pParsed);
   if (err != IERR_OK)
     return err;
 

@@ -146,10 +146,8 @@ inline void CInstruction::GetTableValue(CValueTable const &kTable, CValue const 
   CValue::THash::TIter it = kTable.m_Hash.Find(kKey);
 	if (it)
 		kValue = (*it).m_Val;
-	else {
-		kValue.ReleaseValue();
-		kValue.SetNone();
-	}
+	else 
+		kValue.ClearValue();
 }
 
 inline void CInstruction::SetTableValue(CValueTable &kTable, CValue const &kKey, CValue const &kValue)
