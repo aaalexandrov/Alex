@@ -2,12 +2,13 @@
 - Non-constant upvalues
 - Co-routines
 - Number of elements in table
-- Struct-type table element accessors (.field)
+- Object-type function calls (t:m(p))
 - Compiled fragment saving / loading
 - Compiled code optimizer
 
 - String length/element access operations
 - For loops
+- Do blocks
 - Core function library
 - Tail function calls
 - Function result forwarding for multiple returns
@@ -15,6 +16,7 @@
 
 - Make the garbage collection incremental
 - Error reporting & recovery
+- Grammar post-parsing transform pass
 - Grammar optimizer
 
 - Automatic function execution parallelism
@@ -29,7 +31,7 @@
 + Native code to script calls
 + Iteration
 + Garbage collection
-
++ Struct-type table element accessors (.field)
 
 
 
@@ -40,7 +42,8 @@ Variable ::= Identifier
 ParamList ::= "(" [ ExpressionList ] ")"
 Call ::= ( Variable { Index } | FunctionDef ) ParamList { { Index } ParamList }
 Indexable ::= Call | Variable | "(" Expression ")" 
-Index ::= "[" Expression "]"
+DotIndex ::= "." Identifier
+Index ::= ( "[" Expression "]" ) | DotIndex
 Operand ::= Constant | ( Indexable { Index } )
 Power ::= Operand [ "^" Power ]
 Mult ::= Power { ( "*" | "/" ) Power }

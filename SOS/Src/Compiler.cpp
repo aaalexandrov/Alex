@@ -308,6 +308,9 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode, short &nDest)
 		case CBNFGrammar::RID_Operand:
 			err = CompileOperand(pNode, nDest);
 			break;
+		case CBNFGrammar::RID_DotIndex:
+			err = CompileDotIndex(pNode, nDest);
+			break;
 		case CBNFGrammar::RID_Table:
 			err = CompileTable(pNode, nDest);
 			break;
@@ -554,6 +557,18 @@ EInterpretError CCompiler::CompileOperand(CBNFGrammar::CNode *pNode, short &nDes
 	}
 
 	return IERR_OK;
+}
+
+EInterpretError CCompiler::CompileDotIndex(CBNFGrammar::CNode *pNode, short &nDest)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_DotIndex);
+	ASSERT(!pNode->m_arrChildren.m_iCount);
+  ASSERT(pNode->m_pToken->m_eType == CToken::TT_VARIABLE);
+
+  CStrAny sVal(pNode->m_pToken->m_sToken, ST_CONST);
+	CValue kVal(sVal.GetHeader());
+
+	return CompileConstResult(kVal, nDest);
 }
 
 EInterpretError CCompiler::CompileTable(CBNFGrammar::CNode *pNode, short &nDest)

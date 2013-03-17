@@ -45,7 +45,8 @@ void CBNFGrammar::InitRules()
 	CRule *pFunctionCall = NewNT()->SetID(RID_FunctionCall);
 	CRule *pParamList = NewNT()->SetID(RID_ParamList);
 	CRule *pOperand = NewNT()->SetID(RID_Operand);
-	CRule *pTable = NewNT()->SetID(RID_Table);
+	CRule *pDotIndex = NewNT()->SetID(RID_DotIndex);
+  CRule *pTable = NewNT()->SetID(RID_Table);
 	CRule *pReturn = NewNT()->SetID(RID_Return);
 	CRule *pPower = NewNT()->SetID(RID_Power);
 	CRule *pMult = NewNT()->SetID(RID_Mult);
@@ -150,10 +151,16 @@ void CBNFGrammar::InitRules()
 			AddChild(pExpression)->
 			AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput)));
 
-	pIndex->
-		AddChild(NewT(CToken::TT_OPENBRACKET)->Set(O_NoOutput))->
-		AddChild(pExpression)->
-		AddChild(NewT(CToken::TT_CLOSEBRACKET)->Set(O_NoOutput));
+	pDotIndex->
+    AddChild(NewT(CToken::TT_DOT)->Set(O_NoOutput))->
+    AddChild(NewT(CToken::TT_VARIABLE));
+
+  pIndex->Set(S_Alternative)->
+    AddChild(NewNT()->
+		  AddChild(NewT(CToken::TT_OPENBRACKET)->Set(O_NoOutput))->
+		  AddChild(pExpression)->
+		  AddChild(NewT(CToken::TT_CLOSEBRACKET)->Set(O_NoOutput)))->
+    AddChild(pDotIndex);
 
 	pOperand->Set(S_Alternative)->
 		AddChild(pConstant)->

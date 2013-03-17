@@ -76,6 +76,7 @@ CValue2String::TValueString CToken::s_arrTT2Str[TT_LAST] = {
   VAL2STR(TT_OPENCURLY),
   VAL2STR(TT_CLOSECURLY),
   VAL2STR(TT_COMMA),
+  VAL2STR(TT_DOT),
 };
 
 CValue2String CToken::s_kTT2Str(s_arrTT2Str, ARRSIZE(s_arrTT2Str));
@@ -252,6 +253,7 @@ CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = {
   CToken(CStrAny(ST_WHOLE, "{"),        CToken::TC_SEPARATOR,  CToken::TT_OPENCURLY),
   CToken(CStrAny(ST_WHOLE, "}"),        CToken::TC_SEPARATOR,  CToken::TT_CLOSECURLY),
   CToken(CStrAny(ST_WHOLE, ","),        CToken::TC_SEPARATOR,  CToken::TT_COMMA),
+  CToken(CStrAny(ST_WHOLE, "."),        CToken::TC_SEPARATOR,  CToken::TT_DOT),
 };
 
 CToken const *CTokenizer::GetTemplateToken(CStrAny const &sToken)

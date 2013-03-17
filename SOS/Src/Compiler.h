@@ -62,7 +62,8 @@ public:
 	EInterpretError CompileFunctionDef(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileFunctionCall(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileOperand(CBNFGrammar::CNode *pNode, short &nDest);
-	EInterpretError CompileTable(CBNFGrammar::CNode *pNode, short &nDest);
+	EInterpretError CompileDotIndex(CBNFGrammar::CNode *pNode, short &nDest);
+  EInterpretError CompileTable(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileReturn(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompilePower(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileMult(CBNFGrammar::CNode *pNode, short &nDest);

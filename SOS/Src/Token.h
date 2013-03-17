@@ -67,6 +67,7 @@ public:
     TT_OPENCURLY,
     TT_CLOSECURLY,
     TT_COMMA,
+    TT_DOT,
 
     TT_LAST
   };
