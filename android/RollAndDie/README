@@ -1,0 +1,8 @@
+Roll & Die
+
+A simple dice rolling application.
+
+- Can roll 1-999 typical dice ranging from d2 to d100.
+- Can record their sum, group them by die value, 
+  show the roll in full, or count successes.
+- Configurable success threshold and doubling.

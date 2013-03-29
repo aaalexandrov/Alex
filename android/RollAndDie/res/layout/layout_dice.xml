@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" 
+	android:layout_height="wrap_content" 
+	android:gravity="center_horizontal"
+	>
+
+	<TextView  
+	    android:layout_width="wrap_content" 
+	    android:layout_height="wrap_content"
+	    android:text="Dice:"
+	    android:layout_gravity="center_vertical"
+	    style="@style/TextLook"
+	    />
+
+	<LinearLayout 
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content" 
+		android:orientation="vertical"
+		> 
+		 
+		<Button 
+			android:layout_height="wrap_content" 
+			android:id="@+id/plus" 
+			android:layout_width="match_parent" 
+			android:text="+"
+			android:onClick="onPlus"
+		    style="@style/TextLook"
+			/>
+
+		<EditText 
+			android:id="@+id/dice_number"
+			android:layout_height="wrap_content" 
+			android:layout_width="wrap_content" 
+			android:lines="1" 
+			android:inputType="number" 
+			android:maxLength="3" 
+			android:text="000" 
+			android:saveEnabled="true" 
+			android:freezesText="true" 
+			android:minWidth="60dp" 
+			android:gravity="center"
+		    style="@style/TextLook"
+			/>
+
+		<Button 
+			android:layout_height="wrap_content" 
+			android:id="@+id/minus" 
+			android:layout_width="match_parent" 
+			android:text="-"
+			android:onClick="onMinus"
+		    style="@style/TextLook"
+			/>
+
+	</LinearLayout>
+
+	<LinearLayout
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_vertical"
+	    android:orientation="vertical" >
+
+	    <Spinner
+	        android:id="@+id/success_threshold"
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_gravity="center_vertical"
+	        android:layout_weight="1"
+	        />
+		    
+	    <LinearLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_gravity="center_vertical"
+	        android:layout_weight="1"
+	        android:orientation="horizontal" >
+
+	        <Spinner
+	            android:id="@+id/die_sides"
+	            android:layout_width="wrap_content"
+	            android:layout_height="match_parent"
+	            android:layout_gravity="center_vertical"
+	            android:entries="@array/die_sides"
+	            />
+
+	        <Button
+	            android:id="@+id/roll"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_vertical"
+	            android:onClick="onRoll"
+	            android:text="Roll"
+			    style="@style/TextLook"
+				/>
+	        
+	    </LinearLayout>
+
+	    <Spinner
+	        android:id="@+id/double_threshold"
+	        android:layout_width="match_parent"
+	        android:layout_height="0dp"
+	        android:layout_gravity="center_vertical"
+	        android:layout_weight="1"
+	        />
+	</LinearLayout>
+   
+</LinearLayout>

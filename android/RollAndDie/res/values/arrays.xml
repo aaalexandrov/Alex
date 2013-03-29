@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="die_sides">
+    	<item>d2</item>
+        <item>d3</item>
+        <item>d4</item>
+        <item>d6</item>
+        <item>d8</item>
+        <item>d10</item>
+        <item>d12</item>
+        <item>d20</item>
+        <item>d100</item>
+    </string-array>
+    <string-array name="log_type">
+        <item>Sum</item>
+        <item>Grouped</item>
+        <item>Full</item>
+        <item >Success</item>
+    </string-array>
+    
+</resources>
