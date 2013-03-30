@@ -928,24 +928,16 @@ bool CAABB::IntersectLine(CVector<3, Num> const &vMin, CVector<3, Num> const &vM
       break; // Line can't intersect the AABB
     }
     if (TestLineCoordinate(vMin, vMax, vPoint0, vLine, Util::F_NEG_INFINITY, Util::F_INFINITY, vMin[i], i, nFactor)) { // Line intersects the Min plane of the dimension inside the AABB side
-      if (nMinFactor == Util::F_INFINITY)
-        nMinFactor = nMaxFactor = nFactor;
-      else
-        if (nFactor < nMinFactor)
-          nMinFactor = nFactor;
-        else
-          if (nFactor > nMaxFactor)
-            nMaxFactor = nFactor;
+      if (nFactor < nMinFactor)
+        nMinFactor = nFactor;
+      if (nFactor > nMaxFactor)
+        nMaxFactor = nFactor;
     }
     if (TestLineCoordinate(vMin, vMax, vPoint0, vLine, Util::F_NEG_INFINITY, Util::F_INFINITY, vMax[i], i, nFactor)) { // Line intersects the Max plane of the dimension inside the AABB side
-      if (nMinFactor == Util::F_INFINITY)
-        nMinFactor = nMaxFactor = nFactor;
-      else
-        if (nFactor < nMinFactor)
-          nMinFactor = nFactor;
-        else
-          if (nFactor > nMaxFactor)
-            nMaxFactor = nFactor;
+      if (nFactor < nMinFactor)
+        nMinFactor = nFactor;
+      if (nFactor > nMaxFactor)
+        nMaxFactor = nFactor;
     }
   }
   if (nMinFactor == Util::F_INFINITY)

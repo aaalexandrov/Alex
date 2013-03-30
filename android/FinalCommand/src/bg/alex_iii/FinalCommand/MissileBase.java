@@ -5,36 +5,36 @@ import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.Shape;
 import bg.alex_iii.GLES.Vec;
 
-public class Target implements GameObject {
-	Game mGame;
-	GLESModel mModel;
+public class MissileBase implements GameObject {
+	public Game mGame;
+	public GLESModel mModel;
 	
-	Target(Game game) {
+	public MissileBase(Game game) {
 		mGame = game;
-		
-		GLESModel original = mGame.mMainRenderer.mPrism;
+
+		GLESModel original = mGame.mMainRenderer.mCone;
 		float[] transform = new float[16];
 		Matrix.setIdentityM(new float[16], 0);
 		mModel = new GLESModel(original.mGeometry, original.mMaterial, transform);
 	}
-	
+
 	public Game getGame() {
 		return mGame;
 	}
-	
+
 	public boolean render() {
 		return mModel.render();
 	}
-	
+
 	public void update() {
 	}
-	
+
 	public boolean isPointInside(float[] point) {
 		float curX, curY, curZ;
 		curX = mModel.mTransform[12];
 		curY = mModel.mTransform[13];
 		curZ = mModel.mTransform[14];
-		return Shape.isPointInsideCylinder(point, Vec.get(curX, curY, curZ), GameSettings.TARGET_HEIGHT, GameSettings.TARGET_RADIUS);
+		return Shape.isPointInsideCone(point, Vec.get(curX, curY, curZ), GameSettings.BASE_HEIGHT, GameSettings.BASE_RADIUS);
 	}
 	
 	public void setPosition(float x, float y, float z) {

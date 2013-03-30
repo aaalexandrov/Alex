@@ -17,7 +17,7 @@ import bg.alex_iii.GLES.Vec;
 public class MainRenderer implements GLESUserRenderer {
 	public GLESRenderer mRenderer;
 	public MainActivity mActivity;
-	public GLESModel mPrism, mSphere;
+	public GLESModel mPrism, mSphere, mCone;
 	public Game mGame;
 
 	public void setRenderer(GLESRenderer renderer) {
@@ -178,7 +178,8 @@ public class MainRenderer implements GLESUserRenderer {
 		if (!initMaterials())
 			return false;
 
-		mPrism = GLESUtil.createPrism(2, 10, Vec.get(0, 0, 1.5f), true).createModel(mRenderer.mMaterials.get("color_lit"));
+		mPrism = GLESUtil.createPrism(GameSettings.TARGET_RADIUS, 10, Vec.get(0, 0, GameSettings.TARGET_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
+		mCone = GLESUtil.createPyramid(GameSettings.BASE_RADIUS, 10, Vec.get(0, 0, GameSettings.BASE_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
 		mSphere = GLESUtil.createSphere(1, 2, false).createModel(mRenderer.mMaterials.get("color_lit"));
 	
 		return true;

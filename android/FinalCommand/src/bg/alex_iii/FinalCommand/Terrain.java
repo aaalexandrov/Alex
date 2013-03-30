@@ -6,6 +6,7 @@ import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
+import bg.alex_iii.GLES.Shape;
 import bg.alex_iii.GLES.Vec;
 
 import java.lang.Math;
@@ -16,12 +17,15 @@ public class Terrain {
 	public int mSizeX, mSizeY;
 	public float mGridSize;
 	public float[] mHeights;
+	public float mMinHeight, mMaxHeight;
 	
 	public Terrain(Game game, int sizeX, int sizeY, float gridSize) {
 		mGame = game;
 		mSizeX = sizeX;
 		mSizeY = sizeY;
 		mGridSize = gridSize;
+		mMinHeight = Float.POSITIVE_INFINITY;
+		mMaxHeight = Float.NEGATIVE_INFINITY;
 	}
 	
 	public void initHeights() {
@@ -71,6 +75,34 @@ public class Terrain {
 		float[] dy = Vec.get(0, 2, getHeight(x, y + 1) - getHeight(x, y - 1));
 		float[] n = Vec.cross(dx, dy);
 		return Vec.normalize(n);
+	}
+	
+	public void setHeight(int x, int y, float h) {
+		mHeights[y * mSizeY + x] = h;
+		if (h < mMinHeight)
+			mMinHeight = h;
+		if (h > mMaxHeight)
+			mMaxHeight = h;
+	}
+	
+	public float getRayIntersection(float[] origin, float[] direction) {
+		float extentX = getSizeX() / 2;
+		float extentY = getSizeY() / 2;
+		float[] boxMin = Vec.get(-extentX, -extentY, mMinHeight);
+		float[] boxMax = Vec.get(extentX, extentY, mMaxHeight);
+		float[] factorMinMax = new float[2];
+		
+		if (!Shape.isRayIntersectingBox(boxMin, boxMax, origin, direction, factorMinMax))
+			return Float.NaN;
+		if (factorMinMax[1] < 0)
+			return Float.NaN;
+		float factor = Math.max(0, factorMinMax[0]);
+		
+		while(factor < factorMinMax[1]) {
+			
+		}
+		
+		return Float.NaN;
 	}
 	
 	public boolean initModel() {

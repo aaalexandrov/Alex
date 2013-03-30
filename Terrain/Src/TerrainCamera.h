@@ -14,6 +14,7 @@ public:
 
     explicit TKeyInfo(int iK): kPressedTime(0)    { iKey = iK; bPressed = false; bPressConsumed = false; }
     static inline bool Eq(int iKey, TKeyInfo &ki) { return iKey == ki.iKey; }
+    static inline bool Eq(TKeyInfo &ki0, TKeyInfo &ki1) { return ki0.iKey == ki1.iKey; }
     static inline size_t Hash(const TKeyInfo &ki) { return ki.iKey; }
     static inline size_t Hash(int i) { return i; }
   };

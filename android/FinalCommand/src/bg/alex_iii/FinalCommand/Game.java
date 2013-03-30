@@ -90,6 +90,10 @@ public class Game {
 		mModifications.clear();
 	}
 	
+	public float getDeltaTime() {
+		return (mTime - mTimePrev) / 1000.0f;
+	}
+	
 	public void update() {
 		mIsUpdating = true;
 		
@@ -150,16 +154,40 @@ public class Game {
 				if (!mTouches[1].isValid()) 
 					mTouches[1].init(event.getActionIndex(), event);
 				break;
-			case MotionEvent.ACTION_POINTER_UP:
-				if (mTouches[1].mPointerId == event.getPointerId(event.getActionIndex()))
-					mTouches[1].invalidate();
+			case MotionEvent.ACTION_POINTER_UP: {
+				int pointerId = event.getPointerId(event.getActionIndex());
+				if (mTouches[0].mPointerId == pointerId) {
+					mTouches[0].invalidate();
+					TouchData t = mTouches[0];
+					mTouches[0] = mTouches[1];
+					mTouches[1] = t;
+				} else
+					if (mTouches[1].mPointerId == pointerId)
+						mTouches[1].invalidate();
 				break;
+			}
 			case MotionEvent.ACTION_MOVE: {
 				if (mTouches[0].isValid()) {
-					float oldX = mTouches[0].mX;
-					float oldY = mTouches[0].mY;
+					float oldX, oldY, oldDist;
+					float x, y, dist;
 
-					mTouches[0].get(event);
+					if (mTouches[1].isValid()) {
+						oldX = (mTouches[0].mX + mTouches[1].mX) * 0.5f;
+						oldY = (mTouches[0].mY + mTouches[1].mY) * 0.5f;
+						oldDist = Vec.getLength(Vec.get(mTouches[1].mX - mTouches[0].mX, mTouches[1].mY - mTouches[0].mY));
+						mTouches[0].get(event);
+						mTouches[1].get(event);
+						x = (mTouches[0].mX + mTouches[1].mX) * 0.5f;
+						y = (mTouches[0].mY + mTouches[1].mY) * 0.5f;
+						dist = Vec.getLength(Vec.get(mTouches[1].mX - mTouches[0].mX, mTouches[1].mY - mTouches[0].mY));
+					} else {
+						oldX = mTouches[0].mX;
+						oldY = mTouches[0].mY;
+						oldDist = dist = 0;
+						mTouches[0].get(event);
+						x = mTouches[0].mX;
+						y = mTouches[0].mY;
+					}
 					
 					float scale = Math.min(mainView.getWidth(), mainView.getHeight());
 
@@ -173,19 +201,12 @@ public class Game {
 					theta = polar[1];
 					phi = polar[2];
 					
-					theta -= (mTouches[0].mY - oldY) / scale * (float) Math.PI;
+					theta -= (y - oldY) / scale * (float) Math.PI;
 					theta = Math.min(Math.max((float) Math.PI / 16, theta), (float) Math.PI * (1 - 1 / 16.0f));
-					phi -= (mTouches[0].mX - oldX) / scale * (float) Math.PI;
+					phi -= (x - oldX) / scale * (float) Math.PI;
 					
-					if (mTouches[1].isValid()) {
-						float oldScaleX = mTouches[1].mX;
-						float oldScaleY = mTouches[1].mY;
-						mTouches[1].get(event);
-						
-						float oldDist = Vec.getLength(Vec.get(oldScaleX - oldX, oldScaleY - oldY));
-						float dist = Vec.getLength(Vec.get(mTouches[1].mX - mTouches[0].mX, mTouches[1].mY - mTouches[0].mY));
-						
-						r += (dist - oldDist) / scale * 10;
+					if (dist != oldDist) {
+						r += (dist - oldDist) / scale * 30;
 						r = Math.min(Math.max(5.0f, r), 50.0f);
 					}
 					
@@ -195,8 +216,6 @@ public class Game {
 				}
 				break;
 			}
-				
-			
 		}
 		
 		return true;
