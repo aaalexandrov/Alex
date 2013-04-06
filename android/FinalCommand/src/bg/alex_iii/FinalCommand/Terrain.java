@@ -7,6 +7,7 @@ import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
 import bg.alex_iii.GLES.Shape;
+import bg.alex_iii.GLES.Util;
 import bg.alex_iii.GLES.Vec;
 
 import java.lang.Math;
@@ -35,7 +36,7 @@ public class Terrain {
 		float scaleZ = Math.max(mSizeX, mSizeY) * mGridSize / 8;
 		for (int y = 0; y < mSizeY; ++y)
 			for (int x = 0; x < mSizeX; ++x) {
-				mHeights[y * mSizeX + x] = ((float) Math.sin(x * scaleX) + (float) Math.sin(y * scaleY)) * scaleZ;
+				setHeight(x, y, ((float) Math.sin(x * scaleX) + (float) Math.sin(y * scaleY)) * scaleZ);
 			}
 	}
 	
@@ -97,9 +98,47 @@ public class Terrain {
 		if (factorMinMax[1] < 0)
 			return Float.NaN;
 		float factor = Math.max(0, factorMinMax[0]);
+
+		if (Util.isZero(direction[0]) && Util.isZero(direction[1])) {
+			if (Util.isZero(direction[2]))
+				return Float.NaN;
+			float zTer = getHeight(origin[0], origin[1]);
+			factor = (zTer - origin[2]) / direction[2];
+			if (factor < factorMinMax[0] || factor > factorMinMax[1])
+				return Float.NaN;
+			return factor;
+		}
 		
+		float nextX = (int) (origin[0] + factor * direction[0] + direction[0] > 0 ? 1 : 0);
+		float nextY = (int) (origin[1] + factor * direction[1] + direction[1] > 0 ? 1 : 0);
+		float xFactor = Util.isZero(direction[0]) ? Float.POSITIVE_INFINITY : (nextX - origin[0]) / direction[0]; 
+		float yFactor = Util.isZero(direction[1]) ? Float.POSITIVE_INFINITY : (nextY - origin[1]) / direction[1];
+		float zTerrain = getHeight(origin[0] + factor * direction[0], origin[1] + factor * direction[1]);
+		float z = origin[2] + factor * direction[2];
 		while(factor < factorMinMax[1]) {
-			
+			float nextFactor;
+			if (xFactor < yFactor) {
+				nextFactor = xFactor;
+				nextX = nextX + Math.signum(direction[0]);
+				xFactor = (nextX - origin[0]) / direction[0];
+			} else {
+				nextFactor = yFactor;
+				nextY = nextY + Math.signum(direction[1]);
+				yFactor = (nextY - origin[1]) / direction[1];
+			}
+			if (nextFactor > factorMinMax[1])
+				nextFactor = factorMinMax[1];
+			float nextZ = origin[2] + nextFactor * direction[2]; 
+			float nextZTerrain = getHeight(origin[0] + nextFactor * direction[0], origin[1] + nextFactor * direction[1]);
+			float dif = zTerrain - z;
+			float nextDif = nextZTerrain - nextZ;
+			if (Math.signum(dif) != Math.signum(nextDif)) {
+				float factorIntersection = (dif * nextFactor - nextDif * factor) / (nextDif - dif);
+				return factorIntersection;
+			}
+			factor = nextFactor;
+			zTerrain = nextZTerrain;
+			z = nextZ;
 		}
 		
 		return Float.NaN;

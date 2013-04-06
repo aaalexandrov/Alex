@@ -30,9 +30,14 @@ public class Camera {
 	public synchronized void setLookAt(float x, float y, float z) {
 		Vec.set(mLookAt, x, y, z);
 	}
+
+	public synchronized float[] unProject(float x, float y) {
+		return mGame.mMainRenderer.mRenderer.mCamera.unProject(x, y);
+	}
 	
 	public synchronized void update() {
 		GLESCamera camera = mGame.mMainRenderer.mRenderer.mCamera;
 		camera.setTransform(mPosition, mLookAt, Vec.get(0, 0, 1));
 	}
+	
 }

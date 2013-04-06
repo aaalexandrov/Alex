@@ -14,7 +14,7 @@ public class Game {
 	public Camera mCamera;
 	public Terrain mTerrain;
 	public ArrayList<GameObject> mObjects = new ArrayList<GameObject>();
-	public ArrayList<Runnable> mModifications = new ArrayList<Runnable>();
+	public RunnableList mModifications = new RunnableList();
 	public boolean mIsUpdating = false;
 	
 	TouchData[] mTouches = { new TouchData(), new TouchData() };
@@ -84,12 +84,6 @@ public class Game {
 			mObjects.remove(gameObject);
 	}
 	
-	public void runModifications() {
-		for (Runnable r: mModifications) 
-			r.run();
-		mModifications.clear();
-	}
-	
 	public float getDeltaTime() {
 		return (mTime - mTimePrev) / 1000.0f;
 	}
@@ -104,7 +98,7 @@ public class Game {
 			o.update();
 
 		mIsUpdating = false;
-		runModifications();
+		mModifications.run();
 	}
 	
 	public boolean render() {
@@ -126,6 +120,12 @@ public class Game {
 		addObject(target);
 	}
 	
+	public void createExplosion(float x, float y, float z) {
+		Explosion expl = new Explosion(this);
+		expl.setPosition(x, y, z);
+		addObject(expl);
+	}
+	
 	public boolean initLevel() {
 		mTerrain = new Terrain(this, 16, 16, 1);
 		if (!mTerrain.init())
@@ -140,11 +140,31 @@ public class Game {
 		return true;
 	}
 	
+	public void onTap(float x, float y) {
+		float[] tapped, camPos = new float[3];
+		mCamera.getPosition(camPos);
+		tapped = mCamera.unProject(x, y);
+		float[] direction = Vec.getNormalized(Vec.sub(tapped, camPos));
+		float intersection = mTerrain.getRayIntersection(camPos, direction);
+		if (Float.isNaN(intersection)) 
+			return;
+		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));
+		createExplosion(pos[0], pos[1], pos[2]);
+	}
+	
 	public boolean onTouchEvent(MainView mainView, MotionEvent event) {
 		switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
+			case MotionEvent.ACTION_DOWN: {
 				mTouches[0].init(0, event);
+				final float x = mTouches[0].mX / mainView.getWidth();
+				final float y = mTouches[0].mY / mainView.getHeight(); 
+				mModifications.add(new Runnable() {
+					public void run() {
+						onTap(x, y);
+					}
+				});
 				break;
+			}
 			case MotionEvent.ACTION_UP:
 			case MotionEvent.ACTION_CANCEL:
 				for (TouchData t: mTouches)

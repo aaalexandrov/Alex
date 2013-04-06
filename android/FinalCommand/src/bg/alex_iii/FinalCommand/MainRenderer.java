@@ -126,10 +126,10 @@ public class MainRenderer implements GLESUserRenderer {
 				R.raw.tex_lit_f);
 		if (shader == null)
 			return false;
-		GLESTexture texture = mRenderer.loadTexture("robot",
+		GLESTexture texture = mRenderer.loadTexture("green_grid",
 				GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.LINEAR,
 				GLESTexture.WrapMode.REPEAT, GLESTexture.WrapMode.REPEAT,
-				R.raw.robot);
+				R.raw.green_grid);
 		if (texture == null)
 			return false;
 		GLESState state = new GLESState();

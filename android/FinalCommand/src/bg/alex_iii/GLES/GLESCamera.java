@@ -8,6 +8,8 @@ public class GLESCamera {
 	public float[] mTransform = new float[16];
 	public float[] mView = new float[16];
 	public float[] mProj = new float[16];
+	public boolean mIsOrtho;
+	public float mNear, mFar, mLeft, mRight, mTop, mBottom;
 	
 	public GLESCamera() {
 		Matrix.setIdentityM(mTransform, 0);
@@ -22,10 +24,24 @@ public class GLESCamera {
 	}
 	
 	public void setProjection(float left, float right, float bottom, float top, float near, float far) {
+		mIsOrtho = false;
+		mNear = near;
+		mFar = far;
+		mLeft = left;
+		mRight = right;
+		mTop = top;
+		mBottom = bottom;
 		Matrix.frustumM(mProj, 0, left, right, bottom, top, near, far);
 	}
 	
 	public void setOrtho(float left, float right, float bottom, float top, float near, float far) {
+		mIsOrtho = true;
+		mNear = near;
+		mFar = far;
+		mLeft = left;
+		mRight = right;
+		mTop = top;
+		mBottom = bottom;
 		Matrix.orthoM(mProj, 0, left, right, bottom, top, near, far);
 	}
 	
@@ -40,5 +56,19 @@ public class GLESCamera {
 		assert(transform.length == mTransform.length);
 		mTransform = transform;
 		Matrix.invertM(mView, 0, mTransform, 0);
+	}
+	
+	public float[] unProject(float[] position) {
+		float[] viewProj = getViewProj();
+		float[] invViewProj = new float[16];
+		Matrix.invertM(invViewProj, 0, viewProj, 0);
+		float[] result = new float[4];
+		Matrix.multiplyMV(result, 0, invViewProj, 0, position, 0);
+		return result;
+	}
+	
+	public float[] unProject(float x, float y) {
+		float[] pos = Vec.get(x * (mRight - mLeft) + mLeft, y * (mBottom - mTop) - mTop, mNear, 1);
+		return unProject(pos);
 	}
 }
