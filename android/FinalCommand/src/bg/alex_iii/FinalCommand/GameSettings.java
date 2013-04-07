@@ -7,7 +7,7 @@ public class GameSettings {
 	public static final float BASE_RADIUS = 1;
 	public static final float BASE_HEIGHT = 1.33f;
 	
-	public static final float EXPLOSION_RADIUS = 5;
+	public static final float EXPLOSION_RADIUS = 0.5f;
 	public static final float EXPLOSION_DURATION = 3;
 	public static final float EXPLOSION_SPEED = 5;
 	

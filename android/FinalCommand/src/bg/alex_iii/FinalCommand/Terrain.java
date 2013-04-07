@@ -16,15 +16,16 @@ public class Terrain {
 	public Game mGame;
 	public GLESModel mModel;
 	public int mSizeX, mSizeY;
-	public float mGridSize;
+	public float mGridSize, mTexCoordScale;
 	public float[] mHeights;
 	public float mMinHeight, mMaxHeight;
 	
-	public Terrain(Game game, int sizeX, int sizeY, float gridSize) {
+	public Terrain(Game game, int sizeX, int sizeY, float gridSize, float texCoordScale) {
 		mGame = game;
 		mSizeX = sizeX;
 		mSizeY = sizeY;
 		mGridSize = gridSize;
+		mTexCoordScale = texCoordScale;
 		mMinHeight = Float.POSITIVE_INFINITY;
 		mMaxHeight = Float.NEGATIVE_INFINITY;
 	}
@@ -133,7 +134,7 @@ public class Terrain {
 			float dif = zTerrain - z;
 			float nextDif = nextZTerrain - nextZ;
 			if (Math.signum(dif) != Math.signum(nextDif)) {
-				float factorIntersection = (dif * nextFactor - nextDif * factor) / (nextDif - dif);
+				float factorIntersection = (dif * nextFactor - nextDif * factor) / (dif - nextDif);
 				return factorIntersection;
 			}
 			factor = nextFactor;
@@ -151,7 +152,7 @@ public class Terrain {
 				float[] normal = getNormal(x, y);
 				vertices[y * mSizeX + x] = new VertexPosNormUV(x * mGridSize, y * mGridSize, getHeight(x, y), 
 																		 normal[0], normal[1], normal[2], 
-																		 (float) x / (mSizeX - 1), (float) y / (mSizeY - 1));
+																		 (float) x * mTexCoordScale / (mSizeX - 1), (float) y * mTexCoordScale / (mSizeY - 1));
 			}
 		short[] indices = new short[(mSizeX - 1) * (mSizeY - 1) * 6];
 		for (int y = 0; y < mSizeY - 1; ++y)

@@ -43,6 +43,33 @@ public class GLESMaterial {
 		return true;
 	}
 	
+	public void copyFrom(GLESMaterial material) {
+		copyUniformsFrom(material);
+		copySamplersFrom(material);
+		if (mState != material.mState)
+			mState.copyFrom(material.mState);
+	}
+	
+	public void copyUniformsFrom(GLESMaterial material) {
+		for (int i = 0; i < mUniforms.length; ++i) {
+			String paramName = mShader.mUniforms.getParam(mUniforms[i].mIndexInShader).mName;
+			int index = material.getUniformIndex(paramName);
+			if (index < 0)
+				continue;
+			setUniform(i, material.mUniforms[index].mValue);
+		}
+	}
+	
+	public void copySamplersFrom(GLESMaterial material) {
+		for (int i = 0; i < mSamplers.length; ++i) {
+			String samplerName = mShader.mSamplers.getParam(i).mName;
+			int index = material.getSamplerIndex(samplerName);
+			if (index < 0)
+				continue;
+			setSampler(i, material.mSamplers[index]);
+		}
+	}
+	
 	public int getUniformIndex(String name) {
 		for (int i = 0; i < mUniforms.length; i++)
 			if (mShader.mUniforms.getParam(mUniforms[i].mIndexInShader).mName.equals(name))

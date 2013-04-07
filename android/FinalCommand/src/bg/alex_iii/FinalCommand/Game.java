@@ -127,7 +127,7 @@ public class Game {
 	}
 	
 	public boolean initLevel() {
-		mTerrain = new Terrain(this, 16, 16, 1);
+		mTerrain = new Terrain(this, 16, 16, 1, 8);
 		if (!mTerrain.init())
 			return false;
 		
@@ -146,6 +146,7 @@ public class Game {
 		tapped = mCamera.unProject(x, y);
 		float[] direction = Vec.getNormalized(Vec.sub(tapped, camPos));
 		float intersection = mTerrain.getRayIntersection(camPos, direction);
+//		float intersection = 10;
 		if (Float.isNaN(intersection)) 
 			return;
 		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));

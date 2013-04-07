@@ -64,11 +64,12 @@ public class GLESCamera {
 		Matrix.invertM(invViewProj, 0, viewProj, 0);
 		float[] result = new float[4];
 		Matrix.multiplyMV(result, 0, invViewProj, 0, position, 0);
+		result = Vec.get(result[0] / result[3], result[1] / result[3], result[2] / result[3]);
 		return result;
 	}
 	
 	public float[] unProject(float x, float y) {
-		float[] pos = Vec.get(x * (mRight - mLeft) + mLeft, y * (mBottom - mTop) - mTop, mNear, 1);
+		float[] pos = Vec.get(x * 2 - 1,  1 - 2 * y, 0, 1);
 		return unProject(pos);
 	}
 }

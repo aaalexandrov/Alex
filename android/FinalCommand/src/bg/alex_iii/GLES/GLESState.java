@@ -45,6 +45,27 @@ public class GLESState {
 	public GLESState() {
 	}
 	
+	public void copyFrom(GLESState state) {
+		mBlendMode = state.mBlendMode;
+		
+		mDepthEnable = state.mDepthEnable;
+		mDepthFunc = state.mDepthFunc;
+		mDepthWrite = state.mDepthWrite;
+		mDepthBias = state.mDepthBias;
+		mDepthBiasScale = state.mDepthBiasScale;
+		
+		mBackfaceCulling = state.mBackfaceCulling;
+		
+		mStencilEnable = state.mStencilEnable;
+		mStencilFunc = state.mStencilFunc;
+		mStencilRef = state.mStencilRef;
+		mStencilMask = state.mStencilMask;
+		mStencilWriteMask = state.mStencilWriteMask;
+		mStencilOpFail = state.mStencilOpFail;
+		mStencilOpDepthFail = state.mStencilOpDepthFail;
+		mStencilOpPass = state.mStencilOpPass;
+	}
+	
 	public BlendMode getBlendMode() {
 		return mBlendMode;
 	}
