@@ -9,7 +9,7 @@ uniform vec3 uLightDiffuse;
 uniform vec3 uLightAmbient;
 
 uniform vec3 uMaterialDiffuse;
-uniform vec3 uMaterialAmbient;  
+uniform vec4 uMaterialAmbient;  
 
 varying vec4 vColor;
 
@@ -20,5 +20,5 @@ void main() {
     norm = normalize(norm);
     float NdotL = dot(norm, uLightDir);
     NdotL = max(NdotL, 0.0);
-    vColor = vec4(uLightDiffuse * uMaterialDiffuse * NdotL + uLightAmbient * uMaterialAmbient, 1.0);
+    vColor = vec4(uLightDiffuse * uMaterialDiffuse * NdotL + uLightAmbient * uMaterialAmbient.xyz, uMaterialAmbient.w);
 }

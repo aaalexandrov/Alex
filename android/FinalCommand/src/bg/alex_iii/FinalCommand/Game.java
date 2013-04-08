@@ -21,21 +21,30 @@ public class Game {
 	
 	static class TouchData {
 		int mPointerId = -1;
-		float mX, mY;
+		float mX, mY, mInitialX, mInitialY;
+		boolean mMoved;
 		
 		void init(int index, MotionEvent event) {
 			mPointerId = event.getPointerId(index);
 			mX = event.getX(index);
 			mY = event.getY(index);
+			mInitialX = mX;
+			mInitialY = mY;
+			mMoved = false;
 		}
 		
-		void get(MotionEvent event) {
+		boolean get(MotionEvent event, MainView mainView) {
 			int index = event.findPointerIndex(mPointerId);
 			if (index >= 0) {
+				boolean changed = mX != event.getX(index) || mY != event.getY(index);
 				mX = event.getX(index);
 				mY = event.getY(index);
+				if (!mMoved && mainView.lengthInInches(mX - mInitialX, mY - mInitialY) >= 0.2f)
+					mMoved = true;
+				return changed;
 			} else
 				invalidate();
+			return false;
 		}
 		
 		boolean isValid() {
@@ -89,6 +98,7 @@ public class Game {
 	}
 	
 	public void update() {
+		mModifications.run();
 		mIsUpdating = true;
 		
 		mTimePrev = mTime;
@@ -114,16 +124,18 @@ public class Game {
 		return result;
 	}
 	
-	public void createTarget(float x, float y) {
+	public Target createTarget(float x, float y) {
 		Target target = new Target(this);
 		target.setPosition(x, y, mTerrain.getHeight(x, y));
 		addObject(target);
+		return target;
 	}
 	
-	public void createExplosion(float x, float y, float z) {
+	public Explosion createExplosion(float x, float y, float z) {
 		Explosion expl = new Explosion(this);
 		expl.setPosition(x, y, z);
 		addObject(expl);
+		return expl;
 	}
 	
 	public boolean initLevel() {
@@ -146,27 +158,39 @@ public class Game {
 		tapped = mCamera.unProject(x, y);
 		float[] direction = Vec.getNormalized(Vec.sub(tapped, camPos));
 		float intersection = mTerrain.getRayIntersection(camPos, direction);
-//		float intersection = 10;
 		if (Float.isNaN(intersection)) 
 			return;
 		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));
 		createExplosion(pos[0], pos[1], pos[2]);
+		pos = Vec.add(camPos, Vec.mul(5, direction));
+	}
+	
+	public void endTouch(int touchIndex, MainView mainView) {
+		if (mTouches[touchIndex].isValid()) {
+			if (!mTouches[touchIndex].mMoved) {
+				final float x = mTouches[touchIndex].mX / mainView.getWidth();
+				final float y = mTouches[touchIndex].mY / mainView.getHeight(); 
+				mModifications.add(new Runnable() {
+					public void run() {
+						onTap(x, y);
+					}
+				});
+			} else
+				mTouches[(touchIndex + 1) % 2].mMoved = true;
+		}
+		mTouches[touchIndex].invalidate();
 	}
 	
 	public boolean onTouchEvent(MainView mainView, MotionEvent event) {
 		switch (event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN: {
 				mTouches[0].init(0, event);
-				final float x = mTouches[0].mX / mainView.getWidth();
-				final float y = mTouches[0].mY / mainView.getHeight(); 
-				mModifications.add(new Runnable() {
-					public void run() {
-						onTap(x, y);
-					}
-				});
 				break;
 			}
 			case MotionEvent.ACTION_UP:
+				for (int i = 0; i < 2; ++i)
+					endTouch(i, mainView);
+				break;
 			case MotionEvent.ACTION_CANCEL:
 				for (TouchData t: mTouches)
 					t.invalidate();
@@ -178,13 +202,13 @@ public class Game {
 			case MotionEvent.ACTION_POINTER_UP: {
 				int pointerId = event.getPointerId(event.getActionIndex());
 				if (mTouches[0].mPointerId == pointerId) {
-					mTouches[0].invalidate();
+					endTouch(0, mainView);
 					TouchData t = mTouches[0];
 					mTouches[0] = mTouches[1];
 					mTouches[1] = t;
 				} else
 					if (mTouches[1].mPointerId == pointerId)
-						mTouches[1].invalidate();
+						endTouch(1, mainView);
 				break;
 			}
 			case MotionEvent.ACTION_MOVE: {
@@ -196,8 +220,10 @@ public class Game {
 						oldX = (mTouches[0].mX + mTouches[1].mX) * 0.5f;
 						oldY = (mTouches[0].mY + mTouches[1].mY) * 0.5f;
 						oldDist = Vec.getLength(Vec.get(mTouches[1].mX - mTouches[0].mX, mTouches[1].mY - mTouches[0].mY));
-						mTouches[0].get(event);
-						mTouches[1].get(event);
+						boolean changed0 = mTouches[0].get(event, mainView);
+						boolean changed1 = mTouches[1].get(event, mainView);
+						if ((!changed0 || !mTouches[0].mMoved) && (!changed1 || !mTouches[1].mMoved))
+							break;
 						x = (mTouches[0].mX + mTouches[1].mX) * 0.5f;
 						y = (mTouches[0].mY + mTouches[1].mY) * 0.5f;
 						dist = Vec.getLength(Vec.get(mTouches[1].mX - mTouches[0].mX, mTouches[1].mY - mTouches[0].mY));
@@ -205,7 +231,9 @@ public class Game {
 						oldX = mTouches[0].mX;
 						oldY = mTouches[0].mY;
 						oldDist = dist = 0;
-						mTouches[0].get(event);
+						boolean changed0 = mTouches[0].get(event, mainView);
+						if (!changed0 || !mTouches[0].mMoved)
+							break;
 						x = mTouches[0].mX;
 						y = mTouches[0].mY;
 					}
@@ -233,7 +261,12 @@ public class Game {
 					
 					pos = Vec.getPolar(r, theta, phi);
 					pos = Vec.add(pos, lookAt);
-					mCamera.setPosition(pos[0], pos[1], pos[2]);
+					final float[] position = pos;
+					mModifications.add(new Runnable() {
+						public void run() {
+							mCamera.setPosition(position[0], position[1], position[2]);
+						}
+					});
 				}
 				break;
 			}

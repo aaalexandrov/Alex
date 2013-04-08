@@ -144,7 +144,7 @@ public class MainRenderer implements GLESUserRenderer {
 		material.setUniform("uLightAmbient", Vec.get(0.3f, 0.3f, 0.3f));
 
 		material.setUniform("uMaterialDiffuse", Vec.get(0.7f, 0.7f, 0.7f));
-		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 1));
+		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 1, 1));
 
 		shader = mRenderer.loadShader("color_lit", R.raw.color_lit_v,
 				R.raw.color_lit_f);
@@ -159,7 +159,7 @@ public class MainRenderer implements GLESUserRenderer {
 		material.setUniform("uLightAmbient", Vec.get(0.3f, 0.3f, 0.3f));
 
 		material.setUniform("uMaterialDiffuse", Vec.get(0.7f, 0.7f, 0.0f));
-		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 0));
+		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 0, 1));
 //		material.mState.setBackfaceCulling(false);
 		
 		shader = mRenderer.loadShader("color", R.raw.color_v, R.raw.color_f);

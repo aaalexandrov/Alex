@@ -13,29 +13,29 @@ public class Camera {
 		mPosition = Vec.get(4.0f, 4.0f, 4.0f);
 	}
 	
-	public synchronized float[] getPosition(float[] vec) {
+	public float[] getPosition(float[] vec) {
 		Vec.set(vec, mPosition[0], mPosition[1], mPosition[2]);
 		return vec;
 	}
 	
-	public synchronized void setPosition(float x, float y, float z) {
+	public void setPosition(float x, float y, float z) {
 		Vec.set(mPosition, x, y, z);
 	}
 	
-	public synchronized float[] getLookAt(float[] vec) {
+	public float[] getLookAt(float[] vec) {
 		Vec.set(vec, mLookAt[0], mLookAt[1], mLookAt[2]);
 		return vec;
 	}
 	
-	public synchronized void setLookAt(float x, float y, float z) {
+	public void setLookAt(float x, float y, float z) {
 		Vec.set(mLookAt, x, y, z);
 	}
 
-	public synchronized float[] unProject(float x, float y) {
+	public float[] unProject(float x, float y) {
 		return mGame.mMainRenderer.mRenderer.mCamera.unProject(x, y);
 	}
 	
-	public synchronized void update() {
+	public void update() {
 		GLESCamera camera = mGame.mMainRenderer.mRenderer.mCamera;
 		camera.setTransform(mPosition, mLookAt, Vec.get(0, 0, 1));
 	}
