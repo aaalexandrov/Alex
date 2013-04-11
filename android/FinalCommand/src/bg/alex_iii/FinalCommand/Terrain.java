@@ -110,8 +110,10 @@ public class Terrain {
 			return factor;
 		}
 		
-		float nextX = (int) (origin[0] + factor * direction[0] + direction[0] > 0 ? 1 : 0);
-		float nextY = (int) (origin[1] + factor * direction[1] + direction[1] > 0 ? 1 : 0);
+		float xOffset = extentX % 1;
+		float yOffset = extentY % 1;
+		float nextX = (int) (origin[0] + factor * direction[0] - xOffset + (direction[0] > 0 ? 1 : 0)) + xOffset;
+		float nextY = (int) (origin[1] + factor * direction[1] - yOffset + (direction[1] > 0 ? 1 : 0)) + yOffset;
 		float xFactor = Util.isZero(direction[0]) ? Float.POSITIVE_INFINITY : (nextX - origin[0]) / direction[0]; 
 		float yFactor = Util.isZero(direction[1]) ? Float.POSITIVE_INFINITY : (nextY - origin[1]) / direction[1];
 		float zTerrain = getHeight(origin[0] + factor * direction[0], origin[1] + factor * direction[1]);
@@ -134,7 +136,8 @@ public class Terrain {
 			float dif = zTerrain - z;
 			float nextDif = nextZTerrain - nextZ;
 			if (Math.signum(dif) != Math.signum(nextDif)) {
-				float factorIntersection = (dif * nextFactor - nextDif * factor) / (dif - nextDif);
+				float a = dif / (dif - nextDif);
+				float factorIntersection = (nextFactor - factor) * a + factor;
 				return factorIntersection;
 			}
 			factor = nextFactor;

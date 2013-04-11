@@ -34,7 +34,7 @@ public class MainView extends GLSurfaceView {
 	public boolean onTouchEvent(MotionEvent event) {
 		super.onTouchEvent(event);
 		if (mMainRenderer.mGame != null) {
-			return mMainRenderer.mGame.onTouchEvent(this, event);
+			return mMainRenderer.mGame.onTouchEvent(event);
 		}
 		
 		return false;

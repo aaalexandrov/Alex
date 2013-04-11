@@ -6,7 +6,7 @@ public class Missile implements GameObject {
 	Game mGame;
 	GLESModel mModel;
 	
-	Missile(Game game) {
+	public Missile(Game game) {
 		mGame = game;
 	}
 	
@@ -19,6 +19,10 @@ public class Missile implements GameObject {
 	}
 	
 	public void update() {
+		
+	}
+
+	public void setPosition(float x, float y, float z) {
 		
 	}
 }

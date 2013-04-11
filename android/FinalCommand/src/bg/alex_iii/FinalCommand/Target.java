@@ -9,7 +9,7 @@ public class Target implements GameObject {
 	Game mGame;
 	GLESModel mModel;
 	
-	Target(Game game) {
+	public Target(Game game) {
 		mGame = game;
 		
 		GLESModel original = mGame.mMainRenderer.mPrism;

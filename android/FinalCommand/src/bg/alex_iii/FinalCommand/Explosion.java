@@ -12,7 +12,7 @@ public class Explosion implements GameObject {
 	float[] mPosition;
 	long mCreationTime;
 	
-	Explosion(Game game) {
+	public Explosion(Game game) {
 		mGame = game;
 		
 		GLESModel original = mGame.mMainRenderer.mSphere;
