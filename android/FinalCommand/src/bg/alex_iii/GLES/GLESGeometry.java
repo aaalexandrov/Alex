@@ -20,6 +20,12 @@ public class GLESGeometry {
 		mPrimitiveType = primitiveType2GL(primitiveType);
 	}
 	
+	public void done() {
+		mVertices.done();
+		if (mIndices != null)
+			mIndices.done();
+	}
+	
 	public boolean apply(GLESShader shader) {
 		if (!mVertices.apply(shader.mAttribs))
 			return false;

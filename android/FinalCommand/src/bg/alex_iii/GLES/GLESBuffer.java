@@ -64,8 +64,8 @@ public class GLESBuffer {
 		return true;
 	}
 
-	public <T> boolean init(T dataArray) {
-		GLESShader.AttribArray format = attribsFromVertex(Array.get(dataArray, 0), isIndexBuffer());
+	public <T> boolean init(T dataArray, String[] fields) {
+		GLESShader.AttribArray format = attribsFromVertex(Array.get(dataArray, 0), isIndexBuffer(), fields);
 		ByteBuffer buffer = bufferFromData(dataArray, format);
 		if (buffer == null)
 			return false;
@@ -188,13 +188,24 @@ public class GLESBuffer {
 		attribs.addParamInfo(new GLESShader.AttribInfo(elementId, type, elements, elementName, false));
 	}
 	
-	public static <T> GLESShader.AttribArray attribsFromVertex(T vertex, boolean indexFormat) {
+	public static <T> GLESShader.AttribArray attribsFromVertex(T vertex, boolean indexFormat, String[] fields) {
 		GLESShader.AttribArray attribs = new GLESShader.AttribArray();
 		Class<?> vertClass = vertex.getClass();
 		if (vertClass.equals(Float.class) || vertClass.equals(Short.class) || vertClass.equals(Integer.class)) {
 			addVertexAttrib(attribs, vertex, 0, "@" + vertClass.getSimpleName(), indexFormat);
 		} else {
-			Field[] vertexFields = vertClass.getFields();
+			Field[] vertexFields;
+			if (fields != null) {
+				vertexFields = new Field[fields.length];
+				int i = 0;
+				try {
+					for (i = 0; i < fields.length; ++i)
+						vertexFields[i] = vertClass.getField(fields[i]);
+				} catch (NoSuchFieldException e) {
+					Log.e(TAG, "attribsFromVertex() - getField() can't find field " + fields[i] + " in class " + vertClass.getName());
+				}
+			} else
+				vertexFields = vertClass.getFields();
 			for (int i = 0; i < vertexFields.length; i++) {
 				try {
 					addVertexAttrib(attribs, vertexFields[i].get(vertex), -1, vertexFields[i].getName(), indexFormat);

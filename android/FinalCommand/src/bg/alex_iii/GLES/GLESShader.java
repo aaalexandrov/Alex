@@ -399,6 +399,13 @@ public class GLESShader {
 	
 	public String getName() { return mName; } 
 	
+	public String[] getAttribNames() {
+		String[] attribNames = new String[mAttribs.mParams.size()];
+		for (int i = 0; i < attribNames.length; ++i)
+			attribNames[i] = mAttribs.mParams.get(i).mName;
+		return attribNames;
+	}
+	
 	public boolean isValid() { return GLES20.glIsProgram(mProgram);	}
 	
 	public boolean setPerFrame(GLESModel model) {

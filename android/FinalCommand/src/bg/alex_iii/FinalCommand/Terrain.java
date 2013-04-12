@@ -34,7 +34,7 @@ public class Terrain {
 		mHeights = new float[mSizeX * mSizeY];
 		float scaleX = (2 * (float) Math.PI) / mSizeX; 
 		float scaleY = (2 * (float) Math.PI) / mSizeY;
-		float scaleZ = Math.max(mSizeX, mSizeY) * mGridSize / 8;
+		float scaleZ = Math.max(mSizeX, mSizeY) * mGridSize / 32;
 		for (int y = 0; y < mSizeY; ++y)
 			for (int x = 0; x < mSizeX; ++x) {
 				setHeight(x, y, ((float) Math.sin(x * scaleX) + (float) Math.sin(y * scaleY)) * scaleZ);
@@ -73,8 +73,13 @@ public class Terrain {
 	}
 	
 	public float[] getNormal(int x, int y) {
-		float[] dx = Vec.get(2, 0, getHeight(x + 1, y) - getHeight(x - 1, y));
-		float[] dy = Vec.get(0, 2, getHeight(x, y + 1) - getHeight(x, y - 1));
+		int x0, x1, y0, y1;
+		x0 = Math.min(Math.max(0, x - 1), mSizeX - 1);
+		x1 = Math.min(Math.max(0, x + 1), mSizeX - 1);
+		y0 = Math.min(Math.max(0, y - 1), mSizeY - 1);
+		y1 = Math.min(Math.max(0, y + 1), mSizeY - 1);
+		float[] dx = Vec.get(x1 - x0, 0, mHeights[y * mSizeX + x1] - mHeights[y * mSizeX + x0]);
+		float[] dy = Vec.get(0, y1 - y0, mHeights[y1 * mSizeX + x] - mHeights[y0 * mSizeX + x]);
 		float[] n = Vec.cross(dx, dy);
 		return Vec.normalize(n);
 	}
@@ -172,10 +177,10 @@ public class Terrain {
 		
 		GLESBuffer vb, ib;
 		vb = new GLESBuffer(false, GLESBuffer.Usage.STATIC_DRAW);
-		if (!vb.init(vertices))
+		if (!vb.init(vertices, null))
 			return false;
 		ib = new GLESBuffer(true, GLESBuffer.Usage.STATIC_DRAW);
-		if (!ib.init(indices))
+		if (!ib.init(indices, null))
 			return false;
 		GLESGeometry geometry = new GLESGeometry(vb, ib,
 				GLESGeometry.PrimitiveType.TRIANGLES);

@@ -12,12 +12,15 @@ public class GLESModel {
 	public static <V,I> GLESModel create(V vertices, I indices, GLESGeometry.PrimitiveType primitiveType, GLESMaterial material) {
 		if (material == null)
 			return null;
+		String[] attribNames = null;
+		if (material != null && material.mShader != null)
+			attribNames = material.mShader.getAttribNames();
 		GLESBuffer vb, ib;
 		vb = new GLESBuffer(false, GLESBuffer.Usage.STATIC_DRAW);
-		if (!vb.init(vertices))
+		if (!vb.init(vertices, attribNames))
 			return null;
 		ib = new GLESBuffer(true, GLESBuffer.Usage.STATIC_DRAW);
-		if (!ib.init(indices))
+		if (!ib.init(indices, null))
 			return null;
 		GLESGeometry geometry = new GLESGeometry(vb, ib, primitiveType);
 		float[] transform = new float[16];

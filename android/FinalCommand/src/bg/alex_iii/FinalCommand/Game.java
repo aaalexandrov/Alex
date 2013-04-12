@@ -159,10 +159,10 @@ public class Game {
 		createGameObject(Target.class, 7, 7);
 		createGameObject(Target.class, 0, 0);
 		
-		createGameObject(MissileBase.class, -4, 0);
-		createGameObject(MissileBase.class, 4, 0);
-		createGameObject(MissileBase.class, 0, -4);
-		createGameObject(MissileBase.class, 0, 4);
+		createGameObject(MissileBase.class, -6, 0);
+		createGameObject(MissileBase.class, 6, 0);
+		createGameObject(MissileBase.class, 0, -6);
+		createGameObject(MissileBase.class, 0, 6);
 		
 		return true;
 	}
@@ -176,8 +176,9 @@ public class Game {
 		if (Float.isNaN(intersection)) 
 			return;
 		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));
-		createGameObject(Explosion.class, pos[0], pos[1], pos[2]);
-		pos = Vec.add(camPos, Vec.mul(5, direction));
+//		createGameObject(Explosion.class, pos[0], pos[1], pos[2]);
+		Missile missile = createGameObject(Missile.class, 0, 0, GameSettings.MISSILE_START_ALTITUDE);
+		missile.setTarget(pos[0], pos[1], pos[2]);
 	}
 	
 	public void endTouch(int touchIndex) {

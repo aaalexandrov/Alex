@@ -19,6 +19,7 @@ public class MainRenderer implements GLESUserRenderer {
 	public MainActivity mActivity;
 	public GLESModel mPrism, mSphere, mCone;
 	public Game mGame;
+	public LineHolder mLineHolder;
 
 	public void setRenderer(GLESRenderer renderer) {
 		mRenderer = renderer;
@@ -37,6 +38,8 @@ public class MainRenderer implements GLESUserRenderer {
 	public boolean init() {
 		if (!initModels())
 			return false;
+
+		mLineHolder = new LineHolder(this.mRenderer);
 		
 		mGame = new Game(this);
 		if (!mGame.init())
@@ -46,6 +49,7 @@ public class MainRenderer implements GLESUserRenderer {
 	}
 
 	public void update() {
+		mLineHolder.clearPoints();
 		mGame.update();
 		final float fps = 1000.0f / (mGame.mTime - mGame.mTimePrev);
 		mActivity.runOnUiThread(new Runnable() {
@@ -53,6 +57,7 @@ public class MainRenderer implements GLESUserRenderer {
 				mActivity.setStatusText("FPS: " + fps);
 			}
 		});
+		mLineHolder.updateModel();
 	}
 
 	public boolean render() {
@@ -61,6 +66,8 @@ public class MainRenderer implements GLESUserRenderer {
 		//result &= mPrism.render();
 		//result &= mSphere.render();
 		result &= mGame.render();
+		
+		result &= mLineHolder.render();
 
 		return result;
 	}
@@ -169,7 +176,7 @@ public class MainRenderer implements GLESUserRenderer {
 		material = mRenderer.createMaterial("color", shader, state);
 		if (material == null)
 			return false;
-		material.setUniform("uColor", Vec.get(0, 1, 0, 1));
+		material.setUniform("uColor", Vec.get(1, 1, 1, 1));
 
 		return true;
 	}
@@ -180,7 +187,7 @@ public class MainRenderer implements GLESUserRenderer {
 
 		mPrism = GLESUtil.createPrism(GameSettings.TARGET_RADIUS, 10, Vec.get(0, 0, GameSettings.TARGET_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
 		mCone = GLESUtil.createPyramid(GameSettings.BASE_RADIUS, 10, Vec.get(0, 0, GameSettings.BASE_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
-		mSphere = GLESUtil.createSphere(1, 2, false).createModel(mRenderer.mMaterials.get("color_lit"));
+		mSphere = GLESUtil.createSphere(1, 2, false).createModel(mRenderer.mMaterials.get("color"));
 	
 		return true;
 	}

@@ -11,6 +11,6 @@ public class GameSettings {
 	public static final float EXPLOSION_DURATION = 3;
 	public static final float EXPLOSION_SPEED = 5;
 	
-	public static final float MISSILE_SPEED = 7;
-	public static final float MISSILE_START_ALTITUDE = 30;
+	public static final float MISSILE_SPEED = 4;
+	public static final float MISSILE_START_ALTITUDE = 20;
 }
