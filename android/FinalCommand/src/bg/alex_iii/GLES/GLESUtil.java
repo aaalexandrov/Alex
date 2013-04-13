@@ -18,6 +18,24 @@ public class GLESUtil {
 		}
 	}
 
+	public static class VertexPosColor {
+		public float[] aPosition;
+		@Normalized
+		public byte[] aColor;
+		
+		public VertexPosColor(float x, float y, float z, byte r, byte g, byte b, byte a) {
+			aPosition = Vec.get(x, y, z);
+			byte[] rgba = { r, g, b, a };
+			aColor = rgba;
+		}
+		
+		public VertexPosColor(float[] pos, byte[] color) {
+			assert pos.length == 3 && color.length == 4;
+			aPosition = pos;
+			aColor = color;
+		}
+	}
+	
 	public static class VertexPosNorm {
 		public float[] aPosition;
 		public float[] aNormal;
@@ -35,7 +53,7 @@ public class GLESUtil {
 		}
 		
 		public VertexPosNorm(float[] pos, float[] norm) {
-			assert(pos.length == 3 && norm.length == 3);
+			assert pos.length == 3 && norm.length == 3;
 			aPosition = pos;
 			aNormal = norm;
 		}

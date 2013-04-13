@@ -176,7 +176,6 @@ public class Game {
 		if (Float.isNaN(intersection)) 
 			return;
 		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));
-//		createGameObject(Explosion.class, pos[0], pos[1], pos[2]);
 		Missile missile = createGameObject(Missile.class, 0, 0, GameSettings.MISSILE_START_ALTITUDE);
 		missile.setTarget(pos[0], pos[1], pos[2]);
 	}

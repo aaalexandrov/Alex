@@ -11,6 +11,7 @@ import bg.alex_iii.GLES.Util;
 import bg.alex_iii.GLES.Vec;
 
 import java.lang.Math;
+import java.util.ArrayList;
 
 public class Terrain {
 	public Game mGame;
@@ -19,6 +20,46 @@ public class Terrain {
 	public float mGridSize, mTexCoordScale;
 	public float[] mHeights;
 	public float mMinHeight, mMaxHeight;
+	
+	public class LineTracer {
+		float[] mOrigin, mDirection;
+		float mMinFactor, mMaxFactor;
+		float mFactor, mNextX, mNextY, mXFactor, mYFactor;
+		
+		LineTracer(float[] origin, float[] direction, float minFactor, float maxFactor) {
+			mOrigin = origin;
+			mDirection = direction;
+			mMinFactor = minFactor;
+			mMaxFactor = maxFactor;
+			mFactor = minFactor;
+			
+			float extentX = getSizeX() / 2;
+			float extentY = getSizeY() / 2;
+			mNextX = ((int) ((mOrigin[0] + mFactor * mDirection[0] + extentX) / mGridSize) + (mDirection[0] > 0 ? 1 : 0)) * mGridSize - extentX; 
+			mNextY = ((int) ((mOrigin[1] + mFactor * mDirection[1] + extentY) / mGridSize) + (mDirection[1] > 0 ? 1 : 0)) * mGridSize - extentY;
+			mXFactor = Util.isZero(mDirection[0]) ? Float.POSITIVE_INFINITY : (mNextX - mOrigin[0]) / mDirection[0]; 
+			mYFactor = Util.isZero(mDirection[1]) ? Float.POSITIVE_INFINITY : (mNextY - mOrigin[1]) / mDirection[1];
+		}
+		
+		float nextFactor() {
+			if (mFactor >= mMaxFactor || mXFactor == Float.POSITIVE_INFINITY && mYFactor == Float.POSITIVE_INFINITY)
+				return Float.NaN;
+			
+			if (mXFactor < mYFactor) {
+				mFactor = mXFactor;
+				mNextX += Math.signum(mDirection[0]) * mGridSize;
+				mXFactor = (mNextX - mOrigin[0]) / mDirection[0];
+			} else {
+				mFactor = mYFactor;
+				mNextY += Math.signum(mDirection[1]) * mGridSize;
+				mYFactor = (mNextY - mOrigin[1]) / mDirection[1];
+			}
+			if (mFactor > mMaxFactor)
+				mFactor = mMaxFactor;
+			
+			return mFactor;
+		}
+	}
 	
 	public Terrain(Game game, int sizeX, int sizeY, float gridSize, float texCoordScale) {
 		mGame = game;
@@ -114,28 +155,13 @@ public class Terrain {
 				return Float.NaN;
 			return factor;
 		}
+
+		LineTracer tracer = new LineTracer(origin, direction, factor, factorMinMax[1]);
 		
-		float xOffset = extentX % 1;
-		float yOffset = extentY % 1;
-		float nextX = (int) (origin[0] + factor * direction[0] - xOffset + (direction[0] > 0 ? 1 : 0)) + xOffset;
-		float nextY = (int) (origin[1] + factor * direction[1] - yOffset + (direction[1] > 0 ? 1 : 0)) + yOffset;
-		float xFactor = Util.isZero(direction[0]) ? Float.POSITIVE_INFINITY : (nextX - origin[0]) / direction[0]; 
-		float yFactor = Util.isZero(direction[1]) ? Float.POSITIVE_INFINITY : (nextY - origin[1]) / direction[1];
 		float zTerrain = getHeight(origin[0] + factor * direction[0], origin[1] + factor * direction[1]);
 		float z = origin[2] + factor * direction[2];
-		while(factor < factorMinMax[1]) {
-			float nextFactor;
-			if (xFactor < yFactor) {
-				nextFactor = xFactor;
-				nextX = nextX + Math.signum(direction[0]);
-				xFactor = (nextX - origin[0]) / direction[0];
-			} else {
-				nextFactor = yFactor;
-				nextY = nextY + Math.signum(direction[1]);
-				yFactor = (nextY - origin[1]) / direction[1];
-			}
-			if (nextFactor > factorMinMax[1])
-				nextFactor = factorMinMax[1];
+		while(!Float.isNaN(factor)) {
+			float nextFactor = tracer.nextFactor();
 			float nextZ = origin[2] + nextFactor * direction[2]; 
 			float nextZTerrain = getHeight(origin[0] + nextFactor * direction[0], origin[1] + nextFactor * direction[1]);
 			float dif = zTerrain - z;
@@ -151,6 +177,17 @@ public class Terrain {
 		}
 		
 		return Float.NaN;
+	}
+	
+	public void breakLine(float[] p0, float[] p1, ArrayList<Float> factors) {
+		float[] direction = Vec.sub(p1, p0);
+		float factor = 0;
+		LineTracer tracer = new LineTracer(p0, direction, factor, 1);
+		factors.clear();
+		while (!Float.isNaN(factor)) {
+			factors.add(factor);
+			factor = tracer.nextFactor();
+		}
 	}
 	
 	public boolean initModel() {

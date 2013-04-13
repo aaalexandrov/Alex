@@ -13,7 +13,7 @@ uniform vec3 uMaterialDiffuse;
 uniform vec4 uMaterialAmbient;  
 
 varying vec2 vTextureCoord;
-varying vec4 vColor;
+varying lowp vec4 vColor;
 
 void main() {
     gl_Position = umModelViewProj * aPosition;

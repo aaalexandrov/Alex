@@ -26,10 +26,11 @@ public final class R {
         public static final int color_lit_f=0x7f040001;
         public static final int color_lit_v=0x7f040002;
         public static final int color_v=0x7f040003;
-        public static final int green_grid=0x7f040004;
-        public static final int robot=0x7f040005;
-        public static final int tex_lit_f=0x7f040006;
-        public static final int tex_lit_v=0x7f040007;
+        public static final int color_vert_f=0x7f040004;
+        public static final int color_vert_v=0x7f040005;
+        public static final int green_grid=0x7f040006;
+        public static final int tex_lit_f=0x7f040007;
+        public static final int tex_lit_v=0x7f040008;
     }
     public static final class string {
         public static final int app_name=0x7f050000;

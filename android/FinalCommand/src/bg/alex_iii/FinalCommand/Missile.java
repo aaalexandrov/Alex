@@ -1,11 +1,15 @@
 package bg.alex_iii.FinalCommand;
 
+import java.util.ArrayList;
+
+import bg.alex_iii.GLES.Color;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.Vec;
 
 public class Missile implements GameObject {
+	static final float SHADOW_DISPLACEMENT = 0.1f;
+	
 	Game mGame;
-	GLESModel mModel;
 	float[] mOrigin, mTarget, mPosition;
 	
 	public Missile(Game game) {
@@ -31,8 +35,26 @@ public class Missile implements GameObject {
 		}
 		mPosition = Vec.add(mPosition, Vec.mul(delta, travelDist / dist));
 		
+		mGame.mMainRenderer.mLineHolder.setColor(Color.WHITE);
 		mGame.mMainRenderer.mLineHolder.addPoint(mOrigin[0], mOrigin[1], mOrigin[2]);
 		mGame.mMainRenderer.mLineHolder.addPoint(mPosition[0], mPosition[1], mPosition[2]);
+		
+		ArrayList<Float> factors = new ArrayList<Float>();
+		mGame.mTerrain.breakLine(mOrigin, mPosition, factors);
+		if (factors.size() > 1) {
+			mGame.mMainRenderer.mLineHolder.setColor(Color.BLACK);
+
+			float x = (mPosition[0] - mOrigin[0]) * factors.get(0) + mOrigin[0]; 
+			float y = (mPosition[1] - mOrigin[1]) * factors.get(0) + mOrigin[1];
+			float z = mGame.mTerrain.getHeight(x, y) + SHADOW_DISPLACEMENT;
+			for (int i = 1; i < factors.size(); ++i) {
+				mGame.mMainRenderer.mLineHolder.addPoint(x, y, z);
+				x = (mPosition[0] - mOrigin[0]) * factors.get(i) + mOrigin[0]; 
+				y = (mPosition[1] - mOrigin[1]) * factors.get(i) + mOrigin[1];
+				z = mGame.mTerrain.getHeight(x, y) + SHADOW_DISPLACEMENT;
+				mGame.mMainRenderer.mLineHolder.addPoint(x, y, z);
+			}
+		}
 	}
 
 	public void setTarget(float x, float y, float z) {

@@ -15,6 +15,8 @@ import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
 import bg.alex_iii.GLES.Vec;
 
 public class MainRenderer implements GLESUserRenderer {
+	public static final float FOV_DEGREES = 60;
+	
 	public GLESRenderer mRenderer;
 	public MainActivity mActivity;
 	public GLESModel mPrism, mSphere, mCone;
@@ -54,7 +56,7 @@ public class MainRenderer implements GLESUserRenderer {
 		final float fps = 1000.0f / (mGame.mTime - mGame.mTimePrev);
 		mActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				mActivity.setStatusText("FPS: " + fps);
+				mActivity.setStatusText(String.format("FPS: %.2f",  fps));
 			}
 		});
 		mLineHolder.updateModel();
@@ -178,6 +180,14 @@ public class MainRenderer implements GLESUserRenderer {
 			return false;
 		material.setUniform("uColor", Vec.get(1, 1, 1, 1));
 
+		shader = mRenderer.loadShader("color_vert", R.raw.color_vert_v, R.raw.color_vert_f);
+		if (shader == null)
+			return false;
+		state = new GLESState();
+		material = mRenderer.createMaterial("color_vert", shader, state);
+		if (material == null)
+			return false;
+		
 		return true;
 	}
 
@@ -186,7 +196,7 @@ public class MainRenderer implements GLESUserRenderer {
 			return false;
 
 		mPrism = GLESUtil.createPrism(GameSettings.TARGET_RADIUS, 10, Vec.get(0, 0, GameSettings.TARGET_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
-		mCone = GLESUtil.createPyramid(GameSettings.BASE_RADIUS, 10, Vec.get(0, 0, GameSettings.BASE_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
+		mCone = GLESUtil.createPyramid(GameSettings.BASE_RADIUS, 10, Vec.get(0, 0, GameSettings.BASE_HEIGHT), false).createModel(mRenderer.mMaterials.get("color_lit"));
 		mSphere = GLESUtil.createSphere(1, 2, false).createModel(mRenderer.mMaterials.get("color"));
 	
 		return true;
@@ -195,9 +205,17 @@ public class MainRenderer implements GLESUserRenderer {
 	protected boolean initCameraProjection(float aspect) {
 		float near = 0.1f;
 		float far = 100.0f;
-		float fovFactor = 0.5f;
-		mRenderer.mCamera.setProjection(-aspect * near * fovFactor, aspect * near * fovFactor, -1 * near * fovFactor,
-				1 * near * fovFactor, near, far);
+		
+		float extentX, extentY;
+		if (aspect >= 1) {
+			extentY = (float) Math.tan(FOV_DEGREES) * near;
+			extentX = extentY * aspect; 
+		} else {
+			extentX = (float) Math.tan(FOV_DEGREES) * near;
+			extentY = extentX / aspect;
+		}
+		
+		mRenderer.mCamera.setProjection(-extentX, extentX, -extentY, extentY, near, far);
 		return true;
 	}
 }

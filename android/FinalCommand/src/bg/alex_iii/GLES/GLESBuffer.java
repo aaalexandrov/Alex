@@ -159,7 +159,7 @@ public class GLESBuffer {
 		}
 	}
 	
-	public static void addVertexAttrib(GLESShader.AttribArray attribs, Object vertexElement, int elementId, String elementName, boolean unsigned) {
+	public static void addVertexAttrib(GLESShader.AttribArray attribs, Object vertexElement, int elementId, String elementName, boolean unsigned, boolean normalized) {
 		int type, elements;
 		Class<?> elemClass;
 		if (vertexElement.getClass().isArray()) {
@@ -185,14 +185,14 @@ public class GLESBuffer {
 			return;
 		if (unsigned)
 			type = getUnsignedType(type);
-		attribs.addParamInfo(new GLESShader.AttribInfo(elementId, type, elements, elementName, false));
+		attribs.addParamInfo(new GLESShader.AttribInfo(elementId, type, elements, elementName, normalized));
 	}
 	
 	public static <T> GLESShader.AttribArray attribsFromVertex(T vertex, boolean indexFormat, String[] fields) {
 		GLESShader.AttribArray attribs = new GLESShader.AttribArray();
 		Class<?> vertClass = vertex.getClass();
 		if (vertClass.equals(Float.class) || vertClass.equals(Short.class) || vertClass.equals(Integer.class)) {
-			addVertexAttrib(attribs, vertex, 0, "@" + vertClass.getSimpleName(), indexFormat);
+			addVertexAttrib(attribs, vertex, 0, "@" + vertClass.getSimpleName(), indexFormat, false);
 		} else {
 			Field[] vertexFields;
 			if (fields != null) {
@@ -208,7 +208,7 @@ public class GLESBuffer {
 				vertexFields = vertClass.getFields();
 			for (int i = 0; i < vertexFields.length; i++) {
 				try {
-					addVertexAttrib(attribs, vertexFields[i].get(vertex), -1, vertexFields[i].getName(), indexFormat);
+					addVertexAttrib(attribs, vertexFields[i].get(vertex), -1, vertexFields[i].getName(), indexFormat, vertexFields[i].isAnnotationPresent(Normalized.class));
 				} catch (IllegalAccessException e) {
 					Log.e(TAG, "attribsFromVertex(): Error getting array size of field " + vertex.getClass().getName() + "." + vertexFields[i].getName());
 					continue;

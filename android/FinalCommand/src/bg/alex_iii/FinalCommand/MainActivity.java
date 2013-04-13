@@ -15,8 +15,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
         mMainView = (MainView) findViewById(R.id.gLESView1);
         mStatusLabel = (TextView) findViewById(R.id.statusLabel);
-//        mGLESView = new GLESView(this);
-//        setContentView(mGLESView);
     }
     
     public void setStatusText(String text) {
