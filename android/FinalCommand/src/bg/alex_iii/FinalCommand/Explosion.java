@@ -7,13 +7,31 @@ import bg.alex_iii.GLES.Vec;
 
 public class Explosion implements GameObject {
 	Game mGame;
+	Def mDef;
 	GLESModel mModel;
 	float mRadius;
 	float[] mPosition;
 	long mCreationTime;
 	
-	public Explosion(Game game) {
+	public static class Def implements GameObject.Def {
+		float mDuration;
+		float mRadius;
+		float mSpeed;
+		
+		public Def(float duration, float radius, float speed) {
+			mDuration = duration;
+			mRadius = radius;
+			mSpeed = speed;
+		}
+		
+		public Class<? extends GameObject> gameObjectClass() {
+			return Explosion.class;
+		}
+	}
+	
+	public boolean init(Game game, GameObject.Def def) {
 		mGame = game;
+		mDef = (Def) def;
 		
 		GLESModel original = mGame.mMainRenderer.mSphere;
 		float[] transform = new float[16];
@@ -23,10 +41,8 @@ public class Explosion implements GameObject {
 		mRadius = 0;
 		mPosition = Vec.getZero(3);
 		mCreationTime = mGame.mTime;
-	}
-	
-	public Game getGame() {
-		return mGame;
+		
+		return true;
 	}
 	
 	public boolean render() {
@@ -34,13 +50,23 @@ public class Explosion implements GameObject {
 	}
 	
 	public void update() {
-		if ((mGame.mTime - mCreationTime) / 1000.0f > GameSettings.EXPLOSION_DURATION) {
+		if ((mGame.mTime - mCreationTime) / 1000.0f > mDef.mDuration) {
 			mGame.removeObject(this);
 			return;
 		}
 		
-		mRadius += GameSettings.EXPLOSION_SPEED * mGame.getDeltaTime();
-		mRadius = Math.min(mRadius, GameSettings.EXPLOSION_RADIUS);
+		mRadius += mDef.mSpeed * mGame.getDeltaTime();
+		mRadius = Math.min(mRadius, mDef.mRadius);
+		
+		float[] objPos = new float[3];
+		for (GameObject o: mGame.mObjects) {
+			if (o instanceof Explosion)
+				continue;
+			o.getPosition(objPos);
+			if (Vec.getLengthSquare(Vec.sub(mPosition, objPos)) <= mRadius * mRadius) {
+				mGame.removeObject(o);
+			}
+		}
 		
 		updateTransform();
 	}
@@ -55,8 +81,14 @@ public class Explosion implements GameObject {
 		Matrix.scaleM(mModel.mTransform, 0, mRadius, mRadius, mRadius);
 	}
 	
+	public float[] getPosition(float[] position) {
+		Vec.copy(position, mPosition);
+		return position;
+	}
+	
 	public void setPosition(float x, float y, float z) {
 		Vec.set(mPosition, x, y, z);
 		updateTransform();
 	}
+
 }

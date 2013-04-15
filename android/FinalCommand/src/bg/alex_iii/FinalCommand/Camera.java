@@ -9,7 +9,7 @@ public class Camera {
 	
 	public Camera(Game game) {
 		mGame = game;
-		mLookAt = Vec.getZero(3);
+		mLookAt = Vec.get(0, 0, GameSettings.MISSILE_START_ALTITUDE / 3);
 		mPosition = Vec.get(4.0f, 4.0f, 4.0f);
 	}
 	

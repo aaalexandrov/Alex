@@ -94,6 +94,19 @@ public class Vec {
 		return vec;
 	}
 	
+	public static void copy(float[] vDst, float[] vSrc) {
+		int dim = Math.min(vDst.length, vSrc.length);
+		for (int i = 0; i < dim; ++i)
+			vDst[i] = vSrc[i];
+	}
+	
+	public static float[] getCopy(float[] vSrc) {
+		float[] result = new float[vSrc.length];
+		for (int i = 0; i < vSrc.length; ++i)
+			result[i] = vSrc[i];
+		return result;
+	}
+	
 	public static float[] getPolar(float r, float theta, float phi) {
 		float[] result = new float[3];
 		float sinTheta = (float) Math.sin(theta);

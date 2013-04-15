@@ -3,21 +3,35 @@ package bg.alex_iii.FinalCommand;
 import java.util.ArrayList;
 
 import bg.alex_iii.GLES.Color;
-import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.Vec;
 
 public class Missile implements GameObject {
 	static final float SHADOW_DISPLACEMENT = 0.1f;
 	
 	Game mGame;
+	Def mDef;
 	float[] mOrigin, mTarget, mPosition;
 	
-	public Missile(Game game) {
-		mGame = game;
+	public static class Def implements GameObject.Def {
+		float mSpeed;
+		byte[] mTrailColor;
+		Explosion.Def mExplosionDef;
+
+		public Def(float speed, byte[] trailColor, Explosion.Def explosionDef) {
+			mSpeed = speed;
+			mTrailColor = trailColor;
+			mExplosionDef = explosionDef;
+		}
+		
+		public Class<? extends GameObject> gameObjectClass() {
+			return Missile.class;
+		}
 	}
 	
-	public Game getGame() {
-		return mGame;
+	public boolean init(Game game, GameObject.Def def) {
+		mGame = game;
+		mDef = (Def) def;
+		return true;
 	}
 	
 	public boolean render() {
@@ -27,15 +41,15 @@ public class Missile implements GameObject {
 	public void update() {
 		float[] delta = Vec.sub(mTarget, mPosition);
 		float dist = Vec.getLength(delta);
-		float travelDist = GameSettings.MISSILE_SPEED * mGame.getDeltaTime();
+		float travelDist = mDef.mSpeed * mGame.getDeltaTime();
 		if (dist <= travelDist) {
 			mGame.removeObject(this);
-			mGame.createGameObject(Explosion.class, mTarget[0], mTarget[1], mTarget[2]);
+			mGame.createGameObject(mDef.mExplosionDef, mTarget[0], mTarget[1], mTarget[2]);
 			return;
 		}
 		mPosition = Vec.add(mPosition, Vec.mul(delta, travelDist / dist));
 		
-		mGame.mMainRenderer.mLineHolder.setColor(Color.WHITE);
+		mGame.mMainRenderer.mLineHolder.setColor(mDef.mTrailColor);
 		mGame.mMainRenderer.mLineHolder.addPoint(mOrigin[0], mOrigin[1], mOrigin[2]);
 		mGame.mMainRenderer.mLineHolder.addPoint(mPosition[0], mPosition[1], mPosition[2]);
 		
@@ -59,6 +73,11 @@ public class Missile implements GameObject {
 
 	public void setTarget(float x, float y, float z) {
 		mTarget = Vec.get(x, y, z); 
+	}
+	
+	public float[] getPosition(float[] position) {
+		Vec.copy(position, mPosition);
+		return position;
 	}
 	
 	public void setPosition(float x, float y, float z) {
