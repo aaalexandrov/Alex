@@ -52,6 +52,13 @@ public class GLESTexture {
 			Log.e(TAG, "Error creating texture " + mName);
 			return false;
 		}
+		if (minFilter != MinFilter.NEAREST && minFilter != MinFilter.LINEAR) {
+			GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+			if (GLES20.glGetError() != GLES20.GL_NO_ERROR) {
+				Log.e(TAG, "Error generating mipmaps for texture " + mName);
+				return false;
+			}
+		}
 		return isValid();
 	}
 	

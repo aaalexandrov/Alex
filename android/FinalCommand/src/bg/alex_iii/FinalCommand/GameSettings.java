@@ -13,6 +13,7 @@ public class GameSettings {
 	
 	public static final float MISSILE_SPEED = 1.5f;
 	public static final float MISSILE_START_ALTITUDE = 10;
+	public static final float MISSILE_SPAWN_TIME = 4;
 	
 	public static final float SAM_SPEED = 8;
 	

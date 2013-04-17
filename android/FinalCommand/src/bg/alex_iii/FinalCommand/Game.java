@@ -2,7 +2,6 @@ package bg.alex_iii.FinalCommand;
 
 import java.util.ArrayList;
 
-import bg.alex_iii.GLES.Color;
 import bg.alex_iii.GLES.Vec;
 
 import android.os.SystemClock;
@@ -17,7 +16,7 @@ public class Game {
 	public ArrayList<GameObject> mObjects = new ArrayList<GameObject>();
 	public RunnableList mModifications = new RunnableList();
 	public boolean mIsUpdating = false;
-	public Missile.Def mNukeDef, mSAMDef;
+	public Level mLevel;
 	
 	TouchData[] mTouches = { new TouchData(), new TouchData() };
 	
@@ -66,13 +65,7 @@ public class Game {
 		mCamera = new Camera(this);
 		mCamera.setPosition(10, 0, 10);
 		
-		mNukeDef = new Missile.Def(GameSettings.MISSILE_SPEED, Color.WHITE, 
-									new Explosion.Def(GameSettings.EXPLOSION_DURATION, GameSettings.EXPLOSION_RADIUS, GameSettings.EXPLOSION_SPEED));
-		mSAMDef = new Missile.Def(GameSettings.SAM_SPEED, Color.YELLOW, 
-									new Explosion.Def(GameSettings.SAM_EXPLOSION_DURATION, GameSettings.SAM_EXPLOSION_RADIUS, GameSettings.SAM_EXPLOSION_SPEED));
-		
-		if (!initLevel())
-			return false;
+		mLevel = new Level(this);
 		
 		mClock = SystemClock.uptimeMillis();
 		mTime = mTimePrev = 0;
@@ -122,6 +115,11 @@ public class Game {
 			o.update();
 
 		mIsUpdating = false;
+		
+		if (!mLevel.update()) {
+			mLevel = new Level(this);
+		}
+		
 		mModifications.run();
 	}
 	
@@ -154,25 +152,6 @@ public class Game {
 		return createGameObject(def, x, y, mTerrain.getHeight(x, y));
 	}
 	
-	public boolean initLevel() {
-		mTerrain = new Terrain(this, 24, 24, 1, 8);
-		if (!mTerrain.init())
-			return false;
-		
-		createGameObject(Target.DEF, -7, -7);
-		createGameObject(Target.DEF, 7, -7);
-		createGameObject(Target.DEF, -7, 7);
-		createGameObject(Target.DEF, 7, 7);
-		createGameObject(Target.DEF, 0, 0);
-		
-		createGameObject(MissileBase.DEF, -6, 0);
-		createGameObject(MissileBase.DEF, 6, 0);
-		createGameObject(MissileBase.DEF, 0, -6);
-		createGameObject(MissileBase.DEF, 0, 6);
-		
-		return true;
-	}
-	
 	public MissileBase getNearestBase(float[] position) {
 		MissileBase result = null;
 		float[] basePos = new float[3];
@@ -199,7 +178,7 @@ public class Game {
 		if (Float.isNaN(intersection)) 
 			return;
 		float[] pos = Vec.add(camPos, Vec.mul(intersection, direction));
-		Missile missile = (Missile) createGameObject(mNukeDef, ((float) Math.random() - 0.5f) * mTerrain.getSizeX(), ((float) Math.random() - 0.5f) * mTerrain.getSizeY(), GameSettings.MISSILE_START_ALTITUDE);
+		Missile missile = (Missile) createGameObject(mLevel.mNukeDef, ((float) Math.random() - 0.5f) * mTerrain.getSizeX(), ((float) Math.random() - 0.5f) * mTerrain.getSizeY(), GameSettings.MISSILE_START_ALTITUDE);
 		missile.setTarget(pos[0], pos[1], pos[2]);
 	}
 	
@@ -232,7 +211,7 @@ public class Game {
 			return;
 		float[] basePos = new float[3];
 		base.getPosition(basePos);
-		Missile missile = (Missile) createGameObject(mSAMDef, basePos[0], basePos[1], basePos[2] + GameSettings.BASE_HEIGHT);
+		Missile missile = (Missile) createGameObject(mLevel.mSAMDef, basePos[0], basePos[1], basePos[2] + GameSettings.BASE_HEIGHT);
 		missile.setTarget(targetPos[0], targetPos[1], targetPos[2]);
 	}
 	

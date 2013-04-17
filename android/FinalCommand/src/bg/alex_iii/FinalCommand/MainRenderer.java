@@ -65,8 +65,6 @@ public class MainRenderer implements GLESUserRenderer {
 	public boolean render() {
 		boolean result = true;
 
-		//result &= mPrism.render();
-		//result &= mSphere.render();
 		result &= mGame.render();
 		
 		result &= mLineHolder.render();
@@ -136,7 +134,7 @@ public class MainRenderer implements GLESUserRenderer {
 		if (shader == null)
 			return false;
 		GLESTexture texture = mRenderer.loadTexture("green_grid",
-				GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.LINEAR,
+				GLESTexture.MinFilter.LINEAR_MIPMAP_LINEAR, GLESTexture.MagFilter.LINEAR,
 				GLESTexture.WrapMode.REPEAT, GLESTexture.WrapMode.REPEAT,
 				R.raw.green_grid);
 		if (texture == null)
@@ -203,7 +201,7 @@ public class MainRenderer implements GLESUserRenderer {
 	}
 
 	protected boolean initCameraProjection(float aspect) {
-		float near = 0.1f;
+		float near = 0.5f;
 		float far = 100.0f;
 		
 		float extentX, extentY;
