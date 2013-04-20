@@ -1,6 +1,7 @@
 package bg.alex_iii.FinalCommand;
 
 import bg.alex_iii.GLES.Color;
+import bg.alex_iii.GLES.SoundPlayer;
 
 public class Level {
 	Game mGame;
@@ -10,10 +11,11 @@ public class Level {
 	Level(Game game) {
 		mGame = game;
 	
+		SoundPlayer.Def explosionSound = game.mMainRenderer.mSoundPlayer.mDefs.get("explosion");
 		mNukeDef = new Missile.Def(GameSettings.MISSILE_SPEED, Color.WHITE,
-									new Explosion.Def(GameSettings.EXPLOSION_DURATION, GameSettings.EXPLOSION_RADIUS, GameSettings.EXPLOSION_SPEED));
+									new Explosion.Def(GameSettings.EXPLOSION_DURATION, GameSettings.EXPLOSION_RADIUS, GameSettings.EXPLOSION_SPEED, explosionSound));
 		mSAMDef = new Missile.Def(GameSettings.SAM_SPEED, Color.YELLOW, 
-									new Explosion.Def(GameSettings.SAM_EXPLOSION_DURATION, GameSettings.SAM_EXPLOSION_RADIUS, GameSettings.SAM_EXPLOSION_SPEED));
+									new Explosion.Def(GameSettings.SAM_EXPLOSION_DURATION, GameSettings.SAM_EXPLOSION_RADIUS, GameSettings.SAM_EXPLOSION_SPEED, explosionSound));
 		
 		initLevel();
 	}
@@ -42,7 +44,7 @@ public class Level {
 	}
 
 	long generateMissileTime() {
-		return mGame.mTime + (long) (GameSettings.MISSILE_SPAWN_TIME * 1000 * (0.7f + (float) Math.random() * 0.6f));
+		return mGame.mTime + (long) (GameSettings.MISSILE_SPAWN_TIME * 1000 * (1 + (float) Math.random() * GameSettings.MISSILE_SPAWN_VARIATION * 2 - GameSettings.MISSILE_SPAWN_VARIATION));
 	}
 	
 	boolean update() {

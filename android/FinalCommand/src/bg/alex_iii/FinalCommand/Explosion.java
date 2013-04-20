@@ -3,6 +3,7 @@ package bg.alex_iii.FinalCommand;
 import android.opengl.Matrix;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.Shape;
+import bg.alex_iii.GLES.SoundPlayer;
 import bg.alex_iii.GLES.Vec;
 
 public class Explosion implements GameObject {
@@ -17,11 +18,13 @@ public class Explosion implements GameObject {
 		float mDuration;
 		float mRadius;
 		float mSpeed;
+		SoundPlayer.Def mSound;
 		
-		public Def(float duration, float radius, float speed) {
+		public Def(float duration, float radius, float speed, SoundPlayer.Def sound) {
 			mDuration = duration;
 			mRadius = radius;
 			mSpeed = speed;
+			mSound = sound;
 		}
 		
 		public Class<? extends GameObject> gameObjectClass() {
@@ -41,6 +44,9 @@ public class Explosion implements GameObject {
 		mRadius = 0;
 		mPosition = Vec.getZero(3);
 		mCreationTime = mGame.mTime;
+		
+		if (mDef.mSound != null)
+			mDef.mSound.play();
 		
 		return true;
 	}

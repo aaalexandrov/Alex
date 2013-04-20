@@ -230,12 +230,12 @@ public class Game {
 							onAim(x, y, x1, y1);
 						}
 					});
-				} else
+				}/* else
 					mModifications.add(new Runnable() {
 						public void run() {
 							onTap(x, y);
 						}
-					});
+					});	*/
 			} 
 			mTouches[otherIndex].mMoved = true;
 		}

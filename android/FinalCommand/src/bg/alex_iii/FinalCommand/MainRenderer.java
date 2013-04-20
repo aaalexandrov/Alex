@@ -12,6 +12,7 @@ import bg.alex_iii.GLES.GLESUserRenderer;
 import bg.alex_iii.GLES.GLESUtil;
 import bg.alex_iii.GLES.GLESUtil.VertexPos;
 import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
+import bg.alex_iii.GLES.SoundPlayer;
 import bg.alex_iii.GLES.Vec;
 
 public class MainRenderer implements GLESUserRenderer {
@@ -22,6 +23,7 @@ public class MainRenderer implements GLESUserRenderer {
 	public GLESModel mPrism, mSphere, mCone;
 	public Game mGame;
 	public LineHolder mLineHolder;
+	public SoundPlayer mSoundPlayer;
 
 	public void setRenderer(GLESRenderer renderer) {
 		mRenderer = renderer;
@@ -42,6 +44,9 @@ public class MainRenderer implements GLESUserRenderer {
 			return false;
 
 		mLineHolder = new LineHolder(this.mRenderer);
+		
+		if (!initSound()) 
+			return false;
 		
 		mGame = new Game(this);
 		if (!mGame.init())
@@ -200,6 +205,14 @@ public class MainRenderer implements GLESUserRenderer {
 		return true;
 	}
 
+	protected boolean initSound() {
+		mSoundPlayer = new SoundPlayer(mRenderer.mContext, 8);
+		
+		mSoundPlayer.loadSound("explosion", R.raw.bomb_exploding, SoundPlayer.DEFAULT_PRIORITY);
+		
+		return true;
+	}
+	
 	protected boolean initCameraProjection(float aspect) {
 		float near = 0.5f;
 		float far = 100.0f;

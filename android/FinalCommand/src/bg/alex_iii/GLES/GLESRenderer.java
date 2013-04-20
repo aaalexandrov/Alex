@@ -61,8 +61,8 @@ public class GLESRenderer implements Renderer {
 	public GLESMaterial createMaterial(String name, GLESShader shader, GLESState state) {
 		GLESMaterial material = mMaterials.get(name);
 		if (material != null) {
-			assert(shader == material.mShader);
-			assert(state == material.mState);
+			assert shader == material.mShader;
+			assert state == material.mState;
 			return material;
 		}
 		material = new GLESMaterial(name, shader, state);
