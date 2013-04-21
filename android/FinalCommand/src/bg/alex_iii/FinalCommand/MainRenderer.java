@@ -1,6 +1,9 @@
 package bg.alex_iii.FinalCommand;
 
+import java.util.Comparator;
+
 import bg.alex_iii.GLES.GLESCamera;
+import bg.alex_iii.GLES.GLESCompareSorter;
 import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
@@ -22,6 +25,7 @@ public class MainRenderer implements GLESUserRenderer {
 	public MainActivity mActivity;
 	public GLESModel mPrism, mSphere, mCone;
 	public Game mGame;
+	public GLESCompareSorter mSorter;
 	public LineHolder mLineHolder;
 	public SoundPlayer mSoundPlayer;
 
@@ -40,6 +44,19 @@ public class MainRenderer implements GLESUserRenderer {
 	}
 
 	public boolean init() {
+		mSorter = new GLESCompareSorter(new Comparator<GLESModel>() {
+			public int compare(GLESModel model0, GLESModel model1) {
+				boolean blend0, blend1;
+				blend0 = model0.mMaterial.mState.getBlendMode() != GLESState.BlendMode.COPY;
+				blend1 = model1.mMaterial.mState.getBlendMode() != GLESState.BlendMode.COPY;
+				if (blend0 && !blend1)
+					return 1;
+				if (blend1 && !blend0)
+					return -1;
+				return 0;
+			}
+		});
+		
 		if (!initModels())
 			return false;
 
@@ -72,7 +89,9 @@ public class MainRenderer implements GLESUserRenderer {
 
 		result &= mGame.render();
 		
-		result &= mLineHolder.render();
+		result &= mLineHolder.addToSorter(mSorter);
+		
+		result &= mSorter.sortAndRender();
 
 		return result;
 	}

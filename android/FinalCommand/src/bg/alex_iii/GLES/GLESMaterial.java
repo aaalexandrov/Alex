@@ -9,7 +9,7 @@ public class GLESMaterial {
 
 	public static class Uniform {
 		public int mIndexInShader;
-		float[] mValue;
+		public float[] mValue;
 		
 		Uniform(int indexInShader) {
 			mIndexInShader = indexInShader;

@@ -7,6 +7,7 @@ import bg.alex_iii.GLES.GLESBuffer;
 import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.GLESRenderer;
+import bg.alex_iii.GLES.GLESSorter;
 import bg.alex_iii.GLES.GLESUtil.VertexPosColor;
 import bg.alex_iii.GLES.Color;
 import bg.alex_iii.GLES.Vec;
@@ -69,5 +70,12 @@ public class LineHolder {
 			return true;
 		
 		return mModel.render();
+	}
+	
+	boolean addToSorter(GLESSorter sorter) {
+		if (mModel.mGeometry == null)
+			return true;
+		
+		return sorter.add(mModel);
 	}
 }

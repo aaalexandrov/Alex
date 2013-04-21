@@ -128,10 +128,10 @@ public class Game {
 
 		mCamera.update();
 		
-		result &= mTerrain.render();
+		result &= mTerrain.addToSorter(mMainRenderer.mSorter);
 		
 		for (GameObject o: mObjects)
-			result &= o.render();
+			result &= o.addToSorter(mMainRenderer.mSorter);
 		
 		return result;
 	}

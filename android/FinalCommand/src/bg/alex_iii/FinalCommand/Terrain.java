@@ -5,6 +5,7 @@ import bg.alex_iii.GLES.GLESBuffer;
 import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
+import bg.alex_iii.GLES.GLESSorter;
 import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
 import bg.alex_iii.GLES.Shape;
 import bg.alex_iii.GLES.Util;
@@ -54,10 +55,8 @@ public class Terrain {
 				mNextY += Math.signum(mDirection[1]) * mGridSize;
 				mYFactor = (mNextY - mOrigin[1]) / mDirection[1];
 			}
-			if (mFactor > mMaxFactor)
-				mFactor = mMaxFactor;
 			
-			return mFactor;
+			return Math.min(mFactor, mMaxFactor);
 		}
 	}
 	
@@ -236,5 +235,9 @@ public class Terrain {
 	
 	public boolean render() {
 		return mModel.render();
+	}
+	
+	public boolean addToSorter(GLESSorter sorter) {
+		return sorter.add(mModel);
 	}
 }

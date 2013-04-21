@@ -2,6 +2,7 @@ package bg.alex_iii.FinalCommand;
 
 import android.opengl.Matrix;
 import bg.alex_iii.GLES.GLESModel;
+import bg.alex_iii.GLES.GLESSorter;
 import bg.alex_iii.GLES.Shape;
 import bg.alex_iii.GLES.Vec;
 
@@ -30,6 +31,10 @@ public class Target implements GameObject {
 	
 	public boolean render() {
 		return mModel.render();
+	}
+	
+	public boolean addToSorter(GLESSorter sorter) {
+		return sorter.add(mModel);
 	}
 	
 	public void update() {

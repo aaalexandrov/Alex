@@ -1,7 +1,10 @@
 package bg.alex_iii.FinalCommand;
 
 import android.opengl.Matrix;
+import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
+import bg.alex_iii.GLES.GLESSorter;
+import bg.alex_iii.GLES.GLESState;
 import bg.alex_iii.GLES.Shape;
 import bg.alex_iii.GLES.SoundPlayer;
 import bg.alex_iii.GLES.Vec;
@@ -18,13 +21,19 @@ public class Explosion implements GameObject {
 		float mDuration;
 		float mRadius;
 		float mSpeed;
+		boolean mDoDamage;
+		boolean mAnimateAlpha;
 		SoundPlayer.Def mSound;
+		Def mSecondary;
 		
-		public Def(float duration, float radius, float speed, SoundPlayer.Def sound) {
+		public Def(float duration, float radius, float speed, boolean doDamage, boolean animateAlpha, SoundPlayer.Def sound, Def secondary) {
 			mDuration = duration;
 			mRadius = radius;
 			mSpeed = speed;
+			mDoDamage = doDamage;
+			mAnimateAlpha = animateAlpha;
 			mSound = sound;
+			mSecondary = secondary;
 		}
 		
 		public Class<? extends GameObject> gameObjectClass() {
@@ -39,7 +48,14 @@ public class Explosion implements GameObject {
 		GLESModel original = mGame.mMainRenderer.mSphere;
 		float[] transform = new float[16];
 		Matrix.setIdentityM(new float[16], 0);
-		mModel = new GLESModel(original.mGeometry, original.mMaterial, transform);
+		GLESMaterial material;
+		if (mDef.mAnimateAlpha) {
+			material = new GLESMaterial(original.mMaterial.mName + hashCode(), original.mMaterial.mShader, new GLESState());
+			material.copyFrom(original.mMaterial);
+			material.mState.setBlendMode(GLESState.BlendMode.BLEND);
+		} else
+			material = original.mMaterial;
+		mModel = new GLESModel(original.mGeometry, material, transform);
 		
 		mRadius = 0;
 		mPosition = Vec.getZero(3);
@@ -55,8 +71,12 @@ public class Explosion implements GameObject {
 		return mModel.render();
 	}
 	
+	public boolean addToSorter(GLESSorter sorter) {
+		return sorter.add(mModel);
+	}
+	
 	public void update() {
-		if ((mGame.mTime - mCreationTime) / 1000.0f > mDef.mDuration) {
+		if (mGame.mTime - mCreationTime > mDef.mDuration * 1000) {
 			mGame.removeObject(this);
 			return;
 		}
@@ -64,27 +84,35 @@ public class Explosion implements GameObject {
 		mRadius += mDef.mSpeed * mGame.getDeltaTime();
 		mRadius = Math.min(mRadius, mDef.mRadius);
 		
-		float[] objPos = new float[3];
-		for (GameObject o: mGame.mObjects) {
-			if (o instanceof Explosion)
-				continue;
-			o.getPosition(objPos);
-			if (Vec.getLengthSquare(Vec.sub(mPosition, objPos)) <= mRadius * mRadius) {
-				mGame.removeObject(o);
+		if (mDef.mDoDamage) {
+			float[] objPos = new float[3];
+			for (GameObject o: mGame.mObjects) {
+				if (o instanceof Explosion)
+					continue;
+				o.getPosition(objPos);
+				if (Vec.getLengthSquare(Vec.sub(mPosition, objPos)) <= mRadius * mRadius) {
+					mGame.removeObject(o);
+				}
 			}
 		}
 		
-		updateTransform();
+		updateModel();
 	}
 	
 	public boolean isPointInside(float[] point) {
 		return Shape.isPointInsideSphere(point, mPosition, mRadius);
 	}
 	
-	public void updateTransform() {
+	public void updateModel() {
 		Matrix.setIdentityM(mModel.mTransform, 0);
 		Matrix.translateM(mModel.mTransform, 0, mPosition[0], mPosition[1], mPosition[2]);
 		Matrix.scaleM(mModel.mTransform, 0, mRadius, mRadius, mRadius);
+		
+		if (mDef.mAnimateAlpha) {
+			float alpha = 1 - (mGame.mTime - mCreationTime) / (mDef.mDuration * 1000);
+			int colorIndex = mModel.mMaterial.getUniformIndex("uColor");
+			mModel.mMaterial.mUniforms[colorIndex].mValue[3] = alpha;
+		}
 	}
 	
 	public float[] getPosition(float[] position) {
@@ -94,7 +122,9 @@ public class Explosion implements GameObject {
 	
 	public void setPosition(float x, float y, float z) {
 		Vec.set(mPosition, x, y, z);
-		updateTransform();
+		if (mDef.mSecondary != null) 
+			mGame.createGameObject(mDef.mSecondary, mPosition[0], mPosition[1], mPosition[2]);
+		updateModel();
 	}
-
 }
+

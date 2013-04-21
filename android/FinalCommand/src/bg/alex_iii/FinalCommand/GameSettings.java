@@ -11,6 +11,9 @@ public class GameSettings {
 	public static final float EXPLOSION_DURATION = 1;
 	public static final float EXPLOSION_SPEED = EXPLOSION_RADIUS / EXPLOSION_DURATION;
 	
+	public static final float SECONDARY_EXPLOSION_RADIUS = 15;
+	public static final float SECONDARY_EXPLOSION_SPEED = SECONDARY_EXPLOSION_RADIUS / EXPLOSION_DURATION;
+	
 	public static final float MISSILE_SPEED = 1.5f;
 	public static final float MISSILE_START_ALTITUDE = 10;
 	public static final float MISSILE_SPAWN_TIME = 3;

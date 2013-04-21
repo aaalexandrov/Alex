@@ -3,6 +3,7 @@ package bg.alex_iii.FinalCommand;
 import java.util.ArrayList;
 
 import bg.alex_iii.GLES.Color;
+import bg.alex_iii.GLES.GLESSorter;
 import bg.alex_iii.GLES.Vec;
 
 public class Missile implements GameObject {
@@ -35,6 +36,10 @@ public class Missile implements GameObject {
 	}
 	
 	public boolean render() {
+		return true;
+	}
+	
+	public boolean addToSorter(GLESSorter sorter) {
 		return true;
 	}
 	
