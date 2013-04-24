@@ -20,4 +20,30 @@ public class Util {
 		else
 			return b - a <= EPS;
 	}
+	
+	public static int roundToPowerOf2(int i) {
+		--i;
+		i |= i >> 1;
+		i |= i >> 2;
+		i |= i >> 4;
+		i |= i >> 8;
+		i |= i >> 16;
+		++i;
+		return i;
+	}
+	
+	public static int powerOf2Log2(int i) {
+		int log = 0;
+		if ((i & 0xaaaaaaaa) != 0)
+			log += 1;
+		if ((i & 0xcccccccc) != 0)
+			log += 2;
+		if ((i & 0xf0f0f0f0) != 0)
+			log += 4;
+		if ((i & 0xff00ff00) != 0)
+			log += 8;
+		if ((i & 0xffff0000) != 0)
+			log += 16;
+		return log;
+	}
 }

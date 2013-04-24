@@ -66,6 +66,22 @@ public class GLESUtil {
 			return Vec.IsEqual(aPosition, vpn.aPosition) && Vec.IsEqual(aNormal, vpn.aNormal);
 		}
 	}
+
+	public static class VertexPosUV {
+		public float[] aPosition;
+		public float[] aTextureCoord;
+
+		public VertexPosUV(float x, float y, float z, 
+						   float u, float v) {
+			aPosition = new float[3];
+			aPosition[0] = x;
+			aPosition[1] = y;
+			aPosition[2] = z;
+			aTextureCoord = new float[2];
+			aTextureCoord[0] = u;
+			aTextureCoord[1] = v;
+		}
+	}
 	
 	public static class VertexPosNormUV {
 		public float[] aPosition;

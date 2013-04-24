@@ -2,8 +2,10 @@ package bg.alex_iii.FinalCommand;
 
 import java.util.Comparator;
 
+import android.graphics.Typeface;
 import bg.alex_iii.GLES.GLESCamera;
 import bg.alex_iii.GLES.GLESCompareSorter;
+import bg.alex_iii.GLES.GLESFont;
 import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESMaterial;
 import bg.alex_iii.GLES.GLESModel;
@@ -26,6 +28,7 @@ public class MainRenderer implements GLESUserRenderer {
 	public GLESModel mPrism, mSphere, mCone;
 	public Game mGame;
 	public GLESCompareSorter mSorter;
+	public GLESFont mFont;
 	public LineHolder mLineHolder;
 	public SoundPlayer mSoundPlayer;
 
@@ -161,6 +164,7 @@ public class MainRenderer implements GLESUserRenderer {
 				GLESTexture.MinFilter.LINEAR_MIPMAP_LINEAR, GLESTexture.MagFilter.LINEAR,
 				GLESTexture.WrapMode.REPEAT, GLESTexture.WrapMode.REPEAT,
 				R.raw.green_grid);
+//		texture = mFont.mTexture;
 		if (texture == null)
 			return false;
 		GLESState state = new GLESState();
@@ -214,6 +218,10 @@ public class MainRenderer implements GLESUserRenderer {
 	}
 
 	protected boolean initModels() {
+		mFont = new GLESFont("Monospace_20", 20, Typeface.NORMAL);
+		if (!mFont.init())
+			return false;
+		
 		if (!initMaterials())
 			return false;
 
