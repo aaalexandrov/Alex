@@ -81,6 +81,9 @@ public class GLESRenderer implements Renderer {
 		GLES20.glClearColor(mClearColor[0], mClearColor[1], mClearColor[2], mClearColor[3]);
 		GLES20.glClearDepthf(mClearDepth);
 		GLES20.glClearStencil(mClearStencil);
+		GLES20.glColorMask(true, true, true, true);
+		GLES20.glDepthMask(true);
+		GLES20.glStencilMask(0xffffffff);
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_STENCIL_BUFFER_BIT);
 
 		if (!mUserRenderer.render())

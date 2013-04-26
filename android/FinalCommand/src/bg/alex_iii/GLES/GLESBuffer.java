@@ -18,7 +18,7 @@ public class GLESBuffer {
 	protected int mBuffer;
 	protected int mType;
 	protected int mUsage;
-	protected int mSize;
+	protected int mSize, mMaxSize;
 	protected GLESShader.AttribArray mFormat, mLastShaderFormat;
 	
 	public GLESBuffer(boolean indexBuffer, Usage usage) {
@@ -57,10 +57,11 @@ public class GLESBuffer {
 		mFormat = format;
 		if (!initBuffer())
 			return false;
-		mSize = bufferData.capacity();
-		assert(mSize % mFormat.mStride == 0);
+		mMaxSize = bufferData.capacity();
+		assert mMaxSize % mFormat.mStride == 0;
+		mSize = mMaxSize;
 		GLES20.glBindBuffer(mType, mBuffer);
-		GLES20.glBufferData(mType, mSize, bufferData, mUsage);
+		GLES20.glBufferData(mType, mMaxSize, bufferData, mUsage);
 		return true;
 	}
 
@@ -92,8 +93,14 @@ public class GLESBuffer {
 	
 	public int getType() { return mType; }
 	public int getUsage() { return mUsage; }
-	public int getByteSize() { return mSize; }
+	public int getStride() { return mFormat.mStride; }
+	public int getSizeInBytes() { return mSize; }
+	public int getMaxSizeInBytes() { return mMaxSize; }
 	public int getCount() { return mSize / mFormat.mStride; }  
+	public int getMaxCount() { return mMaxSize / mFormat.mStride; }
+	
+	public void setSizeInBytes(int size) { mSize = Util.clamp(size, 0, mMaxSize); }
+	public void setCount(int count) { setSizeInBytes(count * mFormat.mStride); }
 	
 	public boolean update(int size, ByteBuffer bufferData, int offset) {
 		GLES20.glBindBuffer(mType, mBuffer);

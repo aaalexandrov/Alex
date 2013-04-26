@@ -3,6 +3,7 @@ package bg.alex_iii.FinalCommand;
 import java.util.Comparator;
 
 import android.graphics.Typeface;
+import android.opengl.Matrix;
 import bg.alex_iii.GLES.GLESCamera;
 import bg.alex_iii.GLES.GLESCompareSorter;
 import bg.alex_iii.GLES.GLESFont;
@@ -31,6 +32,7 @@ public class MainRenderer implements GLESUserRenderer {
 	public GLESFont mFont;
 	public LineHolder mLineHolder;
 	public SoundPlayer mSoundPlayer;
+	GLESModel mFontTest;
 
 	public void setRenderer(GLESRenderer renderer) {
 		mRenderer = renderer;
@@ -44,6 +46,7 @@ public class MainRenderer implements GLESUserRenderer {
 
 	public void setDimensions(int width, int height) {
 		initCameraProjection((float) width / height);
+		initFontModel(width, height);
 	}
 
 	public boolean init() {
@@ -93,9 +96,12 @@ public class MainRenderer implements GLESUserRenderer {
 		result &= mGame.render();
 		
 		result &= mLineHolder.addToSorter(mSorter);
-		
+
 		result &= mSorter.sortAndRender();
 
+		if (mFontTest != null)
+			result &= mFontTest.render();
+		
 		return result;
 	}
 
@@ -156,20 +162,17 @@ public class MainRenderer implements GLESUserRenderer {
 	}
 
 	protected boolean initMaterials() {
-		GLESShader shader = mRenderer.loadShader("tex_lit", R.raw.tex_lit_v,
-				R.raw.tex_lit_f);
+		GLESShader shader = mRenderer.loadShader("tex_lit", R.raw.tex_lit_v, R.raw.tex_lit_f);
 		if (shader == null)
 			return false;
 		GLESTexture texture = mRenderer.loadTexture("green_grid",
 				GLESTexture.MinFilter.LINEAR_MIPMAP_LINEAR, GLESTexture.MagFilter.LINEAR,
 				GLESTexture.WrapMode.REPEAT, GLESTexture.WrapMode.REPEAT,
 				R.raw.green_grid);
-//		texture = mFont.mTexture;
 		if (texture == null)
 			return false;
 		GLESState state = new GLESState();
-		GLESMaterial material = mRenderer.createMaterial("tex_lit", shader,
-				state);
+		GLESMaterial material = mRenderer.createMaterial("tex_lit", shader, state);
 		if (material == null)
 			return false;
 		if (!material.setSampler("sTexture", texture))
@@ -181,11 +184,31 @@ public class MainRenderer implements GLESUserRenderer {
 		material.setUniform("uMaterialDiffuse", Vec.get(0.7f, 0.7f, 0.7f));
 		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 1, 1));
 
-		shader = mRenderer.loadShader("color_lit", R.raw.color_lit_v,
-				R.raw.color_lit_f);
+		shader = mRenderer.loadShader("tex", R.raw.tex_v, R.raw.tex_f);
+		if (shader == null)
+			return false;
+		texture = mFont.mTexture;
+		if (texture == null)
+			return false;
+		state = new GLESState();
+		state.setBackfaceCulling(false);
+		state.setDepthEnable(false);
+		state.setBlendMode(GLESState.BlendMode.BLEND);
+		material = mRenderer.createMaterial("tex", shader, state);
+		if (material == null)
+			return false;
+		if (!material.setSampler("sTexture", texture))
+			return false;
+		material.setUniform("uColor", Vec.get(1, 1, 1, 1));
+		float[] transform = new float[16];
+		Matrix.setIdentityM(transform, 0);
+		material.setUniform("umTransform", transform);
+		
+		shader = mRenderer.loadShader("color_lit", R.raw.color_lit_v, R.raw.color_lit_f);
 		if (shader == null)
 			return false;
 		state = new GLESState();
+//		state.setBackfaceCulling(false);
 		material = mRenderer.createMaterial("color_lit", shader, state);
 		if (material == null)
 			return false;
@@ -195,7 +218,6 @@ public class MainRenderer implements GLESUserRenderer {
 
 		material.setUniform("uMaterialDiffuse", Vec.get(0.7f, 0.7f, 0.0f));
 		material.setUniform("uMaterialAmbient", Vec.get(1, 1, 0, 1));
-//		material.mState.setBackfaceCulling(false);
 		
 		shader = mRenderer.loadShader("color", R.raw.color_v, R.raw.color_f);
 		if (shader == null)
@@ -217,6 +239,13 @@ public class MainRenderer implements GLESUserRenderer {
 		return true;
 	}
 
+	protected boolean initFontModel(float viewportWidth, float viewportHeight) {
+		String text = "Lorem ipsum 123";
+		mFontTest = GLESModel.create(mFont.createVertices(text, 50, 50, viewportWidth, viewportHeight), mFont.createIndices(text, 0), GLESGeometry.PrimitiveType.TRIANGLES, mRenderer.mMaterials.get("tex"));
+
+		return true;
+	}
+	
 	protected boolean initModels() {
 		mFont = new GLESFont("Monospace_20", 20, Typeface.NORMAL);
 		if (!mFont.init())

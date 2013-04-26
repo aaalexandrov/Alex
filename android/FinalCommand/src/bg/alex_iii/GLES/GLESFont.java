@@ -39,7 +39,7 @@ public class GLESFont {
 		float width, height;
 		mCharWidth = (float) Math.ceil(paint.measureText(" "));
 		width = mCharWidth;
-		height = (float) Math.ceil(mFontMetrics.bottom - mFontMetrics.top);
+		height = getCharHeight();
 		mFirstChar = ' ';
 		mLastChar = 128;
 		int pixels = (int) width * (int) height * (mLastChar - mFirstChar);
@@ -84,31 +84,73 @@ public class GLESFont {
 		done();
 	}
 	
-	public RectF getCharUVRect(char ch) {
+	float getCharHeight() {
+		return (float) Math.ceil(mFontMetrics.bottom - mFontMetrics.top);
+	}
+	
+	float getCellWidth() {
+		return mCharWidth / mTexture.getWidth();
+	}
+	
+	float getCellHeight() {
+		return getCharHeight() / mTexture.getHeight();
+	}
+	
+	public void getCharUVRect(char ch, float cellWidth, float cellHeight, RectF rect) {
 		if (ch < mFirstChar || ch >= mLastChar)
 			ch = mFirstChar;
 		int index = ch - mFirstChar;
 		int row = index / mCharCols;
 		int col = index % mCharCols;
-		float cellWidth = mCharWidth / mTexture.getWidth();
-		float cellHeight = (mFontMetrics.bottom - mFontMetrics.top) / mTexture.getHeight();
-		RectF rect = new RectF();
 		rect.left = col * cellWidth;
 		rect.top = row * cellHeight;
 		rect.right = rect.left + cellWidth;
 		rect.bottom = rect.top + cellHeight;
-		return rect;
 	}
 	
 	public GLESUtil.VertexPosUV[] createVertices(String text, float x, float y, float viewportWidth, float viewportHeight) {
+		float cellWidth = getCellWidth();
+		float cellHeight = getCellHeight();
+		float quadWidth = mCharWidth / viewportWidth * 2;
+		float quadHeight = getCharHeight() / viewportHeight * 2;
+		float curX = x / viewportWidth * 2 - 1;
+		float curY = (y + (float) Math.ceil(mFontMetrics.top)) / viewportHeight * 2 - 1;
+		float z = -1;
+		
 		GLESUtil.VertexPosUV[] vertices = new GLESUtil.VertexPosUV[text.length() * 4];
+		int vert = 0;
+		RectF uvRect = new RectF();
+		for (int i = 0; i < text.length(); ++i) {
+			getCharUVRect(text.charAt(i), cellWidth, cellHeight, uvRect);
+			vertices[vert + 0] = new GLESUtil.VertexPosUV(curX, curY + quadHeight, z, uvRect.left, uvRect.top);
+			vertices[vert + 1] = new GLESUtil.VertexPosUV(curX + quadWidth, curY + quadHeight, z, uvRect.right, uvRect.top);
+			vertices[vert + 2] = new GLESUtil.VertexPosUV(curX, curY, z, uvRect.left, uvRect.bottom);
+			vertices[vert + 3] = new GLESUtil.VertexPosUV(curX + quadWidth, curY, z, uvRect.right, uvRect.bottom);
+			curX += quadWidth;
+			vert += 4;
+		}
+		assert vert == vertices.length;
 		
 		return vertices;
 	}
 	
-	public short[] createIndices(String text) {
+	public short[] createIndices(String text, int baseVertex) {
 		short[] indices = new short[text.length() * 6];
+		int vert = baseVertex;
+		int ind = 0;
+		for (int i = 0; i < text.length(); ++i) {
+			indices[ind + 0] = (short) (vert + 0);
+			indices[ind + 1] = (short) (vert + 2);
+			indices[ind + 2] = (short) (vert + 1);
+
+			indices[ind + 3] = (short) (vert + 1);
+			indices[ind + 4] = (short) (vert + 2);
+			indices[ind + 5] = (short) (vert + 3);
 		
+			vert += 4;
+			ind += 6;
+		}
+		assert ind == indices.length;
 		return indices;
 	}
 }

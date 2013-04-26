@@ -46,4 +46,20 @@ public class Util {
 			log += 16;
 		return log;
 	}
+	
+	public static int clamp(int x, int min, int max) {
+		return Math.min(Math.max(min, x), max);
+	}
+	
+	public static long clamp(long x, long min, long max) {
+		return Math.min(Math.max(min, x), max);
+	}
+	
+	public static float clamp(float x, float min, float max) {
+		return Math.min(Math.max(min, x), max);
+	}
+	
+	public static double clamp(double x, double min, double max) {
+		return Math.min(Math.max(min, x), max);
+	}
 }
