@@ -24,12 +24,15 @@ public class GLESRenderer implements Renderer {
 	public float[] mClearColor = { 0, 0, 1, 1 };
 	public float mClearDepth = 1;
 	public int mClearStencil = 0; 
+	public int mSurfaceWidth, mSurfaceHeight;
 	
 	public GLESUserRenderer mUserRenderer;
 	
 	public GLESRenderer(Context context, GLSurfaceView surfaceView, GLESUserRenderer userRenderer) {
 		mContext = (Activity) context;
 		mFrameID = 1;
+		mSurfaceWidth = -1;
+		mSurfaceHeight = -1;
 		mUserRenderer = userRenderer;
 		mUserRenderer.setRenderer(this);
 		surfaceView.setEGLContextClientVersion(2);
@@ -94,6 +97,8 @@ public class GLESRenderer implements Renderer {
 
 	public void onSurfaceChanged(GL10 gl, int width, int height) {
 		GLES20.glViewport(0, 0, width, height);
+		mSurfaceWidth = width;
+		mSurfaceHeight = height;
 		mUserRenderer.setDimensions(width, height);
 	}
 

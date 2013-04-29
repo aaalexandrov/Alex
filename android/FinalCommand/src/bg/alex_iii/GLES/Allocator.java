@@ -3,7 +3,7 @@ package bg.alex_iii.GLES;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class GLESAllocator {
+public class Allocator {
 	protected int mSize;
 	protected int mFree;
 	protected LinkedList<Block> mBlocks;
@@ -23,10 +23,17 @@ public class GLESAllocator {
 		}
 	}
 	
-	public GLESAllocator(int size) {
-		mSize = size;
+	public Allocator(int size) {
 		mBlocks = new LinkedList<Block>();
-		clear();
+		clear(size);
+	}
+	
+	public int getSize() {
+		return mSize;
+	}
+	
+	public int getFree() {
+		return mFree;
 	}
 	
 	public int alloc(int size) {
@@ -72,7 +79,8 @@ public class GLESAllocator {
 		}
 	}
 	
-	public void clear() {
+	public void clear(int size) {
+		mSize = size;
 		mFree = mSize;
 		mBlocks.clear();
 		mBlocks.add(new Block(0, mSize, true));
