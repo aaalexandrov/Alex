@@ -27,7 +27,7 @@ public class TextHolder {
 	}
 	
 	class Line {
-		float mX, mY;
+		float mX, mY, mScale;
 		String mText;
 		int mVBOffset, mIBOffset;
 		
@@ -103,12 +103,13 @@ public class TextHolder {
 		mYAlign = yAlign;
 	}
 	
-	public int addLine(float x, float y, String text) {
-		x = getXAligned(x, text);
-		y = getYAligned(y, text);
+	public int addLine(float x, float y, float scale, String text) {
+		x = getXAligned(x, scale, text);
+		y = getYAligned(y, scale, text);
 		Line line = new Line();
 		line.mX = x;
 		line.mY = y;
+		line.mScale = scale;
 		line.mText = text;
 		
 		int id = mNextId++;
@@ -140,28 +141,28 @@ public class TextHolder {
 		return true;
 	}
 
-	float getXAligned(float x, String text) {
+	float getXAligned(float x, float scale, String text) {
 		switch (mXAlign) {
 			case CENTER:
-				x -= text.length() * mFont.mCharWidth / 2;
+				x -= text.length() * mFont.mCharWidth / 2 * scale;
 				break;
 			case RIGHT:
-				x -= text.length() * mFont.mCharWidth;
+				x -= text.length() * mFont.mCharWidth * scale;
 				break;
 		}
 		return x;
 	}
 	
-	float getYAligned(float y, String text) {
+	float getYAligned(float y, float scale, String text) {
 		switch (mYAlign) {
 			case TOP:
-				y += Math.ceil(mFont.mFontMetrics.top); 
+				y += Math.ceil(mFont.mFontMetrics.top * scale); 
 				break;
 			case BOTTOM:
-				y += Math.ceil(mFont.mFontMetrics.bottom);
+				y += Math.ceil(mFont.mFontMetrics.bottom * scale);
 				break;
 			case CENTER:
-				y += Math.ceil(-mFont.getCharHeight() / 2 + mFont.mFontMetrics.bottom);
+				y += Math.ceil((-mFont.getCharHeight() / 2 + mFont.mFontMetrics.bottom) * scale);
 				break;
 		}
 		return y;
@@ -176,7 +177,7 @@ public class TextHolder {
 		int vbOffset = mVBAllocator.alloc(vbSize);
 		if (vbOffset >= 0) {
 			line.mVBOffset = vbOffset;
-			GLESUtil.VertexPosUV[] fontVertices = mFont.createVertices(line.mText, line.mX, line.mY);
+			GLESUtil.VertexPosUV[] fontVertices = mFont.createVertices(line.mText, line.mX, line.mY, line.mScale);
 			ByteBuffer buffer = GLESBuffer.bufferFromData(fontVertices, mModel.mGeometry.mVertices.mFormat);
 			assert vbSize == buffer.capacity();
 			mModel.mGeometry.mVertices.update(buffer.capacity(), buffer, vbOffset);

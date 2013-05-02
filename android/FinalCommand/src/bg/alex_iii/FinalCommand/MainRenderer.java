@@ -90,7 +90,7 @@ public class MainRenderer implements GLESUserRenderer {
 		String fpsText = String.format("FPS: %.2f",  fps);
 		mTextHolder.removeLine(mFPSLineId);
 		mTextHolder.setAlignment(TextHolder.Alignment.LEFT, TextHolder.Alignment.TOP);
-		mFPSLineId = mTextHolder.addLine(0, mRenderer.mSurfaceHeight - 1, fpsText);
+		mFPSLineId = mTextHolder.addLine(0, mRenderer.mSurfaceHeight - 1, 1, fpsText);
 		mLineHolder.updateModel();
 	}
 

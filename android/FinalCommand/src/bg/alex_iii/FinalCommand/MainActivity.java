@@ -14,11 +14,5 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         mMainView = (MainView) findViewById(R.id.gLESView1);
-//        mStatusLabel = (TextView) findViewById(R.id.statusLabel);
     }
-    
-/*    public void setStatusText(String text) {
-    	mStatusLabel.setText(text);
-    }
-*/    
 }

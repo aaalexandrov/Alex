@@ -68,7 +68,7 @@ public class GLESFont {
 		}
 
 		mTexture = new GLESTexture(mName);
-		boolean result = mTexture.init(GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.LINEAR, GLESTexture.WrapMode.CLAMP_TO_EDGE, GLESTexture.WrapMode.CLAMP_TO_EDGE, bitmap);
+		boolean result = mTexture.init(GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.NEAREST, GLESTexture.WrapMode.CLAMP_TO_EDGE, GLESTexture.WrapMode.CLAMP_TO_EDGE, bitmap);
 		bitmap.recycle();
 		
 		return result;
@@ -108,13 +108,13 @@ public class GLESFont {
 		rect.bottom = rect.top + cellHeight;
 	}
 	
-	public GLESUtil.VertexPosUV[] createVertices(String text, float x, float y) {
+	public GLESUtil.VertexPosUV[] createVertices(String text, float x, float y, float scale) {
 		float cellWidth = getCellWidth();
 		float cellHeight = getCellHeight();
-		float quadWidth = mCharWidth;
-		float quadHeight = getCharHeight();
+		float quadWidth = mCharWidth * scale;
+		float quadHeight = getCharHeight() * scale;
 		float curX = x;
-		float curY = (y - (float) Math.ceil(mFontMetrics.top));
+		float curY = (y - (float) Math.ceil(mFontMetrics.top * scale));
 		float z = -1;
 		
 		GLESUtil.VertexPosUV[] vertices = new GLESUtil.VertexPosUV[text.length() * 4];
