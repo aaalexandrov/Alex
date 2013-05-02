@@ -12,13 +12,14 @@ public class Level {
 		mGame = game;
 	
 		SoundPlayer.Def explosionSound = game.mMainRenderer.mSoundPlayer.mDefs.get("explosion");
+		SoundPlayer.Def explosionGroundSound = game.mMainRenderer.mSoundPlayer.mDefs.get("explosion_ground");
 		mNukeDef = new Missile.Def(GameSettings.MISSILE_SPEED, Color.WHITE,
 									new Explosion.Def(GameSettings.EXPLOSION_DURATION, 
 														GameSettings.EXPLOSION_RADIUS, 
 														GameSettings.EXPLOSION_SPEED, 
 														true, 
 														false, 
-														explosionSound,
+														explosionGroundSound,
 														new Explosion.Def(GameSettings.EXPLOSION_DURATION,
 																			GameSettings.SECONDARY_EXPLOSION_RADIUS,
 																			GameSettings.SECONDARY_EXPLOSION_SPEED,
@@ -27,7 +28,13 @@ public class Level {
 																			null, 
 																			null)));
 		mSAMDef = new Missile.Def(GameSettings.SAM_SPEED, Color.YELLOW, 
-									new Explosion.Def(GameSettings.SAM_EXPLOSION_DURATION, GameSettings.SAM_EXPLOSION_RADIUS, GameSettings.SAM_EXPLOSION_SPEED, true, false, explosionSound, null));
+									new Explosion.Def(GameSettings.SAM_EXPLOSION_DURATION, 
+														GameSettings.SAM_EXPLOSION_RADIUS, 
+														GameSettings.SAM_EXPLOSION_SPEED, 
+														true, 
+														false, 
+														explosionSound, 
+														null));
 		
 		initLevel();
 	}

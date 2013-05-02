@@ -2,6 +2,7 @@ package bg.alex_iii.FinalCommand;
 
 import java.util.Comparator;
 
+import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 import android.opengl.Matrix;
 import bg.alex_iii.GLES.GLESCamera;
@@ -83,6 +84,7 @@ public class MainRenderer implements GLESUserRenderer {
 		return true;
 	}
 
+	@SuppressLint("DefaultLocale")
 	public void update() {
 		mLineHolder.clearPoints();
 		mGame.update();
@@ -269,7 +271,8 @@ public class MainRenderer implements GLESUserRenderer {
 	protected boolean initSound() {
 		mSoundPlayer = new SoundPlayer(mRenderer.mContext, 8);
 		
-		mSoundPlayer.loadSound("explosion", R.raw.bomb_exploding, SoundPlayer.DEFAULT_PRIORITY);
+		mSoundPlayer.loadSound("explosion", R.raw.explosion_distant_001, SoundPlayer.DEFAULT_PRIORITY);
+		mSoundPlayer.loadSound("explosion_ground", R.raw.explosion_large_distant, SoundPlayer.DEFAULT_PRIORITY);
 		
 		return true;
 	}
