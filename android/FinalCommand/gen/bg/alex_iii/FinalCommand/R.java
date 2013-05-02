@@ -16,7 +16,6 @@ public final class R {
     public static final class id {
         public static final int gLESView1=0x7f060000;
         public static final int linearLayout1=0x7f060001;
-        public static final int statusLabel=0x7f060002;
     }
     public static final class layout {
         public static final int main=0x7f030000;

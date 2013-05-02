@@ -81,6 +81,20 @@ public class GLESMaterial {
 		return mShader.mSamplers.getParamIndex(name);
 	}
 	
+	public Uniform getUniform(String name) {
+		int index = getUniformIndex(name);
+		if (index >= 0)
+			return mUniforms[index];
+		return null;
+	}
+	
+	public GLESTexture getSampler(String name) {
+		int index = getSamplerIndex(name);
+		if (index >= 0)
+			return mSamplers[index];
+		return null;
+	}
+	
 	public boolean setUniform(int index, float[] value) {
 		mUniforms[index].mValue = value;
 		UniformInfo uni = mShader.mUniforms.getParam(mUniforms[index].mIndexInShader);

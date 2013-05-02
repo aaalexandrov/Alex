@@ -4,16 +4,27 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 
+import android.annotation.SuppressLint;
 import android.opengl.Matrix;
 
 public class TextHolder {
-	GLESRenderer mRenderer;
-	GLESFont mFont;
-	GLESMaterial mMaterial;
+	public GLESRenderer mRenderer;
+	public GLESFont mFont;
+	public GLESMaterial mMaterial;
+	public GLESModel mModel;
+	Alignment mXAlign, mYAlign;
 	Allocator mVBAllocator;
-	GLESModel mModel;
 	int mNextId;
 	HashMap<Integer, Line> mLines;
+	
+	public enum Alignment {
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM,
+		CENTER,
+		BASELINE,
+	}
 	
 	class Line {
 		float mX, mY;
@@ -21,7 +32,7 @@ public class TextHolder {
 		int mVBOffset, mIBOffset;
 		
 		int getVBSize() {
-			return mText.length() * 4 * mMaterial.mShader.mAttribs.mStride;
+			return mText.length() * 4 * getVertexStride();
 		}
 		
 		int getIBSize() {
@@ -29,17 +40,20 @@ public class TextHolder {
 		}
 	}
 	
+	@SuppressLint("UseSparseArrays")
 	public TextHolder(GLESRenderer renderer, GLESFont font, GLESMaterial material, int characters) {
 		mRenderer = renderer;
 		mFont = font;
 		mMaterial = material;
 		mNextId = 1;
 		mLines = new HashMap<Integer, Line>();
+		mXAlign = Alignment.LEFT;
+		mYAlign = Alignment.BASELINE;
 		initBuffers(characters);
 	}
 	
 	boolean initBuffers(int characters) {
-		GLESShader.AttribArray vertexAttrib = mMaterial.mShader.mAttribs;
+		GLESShader.AttribArray vertexAttrib = GLESBuffer.attribsFromVertex(new GLESUtil.VertexPosUV(0, 0, 0, 0, 0), false, null);
 		int vbSize = vertexAttrib.mStride * 4 * characters;
 		mVBAllocator = new Allocator(vbSize);
 
@@ -52,6 +66,7 @@ public class TextHolder {
 		
 		int ibSize = Short.SIZE / 8 * 6 * characters;
 		ByteBuffer indexBuffer = ByteBuffer.allocate(ibSize);
+		indexBuffer.order(ByteOrder.nativeOrder());
 		GLESBuffer ib = new GLESBuffer(true, GLESBuffer.Usage.DYNAMIC_DRAW);
 		if (!ib.init(null, indexBuffer))
 			return false;
@@ -83,7 +98,14 @@ public class TextHolder {
 		done();
 	}
 	
+	public void setAlignment(Alignment xAlign, Alignment yAlign) {
+		mXAlign = xAlign;
+		mYAlign = yAlign;
+	}
+	
 	public int addLine(float x, float y, String text) {
+		x = getXAligned(x, text);
+		y = getYAligned(y, text);
 		Line line = new Line();
 		line.mX = x;
 		line.mY = y;
@@ -117,14 +139,45 @@ public class TextHolder {
 		}
 		return true;
 	}
+
+	float getXAligned(float x, String text) {
+		switch (mXAlign) {
+			case CENTER:
+				x -= text.length() * mFont.mCharWidth / 2;
+				break;
+			case RIGHT:
+				x -= text.length() * mFont.mCharWidth;
+				break;
+		}
+		return x;
+	}
+	
+	float getYAligned(float y, String text) {
+		switch (mYAlign) {
+			case TOP:
+				y += Math.ceil(mFont.mFontMetrics.top); 
+				break;
+			case BOTTOM:
+				y += Math.ceil(mFont.mFontMetrics.bottom);
+				break;
+			case CENTER:
+				y += Math.ceil(-mFont.getCharHeight() / 2 + mFont.mFontMetrics.bottom);
+				break;
+		}
+		return y;
+	}
+	
+	int getVertexStride() {
+		return mModel.mGeometry.mVertices.getStride();
+	}
 	
 	void addLineGeometry(Line line) {
 		int vbSize = line.getVBSize();
 		int vbOffset = mVBAllocator.alloc(vbSize);
 		if (vbOffset >= 0) {
 			line.mVBOffset = vbOffset;
-			GLESUtil.VertexPosUV[] fontVertices = mFont.createVertices(line.mText, line.mX, line.mY, mRenderer.mSurfaceWidth, mRenderer.mSurfaceHeight);
-			ByteBuffer buffer = GLESBuffer.bufferFromData(fontVertices, mMaterial.mShader.mAttribs);
+			GLESUtil.VertexPosUV[] fontVertices = mFont.createVertices(line.mText, line.mX, line.mY);
+			ByteBuffer buffer = GLESBuffer.bufferFromData(fontVertices, mModel.mGeometry.mVertices.mFormat);
 			assert vbSize == buffer.capacity();
 			mModel.mGeometry.mVertices.update(buffer.capacity(), buffer, vbOffset);
 			if (vbOffset >= mModel.mGeometry.mVertices.getSizeInBytes())
@@ -137,8 +190,9 @@ public class TextHolder {
 				newSize = mVBAllocator.mSize;
 			else
 				newSize = Math.min(mVBAllocator.mSize * 3 / 2, mVBAllocator.mSize + vbSize);
+			int vertexStride = getVertexStride();
 			doneBuffers();
-			initBuffers(newSize / mMaterial.mShader.mAttribs.mStride);
+			initBuffers(newSize / vertexStride);
 			for (Line l: mLines.values()) 
 				addLineGeometry(l);
 		}
@@ -146,11 +200,13 @@ public class TextHolder {
 	
 	void addLineIndices(Line line) {
 		line.mIBOffset = mModel.mGeometry.mIndices.getSizeInBytes();
-		int baseVertex = line.mVBOffset / mMaterial.mShader.mAttribs.mStride;
+		int baseVertex = line.mVBOffset / getVertexStride();
 		short[] indices = mFont.createIndices(line.mText, baseVertex);
 		ByteBuffer indexBuffer = ByteBuffer.allocate(indices.length * Short.SIZE / 8);
+		indexBuffer.order(ByteOrder.nativeOrder());
 		for (short s: indices)
 			indexBuffer.putShort(s);
+		indexBuffer.rewind();
 		mModel.mGeometry.mIndices.update(indexBuffer.capacity(), indexBuffer, line.mIBOffset);
 		mModel.mGeometry.mIndices.setSizeInBytes(mModel.mGeometry.mIndices.getSizeInBytes() + indexBuffer.capacity());
 	}

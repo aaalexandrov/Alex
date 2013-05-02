@@ -53,7 +53,7 @@ public class GLESFont {
 		yPow2 = mCharRows * (int) height;
 		yPow2 = Util.roundToPowerOf2(yPow2);
 		
-		Bitmap bitmap = Bitmap.createBitmap(xPow2, yPow2, Bitmap.Config.ARGB_4444);
+		Bitmap bitmap = Bitmap.createBitmap(xPow2, yPow2, Bitmap.Config.ALPHA_8);
 		Canvas canvas = new Canvas(bitmap);
 		canvas.drawColor(0);
 		
@@ -68,7 +68,7 @@ public class GLESFont {
 		}
 
 		mTexture = new GLESTexture(mName);
-		boolean result = mTexture.init(GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.LINEAR, GLESTexture.WrapMode.REPEAT, GLESTexture.WrapMode.REPEAT, bitmap);
+		boolean result = mTexture.init(GLESTexture.MinFilter.LINEAR, GLESTexture.MagFilter.LINEAR, GLESTexture.WrapMode.CLAMP_TO_EDGE, GLESTexture.WrapMode.CLAMP_TO_EDGE, bitmap);
 		bitmap.recycle();
 		
 		return result;
@@ -108,13 +108,13 @@ public class GLESFont {
 		rect.bottom = rect.top + cellHeight;
 	}
 	
-	public GLESUtil.VertexPosUV[] createVertices(String text, float x, float y, float viewportWidth, float viewportHeight) {
+	public GLESUtil.VertexPosUV[] createVertices(String text, float x, float y) {
 		float cellWidth = getCellWidth();
 		float cellHeight = getCellHeight();
-		float quadWidth = mCharWidth / viewportWidth * 2;
-		float quadHeight = getCharHeight() / viewportHeight * 2;
-		float curX = x / viewportWidth * 2 - 1;
-		float curY = (y + (float) Math.ceil(mFontMetrics.top)) / viewportHeight * 2 - 1;
+		float quadWidth = mCharWidth;
+		float quadHeight = getCharHeight();
+		float curX = x;
+		float curY = (y - (float) Math.ceil(mFontMetrics.top));
 		float z = -1;
 		
 		GLESUtil.VertexPosUV[] vertices = new GLESUtil.VertexPosUV[text.length() * 4];
@@ -122,10 +122,10 @@ public class GLESFont {
 		RectF uvRect = new RectF();
 		for (int i = 0; i < text.length(); ++i) {
 			getCharUVRect(text.charAt(i), cellWidth, cellHeight, uvRect);
-			vertices[vert + 0] = new GLESUtil.VertexPosUV(curX, curY + quadHeight, z, uvRect.left, uvRect.top);
-			vertices[vert + 1] = new GLESUtil.VertexPosUV(curX + quadWidth, curY + quadHeight, z, uvRect.right, uvRect.top);
-			vertices[vert + 2] = new GLESUtil.VertexPosUV(curX, curY, z, uvRect.left, uvRect.bottom);
-			vertices[vert + 3] = new GLESUtil.VertexPosUV(curX + quadWidth, curY, z, uvRect.right, uvRect.bottom);
+			vertices[vert + 0] = new GLESUtil.VertexPosUV(curX, curY, z, uvRect.left, uvRect.top);
+			vertices[vert + 1] = new GLESUtil.VertexPosUV(curX + quadWidth, curY, z, uvRect.right, uvRect.top);
+			vertices[vert + 2] = new GLESUtil.VertexPosUV(curX, curY - quadHeight, z, uvRect.left, uvRect.bottom);
+			vertices[vert + 3] = new GLESUtil.VertexPosUV(curX + quadWidth, curY - quadHeight, z, uvRect.right, uvRect.bottom);
 			curX += quadWidth;
 			vert += 4;
 		}
@@ -152,5 +152,28 @@ public class GLESFont {
 		}
 		assert ind == indices.length;
 		return indices;
+	}
+	
+	public float[] setProjection(float viewportWidth, float viewportHeight, float[] transform) {
+		transform[0] = 2 / viewportWidth;
+		transform[1] = 0;
+		transform[2] = 0;
+		transform[3] = 0;
+		
+		transform[4] = 0;
+		transform[5] = 2 / viewportHeight;
+		transform[6] = 0;
+		transform[7] = 0;
+		
+		transform[8] = 0;
+		transform[9] = 0;
+		transform[10] = 1;
+		transform[11] = 0;
+		
+		transform[12] = -1;
+		transform[13] = -1;
+		transform[14] = 0;
+		transform[15] = 1;
+		return transform;
 	}
 }

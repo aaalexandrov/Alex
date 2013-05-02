@@ -9,6 +9,7 @@ import bg.alex_iii.GLES.GLESCompareSorter;
 import bg.alex_iii.GLES.GLESFont;
 import bg.alex_iii.GLES.GLESGeometry;
 import bg.alex_iii.GLES.GLESMaterial;
+import bg.alex_iii.GLES.GLESMaterial.Uniform;
 import bg.alex_iii.GLES.GLESModel;
 import bg.alex_iii.GLES.GLESRenderer;
 import bg.alex_iii.GLES.GLESShader;
@@ -19,6 +20,7 @@ import bg.alex_iii.GLES.GLESUtil;
 import bg.alex_iii.GLES.GLESUtil.VertexPos;
 import bg.alex_iii.GLES.GLESUtil.VertexPosNormUV;
 import bg.alex_iii.GLES.SoundPlayer;
+import bg.alex_iii.GLES.TextHolder;
 import bg.alex_iii.GLES.Vec;
 
 public class MainRenderer implements GLESUserRenderer {
@@ -32,7 +34,8 @@ public class MainRenderer implements GLESUserRenderer {
 	public GLESFont mFont;
 	public LineHolder mLineHolder;
 	public SoundPlayer mSoundPlayer;
-	GLESModel mFontTest;
+	public TextHolder mTextHolder;
+	int mFPSLineId;
 
 	public void setRenderer(GLESRenderer renderer) {
 		mRenderer = renderer;
@@ -46,7 +49,9 @@ public class MainRenderer implements GLESUserRenderer {
 
 	public void setDimensions(int width, int height) {
 		initCameraProjection((float) width / height);
-		initFontModel(width, height);
+
+		Uniform transform = mTextHolder.mMaterial.getUniform("umTransform");
+		mFont.setProjection(width, height, transform.mValue);
 	}
 
 	public boolean init() {
@@ -81,12 +86,11 @@ public class MainRenderer implements GLESUserRenderer {
 	public void update() {
 		mLineHolder.clearPoints();
 		mGame.update();
-		final float fps = 1000.0f / (mGame.mTime - mGame.mTimePrev);
-		mActivity.runOnUiThread(new Runnable() {
-			public void run() {
-				mActivity.setStatusText(String.format("FPS: %.2f",  fps));
-			}
-		});
+		float fps = 1000.0f / (mGame.mTime - mGame.mTimePrev);
+		String fpsText = String.format("FPS: %.2f",  fps);
+		mTextHolder.removeLine(mFPSLineId);
+		mTextHolder.setAlignment(TextHolder.Alignment.LEFT, TextHolder.Alignment.TOP);
+		mFPSLineId = mTextHolder.addLine(0, mRenderer.mSurfaceHeight - 1, fpsText);
 		mLineHolder.updateModel();
 	}
 
@@ -99,8 +103,8 @@ public class MainRenderer implements GLESUserRenderer {
 
 		result &= mSorter.sortAndRender();
 
-		if (mFontTest != null)
-			result &= mFontTest.render();
+		if (mTextHolder != null)
+			result &= mTextHolder.mModel.render();
 		
 		return result;
 	}
@@ -239,21 +243,22 @@ public class MainRenderer implements GLESUserRenderer {
 		return true;
 	}
 
-	protected boolean initFontModel(float viewportWidth, float viewportHeight) {
-		String text = "Lorem ipsum 123";
-		mFontTest = GLESModel.create(mFont.createVertices(text, 50, 50, viewportWidth, viewportHeight), mFont.createIndices(text, 0), GLESGeometry.PrimitiveType.TRIANGLES, mRenderer.mMaterials.get("tex"));
-
+	protected boolean initFontModel() {
+		mTextHolder = new TextHolder(mRenderer, mFont, mRenderer.mMaterials.get("tex"), 256);
 		return true;
 	}
 	
 	protected boolean initModels() {
-		mFont = new GLESFont("Monospace_20", 20, Typeface.NORMAL);
+		mFont = new GLESFont("Monospace", 20, Typeface.NORMAL);
 		if (!mFont.init())
 			return false;
 		
 		if (!initMaterials())
 			return false;
 
+		if (!initFontModel())
+			return false;
+		
 		mPrism = GLESUtil.createPrism(GameSettings.TARGET_RADIUS, 10, Vec.get(0, 0, GameSettings.TARGET_HEIGHT), true).createModel(mRenderer.mMaterials.get("color_lit"));
 		mCone = GLESUtil.createPyramid(GameSettings.BASE_RADIUS, 10, Vec.get(0, 0, GameSettings.BASE_HEIGHT), false).createModel(mRenderer.mMaterials.get("color_lit"));
 		mSphere = GLESUtil.createSphere(1, 2, false).createModel(mRenderer.mMaterials.get("color"));
