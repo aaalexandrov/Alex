@@ -50,7 +50,7 @@ bool CD3DResource::ShouldHaveSystemCopy()
   return !!(m_uiFlags & RF_KEEPSYSTEMCOPY)/* && (m_uiFlags & (RF_IMMUTABLE | RF_DYNAMIC))*/;
 }
 
-bool CD3DResource::CreateSystemCopy(BYTE *pContents)
+bool CD3DResource::CreateSystemCopy(uint8_t *pContents)
 {
   int i, iSubResCount;
   UINT uiSize;
@@ -62,7 +62,7 @@ bool CD3DResource::CreateSystemCopy(BYTE *pContents)
   uiSize = 0;
   for (i = 0; i < iSubResCount; i++)
     uiSize += GetSize(i);
-  m_pSystemCopy = new BYTE[uiSize];
+  m_pSystemCopy = new uint8_t[uiSize];
   if (pContents)
     memcpy(m_pSystemCopy, pContents, uiSize);
 
@@ -101,7 +101,7 @@ UINT CD3DResource::GetSubresourceOffset(UINT uiSubresource)
   return uiOffs;
 }
 
-BYTE *CD3DResource::Map(UINT uiSubresource, UINT uiMapFlags, UINT uiOffset, UINT uiSize)
+uint8_t *CD3DResource::Map(UINT uiSubresource, UINT uiMapFlags, UINT uiOffset, UINT uiSize)
 {
   UINT uiSubresSize = GetSize(uiSubresource);
   if ((m_uiFlags & RF_MAPPED) || 
@@ -154,7 +154,7 @@ BYTE *CD3DResource::Map(UINT uiSubresource, UINT uiMapFlags, UINT uiOffset, UINT
   m_uiMappedOffset = uiOffset;
   m_uiMappedSize = uiSize;
   m_uiMapFlags = uiMapFlags;
-  m_pMappedBuffer = (BYTE *) ms.pData;
+  m_pMappedBuffer = (uint8_t *) ms.pData;
 
   return m_pMappedBuffer + uiOffset;
 }
@@ -235,7 +235,7 @@ void CD3DResource::Unmap(UINT uiSubresource)
   m_pMappedBuffer = 0;
 }
 
-BYTE *CD3DResource::GetMappedPtr()
+uint8_t *CD3DResource::GetMappedPtr()
 {
   if (!(m_uiFlags & RF_MAPPED))
     return 0;
@@ -266,8 +266,8 @@ UINT CD3DResource::GetMemorySize(UINT *pDeviceMemory)
 }
 
 void CD3DResource::CopyRegion(UINT uiRowSize, UINT uiRows, UINT uiSlices,
-                              BYTE *pDst, UINT uiDstRowPitch, UINT uiDstDepthPitch, 
-                              BYTE *pSrc, UINT uiSrcRowPitch, UINT uiSrcDepthPitch)
+                              uint8_t *pDst, UINT uiDstRowPitch, UINT uiDstDepthPitch, 
+                              uint8_t *pSrc, UINT uiSrcRowPitch, UINT uiSrcDepthPitch)
 {
   UINT y, z;
   for (z = 0; z < uiSlices; z++) {
@@ -291,7 +291,7 @@ CD3DBuffer::CD3DBuffer()
   m_pStagingBuffer = 0;
 }
 
-bool CD3DBuffer::Init(EType eType, UINT uiFlags, BYTE *pContents, UINT uiSize)
+bool CD3DBuffer::Init(EType eType, UINT uiFlags, uint8_t *pContents, UINT uiSize)
 {
   ASSERT(eType == RT_INDEX || eType == RT_VERTEX || eType == RT_SHADERCONSTANT);
   ASSERT(!m_pD3DBuffer && m_eType == RT_INVALID);

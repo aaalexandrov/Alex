@@ -790,7 +790,7 @@ EInterpretError CCompiler::CompileComparison(CBNFGrammar::CNode *pNode, short &n
 		return err;
 	m_kLocals.ReleaseTemporary(nArg[0]);
 	CInstruction::EType eIT;
-	BYTE i = 0;
+	uint8_t i = 0;
 	switch (pNode->m_arrChildren[1]->m_pToken->m_eType) {
 	  case CToken::TT_EQUAL:
 			eIT = CInstruction::IT_COMPARE_EQ;
@@ -871,7 +871,7 @@ EInterpretError CCompiler::CompileAnd(CBNFGrammar::CNode *pNode, short &nDest)
 	err = CompileNode(pNode->m_arrChildren.Last(), nResult);
 	if (err != IERR_OK)
 		return err;
-	if (m_pCode->m_arrCode.m_iCount >= (WORD) -1)
+	if (m_pCode->m_arrCode.m_iCount >= (uint16_t) -1)
 		return IERR_TOO_MANY_INSTRUCTIONS;
 	short nAddress = (short) m_pCode->m_arrCode.m_iCount;
 	for (i = 0; i < arrShortValIndices.m_iCount; ++i)
@@ -910,7 +910,7 @@ EInterpretError CCompiler::CompileOr(CBNFGrammar::CNode *pNode, short &nDest)
 	err = CompileNode(pNode->m_arrChildren.Last(), nResult);
 	if (err != IERR_OK)
 		return err;
-	if (m_pCode->m_arrCode.m_iCount >= (WORD) -1)
+	if (m_pCode->m_arrCode.m_iCount >= (uint16_t) -1)
 		return IERR_TOO_MANY_INSTRUCTIONS;
 	short nAddress = (short) m_pCode->m_arrCode.m_iCount;
 	for (i = 0; i < arrShortValIndices.m_iCount; ++i)

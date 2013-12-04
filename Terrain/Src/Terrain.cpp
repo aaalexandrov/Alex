@@ -79,7 +79,7 @@ void CTerrain::CPatchModelBuilder::BuildModels()
 CGeometry *CTerrain::CPatchModelBuilder::BuildMinLODGeometry(CProgressiveGeometry *pProgGeom)
 {
   CGeometry *pGeom;
-  BYTE *pSrc, *pDst;
+  uint8_t *pSrc, *pDst;
   UINT uiMapFlags;
   bool bRes;
 
@@ -104,7 +104,7 @@ CGeometry *CTerrain::CPatchModelBuilder::BuildMinLODGeometry(CProgressiveGeometr
   pSrc = pProgGeom->m_pIB->Map(0, uiMapFlags);
   pDst = pGeom->m_pIB->Map();
 
-  memcpy(pDst, pSrc, pProgGeom->m_uiIndices * sizeof(WORD));
+  memcpy(pDst, pSrc, pProgGeom->m_uiIndices * sizeof(uint16_t));
 
   pGeom->m_pIB->Unmap();
   pProgGeom->m_pIB->Unmap();
@@ -296,13 +296,13 @@ public:
 
   void SetEdgeInfo(CTerrain::CPatch::CEdgedGeom::CEdgeInfo *pEdgeInfo) { m_pEdgeInfo = pEdgeInfo; }
 
-  WORD RemapIndex(WORD wIndex) 
+  uint16_t RemapIndex(uint16_t wIndex) 
   { 
     UINT uiVertInd;
     uiVertInd = m_pEdgeInfo->Vertex2Edge(wIndex);
     if (uiVertInd == -1)
       return wIndex;
-    return (WORD) uiVertInd;
+    return (uint16_t) uiVertInd;
   }
 };
 
@@ -655,7 +655,7 @@ int CTerrain::AddMaterial(CMaterial *pMaterial)
 
 //  pTex = Cast<CVar<CTexture *> >(pMaterial->m_pParams->FindVar(sg_txDiffuse));
   if (pMaterial->GetVar(sg_txDiffuse, vTex)) {  // Read pixel from the least detailed mip map of the diffuse texture
-    BYTE *pColor = vTex.Val()->Map(vTex.Val()->m_iMipLevels - 1, CResource::RMF_SYSTEM_ONLY);
+    uint8_t *pColor = vTex.Val()->Map(vTex.Val()->m_iMipLevels - 1, CResource::RMF_SYSTEM_ONLY);
     vVec3.Val().Set(pColor[0] / 255.0f, pColor[1] / 255.0f, pColor[2] / 255.0f);
     m_arrMaterials[iInd].m_clrAverage.Set(pColor[0], pColor[1], pColor[2]);
     vTex.Val()->Unmap();
@@ -710,15 +710,15 @@ void CTerrain::SetCamera(CCamera *pCamera)
   m_pCamera = pCamera;
 }
 
-bool CTerrain::Save(CFileBase *pFile)
+bool CTerrain::Save(CFile *pFile)
 {
   int i;
-  CAutoDeletePtr<CFileBase> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile;
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
     if (!!sName) 
-      pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ | CFileBase::FOF_WRITE | CFileBase::FOF_CREATE | CFileBase::FOF_TRUNCATE);
+      pFile = CFileSystem::Get()->OpenFile(sName, CFile::FOF_READ | CFile::FOF_WRITE | CFile::FOF_CREATE | CFile::FOF_TRUNCATE);
     if (!pFile)
       return false;
     pPatchFile.m_pPtr = pFile;
@@ -740,15 +740,15 @@ bool CTerrain::Save(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::Load(CFileBase *pFile)
+bool CTerrain::Load(CFile *pFile)
 {
   int i;
-  CAutoDeletePtr<CFileBase> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile;
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
     if (!!sName) 
-      pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ);
+      pFile = CFileSystem::Get()->OpenFile(sName, CFile::FOF_READ);
     if (!pFile)
       return false;
     pPatchFile.m_pPtr = pFile;

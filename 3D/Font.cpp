@@ -134,9 +134,9 @@ bool CFont::Init()
     for (int iCol = 0; iCol < m_iCellCols; iCol++) {
       RECT rc;
       char chBuf[2] = { m_iFirstChar + iRow * m_iCellCols + iCol, 0 };
-      if (!m_Chars[(BYTE) chBuf[0]].ch)
+      if (!m_Chars[(uint8_t) chBuf[0]].ch)
         continue;
-      rc.left = iCol * m_iMaxWidth - m_Chars[(BYTE) chBuf[0]].iA;
+      rc.left = iCol * m_iMaxWidth - m_Chars[(uint8_t) chBuf[0]].iA;
       rc.top = iRow * m_iHeight;
       rc.right = rc.left + m_iMaxWidth;
       rc.bottom = rc.top + m_iHeight;
@@ -158,7 +158,7 @@ bool CFont::Init()
   bmi.bmiHeader.biClrUsed = 0; 
   bmi.bmiHeader.biClrImportant = 0; 
   int iSize = bmi.bmiHeader.biWidth * abs(bmi.bmiHeader.biHeight) * bmi.bmiHeader.biBitCount / 8;
-  BYTE *pBuf = new BYTE[iSize];
+  uint8_t *pBuf = new uint8_t[iSize];
   bRes = !!GetDIBits(hDC, hBmp, 0, abs(bmi.bmiHeader.biHeight), pBuf, &bmi, DIB_RGB_COLORS);
 
   for (i = 0; i < iSize; i += 4)
@@ -260,12 +260,12 @@ bool CFont::IsValid()
 CRect<> CFont::GetCharRect(char ch)
 {
   CRect<> rc;
-  if (m_Chars[(BYTE) ch].ch != ch) 
+  if (m_Chars[(uint8_t) ch].ch != ch) 
     return rc.SetEmpty();
 
   rc.m_vMin.x() = ((ch - m_iFirstChar) % m_iCellCols) / (float) m_iCellCols;
   rc.m_vMin.y() = ((ch - m_iFirstChar) / m_iCellCols) / (float) m_iCellRows;
-  rc.m_vMax = rc.m_vMin + CVector<2>::Get((m_Chars[(BYTE) ch].iB + 1) / (float) (m_iCellCols * m_iMaxWidth), 1.0f / m_iCellRows);
+  rc.m_vMax = rc.m_vMin + CVector<2>::Get((m_Chars[(uint8_t) ch].iB + 1) / (float) (m_iCellCols * m_iMaxWidth), 1.0f / m_iCellRows);
 
   return rc;
 }
@@ -273,7 +273,7 @@ CRect<> CFont::GetCharRect(char ch)
 int CFont::GetKerning(char ch1, char ch2)
 {
   THashKerning::TIter it;
-  it = m_KerningPairs.Find((WORD) (ch2 << 8) | ch1);
+  it = m_KerningPairs.Find((uint16_t) (ch2 << 8) | ch1);
   if (!it)
     return 0;
   return (*it).iKerning;
@@ -297,13 +297,13 @@ float CFont::AddStr(CStrAny &sStr, const CVector<2> &vPos, char chPrevious)
   ASSERT(uiVertSize == sizeof(TPlainVertex));
   if (pGeom->m_pVB->GetSize(0) < (pGeom->m_uiVertices + uiVerts) * uiVertSize)
     return INVALID_LENGTH;
-  if (pGeom->m_pIB->GetSize(0) < (pGeom->m_uiIndices + uiInds) * sizeof(WORD))
+  if (pGeom->m_pIB->GetSize(0) < (pGeom->m_uiIndices + uiInds) * sizeof(uint16_t))
     return INVALID_LENGTH;
   TPlainVertex *pVerts;
-  WORD *pInds;
+  uint16_t *pInds;
   pVerts = (TPlainVertex *) pGeom->m_pVB->Map(0, CResource::RMF_SYSTEM_ONLY, pGeom->m_uiVertices * uiVertSize, uiVerts * uiVertSize);
   ASSERT(pVerts);
-  pInds = (WORD *) pGeom->m_pIB->Map(0, CResource::RMF_SYSTEM_ONLY, pGeom->m_uiIndices * sizeof(WORD), uiInds * sizeof(WORD));
+  pInds = (uint16_t *) pGeom->m_pIB->Map(0, CResource::RMF_SYSTEM_ONLY, pGeom->m_uiIndices * sizeof(uint16_t), uiInds * sizeof(uint16_t));
   ASSERT(pInds);
 
   CVector<3> vCur = { vPos.x(), vPos.y() - m_iAscent, 0.5f }, vBoxSize = { 0, (float) m_iHeight, 0 };
@@ -311,12 +311,12 @@ float CFont::AddStr(CStrAny &sStr, const CVector<2> &vPos, char chPrevious)
   int i, iChars = 0;
   for (i = 0; i < sStr.Length(); i++) {
     char ch = sStr[i];
-    if (!m_Chars[(BYTE) ch].ch)
+    if (!m_Chars[(uint8_t) ch].ch)
       continue;
     CRect<> rcInTex = GetCharRect(ch);
-    vBoxSize.x() = (float) m_Chars[(BYTE) ch].iB;
+    vBoxSize.x() = (float) m_Chars[(uint8_t) ch].iB;
     
-    vCur.x() += m_Chars[(BYTE) ch].iA + GetKerning(chPrevious, ch);
+    vCur.x() += m_Chars[(uint8_t) ch].iA + GetKerning(chPrevious, ch);
 
     pVerts[0].vPos.Set(vCur.x(), vCur.y() + vBoxSize.y(), vCur.z());
     pVerts[0].vTex = rcInTex.m_vMin;
@@ -337,7 +337,7 @@ float CFont::AddStr(CStrAny &sStr, const CVector<2> &vPos, char chPrevious)
     pInds[4] = pInds[0] + 1;
     pInds[5] = pInds[0] + 3;
 
-    vCur.x() += m_Chars[(BYTE) ch].iB + m_Chars[(BYTE) ch].iC;
+    vCur.x() += m_Chars[(uint8_t) ch].iB + m_Chars[(uint8_t) ch].iC;
     chPrevious = ch;
 
     pVerts += 4;

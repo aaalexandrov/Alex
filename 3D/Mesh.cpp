@@ -220,7 +220,7 @@ CMesh::~CMesh()
   DoneInputs();
 }
 
-bool CMesh::Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIndex)
+bool CMesh::Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, uint8_t btMatSemanticIndex)
 {
   ASSERT(pOrgGeom && pOrgGeom->m_ePrimitiveType == CGeometry::PT_TRIANGLELIST);
   UINT uiVertices, uiIndices, i;
@@ -251,7 +251,7 @@ bool CMesh::Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIn
     iMatOffset = -1;
 
   UINT uiVertMapFlags = (pOrgGeom->m_pVB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
-  BYTE *pVertex = pOrgGeom->m_pVB->Map(0, uiVertMapFlags);
+  uint8_t *pVertex = pOrgGeom->m_pVB->Map(0, uiVertMapFlags);
   ASSERT(pVertex);
 
   int iMatID = 0;
@@ -266,7 +266,7 @@ bool CMesh::Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIn
   pOrgGeom->m_pVB->Unmap();
 
   UINT uiIndMapFlags = (pOrgGeom->m_pIB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
-  WORD *pIndex = (WORD *) pOrgGeom->m_pIB->Map(0, uiIndMapFlags);
+  uint16_t *pIndex = (uint16_t *) pOrgGeom->m_pIB->Map(0, uiIndMapFlags);
   ASSERT(pIndex);
 
   for (i = 0; i < uiIndices; i += 3) {
@@ -292,7 +292,7 @@ CD3DBuffer *CMesh::BuildVB(UINT uiNoReorderVertexCount)
   pVB->Init(CResource::RT_VERTEX, m_pOrgGeom->m_pVB->m_uiFlags, 0, m_pOrgGeom->m_pVB->GetSize(0));
 
   int i, iVertSize;
-  BYTE *pSrcVertex, *pDstVertex;
+  uint8_t *pSrcVertex, *pDstVertex;
   UINT uiSrcMapFlags = (m_pOrgGeom->m_pVB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
 
   iVertSize = m_pOrgGeom->m_pInputDesc->GetSize();
@@ -310,17 +310,17 @@ CD3DBuffer *CMesh::BuildVB(UINT uiNoReorderVertexCount)
   return pVB;
 }
 
-CD3DBuffer *CMesh::BuildIB(int iMaterial, CArray<BYTE> &arrUsedVertices)
+CD3DBuffer *CMesh::BuildIB(int iMaterial, CArray<uint8_t> &arrUsedVertices)
 {
   int i, j;
-  WORD *pSrcIndices;
-  CArray<WORD> arrDstIndices(m_arrCollapsedTriangles.m_iCount * 3);
+  uint16_t *pSrcIndices;
+  CArray<uint16_t> arrDstIndices(m_arrCollapsedTriangles.m_iCount * 3);
 
   UINT uiSrcMapFlags = (m_pOrgGeom->m_pIB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
-  pSrcIndices = (WORD *) m_pOrgGeom->m_pIB->Map(0, uiSrcMapFlags);
+  pSrcIndices = (uint16_t *) m_pOrgGeom->m_pIB->Map(0, uiSrcMapFlags);
 
   arrUsedVertices.SetCount(m_arrCollapses.m_iCount);
-  memset(arrUsedVertices.m_pArray, 0, arrUsedVertices.m_iCount * sizeof(BYTE));
+  memset(arrUsedVertices.m_pArray, 0, arrUsedVertices.m_iCount * sizeof(uint8_t));
 
   for (i = 0; i < m_arrCollapsedTriangles.m_iCount; i++) {
     TCollapsedTriangle &kColTri = m_arrCollapsedTriangles[m_arrCollapsedTriangles.m_iCount - 1 - i];
@@ -339,7 +339,7 @@ CD3DBuffer *CMesh::BuildIB(int iMaterial, CArray<BYTE> &arrUsedVertices)
   m_pOrgGeom->m_pIB->Unmap();
 
   CD3DBuffer *pIB = new CD3DBuffer();
-  pIB->Init(CResource::RT_INDEX, m_pOrgGeom->m_pIB->m_uiFlags, (BYTE *) arrDstIndices.m_pArray, arrDstIndices.m_iCount * sizeof(WORD));
+  pIB->Init(CResource::RT_INDEX, m_pOrgGeom->m_pIB->m_uiFlags, (uint8_t *) arrDstIndices.m_pArray, arrDstIndices.m_iCount * sizeof(uint16_t));
 
   return pIB;
 }
@@ -361,12 +361,12 @@ public:
   CArray<int> m_arrVertexChain;
   CAVLTree<int> m_avlVertices;
 
-  void Init(WORD *pIndices, int iIndexCount, int iVertexCount, bool bTrackVertices);
+  void Init(uint16_t *pIndices, int iIndexCount, int iVertexCount, bool bTrackVertices);
   void MergeChains(int iVertex, int iCollapseTo, int iIndexCount);
   int GetLastActiveVertex();
 };
 
-void CIndexChain::Init(WORD *pIndices, int iIndexCount, int iVertexCount, bool bTrackVertices)
+void CIndexChain::Init(uint16_t *pIndices, int iIndexCount, int iVertexCount, bool bTrackVertices)
 {
   int i;
   m_arrChains.SetCount(iIndexCount);
@@ -420,17 +420,17 @@ int CIndexChain::GetLastActiveVertex()
 
 // CMesh
 
-void CMesh::BuildCollapseBuffer(bool bExplicitVertexCount, UINT uiMaxCollapses, CArray<BYTE> const &arrUsedVertices, CProgressiveGeometry *pProgGeom)
+void CMesh::BuildCollapseBuffer(bool bExplicitVertexCount, UINT uiMaxCollapses, CArray<uint8_t> const &arrUsedVertices, CProgressiveGeometry *pProgGeom)
 {
   int iCollapse, iPos;
   CArray<UINT> arrCollapses;
-  CArray<WORD> arrTriIndices;
+  CArray<uint16_t> arrTriIndices;
 
   UINT uiSrcMapFlags = (pProgGeom->m_pIB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
-  BYTE *pSrcIndices = pProgGeom->m_pIB->Map(0, uiSrcMapFlags);
+  uint8_t *pSrcIndices = pProgGeom->m_pIB->Map(0, uiSrcMapFlags);
   
   arrTriIndices.SetCount(pProgGeom->GetIBIndexCount());
-  memcpy(arrTriIndices.m_pArray, pSrcIndices, arrTriIndices.m_iCount * sizeof(WORD));
+  memcpy(arrTriIndices.m_pArray, pSrcIndices, arrTriIndices.m_iCount * sizeof(uint16_t));
   
   pProgGeom->m_pIB->Unmap();
 
@@ -499,7 +499,7 @@ void CMesh::BuildReverseReorder(UINT uiNoReorderVertexCount)
 CProgressiveGeometry *CMesh::BuildProgressiveGeometry(int iMaterial, UINT uiNoReorderVertexCount, UINT uiMaxCollapses)
 {
   CProgressiveGeometry *pProgGeom = new CProgressiveGeometry();
-  CArray<BYTE> arrUsedVertices;
+  CArray<uint8_t> arrUsedVertices;
 
   if (uiNoReorderVertexCount > (UINT) (m_arrCollapses.m_iCount + m_hashVertices.m_iCount))
     uiNoReorderVertexCount = m_arrCollapses.m_iCount + m_hashVertices.m_iCount;

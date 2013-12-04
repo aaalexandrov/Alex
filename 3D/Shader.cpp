@@ -47,7 +47,7 @@ int CInputDesc::GetElementOffset(int iElement)
   return iOffset;
 }
 
-CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrAny sSemantic, BYTE btSemIndex, int *pInfoIndex)
+CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrAny sSemantic, uint8_t btSemIndex, int *pInfoIndex)
 {
   int iIndex;
   if (!pInfoIndex)
@@ -61,7 +61,7 @@ CInputDesc::TInputElement *CInputDesc::GetElementInfo(CStrAny sSemantic, BYTE bt
   return 0;
 }
 
-int CInputDesc::AddElement(CStrAny sSem, EElemType kType, BYTE btSemIndex, BYTE btElements)
+int CInputDesc::AddElement(CStrAny sSem, EElemType kType, uint8_t btSemIndex, uint8_t btElements)
 {
   int iInd = m_Elements.m_iCount;
   m_Elements.SetCount(iInd + 1);
@@ -280,7 +280,7 @@ void CConstantBuffer::Done()
 
 bool CConstantBuffer::Map()
 {
-  BYTE *pMapped = m_pBuffer->Map();
+  uint8_t *pMapped = m_pBuffer->Map();
   if (!pMapped)
     return false;
 
@@ -291,7 +291,7 @@ bool CConstantBuffer::Map()
 
 void CConstantBuffer::Unmap()
 {
-  BYTE *pMapped = m_pBuffer->GetMappedPtr();
+  uint8_t *pMapped = m_pBuffer->GetMappedPtr();
   ASSERT(pMapped);
 
   m_pTemplate->Remap(0, pMapped, m_pVars);
@@ -487,7 +487,7 @@ CTechnique::CTechnique(CStrAny sVarFile)
   static CStrAny sTech(ST_CONST, "Technique");
   static CStrAny sStates(ST_CONST, "States");
 
-  CFileBase *pFile = CFileSystem::Get()->OpenFile(sVarFile, CFileBase::FOF_READ);
+  CFile *pFile = CFileSystem::Get()->OpenFile(sVarFile, CFile::FOF_READ);
   CVarHash *pVars = new CVarHash();
 
   if (pFile) {
@@ -564,12 +564,12 @@ bool CTechnique::InitShaders()
   HRESULT res;
   TResReporter kErrorReport(res);
 
-  CAutoDeletePtr<CFileBase> pFile(CFileSystem::Get()->OpenFile(m_sSrcFile, CFile::FOF_READ));
+  CAutoDeletePtr<CFile> pFile(CFileSystem::Get()->OpenFile(m_sSrcFile, CFile::FOF_READ));
   if (!pFile || !pFile->IsValid())
     return false;
   int iSize = (int) pFile->GetSize();
   CAutoDeletePtr<char> pBuf(new char[iSize]);
-  CFileBase::ERRCODE ec = pFile->Read(pBuf, iSize);
+  CFile::ERRCODE ec = pFile->Read(pBuf, iSize);
   if (ec)
     return false;
 

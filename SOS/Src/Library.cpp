@@ -11,6 +11,8 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tostring").GetHeader()), CValue(ToString));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
 
+  CStrAny s(ST_CONST, "print");
+
   return IERR_OK;
 }
 
@@ -21,7 +23,7 @@ EInterpretError CFunctionLibrary::Print(CExecution &kExecution, CArray<CValue> &
     fprintf(stdout, pFormat, arrParams[i].GetStr(false).m_pBuf);
   }
   fprintf(stdout, "\n");
-  
+
   arrParams.SetCount(0);
 
   return IERR_OK;

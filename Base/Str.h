@@ -19,9 +19,9 @@ public:
   };
   mutable size_t m_uiHash;
 
-  inline DWORD GetRef() const  { return m_RefCount.Get(); }
-  inline void  Acquire() const { m_RefCount.Inc(); }
-  inline void  Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
+  inline uint32_t GetRef() const  { return m_RefCount.Get(); }
+  inline void     Acquire() const { m_RefCount.Inc(); }
+  inline void     Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
 
   static CStrHeader *Get(const char *pSrc, int iLen, bool bInRepository);
 
@@ -189,17 +189,17 @@ inline size_t GetHash(const char *pStr, int iLen)
   for (i = 0; i < (iLen * sizeof(char)) / sizeof(size_t); i++)
     uiRes += *pBuf++;
   uiTemp = 0;
-  BYTE *p = (BYTE *) pBuf;
+  uint8_t *p = (uint8_t *) pBuf;
   switch ((iLen * sizeof(char)) % sizeof(size_t)) {
-    case  7: uiTemp |= (QWORD) (p[6]) << 40;
-    case  6: uiTemp |= (QWORD) (*(WORD *) (p + 4)) << 32;
-             uiTemp |= *(DWORD *) p;
+    case  7: uiTemp |= (uint64_t) (p[6]) << 40;
+    case  6: uiTemp |= (uint64_t) (*(uint16_t *) (p + 4)) << 32;
+             uiTemp |= *(uint32_t *) p;
              break;
-    case  5: uiTemp |= (QWORD) (p[4]) << 32;
-    case  4: uiTemp |= *(DWORD *) p;
+    case  5: uiTemp |= (uint64_t) (p[4]) << 32;
+    case  4: uiTemp |= *(uint32_t *) p;
              break;
-    case  3: uiTemp |= (DWORD) (p[2]) << 16;
-    case  2: uiTemp |= *(WORD *) p;
+    case  3: uiTemp |= (uint32_t) (p[2]) << 16;
+    case  2: uiTemp |= *(uint16_t *) p;
              break;
     case  1: uiTemp |= *p;
     case  0:

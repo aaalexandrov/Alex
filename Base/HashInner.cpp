@@ -28,7 +28,7 @@ struct TTestHashInner {
 		TConDestructor<int const*>::Construct(&pI);
 		TConDestructor<int const*>::Destroy(&pI);
 
-		BYTE btBuf[sizeof(A)], btBuf1[sizeof(A)];
+		uint8_t btBuf[sizeof(A)], btBuf1[sizeof(A)];
 		TConDestructor<A>::Construct((A*)btBuf);
 		TConDestructor<A>::Destroy((A*)btBuf);
 		TConDestructor<A>::ConstructCopy((A*)btBuf1, *(A *)btBuf);

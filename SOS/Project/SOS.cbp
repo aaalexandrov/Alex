@@ -79,6 +79,8 @@
 		<Unit filename="../../Base/VarUtil.h" />
 		<Unit filename="../../Base/Vector.cpp" />
 		<Unit filename="../../Base/Vector.h" />
+		<Unit filename="../../Base/WinFile.cpp" />
+		<Unit filename="../../Base/WinFile.h" />
 		<Unit filename="../Src/BNF.cpp" />
 		<Unit filename="../Src/BNF.h" />
 		<Unit filename="../Src/BNFGrammar.cpp" />

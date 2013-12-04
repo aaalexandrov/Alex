@@ -1,18 +1,11 @@
 #include "stdafx.h"
 #include "File.h"
-
-#include <io.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <direct.h>
 #include <ctype.h>
-#include <stdio.h>
 
-CRTTIRegisterer<CFileBase> g_RegFileBase;
-// CFileBase ---------------------------------------------------------
+CRTTIRegisterer<CFile> g_RegFile;
+// CFile ---------------------------------------------------------
 
-CFileBase::ERRCODE CFileBase::WriteBuf(void const *pBuf, int iBytes)
+CFile::ERRCODE CFile::WriteBuf(void const *pBuf, int iBytes)
 {
   ERRCODE err = Write(&iBytes, sizeof(iBytes));
   if (err || !iBytes)
@@ -21,7 +14,7 @@ CFileBase::ERRCODE CFileBase::WriteBuf(void const *pBuf, int iBytes)
   return err;
 }
 
-CFileBase::ERRCODE CFileBase::ReadBuf(void *&pBuf, int &iBytes)
+CFile::ERRCODE CFile::ReadBuf(void *&pBuf, int &iBytes)
 {
   int iSize;
   ERRCODE err = Read(&iSize, sizeof(iSize));
@@ -34,201 +27,56 @@ CFileBase::ERRCODE CFileBase::ReadBuf(void *&pBuf, int &iBytes)
   if (!iSize)
     return 0;
   if (!pBuf)
-    pBuf = new BYTE[iSize];
+    pBuf = new uint8_t[iSize];
   err = Read(pBuf, iSize);
   return err;
 }
 
-// CFile -------------------------------------------------------------
-CRTTIRegisterer<CFile> g_RegFile;
-
-CFile::CFile(CStrAny const &sName, unsigned int uiFlags)
-{
-  int iOpenFlags = 0, iCreate = 0;
-  m_sFileName = sName;
-  if (uiFlags & FOF_READ) {
-    iCreate |= _S_IREAD;
-    if (uiFlags & FOF_WRITE) {
-      iOpenFlags |= _O_RDWR;
-      iCreate |= _S_IWRITE;
-    } else
-      iOpenFlags |= _O_RDONLY;
-  } else
-    if (uiFlags & FOF_WRITE) {
-      iOpenFlags |= _O_WRONLY;
-      iCreate |= _S_IWRITE;
-    }
-  if (uiFlags & FOF_CREATE)
-    iOpenFlags |= _O_CREAT;
-  if (uiFlags & FOF_APPEND)
-    iOpenFlags |= _O_APPEND;
-  if (uiFlags & FOF_TRUNCATE)
-    iOpenFlags |= _O_TRUNC;
-  if (uiFlags & FOF_TEXT)
-    iOpenFlags |= _O_TEXT;
-  else
-    iOpenFlags |= _O_BINARY;
-  m_hFile = _open(sName.m_pBuf, iOpenFlags, iCreate);
-}
-
-CFile::~CFile()
-{
-  if (m_hFile > 0)
-    _close(m_hFile);
-}
-
-CFile::FILESIZE CFile::GetSize() const
-{
-  ASSERT(IsValid());
-  return _filelengthi64(m_hFile);
-}
-
-CFile::ERRCODE CFile::SetSize(FILESIZE iSize)
-{
-  ASSERT(IsValid());
-  int iRes = _chsize(m_hFile, (long) iSize);
-  return (iRes < 0) ? (ERRCODE) errno : 0;
-}
-
-CFile::FILESIZE CFile::GetPos() const
-{
-  ASSERT(IsValid());
-  return _telli64(m_hFile);
-}
-
-CFile::ERRCODE CFile::SetPos(FILESIZE iPos)
-{
-  ASSERT(IsValid());
-  FILESIZE iRes = _lseeki64(m_hFile, iPos, SEEK_SET);
-  return (iRes < 0) ? (ERRCODE) errno : 0;
-}
-
-CFile::ERRCODE CFile::Read(void *pBuf, int iBytes, int *pProcessedBytes)
-{
-  ASSERT(IsValid());
-  int iRead;
-  if (!pProcessedBytes)
-    pProcessedBytes = &iRead;
-  *pProcessedBytes = _read(m_hFile, pBuf, iBytes);
-  return (*pProcessedBytes == iBytes) ? 0 : (errno ? (ERRCODE) errno : EIO);
-}
-
-CFile::ERRCODE CFile::Write(void const *pBuf, int iBytes, int *pProcessedBytes)
-{
-  ASSERT(IsValid());
-  int iWritten;
-  if (!pProcessedBytes)
-    pProcessedBytes = &iWritten;
-  *pProcessedBytes = _write(m_hFile, pBuf, iBytes);
-  return (*pProcessedBytes == iBytes) ? 0 : (ERRCODE) errno;
-}
-
 // CFileSystem ----------------------------------------------------------------
 
-CFileSystem::CFileIter::~CFileIter()
-{
-  _findclose(m_hFind);
-}
-
-CFileSystem::CFileIter::operator bool() const
-{
-  return m_hFind != -1 && m_FindData.name[0];
-}
-
-CFileSystem::CFileIter &CFileSystem::CFileIter::operator ++()
-{
-  int iRes = _findnexti64(m_hFind, &m_FindData);
-  if (iRes)
-    m_FindData.name[0] = 0;
-  return *this;
-}
-
-CFileSystem::CFileIter &CFileSystem::CFileIter::operator =(CStrAny const &sPath)
-{
-  _findclose(m_hFind);
-  m_hFind = _findfirsti64(sPath.m_pBuf, &m_FindData);
-  return *this;
-}
-
-CStrAny CFileSystem::CFileIter::GetName() const
-{
-  return CStrAny(ST_WHOLE, m_FindData.name);
-}
-
-CFileBase::FILESIZE CFileSystem::CFileIter::GetSize() const
-{
-  return m_FindData.size;
-}
-
-UINT CFileSystem::CFileIter::GetAttributes() const
-{
-  return m_FindData.attrib;
-}
-
 CRTTIRegisterer<CFileSystem> g_RegFileSystem;
+CRTTIRegisterer<CFileSystem::CFileIter> g_RegFileSystemFileIter;
 
 CFileSystem *CFileSystem::s_pFileSystem = 0;
+
+void CFileSystem::Create()
+{
+#ifdef WINDOWS
+  CRTTIHolder::Get()->Find("CWinFileSystem")->CreateInstance();
+#endif // WINDOWS
+  CFileSystem::Get()->Init();
+}
+
+void CFileSystem::Destroy()
+{
+  delete CFileSystem::Get();
+}
 
 CFileSystem::CFileSystem()
 {
   s_pFileSystem = this;
-  GetCurrentDirectory(m_sRootPath);
-  m_sRootPath += CStrAny(ST_WHOLE, "/");
 }
 
 CFileSystem::~CFileSystem()
 {
 }
 
-CFileBase *CFileSystem::OpenFile(CStrAny const &sFile, unsigned int uiFlags)
+void CFileSystem::Init()
+{
+  GetCurrentDirectory(m_sRootPath);
+  m_sRootPath += CStrAny(ST_WHOLE, "/");
+}
+
+CFile *CFileSystem::OpenFile(CStrAny const &sFile, unsigned int uiFlags)
 {
   CStrAny sPath = ResolvePath(sFile);
-  CFileBase *pFile = new CFile(sPath, uiFlags);
+  CFile *pFile = (CFile *) GetFileRTTI()->CreateInstance();
+  pFile->Init(sPath, uiFlags);
   if (!pFile->IsValid()) {
     delete pFile;
     pFile = 0;
   }
   return pFile;
-}
-
-CFileBase::ERRCODE CFileSystem::DeleteFile(CStrAny const &sFile)
-{
-  CStrAny sPath = ResolvePath(sFile);
-  int iRes = _unlink(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
-}
-
-CFileBase::ERRCODE CFileSystem::GetCurrentDirectory(CStrAny &sDir)
-{
-  char *pPath = _getcwd(0, 0);
-  if (!pPath) {
-    sDir.Clear();
-    return (CFileBase::ERRCODE) errno;
-  }
-  sDir = ResolvePath(CStrAny(ST_WHOLE, pPath));
-  free(pPath);
-  return 0;
-}
-
-CFileBase::ERRCODE CFileSystem::SetCurrentDirectory(CStrAny const &sDir)
-{
-  CStrAny sPath = ResolvePath(sDir);
-  int iRes = _chdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
-}
-
-CFileBase::ERRCODE CFileSystem::CreateDirectory(CStrAny const &sDir)
-{
-  CStrAny sPath = ResolvePath(sDir);
-  int iRes = _mkdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
-}
-
-CFileBase::ERRCODE CFileSystem::DeleteDirectory(CStrAny const &sDir)
-{
-  CStrAny sPath = ResolvePath(sDir);
-  int iRes = _rmdir(sPath.m_pBuf);
-  return (iRes < 0) ? (CFileBase::ERRCODE) errno : 0;
 }
 
 CStrAny CFileSystem::ResolvePath(CStrAny const &sFile)
@@ -301,6 +149,13 @@ void CFileSystem::SetCurrentRoot(CStrAny const &sPath)
   CStrAny sPath1 = sPath;
   sPath1 += CStrAny(ST_WHOLE, "/");
   m_sRootPath = ResolvePath(sPath1);
+}
+
+CFileSystem::CFileIter *CFileSystem::GetFileIter(CStrAny const &sPath)
+{
+  CFileIter *pIter = (CFileIter *) GetFileIterRTTI()->CreateInstance();
+  *pIter = sPath;
+  return pIter;
 }
 
 bool CFileSystem::ParsePath(CStrAny const &sFile, CStrAny *pDrive, CStrAny *pPath, CStrAny *pName, CStrAny *pExtension)

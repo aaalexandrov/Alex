@@ -22,7 +22,7 @@ public:
   struct TInputElement {
     CStrAny   m_sSemantic;
     EElemType m_Type;
-    BYTE      m_btIndex, m_btElements;
+    uint8_t   m_btIndex, m_btElements;
 
     int GetSize();
     inline bool operator ==(const TInputElement &ie) const { return m_Type == ie.m_Type && m_btIndex == ie.m_btIndex && m_btElements == ie.m_btElements && m_sSemantic == ie.m_sSemantic; }
@@ -41,13 +41,13 @@ public:
   CInputDesc &operator =(const CInputDesc &id);
   bool operator ==(const CInputDesc &id) const;
 
-  int AddElement(CStrAny sSem, EElemType kType, BYTE btSemIndex, BYTE btElements);
+  int AddElement(CStrAny sSem, EElemType kType, uint8_t btSemIndex, uint8_t btElements);
 
   int GetElementCount() { return m_Elements.m_iCount; }
   int GetElementOffset(int iElement);
   int GetSize() { return GetElementOffset(m_Elements.m_iCount); }
 
-  TInputElement *GetElementInfo(CStrAny sSemantic, BYTE btSemIndex = 0, int *pInfoIndex = 0);
+  TInputElement *GetElementInfo(CStrAny sSemantic, uint8_t btSemIndex = 0, int *pInfoIndex = 0);
   
   bool IsSuperSet(CInputDesc *pInputDesc);
 
@@ -74,7 +74,7 @@ public:
   CConstantTemplate *m_pTemplate;
   CVarObj           *m_pVars;
   bool               m_bOwnVars;
-  CArray<BYTE, 0>    m_arrBuffer;
+  CArray<uint8_t, 0> m_arrBuffer;
   UINT               m_uiFrameUpdated;
 
   CConstantCache();

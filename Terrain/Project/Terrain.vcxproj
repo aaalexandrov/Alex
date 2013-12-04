@@ -218,6 +218,7 @@
     <ClCompile Include="..\..\Base\Var.cpp" />
     <ClCompile Include="..\..\Base\VarUtil.cpp" />
     <ClCompile Include="..\..\Base\Vector.cpp" />
+    <ClCompile Include="..\..\Base\WinFile.cpp" />
     <ClCompile Include="..\Src\Main.cpp" />
     <ClCompile Include="..\Src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -266,6 +267,7 @@
     <ClInclude Include="..\..\Base\Var.h" />
     <ClInclude Include="..\..\Base\VarUtil.h" />
     <ClInclude Include="..\..\Base\Vector.h" />
+    <ClInclude Include="..\..\Base\WinFile.h" />
     <ClInclude Include="..\Src\stdafx.h" />
     <ClInclude Include="..\Src\Terrain.h" />
     <ClInclude Include="..\Src\TerrainCamera.h" />

@@ -34,7 +34,7 @@ public:
     FnNative                *m_pNativeFunc;
     void                    *m_Value;
   };
-  BYTE m_btType;
+  uint8_t m_btType;
 
   explicit CValue()                             { SetNone(); }
 	explicit CValue(bool bValue)                  { Set(bValue); }

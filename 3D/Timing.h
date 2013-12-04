@@ -3,13 +3,13 @@
 
 class CTime {
 public:
-  static QWORD s_qwFrequency, 
-               s_qwFrequencyReal,
-               s_qwStartReal;
+  static uint64_t s_qwFrequency, 
+                  s_qwFrequencyReal,
+                  s_qwStartReal;
 
-  QWORD m_qwTime;
+  uint64_t m_qwTime;
 
-  CTime(QWORD qwTime = 0) { m_qwTime = qwTime; } 
+  CTime(uint64_t qwTime = 0) { m_qwTime = qwTime; } 
 
   CTime operator +(CTime kTime) { return CTime(m_qwTime + kTime.m_qwTime); }
   CTime operator -(CTime kTime) { return CTime(m_qwTime - kTime.m_qwTime); }

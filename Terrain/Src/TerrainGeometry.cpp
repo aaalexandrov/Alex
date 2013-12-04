@@ -17,12 +17,12 @@ bool CTerrain::CPatch::CEdgeMap::Init(CMesh &kMesh)
   return true;
 }
 
-bool CTerrain::CPatch::CEdgeMap::Init(WORD *pEdgeIndices)
+bool CTerrain::CPatch::CEdgeMap::Init(uint16_t *pEdgeIndices)
 {
   int i;
   for (i = 0; i < EDGE_INDICES; i++) {
     m_wEdgeIndices[i] = pEdgeIndices[i];
-    m_hashReverseEdgeIndices.Add(TKeyValue<WORD, WORD>(m_wEdgeIndices[i], i));
+    m_hashReverseEdgeIndices.Add(TKeyValue<uint16_t, uint16_t>(m_wEdgeIndices[i], i));
   }
   return true;
 }
@@ -31,12 +31,12 @@ void CTerrain::CPatch::CEdgeMap::SetGridIndex(UINT uiIndex, CMesh &kMesh)
 {
   CVector<2, int> vCoord = EdgeIndex2Grid(uiIndex);
   m_wEdgeIndices[uiIndex] = kMesh.m_arrReverseReorder[vCoord.y() * PATCH_SIZE + vCoord.x() + EDGE_INDICES];
-  m_hashReverseEdgeIndices.Add(TKeyValue<WORD, WORD>(m_wEdgeIndices[uiIndex], uiIndex));
+  m_hashReverseEdgeIndices.Add(TKeyValue<uint16_t, uint16_t>(m_wEdgeIndices[uiIndex], uiIndex));
 }
 
 UINT CTerrain::CPatch::CEdgeMap::Vertex2Edge(UINT uiVertexIndex)
 {
-  CHashKV<WORD, WORD>::TIter it;
+  CHashKV<uint16_t, uint16_t>::TIter it;
   it = m_hashReverseEdgeIndices.Find(uiVertexIndex);
   if (!it)
     return -1;
@@ -72,13 +72,13 @@ void CTerrain::CPatch::CEdgedGeom::InitEdgeTriangles()
 
   m_mapEdgeTriangles.Clear();
 
-  WORD *pIndices = (WORD *) m_pGeometry->m_pIB->Map();
+  uint16_t *pIndices = (uint16_t *) m_pGeometry->m_pIB->Map();
 
   UINT uiIndices = m_pGeometry->m_uiIndices;
 
   for (i = 0; i < (int) uiIndices; i += 3) {
     UINT uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd;
-    BYTE btOtherIndOfs;
+    uint8_t btOtherIndOfs;
     ASSERT(pIndices[i] >= EDGE_INDICES && pIndices[i+1] >= EDGE_INDICES && pIndices[i+2] >= EDGE_INDICES);
     if (!CheckTriangleForEdge(pIndices + i, 0, uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd, btOtherIndOfs))
       continue;
@@ -88,14 +88,14 @@ void CTerrain::CPatch::CEdgedGeom::InitEdgeTriangles()
   m_pGeometry->m_pIB->Unmap();
 }
 
-void CTerrain::CPatch::CEdgedGeom::OverwriteTriangle(WORD *pStartInd)
+void CTerrain::CPatch::CEdgedGeom::OverwriteTriangle(uint16_t *pStartInd)
 {
   m_arrOverwrittenIndices.Append(pStartInd[0]);
   m_arrOverwrittenIndices.Append(pStartInd[1]);
   m_arrOverwrittenIndices.Append(pStartInd[2]);
 }
 
-void CTerrain::CPatch::CEdgedGeom::IndicesChanged(CProgressiveGeometry *pGeometry, WORD wOldIndex, WORD wCurIndex, WORD *pIndices, UINT uiChanges, UINT *pIndicesOfIndices)
+void CTerrain::CPatch::CEdgedGeom::IndicesChanged(CProgressiveGeometry *pGeometry, uint16_t wOldIndex, uint16_t wCurIndex, uint16_t *pIndices, UINT uiChanges, UINT *pIndicesOfIndices)
 {
   TTriangleMap::TIter itTri;
   UINT uiChange, uiTri;
@@ -106,7 +106,7 @@ void CTerrain::CPatch::CEdgedGeom::IndicesChanged(CProgressiveGeometry *pGeometr
     uiTri = pIndicesOfIndices[uiChange] - (pIndicesOfIndices[uiChange] % 3);
     itTri = m_mapEdgeTriangles.Find(uiTri);
     UINT uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd;
-    BYTE btOtherIndOfs;
+    uint8_t btOtherIndOfs;
     if (!CProgressiveGeometry::IsTriangleDegenerate(pIndices + uiTri) &&
         CheckTriangleForEdge(pIndices + uiTri, 0, uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd, btOtherIndOfs)) {
       if (!itTri)
@@ -122,7 +122,7 @@ void CTerrain::CPatch::CEdgedGeom::IndicesChanged(CProgressiveGeometry *pGeometr
   }
 }
 
-bool CTerrain::CPatch::CEdgedGeom::CheckTriangleForEdge(WORD *pTriInd, CBitArray<EDGE_INDICES> const *pActive, UINT &uiEdgeInd0, UINT &uiEdgeInd1, UINT &uiOtherEdgeInd, BYTE &btOtherIndOfs)
+bool CTerrain::CPatch::CEdgedGeom::CheckTriangleForEdge(uint16_t *pTriInd, CBitArray<EDGE_INDICES> const *pActive, UINT &uiEdgeInd0, UINT &uiEdgeInd1, UINT &uiOtherEdgeInd, uint8_t &btOtherIndOfs)
 {
   UINT uiEdgeInd[3];
   int iNotFound, i, iNegIndex;
@@ -168,17 +168,17 @@ bool CTerrain::CPatch::CEdgedGeom::CheckTriangleForEdge(WORD *pTriInd, CBitArray
   uiEdgeInd0 = iInd1;
   uiEdgeInd1 = iInd2;
   uiOtherEdgeInd = uiEdgeInd[iNegIndex];
-  btOtherIndOfs = (BYTE) iNegIndex;
+  btOtherIndOfs = (uint8_t) iNegIndex;
 
   return true;
 }
 
-UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(WORD *pIndices, UINT uiAppendInd, UINT uiEdgeTriInd, CBitArray<EDGE_INDICES> const &kActive, UINT uiEdgeInd0, UINT uiEdgeInd1, UINT uiOtherEdgeInd, WORD wOtherInd)
+UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(uint16_t *pIndices, UINT uiAppendInd, UINT uiEdgeTriInd, CBitArray<EDGE_INDICES> const &kActive, UINT uiEdgeInd0, UINT uiEdgeInd1, UINT uiOtherEdgeInd, uint16_t wOtherInd)
 {
   UINT uiAdded, uiActive;
   int iSubstInd;
   int iDelta, iCur;
-  WORD wPrev, *pStartInd;
+  uint16_t wPrev, *pStartInd;
 
   if (uiOtherEdgeInd != (UINT) -1) {
     if (EdgeIndexOnCorner(uiEdgeInd0)) {
@@ -186,7 +186,7 @@ UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(WORD *pIndices, UINT uiAppendIn
         uiActive = FirstEdgeIndexBetween(uiEdgeInd0, uiEdgeInd1, &kActive);
         if (uiActive != (UINT) -1) {
           uiAdded = AppendEdgeFan(pIndices, uiAppendInd, uiEdgeTriInd, kActive, uiActive, uiEdgeInd1, -1, wOtherInd);
-          uiAdded += AppendEdgeFan(pIndices, uiAppendInd + uiAdded, -1, kActive, uiOtherEdgeInd, uiEdgeInd0, -1, (WORD) uiActive);
+          uiAdded += AppendEdgeFan(pIndices, uiAppendInd + uiAdded, -1, kActive, uiOtherEdgeInd, uiEdgeInd0, -1, (uint16_t) uiActive);
           return uiAdded;
         }
       }
@@ -196,7 +196,7 @@ UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(WORD *pIndices, UINT uiAppendIn
           uiActive = FirstEdgeIndexBetween(uiEdgeInd1, uiEdgeInd0, &kActive);
           if (uiActive != (UINT) -1) {
             uiAdded = AppendEdgeFan(pIndices, uiAppendInd, uiEdgeTriInd, kActive, uiEdgeInd0, uiActive, -1, wOtherInd);
-            uiAdded += AppendEdgeFan(pIndices, uiAppendInd + uiAdded, -1, kActive, uiEdgeInd1, uiOtherEdgeInd, -1, (WORD) uiActive);
+            uiAdded += AppendEdgeFan(pIndices, uiAppendInd + uiAdded, -1, kActive, uiEdgeInd1, uiOtherEdgeInd, -1, (uint16_t) uiActive);
             return uiAdded;
           }
         }
@@ -213,15 +213,15 @@ UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(WORD *pIndices, UINT uiAppendIn
 
   pStartInd = pIndices + uiAppendInd;
   iDelta = Util::Sign((int) uiEdgeInd1 - (int) uiEdgeInd0);
-  wPrev = (WORD) uiEdgeInd0;
+  wPrev = (uint16_t) uiEdgeInd0;
   for (iCur = (int) uiEdgeInd0 + iDelta; iCur != (int) uiEdgeInd1; iCur += iDelta) {
     if (!kActive.GetBit(iCur))
       continue;
     OverwriteTriangle(pStartInd + uiAdded);
     pStartInd[uiAdded] = wPrev;
-    pStartInd[uiAdded + 1] = (WORD) iCur;
+    pStartInd[uiAdded + 1] = (uint16_t) iCur;
     pStartInd[uiAdded + 2] = wOtherInd;
-    wPrev = (WORD) iCur;
+    wPrev = (uint16_t) iCur;
     uiAdded += 3;
   }
   if (uiEdgeTriInd == (UINT) -1) { 
@@ -237,32 +237,32 @@ UINT CTerrain::CPatch::CEdgedGeom::AppendEdgeFan(WORD *pIndices, UINT uiAppendIn
   }
 
   pStartInd[0] = wPrev;
-  pStartInd[1] = (WORD) (uiEdgeInd1 % EDGE_INDICES);
+  pStartInd[1] = (uint16_t) (uiEdgeInd1 % EDGE_INDICES);
   pStartInd[2] = wOtherInd;
 
   return uiAdded;
 }
 
-void CTerrain::CPatch::CEdgedGeom::ActivateEdges(WORD *&pIndices, CBitArray<EDGE_INDICES> const &kActive)
+void CTerrain::CPatch::CEdgedGeom::ActivateEdges(uint16_t *&pIndices, CBitArray<EDGE_INDICES> const &kActive)
 {
   int i;
   UINT uiAppendIndex;
   TTriangleMap::TIter it;
 
   if (!pIndices)
-    pIndices = (WORD *) m_pGeometry->m_pIB->Map();
+    pIndices = (uint16_t *) m_pGeometry->m_pIB->Map();
 
   UINT uiIndices = m_pGeometry->m_uiIndices;
 
   uiAppendIndex = uiIndices;
   for (it = m_mapEdgeTriangles; it; ++it) {
     UINT uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd;
-    BYTE btOtherIndOfs;
+    uint8_t btOtherIndOfs;
 
     i = *it;
     if (!CheckTriangleForEdge(pIndices + i, &kActive, uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd, btOtherIndOfs))
       continue;
-    WORD wOtherInd = pIndices[i + btOtherIndOfs];
+    uint16_t wOtherInd = pIndices[i + btOtherIndOfs];
     ASSERT(wOtherInd >= EDGE_INDICES);
     uiAppendIndex += AppendEdgeFan(pIndices, uiAppendIndex, i, kActive, uiEdgeInd0, uiEdgeInd1, uiOtherEdgeInd, wOtherInd);
   }
@@ -271,7 +271,7 @@ void CTerrain::CPatch::CEdgedGeom::ActivateEdges(WORD *&pIndices, CBitArray<EDGE
   m_pGeometry->m_uiIndices = uiAppendIndex;
 }
 
-void CTerrain::CPatch::CEdgedGeom::DeactivateEdges(WORD *&pIndices)
+void CTerrain::CPatch::CEdgedGeom::DeactivateEdges(uint16_t *&pIndices)
 {
   //ASSERT(m_bBordersUpdated);
   int i;
@@ -280,7 +280,7 @@ void CTerrain::CPatch::CEdgedGeom::DeactivateEdges(WORD *&pIndices)
     return;
 
   if (!pIndices)
-    pIndices = (WORD *) m_pGeometry->m_pIB->Map();
+    pIndices = (uint16_t *) m_pGeometry->m_pIB->Map();
 
   for (i = 0; i < m_arrTriangleSubstitutions.m_iCount; i++) 
     m_arrTriangleSubstitutions[i].Revert(pIndices);
@@ -289,13 +289,13 @@ void CTerrain::CPatch::CEdgedGeom::DeactivateEdges(WORD *&pIndices)
 
   if (m_arrOverwrittenIndices.m_iCount) {
     memcpy(pIndices + m_pGeometry->m_uiIndices - m_arrOverwrittenIndices.m_iCount, 
-           m_arrOverwrittenIndices.m_pArray, m_arrOverwrittenIndices.m_iCount * sizeof(WORD));
+           m_arrOverwrittenIndices.m_pArray, m_arrOverwrittenIndices.m_iCount * sizeof(uint16_t));
     m_pGeometry->m_uiIndices -= m_arrOverwrittenIndices.m_iCount;
     m_arrOverwrittenIndices.SetCount(0);
   }
 }
 
-bool CTerrain::CPatch::CEdgedGeom::IsSplittableEdge(WORD wInd0, WORD wInd1)
+bool CTerrain::CPatch::CEdgedGeom::IsSplittableEdge(uint16_t wInd0, uint16_t wInd1)
 {
   UINT uiEdgeInd0, uiEdgeInd1;
   uiEdgeInd0 = m_pEdgeInfo->Vertex2Edge(wInd0);
@@ -508,7 +508,7 @@ void CTerrain::CPatch::CFullGeom::DoneMaterialModels()
 void CTerrain::CPatch::CFullGeom::UpdateEdges()
 {
   if (m_pLODEdgedGeom) {
-    WORD *pIndices = 0;
+    uint16_t *pIndices = 0;
     m_pLODEdgedGeom->DeactivateEdges(pIndices);
     if (pIndices)
       m_pLODEdgedGeom->m_pGeometry->m_pIB->Unmap();
@@ -582,7 +582,7 @@ bool CTerrain::CPatch::CFullGeom::Render()
     if (!m_bBordersUpdated && m_pLODEdgedGeom) {
       CBitArray<EDGE_INDICES> kActive;
       bool bExtraActive;
-      WORD *pIndices = 0;
+      uint16_t *pIndices = 0;
 
       m_pLODEdgedGeom->DeactivateEdges(pIndices);
       bExtraActive = DetermineActiveEdgeIndices(kActive, false);
@@ -608,7 +608,7 @@ void CTerrain::CPatch::CFullGeom::UpdateBorders(bool bAdjacentMinDetail)
   if (!m_bBordersUpdated && m_pLODEdgedGeom) {
     CBitArray<EDGE_INDICES> kActive;
     bool bExtraActive;
-    WORD *pIndices = 0;
+    uint16_t *pIndices = 0;
 
     m_pLODEdgedGeom->DeactivateEdges(pIndices);
     bExtraActive = DetermineActiveEdgeIndices(kActive, bAdjacentMinDetail);
@@ -808,7 +808,7 @@ int CTerrain::CPatch::CProgGeom::GetValidVertexCount(int iVertices)
 void CTerrain::CPatch::CProgGeom::SetGeomVertices(int iVertices, int iMaterialInd)
 {
   CProgressiveGeometry *pProgGeom;
-  WORD *pIndices;
+  uint16_t *pIndices;
   TMaterialModel *pMatModel;
 
   pMatModel = GetMaterialModel(iMaterialInd);
@@ -816,7 +816,7 @@ void CTerrain::CPatch::CProgGeom::SetGeomVertices(int iVertices, int iMaterialIn
   if (!pProgGeom) 
     return;
 
-  pIndices = (WORD *) pProgGeom->m_pIB->Map(0, CResource::RMF_SYSTEM_ONLY);
+  pIndices = (uint16_t *) pProgGeom->m_pIB->Map(0, CResource::RMF_SYSTEM_ONLY);
 
   if (m_bBordersUpdated)
     pMatModel->m_pEdgedGeom->DeactivateEdges(pIndices);
@@ -902,7 +902,7 @@ void CTerrain::CPatch::CProgGeom::UpdateBorders(bool bAdjacentMinDetail)
   for (i = -1; i < m_arrMaterialModels.m_iCount; i++) {
     pMatModel = GetMaterialModel(i);
     pModel = pMatModel->m_pModel;
-    WORD *pIndices = (WORD *) pModel->m_pGeometry->m_pIB->Map();
+    uint16_t *pIndices = (uint16_t *) pModel->m_pGeometry->m_pIB->Map();
     if (bExtraActive)
       pMatModel->m_pEdgedGeom->ActivateEdges(pIndices, kActive);
     pModel->m_pGeometry->m_pIB->Unmap();
@@ -918,7 +918,7 @@ bool CTerrain::CPatch::CProgGeom::RenderMaterialModel(int iMaterialInd, bool bEx
   pMatModel = GetMaterialModel(iMaterialInd);
   pModel = pMatModel->m_pModel;
   if (!m_bBordersUpdated) {
-    WORD *pIndices = (WORD *) pModel->m_pGeometry->m_pIB->Map();
+    uint16_t *pIndices = (uint16_t *) pModel->m_pGeometry->m_pIB->Map();
     if (bExtraActive)
       pMatModel->m_pEdgedGeom->ActivateEdges(pIndices, kActive);
     pModel->m_pGeometry->m_pIB->Unmap();

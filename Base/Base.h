@@ -12,39 +12,40 @@
 #define CONCAT(...) __VA_ARGS__
 #define ID(x) x
 
-typedef unsigned int     UINT;
+#if defined(_WIN32) || defined(_WIN64)
+  #define WINDOWS
+#endif
 
-typedef unsigned char    BYTE;
-typedef unsigned short   WORD;
-typedef unsigned long    DWORD;
-typedef unsigned __int64 QWORD;
+#include <stdint.h>
+
+typedef unsigned int     UINT;
 
 // Smart pointers
 class CRefCount {
 public:
-	DWORD m_dwCount;
+	uint32_t m_dwCount;
 
 	inline CRefCount()                           { m_dwCount = 0; }
 	inline CRefCount(const CRefCount &kRefCount) { m_dwCount = 0; }
 	inline ~CRefCount()                          { ASSERT(!m_dwCount); }
 
-	inline DWORD Get()  { return m_dwCount; }
-	inline void  Inc()  { ++m_dwCount; }
-	inline void  Dec()  { ASSERT(m_dwCount); --m_dwCount; }
+	inline uint32_t Get() const                  { return m_dwCount; }
+	inline void     Inc()                        { ++m_dwCount; }
+	inline void     Dec()                        { ASSERT(m_dwCount); --m_dwCount; }
 };
 
-#define DEFREFCOUNT                                               \
-  public:                                                         \
-    mutable CRefCount m_RefCount;                                 \
-    inline DWORD GetRefCount() const { return m_RefCount.Get(); } \
-    inline void  Acquire() const { m_RefCount.Inc(); }            \
-    inline void  Release() const { m_RefCount.Dec(); if (!m_RefCount.Get()) delete this;  }
+#define DEFREFCOUNT                                                  \
+  public:                                                            \
+    mutable CRefCount m_RefCount;                                    \
+    inline uint32_t GetRefCount() const { return m_RefCount.Get(); } \
+    inline void     Acquire() const     { m_RefCount.Inc(); }        \
+    inline void     Release() const     { m_RefCount.Dec(); if (!m_RefCount.Get()) delete this;  }
 
-#define DEFREFCOUNT_DUMMY                          \
-  public:                                          \
-    inline DWORD GetRefCount() const { return 0; } \
-    inline void  Acquire() const {}                \
-    inline void  Release() const { delete this; }
+#define DEFREFCOUNT_DUMMY                             \
+  public:                                             \
+    inline uint32_t GetRefCount() const { return 0; } \
+    inline void     Acquire() const {}                \
+    inline void     Release() const { delete this; }
 
 template <class T>
 class CSmartPtr {
@@ -129,6 +130,12 @@ public:
 struct TTrue  { inline static bool Value() { return true; } };
 struct TFalse { inline static bool Value() { return false; } };
 
+template <class T0, class T1>
+struct TSameType { typedef TFalse TValue; };
+
+template <class T>
+struct TSameType<T, T> { typedef TTrue TValue; };
+
 template <class T>
 struct TIsPOD {	typedef TFalse TValue; };
 
@@ -163,10 +170,10 @@ template <>
 struct TIsPOD<unsigned long> { typedef TTrue TValue; };
 
 template <>
-struct TIsPOD<signed __int64> { typedef TTrue TValue; };
+struct TIsPOD<signed long long> { typedef TTrue TValue; };
 
 template <>
-struct TIsPOD<unsigned __int64> { typedef TTrue TValue; };
+struct TIsPOD<unsigned long long> { typedef TTrue TValue; };
 
 template <>
 struct TIsPOD<float> { typedef TTrue TValue; };

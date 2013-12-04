@@ -97,7 +97,7 @@ bool InitModels()
 
   char chNormBuf[2] = { 0, 0 };
   g_pTextureNorm = new CTexture();
-  if (!g_pTextureNorm->Init(1, 1, DXGI_FORMAT_R8G8_SNORM, 1, (BYTE *) chNormBuf, 2, 0))
+  if (!g_pTextureNorm->Init(1, 1, DXGI_FORMAT_R8G8_SNORM, 1, (uint8_t *) chNormBuf, 2, 0))
     return false;
 
   g_pFont = new CFont(CStrAny(ST_WHOLE, "Arial"), 20);
@@ -121,7 +121,7 @@ bool InitModels()
     { { -1,  1, 0 }, { 0, 1 }, 0 },
   };
 
-  WORD arrInds[] = {
+  uint16_t arrInds[] = {
     0, 1, 2, 
     0, 2, 3,
   };
@@ -244,7 +244,7 @@ bool InitTerrainHeightsNoise()
 bool InitTerrain(int iTerrainSize)
 {
   int iSize;
-  CFileBase *pFile;
+  CFile *pFile;
   CRect<int> rcGrid;
   float fGrid2World;
 
@@ -255,7 +255,7 @@ bool InitTerrain(int iTerrainSize)
   else
     iSize = (CTerrain::PATCH_SIZE - 1) * 16 + 1;
 
-  pFile = CFileSystem::Get()->OpenFile(sTerFile, CFileBase::FOF_READ);
+  pFile = CFileSystem::Get()->OpenFile(sTerFile, CFile::FOF_READ);
   if (!pFile || pFile->Read(rcGrid) || pFile->Read(fGrid2World) ||
       (iTerrainSize > 0 && (rcGrid.GetWidth() != iSize - 1 || rcGrid.GetHeight() != iSize - 1))) {
     rcGrid.Set(0, 0, iSize - 1, iSize - 1);
@@ -278,7 +278,7 @@ bool InitTerrain(int iTerrainSize)
     if (!g_pTerrain->InitPatches())
       return false;
 
-    pFile = CFileSystem::Get()->OpenFile(sTerFile, CFileBase::FOF_READ | CFileBase::FOF_WRITE | CFileBase::FOF_CREATE | CFileBase::FOF_TRUNCATE);
+    pFile = CFileSystem::Get()->OpenFile(sTerFile, CFile::FOF_READ | CFile::FOF_WRITE | CFile::FOF_CREATE | CFile::FOF_TRUNCATE);
     if (!pFile)
       return false;
     if (!g_pTerrain->Save(0)) {
@@ -344,7 +344,7 @@ bool Init(char const *pCmdLine)
   if (!CTime::InitTiming())
     return false;
   new CInput(g_hWnd);
-  new CFileSystem();
+  CFileSystem::Create();
 
   g_pGraphics = new CGraphics();
   g_pGraphics->SetSorter(new CPrioritySorter<>(CStrAny(ST_CONST, "g_fMaterialID")));
@@ -385,7 +385,7 @@ void Done()
   if (g_pGraphics)
     g_pGraphics->Done();
   delete g_pGraphics;
-  delete CFileSystem::Get();
+  CFileSystem::Destroy();
   delete CInput::Get();
 }
 

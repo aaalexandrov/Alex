@@ -116,8 +116,8 @@ inline bool CStateVarObj::EqualVars(CBaseVar const *pVar0, CBaseVar const *pVar1
   if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<float>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<float>::GetRTTI_s())) 
     return ((CVarValueBase<float> *) pVar0)->GetValue() == ((CVarValueBase<float> *) pVar1)->GetValue();
 
-  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<BYTE>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<BYTE>::GetRTTI_s())) 
-    return ((CVarValueBase<BYTE> *) pVar0)->GetValue() == ((CVarValueBase<BYTE> *) pVar1)->GetValue();
+  if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<uint8_t>::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<uint8_t>::GetRTTI_s())) 
+    return ((CVarValueBase<uint8_t> *) pVar0)->GetValue() == ((CVarValueBase<uint8_t> *) pVar1)->GetValue();
 
   if (pVar0->GetRTTI()->IsKindOf(CVarValueBase<CVector<4> >::GetRTTI_s()) && pVar1->GetRTTI()->IsKindOf(CVarValueBase<CVector<4> >::GetRTTI_s())) 
     return ((CVarValueBase<CVector<4> > *) pVar0)->GetValue() == ((CVarValueBase<CVector<4> > *) pVar1)->GetValue();
@@ -321,7 +321,7 @@ bool CBlendState::Init()
     pVar = new CVarRef<int>(*(int *) &m_BSDesc.RenderTarget[i].BlendOpAlpha);
     m_pVars->ReplaceVar(sBlendOpAlpha + CStrAny(ST_STR, i), pVar, true);
 
-    pVar = new CVarRef<BYTE>(m_BSDesc.RenderTarget[i].RenderTargetWriteMask);
+    pVar = new CVarRef<uint8_t>(m_BSDesc.RenderTarget[i].RenderTargetWriteMask);
     m_pVars->ReplaceVar(sRenderTargetWriteMask + CStrAny(ST_STR, i), pVar, true);
   }
 
@@ -485,10 +485,10 @@ bool CDepthStencilState::Init()
   pVar = new CVarRef<int>(m_DSDesc.StencilEnable);
   m_pVars->ReplaceVar(sStencilEnable, pVar, true);
 
-  pVar = new CVarRef<BYTE>(m_DSDesc.StencilReadMask);
+  pVar = new CVarRef<uint8_t>(m_DSDesc.StencilReadMask);
   m_pVars->ReplaceVar(sStencilReadMask, pVar, true);
 
-  pVar = new CVarRef<BYTE>(m_DSDesc.StencilWriteMask);
+  pVar = new CVarRef<uint8_t>(m_DSDesc.StencilWriteMask);
   m_pVars->ReplaceVar(sStencilWriteMask, pVar, true);
 
   pVar = new CVarRef<int>(*(int *) &m_DSDesc.FrontFace.StencilFunc);

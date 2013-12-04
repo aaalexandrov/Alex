@@ -3,12 +3,11 @@
 
 #include "Base.h"
 #include "Str.h"
-#include <io.h>
 
-class CFileBase: public CObject {
-  DEFRTTI(CFileBase, CObject, false)
+class CFile: public CObject {
+  DEFRTTI(CFile, CObject, false)
 public:
-  typedef __int64 FILESIZE;
+  typedef long long FILESIZE;
   typedef int ERRCODE;
 
   enum EOpenFlags {
@@ -20,7 +19,9 @@ public:
     FOF_TEXT = 32,
   };
 
-  virtual ~CFileBase() {}
+  virtual ~CFile() {}
+
+  virtual void     Init(CStrAny const &sName, unsigned int uiFlags) = 0;
 
   virtual bool     IsValid() const = 0;
   virtual CStrAny  GetFullName() const = 0;
@@ -52,44 +53,21 @@ public:
   ERRCODE ReadBuf(void *&pBuf, int &iBytes);
 };
 
-class CFile: public CFileBase {
-  DEFRTTI(CFile, CFileBase, false)
-public:
-  CStrAny    m_sFileName;
-  int        m_hFile;
-
-  explicit CFile(CStrAny const &sName, unsigned int uiFlags);
-  virtual ~CFile();
-
-  virtual bool     IsValid() const     { return m_hFile > 0; }
-  virtual CStrAny  GetFullName() const { return m_sFileName; }
-
-  virtual FILESIZE GetSize() const;
-  virtual ERRCODE  SetSize(FILESIZE iSize);
-  virtual FILESIZE GetPos() const;
-  virtual ERRCODE  SetPos(FILESIZE iPos);
-  virtual ERRCODE  Read(void *pBuf, int iBytes, int *pProcessedBytes = 0);
-  virtual ERRCODE  Write(void const *pBuf, int iBytes, int *pProcessedBytes = 0);
-};
-
 class CFileSystem: public CObject {
-  DEFRTTI(CFileSystem, CObject, true)
+  DEFRTTI(CFileSystem, CObject, false)
 public:
-  class CFileIter {
+  class CFileIter: public CObject {
+    DEFRTTI(CFileSystem::CFileIter, CObject, false)
   public:
-    intptr_t       m_hFind;
-    _finddatai64_t m_FindData;
+    virtual ~CFileIter() {}
 
-    CFileIter(CStrAny const &sPath) { m_hFind = -1; operator =(sPath); }
-    ~CFileIter();
+    virtual operator bool() const = 0;
+    virtual CFileIter &operator ++() = 0;
+    virtual CFileIter &operator =(CStrAny const &sPath) = 0;
 
-    operator bool() const;
-    CFileIter &operator ++();
-    CFileIter &operator =(CStrAny const &sPath);
-
-    CStrAny GetName() const;
-    CFileBase::FILESIZE GetSize() const;
-    UINT GetAttributes() const;
+    virtual CStrAny GetName() const = 0;
+    virtual CFile::FILESIZE GetSize() const = 0;
+    virtual UINT GetAttributes() const = 0;
   };
 public:
   static CFileSystem *s_pFileSystem;
@@ -97,17 +75,26 @@ public:
 
   CStrAny m_sRootPath;
 
+  static void Create();
+  static void Destroy();
+
   CFileSystem();
   virtual ~CFileSystem();
 
-  virtual CFileBase *OpenFile(CStrAny const &sFile, unsigned int uiFlags);
+  virtual void Init();
 
-  virtual CFileBase::ERRCODE DeleteFile(CStrAny const &sFile);
+  virtual CFile *OpenFile(CStrAny const &sFile, unsigned int uiFlags);
 
-  virtual CFileBase::ERRCODE GetCurrentDirectory(CStrAny &sDir);
-  virtual CFileBase::ERRCODE SetCurrentDirectory(CStrAny const &sDir);
-  virtual CFileBase::ERRCODE CreateDirectory(CStrAny const &sDir);
-  virtual CFileBase::ERRCODE DeleteDirectory(CStrAny const &sDir);
+  virtual CFile::ERRCODE DeleteFile(CStrAny const &sFile) = 0;
+
+  virtual CFile::ERRCODE GetCurrentDirectory(CStrAny &sDir) = 0;
+  virtual CFile::ERRCODE SetCurrentDirectory(CStrAny const &sDir) = 0;
+  virtual CFile::ERRCODE CreateDirectory(CStrAny const &sDir) = 0;
+  virtual CFile::ERRCODE DeleteDirectory(CStrAny const &sDir) = 0;
+  virtual CRTTI const *GetFileRTTI() const = 0;
+  virtual CRTTI const *GetFileIterRTTI() const = 0;
+
+  virtual CFileIter *GetFileIter(CStrAny const &sPath);
 
   virtual CStrAny ResolvePath(CStrAny const &sFile);
   virtual CStrAny GetCurrentRoot();
@@ -119,21 +106,21 @@ public:
 // Implementation -------------------------------------------------------------
 
 template <class T>
-CFileBase::ERRCODE CFileBase::Write(T const &t)
+CFile::ERRCODE CFile::Write(T const &t)
 {
   ERRCODE err = Write(&t, sizeof(t));
   return err;
 }
 
 template <class T>
-CFileBase::ERRCODE CFileBase::Read(T &t)
+CFile::ERRCODE CFile::Read(T &t)
 {
   ERRCODE err = Read(&t, sizeof(t));
   return err;
 }
 
 template <class T>
-CFileBase::ERRCODE CFileBase::WriteArray(T const &t)
+CFile::ERRCODE CFile::WriteArray(T const &t)
 {
   ERRCODE err = Write(&t.m_iCount, sizeof(t.m_iCount));
   if (err || !t.m_iCount)
@@ -143,7 +130,7 @@ CFileBase::ERRCODE CFileBase::WriteArray(T const &t)
 }
 
 template <class T>
-CFileBase::ERRCODE CFileBase::ReadArray(T &t)
+CFile::ERRCODE CFile::ReadArray(T &t)
 {
   int iCount;
   ERRCODE err = Read(iCount);

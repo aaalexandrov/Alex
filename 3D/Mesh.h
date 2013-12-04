@@ -113,12 +113,12 @@ public:
   CMesh();
   ~CMesh();
 
-  bool Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, BYTE btMatSemanticIndex);
+  bool Init(CGeometry *pOrgGeom, CStrAny sMatSemantic, uint8_t btMatSemanticIndex);
 
   CProgressiveGeometry *BuildProgressiveGeometry(int iMaterial, UINT uiNoReorderVertexCount, UINT uiMaxCollapses); // The first uiNoReorderVertexCount will not be reordered and will appear at their original order at the start of the resulting progressive mesh VB
   CD3DBuffer *BuildVB(UINT uiNoReorderVertexCount);
-  CD3DBuffer *BuildIB(int iMaterial, CArray<BYTE> &arrUsedVertices);
-  void BuildCollapseBuffer(bool bExplicitVertexCount, UINT uiMaxCollapses, CArray<BYTE> const &arrUsedVertices, CProgressiveGeometry *pProgGeom);
+  CD3DBuffer *BuildIB(int iMaterial, CArray<uint8_t> &arrUsedVertices);
+  void BuildCollapseBuffer(bool bExplicitVertexCount, UINT uiMaxCollapses, CArray<uint8_t> const &arrUsedVertices, CProgressiveGeometry *pProgGeom);
   void BuildReverseReorder(UINT uiNoReorderVertexCount);
   UINT GetMaxCollapses();
 

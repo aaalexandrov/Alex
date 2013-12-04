@@ -31,8 +31,8 @@ void CGeometryMerge::AddGeometry(CGeometry *pGeom, UINT uiVertices, UINT uiIndic
   ASSERT(pGeom->m_ePrimitiveType == CGeometry::PT_TRIANGLELIST);
   ASSERT(*pGeom->m_pInputDesc == *m_pInputDesc);
   int iBaseVert, iBaseInd, i, iVertStride;
-  BYTE *pSrcVert;
-  WORD *pSrcInd;
+  uint8_t *pSrcVert;
+  uint16_t *pSrcInd;
   UINT uiMapFlags;
   CIndexRemap kRemap, *pRemap;
 
@@ -45,7 +45,7 @@ void CGeometryMerge::AddGeometry(CGeometry *pGeom, UINT uiVertices, UINT uiIndic
   pSrcVert = pGeom->m_pVB->Map(0, uiMapFlags);
 
   uiMapFlags = (pGeom->m_pIB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
-  pSrcInd = (WORD *) pGeom->m_pIB->Map(0, uiMapFlags);
+  pSrcInd = (uint16_t *) pGeom->m_pIB->Map(0, uiMapFlags);
 
   if (!uiVertices)
     uiVertices = pGeom->m_uiVertices;
@@ -111,21 +111,21 @@ CGeometry *CGeometryMerge::CreateGeometry(CRTTI const *pGeomRTTI, UINT uiVBFlags
     return 0;
   }
 
-  BYTE *pBuf;
+  uint8_t *pBuf;
   pBuf = pGeom->m_pVB->Map();
   memcpy(pBuf, m_arrVertices.m_pArray, m_arrVertices.m_iCount);
   pGeom->m_pVB->Unmap();
   pGeom->m_uiVertices -= uiExtraVertices;
 
   pBuf = pGeom->m_pIB->Map();
-  memcpy(pBuf, m_arrIndices.m_pArray, m_arrIndices.m_iCount * sizeof(WORD));
+  memcpy(pBuf, m_arrIndices.m_pArray, m_arrIndices.m_iCount * sizeof(uint16_t));
   pGeom->m_pIB->Unmap();
   pGeom->m_uiIndices -= uiExtraVertices;
 
   return pGeom;
 }
 
-void CGeometryMerge::TransformVertex(BYTE *pDstVertex, BYTE *pSrcVertex)
+void CGeometryMerge::TransformVertex(uint8_t *pDstVertex, uint8_t *pSrcVertex)
 {
   int iElem, i;
 

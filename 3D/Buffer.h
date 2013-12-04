@@ -37,28 +37,28 @@ public:
   CResource()          { m_eType = RT_INVALID; }
   virtual ~CResource() { ASSERT(m_eType == RT_INVALID); }
 
-  virtual bool Init(EType eType, UINT uiFlags);
-  virtual void Done()  { m_eType = RT_INVALID; }
+  virtual bool     Init(EType eType, UINT uiFlags);
+  virtual void     Done()  { m_eType = RT_INVALID; }
+                   
+  virtual UINT     GetSubresources() = 0;
+  virtual UINT     GetSize(UINT uiSubresource) = 0;
 
-  virtual UINT GetSubresources() = 0;
-  virtual UINT GetSize(UINT uiSubresource) = 0;
+  virtual uint8_t *Map(UINT uiSubresource = 0, UINT uiMapFlags = 0, UINT uiOffset = 0, UINT uiSize = 0) = 0;
+  virtual void     Unmap(UINT uiSubresource = -1) = 0;
 
-  virtual BYTE *Map(UINT uiSubresource = 0, UINT uiMapFlags = 0, UINT uiOffset = 0, UINT uiSize = 0) = 0;
-  virtual void  Unmap(UINT uiSubresource = -1) = 0;
-
-  virtual BYTE *GetMappedPtr() = 0;
-  virtual UINT GetMemorySize(UINT *pDeviceMemory) = 0;
+  virtual uint8_t *GetMappedPtr() = 0;
+  virtual UINT     GetMemorySize(UINT *pDeviceMemory) = 0;
 };
 
 struct ID3D11Resource;
 class CD3DResource: public CResource {
 	DEFRTTI(CD3DResource, CResource, false)
 public:
-  BYTE *m_pSystemCopy;
-  UINT  m_uiMappedSubresource;
-  UINT  m_uiMappedOffset, m_uiMappedSize;
-  UINT  m_uiMapFlags;
-  BYTE *m_pMappedBuffer;
+  uint8_t *m_pSystemCopy;
+  UINT     m_uiMappedSubresource;
+  UINT     m_uiMappedOffset, m_uiMappedSize;
+  UINT     m_uiMapFlags;
+  uint8_t *m_pMappedBuffer;
 
   CD3DResource();
   virtual ~CD3DResource() {}
@@ -67,26 +67,26 @@ public:
   virtual void Done();
 
   virtual bool ShouldHaveSystemCopy();
-  virtual bool CreateSystemCopy(BYTE *pContents);
+  virtual bool CreateSystemCopy(uint8_t *pContents);
   virtual bool GetResourceParams(bool bStaging, D3D11_USAGE &eUsage, UINT &uiCPUAccessFlags);
   virtual UINT GetSubresourceOffset(UINT uiSubresource);
 
   virtual UINT GetSubresources() = 0;
   virtual UINT GetSize(UINT uiSubresource) = 0;
 
-  virtual BYTE *Map(UINT uiSubresource = 0, UINT uiMapFlags = 0, UINT uiOffset = 0, UINT uiSize = 0);
-  virtual void  Unmap(UINT uiSubresource = -1);
+  virtual uint8_t *Map(UINT uiSubresource = 0, UINT uiMapFlags = 0, UINT uiOffset = 0, UINT uiSize = 0);
+  virtual void     Unmap(UINT uiSubresource = -1);
 
-  virtual BYTE *GetMappedPtr();
-  virtual UINT GetMemorySize(UINT *pDeviceMemory);
+  virtual uint8_t *GetMappedPtr();
+  virtual UINT     GetMemorySize(UINT *pDeviceMemory);
 
   virtual ID3D11Resource *GetD3DResource() = 0;
   virtual ID3D11Resource *GetStagingResource() = 0;
   virtual bool GetMappedBox(D3D11_BOX &kBox, UINT &uiRowSize, UINT &uiRowPitch, UINT &uiDepthPitch, bool bInBlocks) = 0; 
 
   static  void CopyRegion(UINT uiRowSize, UINT uiRows, UINT uiSlices,
-                          BYTE *pDst, UINT uiDstRowPitch, UINT uiDstDepthPitch, 
-                          BYTE *pSrc, UINT uiSrcRowPitch, UINT uiSrcDepthPitch);
+                          uint8_t *pDst, UINT uiDstRowPitch, UINT uiDstDepthPitch, 
+                          uint8_t *pSrc, UINT uiSrcRowPitch, UINT uiSrcDepthPitch);
 };
 
 struct ID3D11Buffer;
@@ -101,7 +101,7 @@ public:
   CD3DBuffer();
   virtual ~CD3DBuffer() { Done(); }
 
-  virtual bool Init(EType eType, UINT uiFlags, BYTE *pContents, UINT uiSize);
+  virtual bool Init(EType eType, UINT uiFlags, uint8_t *pContents, UINT uiSize);
   virtual void Done();
 
   virtual UINT GetSubresources()               { return 1;                }

@@ -70,6 +70,9 @@
     <ClCompile Include="..\Src\Error.cpp" />
     <ClCompile Include="..\Src\Interpreter.cpp" />
     <ClCompile Include="..\Src\Library.cpp" />
+    <ClCompile Include="..\..\Base\WinFile.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />
@@ -140,6 +143,9 @@
     <ClInclude Include="..\Src\Compiler.h" />
     <ClInclude Include="..\Src\Interpreter.h" />
     <ClInclude Include="..\Src\Library.h" />
+    <ClInclude Include="..\..\Base\WinFile.h">
+      <Filter>Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />

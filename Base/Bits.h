@@ -43,17 +43,17 @@ class CBitArrayTpl {
 public:
   B m_Bits;
 
-  inline int  BitElementIndex(int iBit) const { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return iBit / (sizeof(UINT) * 8); }
-  inline UINT BitElementMask(int iBit)  const { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return 1 << (iBit % (sizeof(UINT) * 8)); }
-
-  inline void SetAll()                        { memset(m_Bits.GetBits(), -1, m_Bits.GetArraySize() * sizeof(UINT)); }
-  inline void ClearAll()                      { memset(m_Bits.GetBits(), 0, m_Bits.GetArraySize() * sizeof(UINT)); }
-
-  inline BYTE GetBit(int iBit) const          { return !!(m_Bits.GetBits()[BitElementIndex(iBit)] & BitElementMask(iBit)); }
-
-  inline void SetBit(int iBit)                { m_Bits.GetBits()[BitElementIndex(iBit)] |= BitElementMask(iBit); }
-  inline void ClearBit(int iBit)              { m_Bits.GetBits()[BitElementIndex(iBit)] &= ~BitElementMask(iBit); }
-  inline BYTE SetBit(int iBit, BYTE btValue)  { if (btValue) SetBit(iBit); else ClearBit(iBit); return !!btValue; }
+  inline int  BitElementIndex(int iBit) const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return iBit / (sizeof(UINT) * 8); }
+  inline UINT BitElementMask(int iBit)  const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return 1 << (iBit % (sizeof(UINT) * 8)); }
+                                                   
+  inline void SetAll()                              { memset(m_Bits.GetBits(), -1, m_Bits.GetArraySize() * sizeof(UINT)); }
+  inline void ClearAll()                            { memset(m_Bits.GetBits(), 0, m_Bits.GetArraySize() * sizeof(UINT)); }
+                                                   
+  inline uint8_t GetBit(int iBit) const             { return !!(m_Bits.GetBits()[BitElementIndex(iBit)] & BitElementMask(iBit)); }
+                                                   
+  inline void SetBit(int iBit)                      { m_Bits.GetBits()[BitElementIndex(iBit)] |= BitElementMask(iBit); }
+  inline void ClearBit(int iBit)                    { m_Bits.GetBits()[BitElementIndex(iBit)] &= ~BitElementMask(iBit); }
+  inline uint8_t SetBit(int iBit, uint8_t btValue)  { if (btValue) SetBit(iBit); else ClearBit(iBit); return !!btValue; }
 
 	inline int ScanFirstSet(int iStartBit = 0) const;
 	inline int ScanFirstClear(int iStartBit = 0) const;

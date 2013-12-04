@@ -108,14 +108,14 @@ CArray<T, G>::CArray(int iMaxCount)
 {
   m_iCount = 0;
   m_iMaxCount = iMaxCount;
-  m_pArray = (T *) new BYTE[m_iMaxCount * sizeof(T)];
+  m_pArray = (T *) new uint8_t[m_iMaxCount * sizeof(T)];
 }
 
 template <class T, int G>
 CArray<T, G>::~CArray()
 {
 	TConDestructor<T>::Destroy(m_pArray, m_iCount);
-  delete [] (BYTE *) m_pArray;
+  delete [] (uint8_t *) m_pArray;
 }
 
 template <class T, int G>
@@ -209,12 +209,12 @@ void CArray<T, G>::SetMaxCount(int iMaxCount)
   if (iMaxCount == m_iMaxCount)
     return;
   ASSERT(iMaxCount > 0);
-  T *p = (T *) new BYTE[iMaxCount * sizeof(T)];
+  T *p = (T *) new uint8_t[iMaxCount * sizeof(T)];
   int iSize = Util::Min(iMaxCount, m_iCount);
   for (int i = 0; i < iSize; i++)
 		TConDestructor<T>::ConstructCopy(p + i, m_pArray[i]);
 	TConDestructor<T>::Destroy(m_pArray, m_iCount);
-  delete [] (BYTE *) m_pArray;
+  delete [] (uint8_t *) m_pArray;
   m_pArray = p;
 	m_iCount = iSize;
   m_iMaxCount = iMaxCount;

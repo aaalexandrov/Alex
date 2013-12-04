@@ -6,7 +6,7 @@
 #include "Model.h"
 #include "Threads.h"
 
-class CFileBase;
+class CFile;
 class CMaterial;
 class CGeometry;
 class CAABB;
@@ -25,7 +25,7 @@ public:
 
   struct TMaterialData {
     CSmartPtr<CMaterial> m_pMaterial;
-    CVector<3, BYTE> m_clrAverage;
+    CVector<3, uint8_t> m_clrAverage;
   };
 
   class CPatchModelBuilder;
@@ -49,11 +49,11 @@ public:
       };
 
       struct TTriangleSubst {
-        UINT m_uiIndex;
-        WORD m_wOrgValue[3];
+        UINT     m_uiIndex;
+        uint16_t m_wOrgValue[3];
 
-        inline void Init(WORD *pIndices, UINT uiIndex) { m_uiIndex = uiIndex; for (int i = 0; i < ARRSIZE(m_wOrgValue); i++) m_wOrgValue[i] = pIndices[m_uiIndex + i]; }
-        inline void Revert(WORD *pIndices) { for (int i = 0; i < ARRSIZE(m_wOrgValue); i++) pIndices[m_uiIndex + i] = m_wOrgValue[i]; }
+        inline void Init(uint16_t *pIndices, UINT uiIndex) { m_uiIndex = uiIndex; for (int i = 0; i < ARRSIZE(m_wOrgValue); i++) m_wOrgValue[i] = pIndices[m_uiIndex + i]; }
+        inline void Revert(uint16_t *pIndices) { for (int i = 0; i < ARRSIZE(m_wOrgValue); i++) pIndices[m_uiIndex + i] = m_wOrgValue[i]; }
       };
 
       typedef CAVLTree<UINT> TTriangleMap;
@@ -61,7 +61,7 @@ public:
       CGeometry *m_pGeometry;
       CEdgeInfo *m_pEdgeInfo;
       CArray<TTriangleSubst> m_arrTriangleSubstitutions;
-      CArray<WORD> m_arrOverwrittenIndices;
+      CArray<uint16_t> m_arrOverwrittenIndices;
       TTriangleMap m_mapEdgeTriangles;
 
       CEdgedGeom(CGeometry *pGeometry, CEdgeInfo *pEdgeInfo);
@@ -69,28 +69,28 @@ public:
 
       void InitEdgeTriangles();
 
-      void OverwriteTriangle(WORD *pStartInd);
-      virtual void IndicesChanged(CProgressiveGeometry *pGeometry, WORD wOldIndex, WORD wCurIndex, WORD *pIndices, UINT uiChanges, UINT *pIndicesOfIndices);
+      void OverwriteTriangle(uint16_t *pStartInd);
+      virtual void IndicesChanged(CProgressiveGeometry *pGeometry, uint16_t wOldIndex, uint16_t wCurIndex, uint16_t *pIndices, UINT uiChanges, UINT *pIndicesOfIndices);
 
-      bool CheckTriangleForEdge(WORD *pTriInd, CBitArray<EDGE_INDICES> const *pActive, UINT &uiEdgeInd0, UINT &uiEdgeInd1, UINT &uiOtherEdgeInd, BYTE &btOtherIndOfs);
-      UINT AppendEdgeFan(WORD *pIndices, UINT uiAppendInd, UINT uiEdgeTriInd, CBitArray<EDGE_INDICES> const &kActive, UINT uiEdgeInd0, UINT uiEdgeInd1, UINT uiOtherEdgeInd, WORD wOtherInd);
-      void ActivateEdges(WORD *&pIndices, CBitArray<EDGE_INDICES> const &kActive);
-      void DeactivateEdges(WORD *&pIndices);
+      bool CheckTriangleForEdge(uint16_t *pTriInd, CBitArray<EDGE_INDICES> const *pActive, UINT &uiEdgeInd0, UINT &uiEdgeInd1, UINT &uiOtherEdgeInd, uint8_t &btOtherIndOfs);
+      UINT AppendEdgeFan(uint16_t *pIndices, UINT uiAppendInd, UINT uiEdgeTriInd, CBitArray<EDGE_INDICES> const &kActive, UINT uiEdgeInd0, UINT uiEdgeInd1, UINT uiOtherEdgeInd, uint16_t wOtherInd);
+      void ActivateEdges(uint16_t *&pIndices, CBitArray<EDGE_INDICES> const &kActive);
+      void DeactivateEdges(uint16_t *&pIndices);
 
-      inline bool IsSplittableEdge(WORD wInd0, WORD wInd1);
+      inline bool IsSplittableEdge(uint16_t wInd0, uint16_t wInd1);
       inline UINT FirstEdgeIndexBetween(UINT uiEdgeInd0, UINT uiEdgeInd1, CBitArray<EDGE_INDICES> const *pActive);
     };
 
     class CPatchGeom;
     class CEdgeMap: public CEdgedGeom::CEdgeInfo {
     public:
-      WORD                 m_wEdgeIndices[EDGE_INDICES];
-      CHashKV<WORD, WORD>  m_hashReverseEdgeIndices;
+      uint16_t                    m_wEdgeIndices[EDGE_INDICES];
+      CHashKV<uint16_t, uint16_t> m_hashReverseEdgeIndices;
 
       CEdgeMap();
 
       bool Init(CMesh &kMesh);
-      bool Init(WORD *pEdgeIndices);
+      bool Init(uint16_t *pEdgeIndices);
 
       bool IsInitialized() { return !!m_hashReverseEdgeIndices.m_iCount; }
 
@@ -230,7 +230,7 @@ public:
     CSmartPtr<CPatchGeom>     m_pGeom;
 
     bool                      m_bBuilding;
-    CArray<WORD>              m_arrCollapses, m_arrCollapsedTriangles;
+    CArray<uint16_t>          m_arrCollapses, m_arrCollapsedTriangles;
     UINT                      m_uiMaterialCollapses, m_uiRealCollapses;
     CEdgeMap                  m_EdgeMap;
 
@@ -263,12 +263,12 @@ public:
 
     bool Init();
 
-    bool Save(CFileBase *pFile);
-    bool Load(CFileBase *pFile);
-    bool SaveMeshData(CFileBase *pFile);
-    bool LoadMeshData(CFileBase *pFile);
-    bool SaveMinLODMesh(CFileBase *pFile);
-    bool LoadMinLODMesh(CFileBase *pFile);
+    bool Save(CFile *pFile);
+    bool Load(CFile *pFile);
+    bool SaveMeshData(CFile *pFile);
+    bool LoadMeshData(CFile *pFile);
+    bool SaveMinLODMesh(CFile *pFile);
+    bool LoadMinLODMesh(CFile *pFile);
     CStrAny GetSaveFileName();
     bool HasMeshData() { return !!m_arrCollapses.m_iCount; }
 
@@ -379,8 +379,8 @@ public:
   void DonePatches();
   void SetCamera(CCamera *pCamera);
 
-  bool Save(CFileBase *pFile);
-  bool Load(CFileBase *pFile);
+  bool Save(CFile *pFile);
+  bool Load(CFile *pFile);
   CStrAny GetSaveFileName();
 
   void PatchInitDone(CPatch *pPatch);

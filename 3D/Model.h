@@ -66,7 +66,7 @@ public:
   virtual ~CGeometry();
 
   virtual bool Init(CInputDesc *pInputDesc, EPrimitiveType ePrimitiveType, 
-                    UINT uiVertices, UINT uiIndices, void *pVertices = 0, WORD *pIndices = 0, 
+                    UINT uiVertices, UINT uiIndices, void *pVertices = 0, uint16_t *pIndices = 0, 
                     UINT uiVBFlags = 0, UINT uiIBFlags = 0, CRTTI const *pBoundRTTI = 0);
   virtual void Done();
 
@@ -74,15 +74,15 @@ public:
 
   virtual void SetInputDesc(CInputDesc *pInputDesc);
   virtual void SetVertices(UINT uiVertices, void *pVertices = 0, UINT uiFlags = 0);
-  virtual void SetIndices(UINT uiIndices, WORD *pIndices = 0, UINT uiFlags = 0);
-  virtual void SetBoundType(CRTTI const *pBoundRTTI, void *pVertices = 0, WORD *pIndices = 0);
+  virtual void SetIndices(UINT uiIndices, uint16_t *pIndices = 0, UINT uiFlags = 0);
+  virtual void SetBoundType(CRTTI const *pBoundRTTI, void *pVertices = 0, uint16_t *pIndices = 0);
   virtual UINT GetVBVertexCount();
   virtual UINT GetIBIndexCount();
 
   virtual bool Apply();
   virtual bool Render(UINT uiIndices = -1, UINT uiStartIndex = 0, UINT uiBaseVertex = 0);
 
-  static inline bool IsTriangleDegenerate(WORD *pIndices) { return pIndices[0] == pIndices[1] || pIndices[0] == pIndices[2] || pIndices[1] == pIndices[2]; }
+  static inline bool IsTriangleDegenerate(uint16_t *pIndices) { return pIndices[0] == pIndices[1] || pIndices[0] == pIndices[2] || pIndices[1] == pIndices[2]; }
   static inline D3D11_PRIMITIVE_TOPOLOGY GetD3DPrimitiveTopology(EPrimitiveType ePT);
 };
 
@@ -97,7 +97,7 @@ public:
   class CChangeCallback {
   public:
     // This callback is called after the changes have been made
-    virtual void IndicesChanged(CProgressiveGeometry *pGeometry, WORD wOldIndex, WORD wCurIndex, WORD *pIndices, UINT uiChanges, UINT *pIndicesOfIndices) = 0;
+    virtual void IndicesChanged(CProgressiveGeometry *pGeometry, uint16_t wOldIndex, uint16_t wCurIndex, uint16_t *pIndices, UINT uiChanges, UINT *pIndicesOfIndices) = 0;
   };
 public:
   // Individual collapse data is a sequence of: 
@@ -120,14 +120,14 @@ public:
   void DoneProgressive();
 
   virtual void SetCollapses(UINT uiCollapses, UINT *pCollapses, bool bExplicitVertexCount);
-  virtual bool SetActiveVertices(UINT uiVertices, WORD **pMappedIndices = 0);
+  virtual bool SetActiveVertices(UINT uiVertices, uint16_t **pMappedIndices = 0);
 
   UINT CalcMinVertices();
   inline UINT GetPrevCollapse(UINT uiCollapse);
   inline UINT GetPrevCollapseVertices(UINT uiCollapse);
   inline UINT GetNextCollapse(UINT uiCollapse);
-  bool CollapseVertex(WORD *&pIndices);
-  bool UncollapseVertex(UINT uiVertThreshold, WORD *&pIndices);
+  bool CollapseVertex(uint16_t *&pIndices);
+  bool UncollapseVertex(UINT uiVertThreshold, uint16_t *&pIndices);
 };
 
 class CModel: public CVarObj {

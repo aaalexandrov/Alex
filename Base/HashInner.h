@@ -13,7 +13,7 @@ public:
 
 	class CTableElem {
 	public:
-		BYTE m_btData[sizeof(T)];
+		uint8_t m_btData[sizeof(T)];
 		CTableElem *m_pNext;
 
 		CTableElem()  { m_pNext = GetFreePtr(); }

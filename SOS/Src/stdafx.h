@@ -10,8 +10,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <tchar.h>
-#include <ASSERT.h>
 #include <math.h>
 #include <memory.h>
 

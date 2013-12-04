@@ -8,11 +8,11 @@ class CGeometryMerge {
 public:
   class CIndexRemap {
   public:
-    virtual WORD RemapIndex(WORD wIndex) { return wIndex; }
+    virtual uint16_t RemapIndex(uint16_t wIndex) { return wIndex; }
   };
 public:
-  CArray<BYTE> m_arrVertices;
-  CArray<WORD> m_arrIndices;
+  CArray<uint8_t> m_arrVertices;
+  CArray<uint16_t> m_arrIndices;
   CSmartPtr<CInputDesc> m_pInputDesc;
   CArray<CMatrix<4, 4> *> m_arrElementXForms;
   bool m_bSkipUnusedVertices;
@@ -29,7 +29,7 @@ public:
 
   CGeometry *CreateGeometry(CRTTI const *pGeomRTTI = 0, UINT uiVBFlags = 0, UINT uiIBFlags = 0, UINT uiExtraVertices = 0, UINT uiExtraIndices = 0, CRTTI const *pBoundRTTI = 0);
 
-  void TransformVertex(BYTE *pDstVertex, BYTE *pSrcVertex);
+  void TransformVertex(uint8_t *pDstVertex, uint8_t *pSrcVertex);
 };
 
 #endif

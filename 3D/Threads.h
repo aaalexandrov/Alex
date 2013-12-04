@@ -32,9 +32,9 @@ public:
 class CThreadWin: public CThreadBase {
   DEFRTTI(CThreadWin, CThreadBase, true)
 public:
-  HANDLE  m_hThread;
-  DWORD   m_dwThreadID;
-  void   *m_pParam;
+  HANDLE    m_hThread;
+  DWORD     m_dwThreadID;
+  void     *m_pParam;
 
   CThreadWin();
   virtual ~CThreadWin();

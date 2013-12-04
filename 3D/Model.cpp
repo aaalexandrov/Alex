@@ -156,7 +156,7 @@ CGeometry::~CGeometry()
 }
 
 bool CGeometry::Init(CInputDesc *pInputDesc, EPrimitiveType ePrimitiveType, 
-                     UINT uiVertices, UINT uiIndices, void *pVertices, WORD *pIndices, 
+                     UINT uiVertices, UINT uiIndices, void *pVertices, uint16_t *pIndices, 
                      UINT uiVBFlags, UINT uiIBFlags, CRTTI const *pBoundRTTI)
 {
   SetInputDesc(pInputDesc);
@@ -192,13 +192,13 @@ void CGeometry::SetVertices(UINT uiVertices, void *pVertices, UINT uiFlags)
 
   if (uiVertices > 0) {
     m_pVB = new CD3DBuffer();
-    bool bRes = m_pVB->Init(CResource::RT_VERTEX, uiFlags, (BYTE *) pVertices, m_uiVertices * m_pInputDesc->GetSize());
+    bool bRes = m_pVB->Init(CResource::RT_VERTEX, uiFlags, (uint8_t *) pVertices, m_uiVertices * m_pInputDesc->GetSize());
     ASSERT(bRes);
   } else
     m_pVB = 0;
 }
 
-void CGeometry::SetIndices(UINT uiIndices, WORD *pIndices, UINT uiFlags)
+void CGeometry::SetIndices(UINT uiIndices, uint16_t *pIndices, UINT uiFlags)
 {
   ASSERT(m_pInputDesc);
 
@@ -206,13 +206,13 @@ void CGeometry::SetIndices(UINT uiIndices, WORD *pIndices, UINT uiFlags)
 
   if (uiIndices > 0) {
     m_pIB = new CD3DBuffer();
-    bool bRes = m_pIB->Init(CResource::RT_INDEX, uiFlags, (BYTE *) pIndices, m_uiIndices * sizeof(WORD));
+    bool bRes = m_pIB->Init(CResource::RT_INDEX, uiFlags, (uint8_t *) pIndices, m_uiIndices * sizeof(uint16_t));
     ASSERT(bRes);
   } else
     m_pIB = 0;
 }
 
-void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, WORD *pIndices)
+void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, uint16_t *pIndices)
 {
   SAFE_DELETE(m_pBound);
   if (pBoundRTTI) {
@@ -225,9 +225,9 @@ void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, WORD *pIn
     else 
       pPoints = (CVector<3> *) m_pVB->Map();
 
-    WORD *pInd;
+    uint16_t *pInd;
     if (!pIndices && m_uiIndices)
-      pInd = (WORD *) m_pIB->Map();
+      pInd = (uint16_t *) m_pIB->Map();
     else
       pInd = pIndices;
 
@@ -236,7 +236,7 @@ void CGeometry::SetBoundType(CRTTI const *pBoundRTTI, void *pVertices, WORD *pIn
     CInputDesc::TInputElement *pElem = m_pInputDesc->GetElementInfo(sPOSITION, 0, &iPosIndex);
     ASSERT(pElem && pElem->m_btElements >= 3);
 
-    pPoints = (CVector<3> *) ((BYTE *) pPoints + m_pInputDesc->GetElementOffset(iPosIndex));
+    pPoints = (CVector<3> *) ((uint8_t *) pPoints + m_pInputDesc->GetElementOffset(iPosIndex));
     iStride = m_pInputDesc->GetSize();
 
     if (!pInd)
@@ -261,7 +261,7 @@ UINT CGeometry::GetVBVertexCount()
 
 UINT CGeometry::GetIBIndexCount()
 {
-  return m_pIB->GetSize(0) / sizeof(WORD);
+  return m_pIB->GetSize(0) / sizeof(uint16_t);
 }
 
 bool CGeometry::IsValid()
@@ -374,9 +374,9 @@ void CProgressiveGeometry::SetCollapses(UINT uiCollapses, UINT *pCollapses, bool
   }
 }
 
-bool CProgressiveGeometry::SetActiveVertices(UINT uiVertices, WORD **pMappedIndices)
+bool CProgressiveGeometry::SetActiveVertices(UINT uiVertices, uint16_t **pMappedIndices)
 {
-  WORD *pIndices = 0;
+  uint16_t *pIndices = 0;
 
   if (!pMappedIndices)
     pMappedIndices = &pIndices;
@@ -444,7 +444,7 @@ UINT CProgressiveGeometry::GetNextCollapse(UINT uiCollapse)
   return uiCollapse + 1;
 }
 
-bool CProgressiveGeometry::CollapseVertex(WORD *&pIndices)
+bool CProgressiveGeometry::CollapseVertex(uint16_t *&pIndices)
 {
   if (m_uiCurCollapse >= m_uiCollapses)
     return false;
@@ -467,7 +467,7 @@ bool CProgressiveGeometry::CollapseVertex(WORD *&pIndices)
   uiFirstReplace = uiReplaceIndex;
 
   if (!pIndices)
-    pIndices = (WORD *) m_pIB->Map();
+    pIndices = (uint16_t *) m_pIB->Map();
 
   while (m_pCollapses[uiReplaceIndex] != INVALID_INDEX) {
     UINT uiIndexOfIndex = m_pCollapses[uiReplaceIndex];
@@ -489,7 +489,7 @@ bool CProgressiveGeometry::CollapseVertex(WORD *&pIndices)
   return true;
 }
 
-bool CProgressiveGeometry::UncollapseVertex(UINT uiVertThreshold, WORD *&pIndices)
+bool CProgressiveGeometry::UncollapseVertex(UINT uiVertThreshold, uint16_t *&pIndices)
 {
   if (!m_uiCurCollapse)
     return false;
@@ -515,7 +515,7 @@ bool CProgressiveGeometry::UncollapseVertex(UINT uiVertThreshold, WORD *&pIndice
   uiFirstReplace = uiReplaceIndex;
 
   if (!pIndices)
-    pIndices = (WORD *) m_pIB->Map();
+    pIndices = (uint16_t *) m_pIB->Map();
 
   while (m_pCollapses[uiReplaceIndex] != INVALID_INDEX) {
     UINT uiIndexOfIndex = m_pCollapses[uiReplaceIndex];

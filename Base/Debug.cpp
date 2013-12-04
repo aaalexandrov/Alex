@@ -2,7 +2,9 @@
 #include "Debug.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include <Windows.h>
+#ifdef WINDOWS
+    #include <Windows.h>
+#endif
 
 bool g_bAssertDisabled = false;
 bool g_bInAssert = false;
@@ -33,6 +35,7 @@ void Assert(bool bCondition, const char *pCondition, const char *pFile, int nLin
 
   DbgPrint("ASSERT(%s) at %s:%d\n", pCondition, pFile, nLine);
 
+#ifdef WINDOWS
   sprintf(chBuf, "ASSERT(%s)\n\nat %s:%d\n\nBreak execution (Y/N) or disable assertions (Cancel)?", pCondition, pFile, nLine);
   iRes = MessageBoxA(0, chBuf, "Assertion failed!", MB_YESNOCANCEL | MB_ICONSTOP);
   switch (iRes) {
@@ -45,6 +48,9 @@ void Assert(bool bCondition, const char *pCondition, const char *pFile, int nLin
     case IDNO:
       break;
   }
+#else
+  __builtin_trap();
+#endif
 
   g_bInAssert = false;
 }

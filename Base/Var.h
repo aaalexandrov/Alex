@@ -121,25 +121,25 @@ inline bool Set(int *dst, const float *src)
   return *dst == *src;
 }
 
-inline bool Set(BYTE *dst, const int *src)
+inline bool Set(uint8_t *dst, const int *src)
 {
-  *dst = (BYTE) *src;
+  *dst = (uint8_t) *src;
   return *dst == *src;
 }
 
-inline bool Set(int *dst, const BYTE *src)
+inline bool Set(int *dst, const uint8_t *src)
 {
   *dst = (int) *src;
   return true;
 }
 
-inline bool Set(BYTE *dst, const float *src)
+inline bool Set(uint8_t *dst, const float *src)
 {
-  *dst = (BYTE) *src;
+  *dst = (uint8_t) *src;
   return *dst == *src;
 }
 
-inline bool Set(float *dst, const BYTE *src)
+inline bool Set(float *dst, const uint8_t *src)
 {
   *dst = (float) *src;
   return true;
@@ -149,8 +149,8 @@ bool Set(CStrAny *dst, const int *src);
 bool Set(int *dst, const CStrAny *src);
 bool Set(CStrAny *dst, const float *src);
 bool Set(float *dst, const CStrAny *src);
-inline bool Set(CStrAny *dst, const BYTE *src) { int i = *src; return Set(dst, &i); }
-inline bool Set(BYTE *dst, const CStrAny *src) { int i; bool bRes = Set(&i, src); *dst = (BYTE) i; return bRes && *dst == i; }
+inline bool Set(CStrAny *dst, const uint8_t *src) { int i = *src; return Set(dst, &i); }
+inline bool Set(uint8_t *dst, const CStrAny *src) { int i; bool bRes = Set(&i, src); *dst = (uint8_t) i; return bRes && *dst == i; }
 
 inline bool Set(CStrAny *dst, const CStrAny *src)
 {
@@ -388,11 +388,11 @@ static inline bool SetValue(CStrAny *val, const CBaseVar *vSrc)
   return vSrc->GetStr(*val);
 }
 
-static inline bool SetValue(BYTE *val, const CBaseVar *vSrc)
+static inline bool SetValue(uint8_t *val, const CBaseVar *vSrc)
 {
   int i;
   bool bRes = vSrc->GetInt(i);
-  *val = (BYTE) i;
+  *val = (uint8_t) i;
   return bRes && *val == i;
 }
 

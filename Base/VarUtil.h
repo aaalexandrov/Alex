@@ -60,20 +60,20 @@ public:
   virtual bool Init()        { return true; }
   virtual void Done()        { SAFE_DELETE(m_pVars); }
 
-  virtual void Remap(BYTE *pNewBufBase, BYTE *pOldBufBase, CVarObj *pDstVars = 0);
-  virtual void MakeVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, BYTE *pSrcBufBase, bool bAddVars);
-  virtual void ClearVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, int iDstBufSize);
+  virtual void Remap(uint8_t *pNewBufBase, uint8_t *pOldBufBase, CVarObj *pDstVars = 0);
+  virtual void MakeVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, uint8_t *pSrcBufBase, bool bAddVars);
+  virtual void ClearVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, int iDstBufSize);
 
   virtual void CopyValues(CVarObj *pSrcVars);
 };
 
-class CFileBase;
+class CFile;
 
 class CVarFile {
 public:
-  CFileBase *m_pFile;
+  CFile *m_pFile;
 
-  CVarFile(CFileBase *pFile);
+  CVarFile(CFile *pFile);
   ~CVarFile();
 
   bool Read(CVarObj *pVars);

@@ -365,7 +365,7 @@ void CGraphics::SetViewport(const CRect<> &rc, float fMinZ, float fMaxZ)
   m_pDeviceContext->RSSetViewports(1, &vp);
 }
 
-void CGraphics::Clear(const CVector<4> &vColor, float fDepth, BYTE btStencil)
+void CGraphics::Clear(const CVector<4> &vColor, float fDepth, uint8_t btStencil)
 {
   CScopeLock kLock(&m_Lock);
 

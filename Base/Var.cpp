@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Var.h"
 #include "VarUtil.h"
-#include <stdio.h>
+#include "Parse.h"
 
 // Var classes RTTI -----------------------------------------------------
 
@@ -11,7 +11,7 @@ CRTTIRegisterer<CDummyVar> g_RegDummyVar;
 CVarRTTIRegisterer<int> g_RegVarInt;
 CVarRTTIRegisterer<float> g_RegVarFloat;
 CVarRTTIRegisterer<CStrAny> g_RegVarStrAny;
-CVarRTTIRegisterer<BYTE> g_RegVarBYTE;
+CVarRTTIRegisterer<uint8_t> g_RegVarBYTE;
 
 CRTTIRegisterer<CVarValueBase<CVarObj> > g_RegVarValueBaseVarObj;
 CRTTIRegisterer<CVarRef<CVarObj> > g_RegVarRefVarObj;
@@ -201,44 +201,29 @@ bool CVarValueObj::SetVar(CStrAny const &sVar, const CBaseVar &vSrc)
 bool Set(CStrAny *dst, const int *src)
 {
   char chBuf[96];
-  _itoa(*src, chBuf, 10);
+  Parse::Int2Str(*src, chBuf, sizeof(chBuf));
   *dst = CStrAny(ST_WHOLE, chBuf);
   return true;
 }
 
 bool Set(int *dst, const CStrAny *src)
 {
-  if (src->ZeroTerminated())
-    *dst = atoi(src->m_pBuf);
-  else {
-    CStrAny s = *src;
-    *dst = atoi(s.m_pBuf);
-  }
-  return true;
+  bool bRes = Parse::Str2Int(*dst, *src);
+  return bRes;
 }
 
 bool Set(CStrAny *dst, const float *src)
 {
   char chBuf[96];
-  sprintf(chBuf, "%g", *src);
+  Parse::Float2Str(*src, chBuf, sizeof(chBuf));
   *dst = CStrAny(ST_WHOLE, chBuf);
   return true;
 }
 
 bool Set(float *dst, const CStrAny *src)
 {
-  int iRes;
-  if (src->ZeroTerminated())
-    iRes = sscanf(src->m_pBuf, "%f", dst);
-  else {
-    CStrAny s = *src;
-    iRes = sscanf(s.m_pBuf, "%f", dst);
-  }
-  if (iRes < 1) {
-    *dst = 0;
-    return false;
-  }
-  return true;
+  bool bRes = Parse::Str2Float(*dst, *src);
+  return bRes;
 }
 
 // CVarHash ----------------------------------------------------------------------

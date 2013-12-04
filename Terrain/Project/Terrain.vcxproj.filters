@@ -120,6 +120,9 @@
     <ClCompile Include="..\..\Base\RTTI.cpp">
       <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Base\WinFile.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\stdafx.h" />
@@ -228,6 +231,9 @@
       <Filter>3D</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Base\RTTI.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Base\WinFile.h">
       <Filter>Base</Filter>
     </ClInclude>
   </ItemGroup>

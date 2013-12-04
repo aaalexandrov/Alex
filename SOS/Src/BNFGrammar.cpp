@@ -87,7 +87,7 @@ void CBNFGrammar::InitRules()
 		AddChild(NewNT()->Set(R_ZeroInfinity)->
 		  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
 			AddChild(NewT(CToken::TT_VARIABLE)));
-	
+
 	pFunctionDef->Set(O_Output)->
 		AddChild(NewT(CToken::TT_FUNCTION)->Set(O_NoOutput))->
 		AddChild(NewT(CToken::TT_OPENBRACE)->Set(O_NoOutput))->
@@ -246,7 +246,7 @@ void CBNFGrammar::InitRules()
 		AddChild(NewNT()->Set(R_ZeroOne)->Set(O_Output)->
 			AddChild(NewT(CToken::TT_ASSIGN)->Set(O_NoOutput))->
 			AddChild(pExpressionList));
-	
+
 	pLValue->Set(S_Alternative)->
 		AddChild(NewNT()->
 		  AddChild(pIndexable)->
@@ -316,7 +316,7 @@ void CBNFGrammar::Dump(CNode *pParsed, int iIndent)
 	if (!pParsed)
 		return;
 	CStrAny sIndent(ST_STR, ' ', iIndent);
-	printf(sIndent.m_pBuf);
+	printf("%s", sIndent.m_pBuf);
 	if (!pParsed->m_arrChildren.m_iCount) {
 		CStrAny sToken = pParsed->m_pToken->ToString();
 		printf("%s, ", sToken.m_pBuf);

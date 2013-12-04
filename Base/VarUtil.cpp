@@ -152,7 +152,7 @@ bool CVarMerge::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
 // CVarTemplate --------------------------------------------------------------
 CRTTIRegisterer<CVarTemplate> g_RegVarTemplate;
 
-void CVarTemplate::Remap(BYTE *pNewBufBase, BYTE *pOldBufBase, CVarObj *pDstVars)
+void CVarTemplate::Remap(uint8_t *pNewBufBase, uint8_t *pOldBufBase, CVarObj *pDstVars)
 {
   CVarObj::CIter *pIt;
   CBaseVar *pDstVal;
@@ -162,20 +162,20 @@ void CVarTemplate::Remap(BYTE *pNewBufBase, BYTE *pOldBufBase, CVarObj *pDstVars
     else
       pDstVal = pIt->GetValue();
     ASSERT(pDstVal);
-    pDstVal->SetRef((BYTE *) pDstVal->GetRef() + (pNewBufBase - pOldBufBase));
+    pDstVal->SetRef((uint8_t *) pDstVal->GetRef() + (pNewBufBase - pOldBufBase));
   }
   delete pIt;
   return;
 }
 
-void CVarTemplate::MakeVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, BYTE *pSrcBufBase, bool bAddVars)
+void CVarTemplate::MakeVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, uint8_t *pSrcBufBase, bool bAddVars)
 {
   CVarObj::CIter *pIt;
   CBaseVar *pOrgVal, *pNewVar;
   for (pIt = m_pVars->GetIter(); *pIt; pIt->Next()) {
     pNewVar = pIt->GetValue()->Clone();
     if (pDstBufBase != pSrcBufBase) {
-      pNewVar->SetRef((BYTE *) pNewVar->GetRef() + (pDstBufBase - pSrcBufBase));
+      pNewVar->SetRef((uint8_t *) pNewVar->GetRef() + (pDstBufBase - pSrcBufBase));
       pOrgVal = bAddVars ? 0 : pDstVars->FindVar(pIt->GetName());
       if (pOrgVal)
         pNewVar->SetVar(*pOrgVal);
@@ -188,7 +188,7 @@ void CVarTemplate::MakeVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, BYTE *pSrcB
   delete pIt;
 }
 
-void CVarTemplate::ClearVarCopy(CVarObj *pDstVars, BYTE *pDstBufBase, int iDstBufSize)
+void CVarTemplate::ClearVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, int iDstBufSize)
 {
   CVarObj::CIter *pIt;
   CBaseVar *pDstVal;
@@ -218,7 +218,7 @@ void CVarTemplate::CopyValues(CVarObj *pSrcVars)
 
 // CVarFile -------------------------------------------------------------------
 
-CVarFile::CVarFile(CFileBase *pFile)
+CVarFile::CVarFile(CFile *pFile)
 {
   m_pFile = pFile;
 }

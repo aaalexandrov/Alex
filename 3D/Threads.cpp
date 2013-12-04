@@ -65,7 +65,7 @@ UINT CThreadWin::GetExitCode()
 
 UINT CThreadWin::Wait(UINT uiMilliseconds)
 {
-  DWORD dwRes = WaitForSingleObject(m_hThread, uiMilliseconds);
+  uint32_t dwRes = WaitForSingleObject(m_hThread, uiMilliseconds);
   switch (dwRes) {
     case WAIT_OBJECT_0:
       dwRes = 0;

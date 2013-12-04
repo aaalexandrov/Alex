@@ -64,13 +64,13 @@ bool CTexture::Init(CStrAny sFilename, int iMipLevels, UINT uiFlags)
 {
   Done();
 
-  CAutoDeletePtr<CFileBase> pFile(CFileSystem::Get()->OpenFile(sFilename, CFile::FOF_READ));
+  CAutoDeletePtr<CFile> pFile(CFileSystem::Get()->OpenFile(sFilename, CFile::FOF_READ));
   if (!pFile)
     return false;
 
   int iSize = (int) pFile->GetSize();
   CAutoDeletePtr<char> pBuf(new char[iSize]);
-  CFileBase::ERRCODE ec = pFile->Read(pBuf, iSize);
+  CFile::ERRCODE ec = pFile->Read(pBuf, iSize);
   if (ec)
     return false;
 
@@ -147,7 +147,7 @@ bool CTexture::Init(CStrAny sFilename, int iMipLevels, UINT uiFlags)
   return true;
 }
 
-bool CTexture::Init(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, BYTE *pData, int iRowPitch, UINT uiFlags)
+bool CTexture::Init(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, uint8_t *pData, int iRowPitch, UINT uiFlags)
 {
   D3D11_USAGE eUsage;
   UINT uiCPUAccessFlags;
@@ -275,7 +275,7 @@ UINT CTexture::GetBlockPitch(UINT uiSubresource)
   return iBlockPitch;
 }
 
-BYTE *CTexture::MapRect(UINT uiSubresource, UINT uiMapFlags, CRect<int> const &rcRect)
+uint8_t *CTexture::MapRect(UINT uiSubresource, UINT uiMapFlags, CRect<int> const &rcRect)
 {
   ASSERT(uiSubresource < GetSubresources());
   int iBPP, iBlockSize, iBlockPitch;
@@ -335,7 +335,7 @@ bool CTexture::GetMappedBox(D3D11_BOX &kBox, UINT &uiRowSize, UINT &uiRowPitch, 
   return true;
 }
 
-bool CTexture::CreateSystemCopy(BYTE *pContents)
+bool CTexture::CreateSystemCopy(uint8_t *pContents)
 {
   if (!CD3DResource::CreateSystemCopy(pContents))
     return false;
@@ -361,7 +361,7 @@ bool CTexture::TransferD3DToSystemCopy()
   CScopeLock kLock(&CGraphics::Get()->m_Lock);
   CGraphics::Get()->m_pDeviceContext->CopyResource(pStaging, m_pTexture);
 
-  BYTE *pCopy = m_pSystemCopy;
+  uint8_t *pCopy = m_pSystemCopy;
   for (iLevel = 0; iLevel < m_iMipLevels; iLevel++) {
     D3D11_MAPPED_SUBRESOURCE ms;
     HRESULT res;
@@ -371,7 +371,7 @@ bool CTexture::TransferD3DToSystemCopy()
     if (FAILED(res))
       return false;
 
-    if (!CopyLevelData(m_iWidth, m_iHeight, m_eFormat, iLevel, (BYTE *) ms.pData, ms.RowPitch, pCopy, 0))
+    if (!CopyLevelData(m_iWidth, m_iHeight, m_eFormat, iLevel, (uint8_t *) ms.pData, ms.RowPitch, pCopy, 0))
       return false;
 
     CGraphics::Get()->m_pDeviceContext->Unmap(pStaging, iLevel);
@@ -382,7 +382,7 @@ bool CTexture::TransferD3DToSystemCopy()
   return true;
 }
 
-ID3D11Texture2D *CTexture::CreateD3DTexture(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, BYTE *pData, int iRowPitch, D3D11_USAGE eUsage, UINT uiCPUAccessFlags, bool bCanGenerateMips)
+ID3D11Texture2D *CTexture::CreateD3DTexture(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, uint8_t *pData, int iRowPitch, D3D11_USAGE eUsage, UINT uiCPUAccessFlags, bool bCanGenerateMips)
 {
   int iBPP, iBlockSize, i;
   bool bRes, bAutoGenMips;
@@ -648,7 +648,7 @@ int CTexture::GetLevelSize(int iHeight, int iLevel, int iBlockPitch, int iBlockS
   return iBlockPitch * iBlockHeight;
 }
 
-bool CTexture::CopyLevelData(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iLevel, BYTE *pSrcData, int iSrcBlockPitch, BYTE *pDstData, int iDstBlockPitch)
+bool CTexture::CopyLevelData(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iLevel, uint8_t *pSrcData, int iSrcBlockPitch, uint8_t *pDstData, int iDstBlockPitch)
 {
   int iBPP, iBlockSize;
   int iRowSize, iWidthB, iHeightB;

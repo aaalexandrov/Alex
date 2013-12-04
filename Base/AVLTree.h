@@ -11,7 +11,7 @@ public:
   struct TNode {
     T Data;
     TNode *pChild[2], *pParent;
-    BYTE btLevel;
+    uint8_t btLevel;
 
     TNode(T t): Data(t), btLevel(0) { pParent = pChild[0] = pChild[1] = 0; }
 
@@ -89,7 +89,7 @@ void CAVLTree<T, K, P>::TNode::SetChild(int iChild, TNode *pN)
 template <class T, class K, class P>
 void CAVLTree<T, K, P>::TNode::SetLevel(TNode *pNode)
 {
-  BYTE btL;
+  uint8_t btL;
   do {
     btL = Util::Max(GetNodeLevel(pNode->pChild[0]), GetNodeLevel(pNode->pChild[1])) + 1;
     if (btL != pNode->btLevel) {
@@ -148,7 +148,7 @@ void CAVLTree<T, K, P>::Add(T t)
     if (pNode->pChild[iChild])
       pNode = pNode->pChild[iChild];
     else {
-      BYTE btLevel = pNode->btLevel;
+      uint8_t btLevel = pNode->btLevel;
       pNode->SetChild(iChild, new TNode(t));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
@@ -184,7 +184,7 @@ void CAVLTree<T, K, P>::AddUnique(T t)
     if (pNode->pChild[iChild])
       pNode = pNode->pChild[iChild];
     else {
-      BYTE btLevel = pNode->btLevel;
+      uint8_t btLevel = pNode->btLevel;
       pNode->SetChild(iChild, new TNode(t));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))

@@ -125,10 +125,10 @@ namespace Util {
 	inline T RoundUpToPow2Minus1(T a); // returns a number with the same most significant bit as the argument, and all less significant bits set to 1
 
   template <class T>
-  inline T &IndexStride(T *pT, int iStride, int iIndex) { return *(T*)((BYTE *) pT + iStride * iIndex); }
+  inline T &IndexStride(T *pT, int iStride, int iIndex) { return *(T*)((uint8_t *) pT + iStride * iIndex); }
 
   template <class T>
-  inline T const &IndexStride(T const *pT, int iStride, int iIndex) { return *(T*)((BYTE *) pT + iStride * iIndex); }
+  inline T const &IndexStride(T const *pT, int iStride, int iIndex) { return *(T*)((uint8_t *) pT + iStride * iIndex); }
 
   template <class T, class E, class P /*= Less<E>*/ >
   int BinSearch(const T &arr, int iCount, E elem);
@@ -143,7 +143,7 @@ namespace Util {
   void QSort(T &arr, int iEnd, int iStart = 0);
 
   // Floating point constants & functions
-  static const DWORD s_dwQNAN = 0xffffffff, s_dwSNAN = 0xffbfffff, s_dwINFINITY = 0x7f800000, s_dwNEG_INFINITY = 0xff800000;
+  static const uint32_t s_dwQNAN = 0xffffffff, s_dwSNAN = 0xffbfffff, s_dwINFINITY = 0x7f800000, s_dwNEG_INFINITY = 0xff800000;
   static const float F_QNAN = *(float *) &s_dwQNAN,
                      F_SNAN = *(float *) &s_dwSNAN,
                      F_INFINITY = *(float *) &s_dwINFINITY,

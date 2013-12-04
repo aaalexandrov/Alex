@@ -13,20 +13,20 @@ public:
 
   struct TKerningPair {
     union {
-      char ch[2];
-      WORD wChars;
+      char     ch[2];
+      uint16_t wChars;
     };
     int iKerning;
 
     TKerningPair(char ch1, char ch2, int iKern) { ch[0] = ch1; ch[1] = ch2; iKerning = iKern; }
 
     static inline size_t Hash(const TKerningPair &kPair) { return kPair.wChars; }
-    static inline size_t Hash(WORD wChars)               { return wChars; }
+    static inline size_t Hash(uint16_t wChars)           { return wChars; }
     static inline bool Eq(const TKerningPair &kPair1, const TKerningPair &kPair2) { return kPair1.wChars == kPair2.wChars; }
-    static inline bool Eq(WORD wChars, const TKerningPair &kPair) { return wChars == kPair.wChars; }
+    static inline bool Eq(uint16_t wChars, const TKerningPair &kPair)             { return wChars == kPair.wChars; }
   };
 
-  typedef CHash<TKerningPair, WORD, TKerningPair, TKerningPair> THashKerning;
+  typedef CHash<TKerningPair, uint16_t, TKerningPair, TKerningPair> THashKerning;
 
   static const int MAX_CHARS = 256;
   static const int INIT_BUFFER_CHARS = 4096;

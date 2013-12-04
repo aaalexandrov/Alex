@@ -175,14 +175,14 @@ bool CTerrain::CPatch::Init()
   return true;
 }
 
-bool CTerrain::CPatch::Save(CFileBase *pFile)
+bool CTerrain::CPatch::Save(CFile *pFile)
 {
-  CAutoDeletePtr<CFileBase> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile;
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
     if (!!sName) 
-      pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ | CFileBase::FOF_WRITE | CFileBase::FOF_CREATE | CFileBase::FOF_TRUNCATE);
+      pFile = CFileSystem::Get()->OpenFile(sName, CFile::FOF_READ | CFile::FOF_WRITE | CFile::FOF_CREATE | CFile::FOF_TRUNCATE);
     if (!pFile)
       return false;
     pPatchFile.m_pPtr = pFile;
@@ -206,15 +206,15 @@ bool CTerrain::CPatch::Save(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::CPatch::Load(CFileBase *pFile)
+bool CTerrain::CPatch::Load(CFile *pFile)
 {
   CVector<2, int> vPatchIndex;
-  CAutoDeletePtr<CFileBase> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile;
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
     if (!!sName) 
-      pFile = CFileSystem::Get()->OpenFile(sName, CFileBase::FOF_READ);
+      pFile = CFileSystem::Get()->OpenFile(sName, CFile::FOF_READ);
     if (!pFile)
       return false;
     pPatchFile.m_pPtr = pFile;
@@ -252,7 +252,7 @@ bool CTerrain::CPatch::Load(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::CPatch::SaveMeshData(CFileBase *pFile)
+bool CTerrain::CPatch::SaveMeshData(CFile *pFile)
 {
   if (!HasMeshData())
     return true;
@@ -271,7 +271,7 @@ bool CTerrain::CPatch::SaveMeshData(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::CPatch::LoadMeshData(CFileBase *pFile)
+bool CTerrain::CPatch::LoadMeshData(CFile *pFile)
 {
   ASSERT(!HasMeshData());
 
@@ -289,7 +289,7 @@ bool CTerrain::CPatch::LoadMeshData(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::CPatch::SaveMinLODMesh(CFileBase *pFile)
+bool CTerrain::CPatch::SaveMinLODMesh(CFile *pFile)
 {
   if (!m_EdgeMap.IsInitialized() || !m_pMinLODModel)
     return true;
@@ -297,14 +297,14 @@ bool CTerrain::CPatch::SaveMinLODMesh(CFileBase *pFile)
     return false;
 
   UINT uiMapFlags;
-  BYTE *pBuf;
-  CFileBase::ERRCODE err;
+  uint8_t *pBuf;
+  CFile::ERRCODE err;
   CGeometry *pGeom;
   
   pGeom = m_pMinLODModel->m_pGeometry;
   uiMapFlags = (pGeom->m_pIB->m_uiFlags & CResource::RF_KEEPSYSTEMCOPY) ? CResource::RMF_SYSTEM_ONLY : 0;
   pBuf = pGeom->m_pIB->Map(0, uiMapFlags);
-  err = pFile->WriteBuf(pBuf, pGeom->m_uiIndices * sizeof(WORD));
+  err = pFile->WriteBuf(pBuf, pGeom->m_uiIndices * sizeof(uint16_t));
   pGeom->m_pIB->Unmap();
   if (err)
     return false;
@@ -319,21 +319,21 @@ bool CTerrain::CPatch::SaveMinLODMesh(CFileBase *pFile)
   return true;
 }
 
-bool CTerrain::CPatch::LoadMinLODMesh(CFileBase *pFile)
+bool CTerrain::CPatch::LoadMinLODMesh(CFile *pFile)
 {
   ASSERT(!m_EdgeMap.IsInitialized() && !m_pMinLODModel);
 
-  WORD wEdgeIndices[EDGE_INDICES];
+  uint16_t wEdgeIndices[EDGE_INDICES];
   if (pFile->Read(wEdgeIndices))
     return false;
   if (!m_EdgeMap.Init(wEdgeIndices))
     return false;
 
-  CAutoDeletePtr<BYTE> pIB, pVB;
+  CAutoDeletePtr<uint8_t> pIB, pVB;
   int iIBSize, iVBSize;
   CSmartPtr<CGeometry> pGeom;
   CInputDesc *pDesc;
-  BYTE *pBuf;
+  uint8_t *pBuf;
 
   if (pFile->ReadBuf(*(void **) &pIB.m_pPtr, iIBSize))
     return false;
@@ -343,13 +343,13 @@ bool CTerrain::CPatch::LoadMinLODMesh(CFileBase *pFile)
   pDesc = m_pTerrain->m_pLODMaterial->m_pTechnique->m_pInputDesc;
   pGeom = new CGeometry();
   if (!pGeom->Init(pDesc, CGeometry::PT_TRIANGLELIST, iVBSize / pDesc->GetSize(), 
-                   iIBSize / sizeof(WORD) + EDGE_INDICES * 3, pVB, 0, 
+                   iIBSize / sizeof(uint16_t) + EDGE_INDICES * 3, pVB, 0, 
                    CResource::RF_KEEPSYSTEMCOPY, CResource::RF_KEEPSYSTEMCOPY))
     return false;
   pBuf = pGeom->m_pIB->Map();
   memcpy(pBuf, pIB, iIBSize);
   pGeom->m_pIB->Unmap();
-  pGeom->m_uiIndices = iIBSize / sizeof(WORD);
+  pGeom->m_uiIndices = iIBSize / sizeof(uint16_t);
   pGeom->m_pBound = GetAABB(true).Clone();
 
   m_pMinLODModel = new CModel();
@@ -411,15 +411,15 @@ bool CTerrain::CPatch::InitIB(CGeometry *pGeom, int iMaterial, UINT uiReservedVe
 {
   int x, y;
   UINT uiMaxIndices;
-  WORD *pInd, *pOrgInd;
+  uint16_t *pInd, *pOrgInd;
 
   uiMaxIndices = Util::Sqr(PATCH_SIZE - 1) * 6;
-  pOrgInd = new WORD[uiMaxIndices];
+  pOrgInd = new uint16_t[uiMaxIndices];
 
   pInd = pOrgInd;
   for (y = 0; y < PATCH_SIZE - 1; y++)
     for (x = 0; x < PATCH_SIZE - 1; x++) {
-      WORD wBase;
+      uint16_t wBase;
       bool bAddTri;
 
       wBase = y * PATCH_SIZE + x + uiReservedVertices;
@@ -695,7 +695,7 @@ bool CTerrain::CPatch::InitFarTexture()
 
   CRect<int> rcNorm = GetTexRectPixel();
 
-  BYTE *pBuf;
+  uint8_t *pBuf;
   int iRowPitch, x, y;
 
   iRowPitch = m_pTexFar->GetBlockPitch(0);
@@ -703,7 +703,7 @@ bool CTerrain::CPatch::InitFarTexture()
   
   for (y = 0; y < PATCH_SIZE; y++)
     for (x = 0; x < PATCH_SIZE; x++) {
-      ((CVector<3, BYTE> *) (pBuf + x * 4 + y * iRowPitch))->Set(m_pTerrain->m_arrMaterials[m_Points[y][x].m_iMaterial].m_clrAverage);
+      ((CVector<3, uint8_t> *) (pBuf + x * 4 + y * iRowPitch))->Set(m_pTerrain->m_arrMaterials[m_Points[y][x].m_iMaterial].m_clrAverage);
       pBuf[x * 4 + y * iRowPitch + 3] = 255;
     }
 

@@ -84,7 +84,7 @@ public:
   virtual ~CTexture() { Done(); }
 
   virtual bool Init(CStrAny sFilename, int iMipLevels, UINT uiFlags);
-  virtual bool Init(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, BYTE *pData, int iRowPitch, UINT uiFlags);
+  virtual bool Init(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, uint8_t *pData, int iRowPitch, UINT uiFlags);
   virtual void Done();
   virtual void RecordMemory(bool bAdd);
 
@@ -95,7 +95,7 @@ public:
 
   virtual UINT GetBlockPitch(UINT uiSubresource);
 
-  virtual BYTE *MapRect(UINT uiSubresource, UINT uiMapFlags, CRect<int> const &rcRect);
+  virtual uint8_t *MapRect(UINT uiSubresource, UINT uiMapFlags, CRect<int> const &rcRect);
 
   virtual ID3D11Resource *GetD3DResource()     { return m_pTexture; }
   virtual ID3D11Resource *GetStagingResource() { return m_pStagingTexture; }
@@ -103,16 +103,16 @@ public:
 
   virtual bool IsValid()                       { return !!m_pTextureView; }
 
-  virtual bool CreateSystemCopy(BYTE *pContents);
+  virtual bool CreateSystemCopy(uint8_t *pContents);
   virtual bool TransferD3DToSystemCopy();
 
-  static ID3D11Texture2D *CreateD3DTexture(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, BYTE *pData, int iRowPitch, D3D11_USAGE eUsage, UINT uiCPUAccessFlags, bool bCanGenerateMips);
+  static ID3D11Texture2D *CreateD3DTexture(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iMipLevels, uint8_t *pData, int iRowPitch, D3D11_USAGE eUsage, UINT uiCPUAccessFlags, bool bCanGenerateMips);
 
   static bool GetFormatParams(DXGI_FORMAT eFormat, int &iBPP, int &iBlockSize);
   static inline int GetBlockPitch(int iWidth, int iLevel, int iBPP, int iBlockSize);
   static inline int GetLevelSize(int iHeight, int iLevel, int iBlockPitch, int iBlockSize);
 
-  static bool CopyLevelData(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iLevel, BYTE *pSrcData, int iSrcBlockPitch, BYTE *pDstData, int iDstBlockPitch);
+  static bool CopyLevelData(int iWidth, int iHeight, DXGI_FORMAT eFormat, int iLevel, uint8_t *pSrcData, int iSrcBlockPitch, uint8_t *pDstData, int iDstBlockPitch);
 };
 
 IMPLEMENT_BASE_SET(CTexture *)

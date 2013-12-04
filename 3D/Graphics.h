@@ -69,7 +69,7 @@ public:
 
   void GetViewport(CRect<> &rc, float &fMinZ, float &fMaxZ);
   void SetViewport(const CRect<> &rc, float fMinZ, float fMaxZ);
-  void Clear(const CVector<4> &vColor, float fDepth, BYTE btStencil);
+  void Clear(const CVector<4> &vColor, float fDepth, uint8_t btStencil);
   bool Present();
   void ResetCounts();
 

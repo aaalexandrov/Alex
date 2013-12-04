@@ -114,6 +114,7 @@
     <ClCompile Include="..\..\Base\Var.cpp" />
     <ClCompile Include="..\..\Base\VarUtil.cpp" />
     <ClCompile Include="..\..\Base\Vector.cpp" />
+    <ClCompile Include="..\..\Base\WinFile.cpp" />
     <ClCompile Include="..\Src\BNF.cpp" />
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="..\..\Base\Var.h" />
     <ClInclude Include="..\..\Base\VarUtil.h" />
     <ClInclude Include="..\..\Base\Vector.h" />
+    <ClInclude Include="..\..\Base\WinFile.h" />
     <ClInclude Include="..\Src\BNF.h" />
     <ClInclude Include="..\Src\BNFGrammar.h" />
     <ClInclude Include="..\Src\Compiler.h" />
