@@ -257,15 +257,15 @@ CStrAny CValue::GetStr(bool bDecorate) const
         s = CStrAny(ST_CONST, '"') + s + CStrAny(ST_CONST, '"');
       break;
     case VT_TABLE:
-      sprintf(chBuf, "<Table:%x>", m_pTableValue);
+      sprintf(chBuf, "<Table:%p>", m_pTableValue);
       s = CStrAny(ST_CONST, chBuf);
       break;
 		case VT_FRAGMENT:
-			sprintf(chBuf, "<Fragment:%x>", m_pFragment);
+			sprintf(chBuf, "<Fragment:%p>", m_pFragment);
 			s = CStrAny(ST_CONST, chBuf);
 			break;
 		case VT_NATIVE_FUNC:
-			sprintf(chBuf, "<NativeFunc:%x>", m_pNativeFunc);
+			sprintf(chBuf, "<NativeFunc:%p>", m_pNativeFunc);
 			s = CStrAny(ST_CONST, chBuf);
 			break;
   }

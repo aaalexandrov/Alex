@@ -41,9 +41,13 @@ CFileSystem *CFileSystem::s_pFileSystem = 0;
 
 void CFileSystem::Create()
 {
-#ifdef WINDOWS
-  CRTTIHolder::Get()->Find("CWinFileSystem")->CreateInstance();
+#if defined(WINDOWS)
+  char const *chFSClass = "CWinFileSystem";
+#elif defined(LINUX)
+  char const *chFSClass = "CLinFileSystem";
 #endif // WINDOWS
+  CRTTIHolder::Get()->Find(chFSClass)->CreateInstance();
+
   CFileSystem::Get()->Init();
 }
 
@@ -154,7 +158,8 @@ void CFileSystem::SetCurrentRoot(CStrAny const &sPath)
 CFileSystem::CFileIter *CFileSystem::GetFileIter(CStrAny const &sPath)
 {
   CFileIter *pIter = (CFileIter *) GetFileIterRTTI()->CreateInstance();
-  *pIter = sPath;
+  CStrAny sResPath = ResolvePath(sPath);
+  *pIter = sResPath;
   return pIter;
 }
 

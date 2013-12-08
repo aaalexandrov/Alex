@@ -14,6 +14,8 @@
 
 #if defined(_WIN32) || defined(_WIN64)
   #define WINDOWS
+#elif __linux__
+  #define LINUX
 #endif
 
 #include <stdint.h>

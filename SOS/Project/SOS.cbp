@@ -53,6 +53,8 @@
 		<Unit filename="../../Base/Hash.h" />
 		<Unit filename="../../Base/HashInner.cpp" />
 		<Unit filename="../../Base/HashInner.h" />
+		<Unit filename="../../Base/LinFile.cpp" />
+		<Unit filename="../../Base/LinFile.h" />
 		<Unit filename="../../Base/List.cpp" />
 		<Unit filename="../../Base/List.h" />
 		<Unit filename="../../Base/Matrix.cpp" />

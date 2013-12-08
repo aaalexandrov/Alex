@@ -19,6 +19,13 @@ public:
     FOF_TEXT = 32,
   };
 
+  enum EFileAttributes {
+    FA_READ = 1,
+    FA_WRITE = 2,
+    FA_EXECUTE = 4,
+    FA_DIRECTORY = 8,
+  };
+
   virtual ~CFile() {}
 
   virtual void     Init(CStrAny const &sName, unsigned int uiFlags) = 0;

@@ -139,7 +139,12 @@ CFile::FILESIZE CWinFileSystem::CWinFileIter::GetSize() const
 
 UINT CWinFileSystem::CWinFileIter::GetAttributes() const
 {
-  return m_FindData.attrib;
+  UINT uiAttr = CFile::FA_READ | CFile::FA_EXECUTE;
+  if (!(m_FindData.attrib & _A_RDONLY))
+    uiAttr |= CFile::FA_WRITE;
+  if (m_FindData.attrib & _A_SUBDIR)
+    uiAttr |= CFile::FA_DIRECTORY;
+  return uiAttr;
 }
 
 CRTTIRegisterer<CWinFileSystem> g_RegWinFileSystem;

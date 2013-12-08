@@ -15,7 +15,7 @@ CStrAny CValue2String::GetStr(int iVal)
 {
   if (iVal >= 0 && iVal < m_iCount && m_pTable[iVal].m_iVal == iVal)
     return m_pTable[iVal].m_sStr;
-  for (int i = 0; i < m_iCount; ++i) 
+  for (int i = 0; i < m_iCount; ++i)
     if (m_pTable[i].m_iVal == iVal)
       return m_pTable[i].m_sStr;
   ASSERT(!"String not found for value");
@@ -207,12 +207,12 @@ void CTokenizer::Dump(CList<CToken *> *pList)
   for (pNode = pList->m_pHead; pNode; pNode = pNode->pNext) {
     CStrAny s = pNode->Data->ToString();
     s += CStrAny(ST_WHOLE, "\n");
-    printf(s.m_pBuf);
+    printf("%s", s.m_pBuf);
   }
   printf("<end of token list>\n");
 }
 
-CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = { 
+CToken CTokenizer::s_TemplateTokens[CToken::TT_LAST] = {
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_UNKNOWN,    CToken::TT_UNKNOWN),
   CToken(CStrAny(ST_WHOLE, ""),         CToken::TC_IDENTIFIER, CToken::TT_VARIABLE),
 	CToken(CStrAny(ST_WHOLE, "local"),    CToken::TC_KEYWORD,    CToken::TT_LOCAL),

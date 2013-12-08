@@ -10,15 +10,15 @@ static void AVLTreeTest()
   bool bFirst = true;
   for (i = 0; i < 10000; i++) {
     iInd = rand();
-    pValues[i] = (int *) iInd;
+    pValues[i] = (int *) (intptr_t) iInd;
     if (bFirst) {
-      kTree.Add((int *) iInd);
+      kTree.Add((int *) (intptr_t) iInd);
       bFirst = false;
     } else
-      kTree.AddUnique((int *) iInd);
+      kTree.AddUnique((int *) (intptr_t) iInd);
     ASSERT(kTree.CheckIntegrity());
-    it = kTree.Find((int *) iInd);
-    ASSERT(it && *it == (int *) iInd);
+    it = kTree.Find((int *) (intptr_t) iInd);
+    ASSERT(it && *it == (int *) (intptr_t) iInd);
   }
   Util::QSort<int *[10000], int *, Util::LessV<int *> >(pValues, 10000);
   for (i = 0, it = kTree; i < 10000; ++it) {
