@@ -7,10 +7,10 @@
 class CFreeCamera: public CInput::CEventListener {
 public:
   struct TKeyInfo {
-    int   iKey;
-    CTime kPressedTime;
-    bool  bPressed: 1, 
-          bPressConsumed: 1;
+    int              iKey;
+    CTime            kPressedTime;
+    bool             bPressed: 1, 
+                     bPressConsumed: 1;
 
     explicit TKeyInfo(int iK): kPressedTime(0)    { iKey = iK; bPressed = false; bPressConsumed = false; }
     static inline bool Eq(int iKey, TKeyInfo &ki) { return iKey == ki.iKey; }

@@ -9,7 +9,7 @@
 #include "Model.h"
 #include "Matrix.h"
 #include "Camera.h"
-#include "Input.h"
+#include "Windows/WinInput.h"
 #include "Timing.h"
 #include "Font.h"
 #include "Random.h"
@@ -21,6 +21,7 @@
 const char g_chClassName[] = "TerrainWindClass";
 HWND g_hWnd = 0;
 HINSTANCE g_hInstance = 0;
+CTimer g_kTimer;
 
 CGraphics  *g_pGraphics = 0;
 CTechnique *g_pTech = 0;
@@ -42,9 +43,9 @@ void AddText()
 {
   static int iFrame = 0;
   static CTime kLastTimes[256];
-  CTime kNow = CTime::GetCurrent();
+  CTime kNow = g_kTimer.GetCurrent();
 
-  float fFPS = ARRSIZE(kLastTimes) / (kNow - kLastTimes[iFrame]).Seconds(true);
+  float fFPS = ARRSIZE(kLastTimes) / (kNow - kLastTimes[iFrame]).Seconds();
   kLastTimes[iFrame] = kNow;
   iFrame = (iFrame + 1) % ARRSIZE(kLastTimes);
 
@@ -341,9 +342,8 @@ bool InitScene()
 
 bool Init(char const *pCmdLine)
 {
-  if (!CTime::InitTiming())
-    return false;
-  new CInput(g_hWnd);
+  g_kTimer.Init();
+  CInput::Create((COSWindow *) g_hWnd);
   CFileSystem::Create();
 
   g_pGraphics = new CGraphics();
@@ -386,12 +386,12 @@ void Done()
     g_pGraphics->Done();
   delete g_pGraphics;
   CFileSystem::Destroy();
-  delete CInput::Get();
+  CInput::Destroy();
 }
 
 void Render()
 {
-  g_pFreeCamera->Update(CTime::GetCurrentReal());
+  g_pFreeCamera->Update(g_kTimer.GetCurrent());
 
   CVector<4> vBlue = { 0, 0, 1, 1 };
   g_pGraphics->Clear(vBlue, 1, 0);
@@ -415,8 +415,8 @@ void Render()
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  if (CInput::Get()->InputWindowProc(hwnd, uMsg, wParam, lParam))
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+  if (((CWinInput *) CInput::Get())->InputWindowProc(hwnd, uMsg, wParam, lParam))
+    return 0;
   switch (uMsg) {
     case WM_CLOSE:
       DestroyWindow(hwnd);

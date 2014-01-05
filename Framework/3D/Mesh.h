@@ -61,7 +61,7 @@ public:
     void RecordCollapse(CArray<TCollapsedTriangle> &arrCollapsedTriangles);
 
     static inline size_t Hash(TTriangle const *pTri) { return (size_t) pTri->m_pVertices[0] + (size_t) pTri->m_pVertices[1] + (size_t) pTri->m_pVertices[2]; }
-    static inline size_t Eq(TTriangle const *pTri0, TTriangle const *pTri1) { return pTri0->m_pVertices[0] == pTri1->m_pVertices[0] && pTri0->m_pVertices[1] == pTri1->m_pVertices[1] && pTri0->m_pVertices[2] == pTri1->m_pVertices[2]; }
+    static inline bool Eq(TTriangle const *pTri0, TTriangle const *pTri1) { return pTri0->m_pVertices[0] == pTri1->m_pVertices[0] && pTri0->m_pVertices[1] == pTri1->m_pVertices[1] && pTri0->m_pVertices[2] == pTri1->m_pVertices[2]; }
   };
 
   typedef CHash<TVertex *> TVertexHash;

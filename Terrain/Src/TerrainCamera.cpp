@@ -35,8 +35,8 @@ CFreeCamera::CFreeCamera(CCamera *pCam, bool bOwnCam)
   m_hashKeys.Add(TKeyInfo('I'));
   m_hashKeys.Add(TKeyInfo('O'));
   m_hashKeys.Add(TKeyInfo('P'));
-  m_hashKeys.Add(TKeyInfo(VK_ADD));
-  m_hashKeys.Add(TKeyInfo(VK_SUBTRACT));
+  m_hashKeys.Add(TKeyInfo('='));
+  m_hashKeys.Add(TKeyInfo('-'));
 
   CInput::Get()->SetEventListener(this);
 
@@ -57,10 +57,10 @@ float CFreeCamera::GetKeyPressedSeconds(int iKey, CTime kNow)
   if (!it)
     return 0;
   if ((*it).bPressed) {
-    fPressed = kNow.SecondsSince((*it).kPressedTime, true);
+    fPressed = (kNow - (*it).kPressedTime).Seconds();
     (*it).kPressedTime = kNow;
   } else {
-    fPressed = (*it).kPressedTime.Seconds(true);
+    fPressed = (*it).kPressedTime.Seconds();
     (*it).kPressedTime.m_qwTime = 0;
   }
   return fPressed;
@@ -121,7 +121,7 @@ void CFreeCamera::Update(CTime kTime)
   m_vMouseLast = m_vMouseNow;
 
 /*  static float fVertDelta = 0;
-  fTime = GetKeyPressedSeconds(VK_ADD, kTime) - GetKeyPressedSeconds(VK_SUBTRACT, kTime);
+  fTime = GetKeyPressedSeconds(CInput::KC_EQUALS, kTime) - GetKeyPressedSeconds(CInput::KC_SUB, kTime);
   CTerrain::CPatch *pPatch = g_pTerrain->GetPatch(0, 0);
   fVertDelta += fTime * 500;
   float fGoal = Bound<float>(pPatch->m_uiActiveVertices + fVertDelta, (float) pPatch->m_uiMinVerticesToSet, (float) pPatch->m_arrMaterialModels[0]->m_pModel->m_pGeometry->GetVBVertexCount());
@@ -275,7 +275,7 @@ bool CFreeCamera::OnInputEvent(CInput::CEvent *pEvent)
   switch (pEvent->m_eEvent) {
     case CInput::ET_KEYDOWN:
 //      PRINT("Key down: %c\n", pEvent->m_iKey);
-      it = m_hashKeys.Find(pEvent->m_iKey);
+      it = m_hashKeys.Find((CInput::EKeyCode) pEvent->m_iKey);
       if (!!it) {
         ASSERT(!(*it).bPressed);
         (*it).bPressed = true;
@@ -285,7 +285,7 @@ bool CFreeCamera::OnInputEvent(CInput::CEvent *pEvent)
       break;
     case CInput::ET_KEYUP:
 //      PRINT("Key up: %c\n", pEvent->m_iKey);
-      it = m_hashKeys.Find(pEvent->m_iKey);
+      it = m_hashKeys.Find((CInput::EKeyCode) pEvent->m_iKey);
       if (!!it) {
         ASSERT((*it).bPressed);
         (*it).bPressed = false;
@@ -294,14 +294,14 @@ bool CFreeCamera::OnInputEvent(CInput::CEvent *pEvent)
       }
       break;
     case CInput::ET_MOUSEDOWN:
-      if (pEvent->m_iKey == VK_RBUTTON) {
+      if (pEvent->m_iKey == CInput::KC_RMOUSE) {
         CInput::Get()->SetMouseCapture(true);
         m_vMouseLast = pEvent->m_vPos - m_vMouseNow + m_vMouseLast;
         m_vMouseNow = pEvent->m_vPos;
       }
       break;
     case CInput::ET_MOUSEUP:
-      if (pEvent->m_iKey == VK_RBUTTON) {
+      if (pEvent->m_iKey == CInput::KC_RMOUSE) {
         CInput::Get()->SetMouseCapture(false);
         m_vMouseNow = pEvent->m_vPos;
       }

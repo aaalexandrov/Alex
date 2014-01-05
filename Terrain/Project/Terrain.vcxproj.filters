@@ -1,251 +1,296 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Base">
-      <UniqueIdentifier>{ce837eb2-3ef6-4aec-be3a-d95e78eb6631}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="3D">
-      <UniqueIdentifier>{aeb1023c-20a2-4583-80b8-8d4f8f334b81}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\Src\Main.cpp" />
     <ClCompile Include="..\Src\stdafx.cpp" />
     <ClCompile Include="..\Src\Terrain.cpp" />
     <ClCompile Include="..\Src\TerrainCamera.cpp" />
-    <ClCompile Include="..\..\Base\Array.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\AVLTree.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Base.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Debug.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\File.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Hash.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\List.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Matrix.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Parse.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Rect.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Str.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Util.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Var.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\VarUtil.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Vector.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Shape.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Transform.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Convex.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Random.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Bits.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="..\Src\TerrainPatch.cpp" />
     <ClCompile Include="..\Src\TerrainGeometry.cpp" />
-    <ClCompile Include="..\..\3D\Model.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Array.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Shader.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\AVLTree.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\State.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Base.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Texture.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Bits.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Threads.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Convex.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Timing.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Debug.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Buffer.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Encode.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Camera.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Hash.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Font.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\HashInner.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\FrameSorter.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\List.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\GeomUtil.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Matrix.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Graphics.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Parse.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Input.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Random.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3D\Mesh.cpp">
-      <Filter>3D</Filter>
+    <ClCompile Include="..\..\Framework\Base\Rect.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Base\RTTI.cpp">
-      <Filter>Base</Filter>
+    <ClCompile Include="..\..\Framework\Base\RTTI.cpp">
+      <Filter>Framework\Base</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Base\WinFile.cpp">
-      <Filter>Base</Filter>
+    <ClCompile Include="..\..\Framework\Base\Shape.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Str.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Transform.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Util.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Var.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\VarUtil.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Vector.cpp">
+      <Filter>Framework\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Buffer.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Camera.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Font.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\FrameSorter.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\GeomUtil.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Graphics.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Mesh.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Model.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Shader.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\State.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\3D\Texture.cpp">
+      <Filter>Framework\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\File.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Input.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Threads.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Timing.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinInput.cpp">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\OSWindow.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinOSWindow.cpp">
+      <Filter>Framework\OS\Windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\stdafx.h" />
     <ClInclude Include="..\Src\Terrain.h" />
     <ClInclude Include="..\Src\TerrainCamera.h" />
-    <ClInclude Include="..\..\Base\Array.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Array.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\AVLTree.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\AVLTree.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Base.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Base.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Debug.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Bits.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\File.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Convex.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Hash.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Debug.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\List.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Encode.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Matrix.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Hash.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Parse.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\HashInner.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Rect.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\List.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Str.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Matrix.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Util.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Parse.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Var.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Random.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\VarUtil.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Rect.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Vector.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\RTTI.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Shape.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Shape.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Transform.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Str.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Convex.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Transform.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Random.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Util.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\Bits.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\Base\Var.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Model.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\Base\VarUtil.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Shader.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\Base\Vector.h">
+      <Filter>Framework\Base</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\State.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Buffer.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Texture.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Camera.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Threads.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Font.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Timing.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\FrameSorter.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Buffer.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\GeomUtil.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Camera.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Graphics.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Font.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Mesh.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\FrameSorter.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Model.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\GeomUtil.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Shader.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Graphics.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\State.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Input.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\3D\Texture.h">
+      <Filter>Framework\3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3D\Mesh.h">
-      <Filter>3D</Filter>
+    <ClInclude Include="..\..\Framework\OS\File.h">
+      <Filter>Framework\OS</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\RTTI.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\OS\Input.h">
+      <Filter>Framework\OS</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Base\WinFile.h">
-      <Filter>Base</Filter>
+    <ClInclude Include="..\..\Framework\OS\Threads.h">
+      <Filter>Framework\OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Timing.h">
+      <Filter>Framework\OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinInput.h">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\OSWindow.h">
+      <Filter>Framework\OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinOSWindow.h">
+      <Filter>Framework\OS\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\Terrain.hlsl" />
     <None Include="..\Src\Terrain.vfx" />
     <None Include="..\Src\TerrainLOD.vfx" />
-    <None Include="..\Src\Plain.hlsl">
-      <Filter>3D</Filter>
-    </None>
-    <None Include="..\Src\Plain.vfx">
-      <Filter>3D</Filter>
-    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{1b6ac439-e326-4ad1-821c-73e2a199c2c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Base">
+      <UniqueIdentifier>{f759dc4a-f0c3-48f0-9313-95f186d0a618}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\OS">
+      <UniqueIdentifier>{db0542d1-cadd-4ba2-8183-4f7314a1cba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\3D">
+      <UniqueIdentifier>{b4bc4f2b-f961-41ee-b130-2d80a798db79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\OS\Windows">
+      <UniqueIdentifier>{74be2611-eb7a-4931-9c49-12a364373596}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

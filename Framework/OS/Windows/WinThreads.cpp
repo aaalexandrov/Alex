@@ -1,8 +1,7 @@
 #include "stdafx.h"
-#include "Threads.h"
+#include "WinThreads.h"
 
-// CThreadBase ----------------------------------------------------------------
-CRTTIRegisterer<CThreadBase> g_RegThreadBase;
+#ifdef WINDOWS
 
 // CThreadWin -----------------------------------------------------------------
 CRTTIRegisterer<CThreadWin> g_RegThreadWin;
@@ -27,7 +26,7 @@ bool CThreadWin::Init(void *pParam, bool bCreateSuspended, UINT uiStackSize)
   m_pParam = pParam;
   m_hThread = CreateThread(0, uiStackSize, ThreadFunc, this, CREATE_SUSPENDED, &m_dwThreadID);
   ASSERT(m_dwThreadID);
-  if (!m_dwThreadID) 
+  if (!m_dwThreadID)
     return false;
   if (!bCreateSuspended)
     Resume();
@@ -107,15 +106,13 @@ DWORD WINAPI CThreadWin::ThreadFunc(LPVOID lpParam)
   return uiRes;
 }
 
-// CLockBase ------------------------------------------------------------------
-CRTTIRegisterer<CLockBase> g_RegLockBase;
-
 // CLockWin -------------------------------------------------------------------
 CRTTIRegisterer<CLockWin> g_RegLockWin;
 
 CLockWin::CLockWin(UINT uiSpinCount)
 {
-  InitializeCriticalSectionEx(&m_CS, uiSpinCount, 0);
+  InitializeCriticalSection(&m_CS);
+  SetCriticalSectionSpinCount(&m_CS, uiSpinCount);
 }
 
 CLockWin::~CLockWin()
@@ -142,3 +139,5 @@ void CLockWin::SetSpinCount(UINT uiSpinCount)
 {
   SetCriticalSectionSpinCount(&m_CS, uiSpinCount);
 }
+
+#endif // WINDOWS

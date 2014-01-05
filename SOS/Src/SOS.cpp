@@ -31,7 +31,7 @@ void TestFiles()
   delete pIt;
 
   CFile::ERRCODE err = CFileSystem::Get()->DeleteDirectory(sDir);
-  printf("Delete directiry error code: %d\n", err);
+  printf("Delete directory error code: %d\n", err);
 
   pFile = CFileSystem::Get()->OpenFile(sFile, CFile::FOF_READ | CFile::FOF_TEXT);
 

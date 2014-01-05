@@ -108,7 +108,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\Base;..\..\3D;C:\Program Files (x86)\Microsoft DirectX SDK (February 2010)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Framework\Base;..\..\Framework\OS;..\..\Framework\3D;C:\Program Files (x86)\Microsoft DirectX SDK (February 2010)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -145,7 +145,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\Base;..\..\3D;C:\Program Files (x86)\Microsoft DirectX SDK (February 2010)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Framework\Base;..\..\Framework\OS;..\..\Framework\3D;C:\Program Files (x86)\Microsoft DirectX SDK (February 2010)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -183,42 +183,49 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\3D\Buffer.cpp" />
-    <ClCompile Include="..\..\3D\Camera.cpp" />
-    <ClCompile Include="..\..\3D\Font.cpp" />
-    <ClCompile Include="..\..\3D\FrameSorter.cpp" />
-    <ClCompile Include="..\..\3D\GeomUtil.cpp" />
-    <ClCompile Include="..\..\3D\Graphics.cpp" />
-    <ClCompile Include="..\..\3D\Input.cpp" />
-    <ClCompile Include="..\..\3D\Mesh.cpp" />
-    <ClCompile Include="..\..\3D\Model.cpp" />
-    <ClCompile Include="..\..\3D\Shader.cpp" />
-    <ClCompile Include="..\..\3D\State.cpp" />
-    <ClCompile Include="..\..\3D\Texture.cpp" />
-    <ClCompile Include="..\..\3D\Threads.cpp" />
-    <ClCompile Include="..\..\3D\Timing.cpp" />
-    <ClCompile Include="..\..\Base\Array.cpp" />
-    <ClCompile Include="..\..\Base\AVLTree.cpp" />
-    <ClCompile Include="..\..\Base\Base.cpp" />
-    <ClCompile Include="..\..\Base\Bits.cpp" />
-    <ClCompile Include="..\..\Base\Convex.cpp" />
-    <ClCompile Include="..\..\Base\Debug.cpp" />
-    <ClCompile Include="..\..\Base\File.cpp" />
-    <ClCompile Include="..\..\Base\Hash.cpp" />
-    <ClCompile Include="..\..\Base\List.cpp" />
-    <ClCompile Include="..\..\Base\Matrix.cpp" />
-    <ClCompile Include="..\..\Base\Parse.cpp" />
-    <ClCompile Include="..\..\Base\Random.cpp" />
-    <ClCompile Include="..\..\Base\Rect.cpp" />
-    <ClCompile Include="..\..\Base\RTTI.cpp" />
-    <ClCompile Include="..\..\Base\Shape.cpp" />
-    <ClCompile Include="..\..\Base\Str.cpp" />
-    <ClCompile Include="..\..\Base\Transform.cpp" />
-    <ClCompile Include="..\..\Base\Util.cpp" />
-    <ClCompile Include="..\..\Base\Var.cpp" />
-    <ClCompile Include="..\..\Base\VarUtil.cpp" />
-    <ClCompile Include="..\..\Base\Vector.cpp" />
-    <ClCompile Include="..\..\Base\WinFile.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Buffer.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Camera.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Font.cpp" />
+    <ClCompile Include="..\..\Framework\3D\FrameSorter.cpp" />
+    <ClCompile Include="..\..\Framework\3D\GeomUtil.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Graphics.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Mesh.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Model.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Shader.cpp" />
+    <ClCompile Include="..\..\Framework\3D\State.cpp" />
+    <ClCompile Include="..\..\Framework\3D\Texture.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Array.cpp" />
+    <ClCompile Include="..\..\Framework\Base\AVLTree.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Base.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Bits.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Convex.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Debug.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Encode.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Hash.cpp" />
+    <ClCompile Include="..\..\Framework\Base\HashInner.cpp" />
+    <ClCompile Include="..\..\Framework\Base\List.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Matrix.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Parse.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Random.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Rect.cpp" />
+    <ClCompile Include="..\..\Framework\Base\RTTI.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Shape.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Str.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Transform.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Util.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Var.cpp" />
+    <ClCompile Include="..\..\Framework\Base\VarUtil.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Vector.cpp" />
+    <ClCompile Include="..\..\Framework\OS\File.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Input.cpp" />
+    <ClCompile Include="..\..\Framework\OS\OSWindow.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Threads.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Timing.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinInput.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinOSWindow.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp" />
     <ClCompile Include="..\Src\Main.cpp" />
     <ClCompile Include="..\Src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -232,49 +239,54 @@
     <ClCompile Include="..\Src\TerrainPatch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\3D\Buffer.h" />
-    <ClInclude Include="..\..\3D\Camera.h" />
-    <ClInclude Include="..\..\3D\Font.h" />
-    <ClInclude Include="..\..\3D\FrameSorter.h" />
-    <ClInclude Include="..\..\3D\GeomUtil.h" />
-    <ClInclude Include="..\..\3D\Graphics.h" />
-    <ClInclude Include="..\..\3D\Input.h" />
-    <ClInclude Include="..\..\3D\Mesh.h" />
-    <ClInclude Include="..\..\3D\Model.h" />
-    <ClInclude Include="..\..\3D\Shader.h" />
-    <ClInclude Include="..\..\3D\State.h" />
-    <ClInclude Include="..\..\3D\Texture.h" />
-    <ClInclude Include="..\..\3D\Threads.h" />
-    <ClInclude Include="..\..\3D\Timing.h" />
-    <ClInclude Include="..\..\Base\Array.h" />
-    <ClInclude Include="..\..\Base\AVLTree.h" />
-    <ClInclude Include="..\..\Base\Base.h" />
-    <ClInclude Include="..\..\Base\Bits.h" />
-    <ClInclude Include="..\..\Base\Convex.h" />
-    <ClInclude Include="..\..\Base\Debug.h" />
-    <ClInclude Include="..\..\Base\File.h" />
-    <ClInclude Include="..\..\Base\Hash.h" />
-    <ClInclude Include="..\..\Base\List.h" />
-    <ClInclude Include="..\..\Base\Matrix.h" />
-    <ClInclude Include="..\..\Base\Parse.h" />
-    <ClInclude Include="..\..\Base\Random.h" />
-    <ClInclude Include="..\..\Base\Rect.h" />
-    <ClInclude Include="..\..\Base\RTTI.h" />
-    <ClInclude Include="..\..\Base\Shape.h" />
-    <ClInclude Include="..\..\Base\Str.h" />
-    <ClInclude Include="..\..\Base\Transform.h" />
-    <ClInclude Include="..\..\Base\Util.h" />
-    <ClInclude Include="..\..\Base\Var.h" />
-    <ClInclude Include="..\..\Base\VarUtil.h" />
-    <ClInclude Include="..\..\Base\Vector.h" />
-    <ClInclude Include="..\..\Base\WinFile.h" />
+    <ClInclude Include="..\..\Framework\3D\Buffer.h" />
+    <ClInclude Include="..\..\Framework\3D\Camera.h" />
+    <ClInclude Include="..\..\Framework\3D\Font.h" />
+    <ClInclude Include="..\..\Framework\3D\FrameSorter.h" />
+    <ClInclude Include="..\..\Framework\3D\GeomUtil.h" />
+    <ClInclude Include="..\..\Framework\3D\Graphics.h" />
+    <ClInclude Include="..\..\Framework\3D\Mesh.h" />
+    <ClInclude Include="..\..\Framework\3D\Model.h" />
+    <ClInclude Include="..\..\Framework\3D\Shader.h" />
+    <ClInclude Include="..\..\Framework\3D\State.h" />
+    <ClInclude Include="..\..\Framework\3D\Texture.h" />
+    <ClInclude Include="..\..\Framework\Base\Array.h" />
+    <ClInclude Include="..\..\Framework\Base\AVLTree.h" />
+    <ClInclude Include="..\..\Framework\Base\Base.h" />
+    <ClInclude Include="..\..\Framework\Base\Bits.h" />
+    <ClInclude Include="..\..\Framework\Base\Convex.h" />
+    <ClInclude Include="..\..\Framework\Base\Debug.h" />
+    <ClInclude Include="..\..\Framework\Base\Encode.h" />
+    <ClInclude Include="..\..\Framework\Base\Hash.h" />
+    <ClInclude Include="..\..\Framework\Base\HashInner.h" />
+    <ClInclude Include="..\..\Framework\Base\List.h" />
+    <ClInclude Include="..\..\Framework\Base\Matrix.h" />
+    <ClInclude Include="..\..\Framework\Base\Parse.h" />
+    <ClInclude Include="..\..\Framework\Base\Random.h" />
+    <ClInclude Include="..\..\Framework\Base\Rect.h" />
+    <ClInclude Include="..\..\Framework\Base\RTTI.h" />
+    <ClInclude Include="..\..\Framework\Base\Shape.h" />
+    <ClInclude Include="..\..\Framework\Base\Str.h" />
+    <ClInclude Include="..\..\Framework\Base\Transform.h" />
+    <ClInclude Include="..\..\Framework\Base\Util.h" />
+    <ClInclude Include="..\..\Framework\Base\Var.h" />
+    <ClInclude Include="..\..\Framework\Base\VarUtil.h" />
+    <ClInclude Include="..\..\Framework\Base\Vector.h" />
+    <ClInclude Include="..\..\Framework\OS\File.h" />
+    <ClInclude Include="..\..\Framework\OS\Input.h" />
+    <ClInclude Include="..\..\Framework\OS\OSWindow.h" />
+    <ClInclude Include="..\..\Framework\OS\Threads.h" />
+    <ClInclude Include="..\..\Framework\OS\Timing.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinInput.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinOSWindow.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h" />
     <ClInclude Include="..\Src\stdafx.h" />
     <ClInclude Include="..\Src\Terrain.h" />
     <ClInclude Include="..\Src\TerrainCamera.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Src\Plain.hlsl" />
-    <None Include="..\Src\Plain.vfx" />
     <None Include="..\Src\Terrain.hlsl" />
     <None Include="..\Src\Terrain.vfx" />
     <None Include="..\Src\TerrainLOD.vfx" />

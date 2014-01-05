@@ -41,7 +41,7 @@ Constant ::= "nil" | "true" | "false" | String | Number | Table
 Variable ::= Identifier
 ParamList ::= "(" [ ExpressionList ] ")"
 Call ::= ( Variable { Index } | FunctionDef ) ParamList { { Index } ParamList }
-Indexable ::= Call | Variable | "(" Expression ")" 
+Indexable ::= Call | Variable | "(" Expression ")"
 DotIndex ::= "." Identifier
 Index ::= ( "[" Expression "]" ) | DotIndex
 Operand ::= Constant | ( Indexable { Index } )
@@ -73,3 +73,5 @@ If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
 While ::= "while" Expression "do" { Operator } "end"
 
 Operator ::= While | If | Return | Locals | Assignment | Call
+
+Program ::= { Operator }
