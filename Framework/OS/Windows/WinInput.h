@@ -1,9 +1,11 @@
 #ifndef __WININPUT_H
 #define __WININPUT_H
 
+#ifdef WINDOWS
+
 #include "Input.h"
 #include <Windows.h>
-
+#include "WinOSWindow.h"
 
 class CWinInput: public CInput {
   DEFRTTI(CWinInput, CInput, true)
@@ -38,8 +40,9 @@ public:
   int Key2VK(int iKey);
   int VK2Key(int iVK, bool bExtended);
 
-  HWND GetHWnd() { return (HWND) m_pWindow; }
+  HWND GetHWnd() { return ((CWinOSWindow *) m_pWindow)->m_hWnd; }
 };
 
+#endif // WINDOWS
 
 #endif

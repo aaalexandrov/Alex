@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "WinInput.h"
 
+#ifdef WINDOWS
+
 // CWinInput ------------------------------------------------------------------
 
 CRTTIRegisterer<CWinInput> g_RegWinInput;
@@ -94,6 +96,10 @@ CWinInput::CEvent *CWinInput::MakeMouseEvent(EEventType eEvent, int iKey, WPARAM
   pEvent->m_vPos = CVector<2, int>::Get(LOWORD(lParam), HIWORD(lParam));
   return pEvent;
 }
+
+#ifndef MAPVK_VSC_TO_VK_EX // Fuck MinGW?
+#define MAPVK_VSC_TO_VK_EX (3)
+#endif
 
 bool CWinInput::InputWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -330,3 +336,5 @@ int CWinInput::VK2Key(int iVK, bool bExtended)
     iVK += 256;
   return m_iVK2Key[iVK];
 }
+
+#endif // WINDOWS

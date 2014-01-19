@@ -10,10 +10,12 @@
 #include "Matrix.h"
 #include "Camera.h"
 #include "Windows/WinInput.h"
+#include "Startup.h"
 #include "Timing.h"
 #include "Font.h"
 #include "Random.h"
 #include "FrameSorter.h"
+#include "OSWindow.h"
 
 #include "TerrainCamera.h"
 #include "Terrain.h"
@@ -340,15 +342,15 @@ bool InitScene()
   return true;
 }
 
-bool Init(char const *pCmdLine)
+bool Init(CStrAny sCmdLine, COSWindow *pOSWindow)
 {
   g_kTimer.Init();
-  CInput::Create((COSWindow *) g_hWnd);
+  CInput::Create(pOSWindow);
   CFileSystem::Create();
 
   g_pGraphics = new CGraphics();
   g_pGraphics->SetSorter(new CPrioritySorter<>(CStrAny(ST_CONST, "g_fMaterialID")));
-  if (!g_pGraphics->Init(g_hWnd, false))
+  if (!g_pGraphics->Init(((CWinOSWindow *) pOSWindow)->m_hWnd, false))
     return false;
 
   if (!InitScene())
@@ -358,9 +360,9 @@ bool Init(char const *pCmdLine)
     return false;
 
   int iTerrainSize;
-  CStrAny sSize, sCmdLine(ST_WHOLE, pCmdLine);
+  CStrAny sSize;
 
-  sSize = Parse::ReadInt(sCmdLine);
+  sSize = Parse::ReadInt(sCmdLine.SubStr(0, -1));
   if (!sSize || !Parse::Str2Int(iTerrainSize, sSize))
     iTerrainSize = -1;
 
@@ -449,7 +451,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI _WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 #ifdef _DEBUG
   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF /*| _CRTDBG_CHECK_CRT_DF*/);
@@ -486,7 +488,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   ShowWindow(g_hWnd, nCmdShow);
   UpdateWindow(g_hWnd);
 
-  if (!Init(lpCmdLine)) {
+  if (!Init(CStrAny(ST_WHOLE, lpCmdLine), 0)) {
     MessageBox(0, "Init failed", "Terrain Error", MB_OK | MB_ICONERROR);
     return 0;
   }
@@ -510,4 +512,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   Done();
 
   return (int) msg.wParam;
+}
+
+class CMainWndCallback: public COSWindow::CCallback {
+public:
+  virtual void OnMoved(COSWindow &kWindow, CRect<int> const &rcOld);
+};
+
+void CMainWndCallback::OnMoved(COSWindow &kWindow, CRect<int> const &rcOld)
+{
+  if (kWindow.GetRect().GetSize() == rcOld.GetSize())
+    return;
+  if (g_pGraphics && g_pGraphics->Resize(kWindow.GetRect().GetWidth(), kWindow.GetRect().GetHeight(), g_pGraphics->m_bFullscreen))
+    InitCameraParams();
+}
+
+int Main(CStartUp &kStartUp)
+{
+  CRect<int> rc(-1, -1, 1023, 767);
+  CMainWndCallback kCB;
+  CAutoDeletePtr<COSWindow> pOSWindow(COSWindow::Create(kStartUp, &kCB, CStrAny(ST_STR, "Terrain"), &rc));
+  
+  if (!pOSWindow)
+    return -1;
+
+  if (!Init(kStartUp.m_sCmdLine, pOSWindow)) 
+    return -1;
+
+  while (pOSWindow->Process()) {
+    Render();
+  }
+
+  Done();
+
+  return 0;
 }

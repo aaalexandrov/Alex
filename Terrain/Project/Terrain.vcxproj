@@ -219,11 +219,13 @@
     <ClCompile Include="..\..\Framework\OS\File.cpp" />
     <ClCompile Include="..\..\Framework\OS\Input.cpp" />
     <ClCompile Include="..\..\Framework\OS\OSWindow.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Startup.cpp" />
     <ClCompile Include="..\..\Framework\OS\Threads.cpp" />
     <ClCompile Include="..\..\Framework\OS\Timing.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinInput.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinOSWindow.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinStartUp.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp" />
     <ClCompile Include="..\Src\Main.cpp" />
@@ -275,11 +277,13 @@
     <ClInclude Include="..\..\Framework\OS\File.h" />
     <ClInclude Include="..\..\Framework\OS\Input.h" />
     <ClInclude Include="..\..\Framework\OS\OSWindow.h" />
+    <ClInclude Include="..\..\Framework\OS\Startup.h" />
     <ClInclude Include="..\..\Framework\OS\Threads.h" />
     <ClInclude Include="..\..\Framework\OS\Timing.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinInput.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinOSWindow.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinStartUp.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h" />
     <ClInclude Include="..\Src\stdafx.h" />

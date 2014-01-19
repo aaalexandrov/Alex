@@ -136,6 +136,12 @@
     <ClCompile Include="..\..\Framework\OS\Windows\WinOSWindow.cpp">
       <Filter>Framework\OS\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Startup.cpp">
+      <Filter>Framework\OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinStartUp.cpp">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\stdafx.h" />
@@ -268,6 +274,12 @@
       <Filter>Framework\OS</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Framework\OS\Windows\WinOSWindow.h">
+      <Filter>Framework\OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Startup.h">
+      <Filter>Framework\OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinStartUp.h">
       <Filter>Framework\OS\Windows</Filter>
     </ClInclude>
   </ItemGroup>

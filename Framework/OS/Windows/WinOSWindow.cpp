@@ -2,6 +2,9 @@
 #include "WinOSWindow.h"
 #include "Str.h"
 #include "WinInput.h"
+#include "WinStartUp.h"
+
+#ifdef WINDOWS
 
 // CWinOSWindow ---------------------------------------------------------------
 
@@ -10,10 +13,8 @@ CRTTIRegisterer<CWinOSWindow> g_RegWinOSWindow;
 int CWinOSWindow::s_iWinClass = 1;
 CWinOSWindow::TWindowHash CWinOSWindow::s_kWinOSWindows;
 
-CWinOSWindow::CWinOSWindow(HINSTANCE hInstance, int iShowCmd, char const *chClassName)
+CWinOSWindow::CWinOSWindow()
 {
-  m_hInstance = hInstance;
-  m_iShowCmd = iShowCmd;
   m_hWnd = 0;
   m_Rect.SetEmpty();
 }
@@ -23,12 +24,15 @@ CWinOSWindow::~CWinOSWindow()
   Done();
 }
 
-bool CWinOSWindow::Init(CStrAny sName, CRect<int> const *rc)
+bool CWinOSWindow::Init(CStartUp const &kStartUp, CCallback *pCallback, CStrAny sName, CRect<int> const *rc)
 {
   if (rc)
     m_Rect = *rc;
 
-	WNDCLASSEX wc;
+  m_pCallback = pCallback;
+
+  CWinStartUp const &kWinStartUp = *(CWinStartUp const *) &kStartUp;
+  WNDCLASSEX wc;
   CStrAny sClassName(ST_WHOLE, "WinOSWindowClass");
   sClassName += CStrAny(ST_STR, s_iWinClass++);
 
@@ -37,7 +41,7 @@ bool CWinOSWindow::Init(CStrAny sName, CRect<int> const *rc)
   wc.lpfnWndProc = CWinOSWindow::WindowProc;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = 0;
-  wc.hInstance = m_hInstance;
+  wc.hInstance = kWinStartUp.m_hInstance;
   wc.hIcon = 0;
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.hbrBackground = 0; //(HBRUSH) (COLOR_BACKGROUND + 1);
@@ -71,13 +75,13 @@ bool CWinOSWindow::Init(CStrAny sName, CRect<int> const *rc)
   if (m_Rect.GetHeight() > 0)
     h = rcWindow.GetHeight();
 
-  m_hWnd = CreateWindowEx(GetWindowStyleEx(), sClassName.m_pBuf, sName.m_pBuf, GetWindowStyle(), x, y, w, h, 0, 0, m_hInstance, 0);
+  m_hWnd = CreateWindowEx(GetWindowStyleEx(), sClassName.m_pBuf, sName.m_pBuf, GetWindowStyle(), x, y, w, h, 0, 0, kWinStartUp.m_hInstance, 0);
   if (!m_hWnd) 
     return false;
 
   s_kWinOSWindows.Add(this);
 
-  ShowWindow(m_hWnd, m_iShowCmd);
+  ShowWindow(m_hWnd, kWinStartUp.m_iCmdShow);
   UpdateWindow(m_hWnd);
 
   UpdateRect();
@@ -111,17 +115,16 @@ void CWinOSWindow::UpdateRect()
 {
   RECT rcWin;
   GetClientRect(m_hWnd, &rcWin);
-  m_Rect.Set(rcWin.left, rcWin.top, rcWin.right, rcWin.bottom);
+  POINT ptUL, ptRB;
+  ptUL.x = rcWin.top; 
+  ptUL.y = rcWin.left;
+  ptRB.x = rcWin.right;
+  ptRB.y = rcWin.bottom;
+  ClientToScreen(m_hWnd, &ptUL);
+  ClientToScreen(m_hWnd, &ptRB);
+  //m_Rect.Set(rcWin.left, rcWin.top, rcWin.right, rcWin.bottom);
+  m_Rect.Set(ptUL.x, ptUL.y, ptRB.x, ptRB.y);
   ASSERT(!m_Rect.IsEmpty());
-}
-
-void CWinOSWindow::OnMove(CRect<int> const &rcNew)
-{
-}
-
-bool CWinOSWindow::OnDraw(CRect<int> const &rcDirty) 
-{ 
-  return false; 
 }
 
 bool CWinOSWindow::Process()
@@ -159,7 +162,8 @@ LRESULT CALLBACK CWinOSWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
         TWindowHash::TIter it = s_kWinOSWindows.Find(hwnd);
         ASSERT(it);
         CRect<int> rcUpdate(rect.left, rect.top, rect.right, rect.bottom);
-        it->OnDraw(rcUpdate);
+        if (it->m_pCallback)
+          it->m_pCallback->OnDraw(**it, rcUpdate);
       }
       ValidateRect(hwnd, 0);
       break;
@@ -168,9 +172,11 @@ LRESULT CALLBACK CWinOSWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
       TWindowHash::TIter it = s_kWinOSWindows.Find(hwnd);
       ASSERT(it);
       WINDOWPOS *pWinPos = (WINDOWPOS *) lParam;
-      CRect<int> rcNew(pWinPos->x, pWinPos->y, pWinPos->x + pWinPos->cx, pWinPos->y + pWinPos->cy);
-      if (rcNew != it->m_Rect)
-        it->OnMove(rcNew);
+      CRect<int> rcOld = it->m_Rect;
+      it->UpdateRect();
+//      CRect<int> rcNew(pWinPos->x, pWinPos->y, pWinPos->x + pWinPos->cx, pWinPos->y + pWinPos->cy);
+      if (rcOld != it->m_Rect && it->m_pCallback)
+        it->m_pCallback->OnMoved(**it, rcOld);
       return 0;
     } 
     default:
@@ -191,3 +197,5 @@ void CWinOSWindow::Client2WindowRect(CRect<int> const &rcClient, CRect<int> &rcW
 
   rcWindow.Set(rcWin.left, rcWin.top, rcWin.right, rcWin.bottom);
 }
+
+#endif // WINDOWS

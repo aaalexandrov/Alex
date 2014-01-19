@@ -1,23 +1,23 @@
 #ifndef __WINOSWINDOW_H
 #define __WINOSWINDOW_H
 
+#ifdef WINDOWS
+
 #include "OSWindow.h"
 #include <Windows.h>
 
 class CWinOSWindow : public COSWindow {
-  DEFRTTI(CWinOSWindow, COSWindow, false)
+  DEFRTTI(CWinOSWindow, COSWindow, true)
 public:
   static int s_iWinClass;
 
-  HINSTANCE m_hInstance;
-  int m_iShowCmd;
   HWND m_hWnd;
   CRect<int> m_Rect;
 
-  CWinOSWindow(HINSTANCE hInstance, int iShowCmd, char const *chClassName);
+  CWinOSWindow();
   virtual ~CWinOSWindow();
 
-  virtual bool Init(CStrAny sName, CRect<int> const *rc);
+  virtual bool Init(CStartUp const &kStartUp, CCallback *pCallback, CStrAny sName, CRect<int> const *rc);
   virtual void Done();
 
   virtual CRect<int> const &GetRect() const;
@@ -25,9 +25,6 @@ public:
 
   virtual bool Process();
   
-  virtual void OnMove(CRect<int> const &rcNew);
-  virtual bool OnDraw(CRect<int> const &rcDirty);
-
 public:
   static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -45,5 +42,6 @@ public:
   static TWindowHash s_kWinOSWindows;
 };
 
+#endif // WINDOWS
 
 #endif

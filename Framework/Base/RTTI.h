@@ -41,7 +41,7 @@ public:
   typedef T Type;
   typedef B Base;
 
-  static  CObject *CreateInstance_s()             { return 0; }
+  static  CObject *CreateInstance_s()             { ASSERT(!"Trying to instantiate class whose RTTI has creation turned off!"); return 0; }
   virtual CObject *CreateInstance() const         { return CreateInstance_s(); }
 
   static  char const *GetName_s()                 { return Type::GetClassName_s(); }
