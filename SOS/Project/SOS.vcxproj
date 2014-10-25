@@ -24,7 +24,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -63,7 +63,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <UseFullPaths>false</UseFullPaths>
-      <AdditionalIncludeDirectories>../../Base</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../Framework/Base;../../Framework/OS</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -95,26 +95,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Base\Array.cpp" />
-    <ClCompile Include="..\..\Base\AVLTree.cpp" />
-    <ClCompile Include="..\..\Base\Base.cpp" />
-    <ClCompile Include="..\..\Base\Bits.cpp" />
-    <ClCompile Include="..\..\Base\Debug.cpp" />
-    <ClCompile Include="..\..\Base\Encode.cpp" />
-    <ClCompile Include="..\..\Base\File.cpp" />
-    <ClCompile Include="..\..\Base\Hash.cpp" />
-    <ClCompile Include="..\..\Base\HashInner.cpp" />
-    <ClCompile Include="..\..\Base\List.cpp" />
-    <ClCompile Include="..\..\Base\Matrix.cpp" />
-    <ClCompile Include="..\..\Base\Parse.cpp" />
-    <ClCompile Include="..\..\Base\Rect.cpp" />
-    <ClCompile Include="..\..\Base\RTTI.cpp" />
-    <ClCompile Include="..\..\Base\Str.cpp" />
-    <ClCompile Include="..\..\Base\Util.cpp" />
-    <ClCompile Include="..\..\Base\Var.cpp" />
-    <ClCompile Include="..\..\Base\VarUtil.cpp" />
-    <ClCompile Include="..\..\Base\Vector.cpp" />
-    <ClCompile Include="..\..\Base\WinFile.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Array.cpp" />
+    <ClCompile Include="..\..\Framework\Base\AVLTree.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Base.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Bits.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Debug.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Encode.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Hash.cpp" />
+    <ClCompile Include="..\..\Framework\Base\HashInner.cpp" />
+    <ClCompile Include="..\..\Framework\Base\List.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Parse.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Random.cpp" />
+    <ClCompile Include="..\..\Framework\Base\RTTI.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Str.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Util.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Var.cpp" />
+    <ClCompile Include="..\..\Framework\Base\VarUtil.cpp" />
+    <ClCompile Include="..\..\Framework\OS\File.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Threads.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Timing.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp" />
+    <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp" />
     <ClCompile Include="..\Src\BNF.cpp" />
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
@@ -132,26 +134,28 @@
     <ClCompile Include="..\Src\Variable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Base\Array.h" />
-    <ClInclude Include="..\..\Base\AVLTree.h" />
-    <ClInclude Include="..\..\Base\Base.h" />
-    <ClInclude Include="..\..\Base\Bits.h" />
-    <ClInclude Include="..\..\Base\Debug.h" />
-    <ClInclude Include="..\..\Base\Encode.h" />
-    <ClInclude Include="..\..\Base\File.h" />
-    <ClInclude Include="..\..\Base\Hash.h" />
-    <ClInclude Include="..\..\Base\HashInner.h" />
-    <ClInclude Include="..\..\Base\List.h" />
-    <ClInclude Include="..\..\Base\Matrix.h" />
-    <ClInclude Include="..\..\Base\Parse.h" />
-    <ClInclude Include="..\..\Base\Rect.h" />
-    <ClInclude Include="..\..\Base\RTTI.h" />
-    <ClInclude Include="..\..\Base\Str.h" />
-    <ClInclude Include="..\..\Base\Util.h" />
-    <ClInclude Include="..\..\Base\Var.h" />
-    <ClInclude Include="..\..\Base\VarUtil.h" />
-    <ClInclude Include="..\..\Base\Vector.h" />
-    <ClInclude Include="..\..\Base\WinFile.h" />
+    <ClInclude Include="..\..\Framework\Base\Array.h" />
+    <ClInclude Include="..\..\Framework\Base\AVLTree.h" />
+    <ClInclude Include="..\..\Framework\Base\Base.h" />
+    <ClInclude Include="..\..\Framework\Base\Bits.h" />
+    <ClInclude Include="..\..\Framework\Base\Debug.h" />
+    <ClInclude Include="..\..\Framework\Base\Encode.h" />
+    <ClInclude Include="..\..\Framework\Base\Hash.h" />
+    <ClInclude Include="..\..\Framework\Base\HashInner.h" />
+    <ClInclude Include="..\..\Framework\Base\List.h" />
+    <ClInclude Include="..\..\Framework\Base\Parse.h" />
+    <ClInclude Include="..\..\Framework\Base\Random.h" />
+    <ClInclude Include="..\..\Framework\Base\RTTI.h" />
+    <ClInclude Include="..\..\Framework\Base\Str.h" />
+    <ClInclude Include="..\..\Framework\Base\Util.h" />
+    <ClInclude Include="..\..\Framework\Base\Var.h" />
+    <ClInclude Include="..\..\Framework\Base\VarUtil.h" />
+    <ClInclude Include="..\..\Framework\OS\File.h" />
+    <ClInclude Include="..\..\Framework\OS\Threads.h" />
+    <ClInclude Include="..\..\Framework\OS\Timing.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h" />
+    <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h" />
     <ClInclude Include="..\Src\BNF.h" />
     <ClInclude Include="..\Src\BNFGrammar.h" />
     <ClInclude Include="..\Src\Compiler.h" />

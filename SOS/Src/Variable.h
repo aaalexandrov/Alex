@@ -248,8 +248,7 @@ CStrAny CValue::GetStr(bool bDecorate) const
         s = CStrAny(ST_CONST, '<') + s + CStrAny(ST_CONST, '>');
 			break;
     case VT_FLOAT:
-      sprintf(chBuf, "%g", m_fValue);
-      s = CStrAny(ST_CONST, chBuf);
+      s = CStrAny(ST_CONST, m_fValue);
       break;
     case VT_STRING:
       s = CStrAny(m_pStrValue);

@@ -236,6 +236,8 @@ void CCompiler::CLocalTracker::EndContext()
 
 CCompiler::CCompiler()
 {
+  m_pInterpreter = 0;
+  m_pCode = 0;
 }
 
 CCompiler::~CCompiler()

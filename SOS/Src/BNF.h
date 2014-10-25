@@ -5,21 +5,9 @@
 
 class CBNFParser {
 public:
-	enum ERepeat {
-		R_One,
-		R_ZeroOne,
-		R_ZeroInfinity,
-	};
-
 	enum ESequence {
 		S_Sequence,
 		S_Alternative,
-	};
-
-	enum EOutput {
-		O_NoOutput,
-		O_NoRenaming,
-		O_Output,
 	};
 
 	static const int MAX_CHILD_RULES = 8;
@@ -28,38 +16,43 @@ public:
 
 	class CRule {
 	public:
-		EOutput m_eOutput;
+    bool m_bOutput;
 		int m_iID;
 
-		CRule(): m_eOutput(O_NoRenaming), m_iID(0) {}
+		CRule(): m_bOutput(false), m_iID(0) {}
 		virtual ~CRule() {}
-
-		static inline EOutput CombineOutput(EOutput eOutput1, EOutput eOutput2) { return Util::Min(eOutput1, eOutput2); }
 
 		virtual void AddToHash(CHash<CRule const *> &hashRules) const { hashRules.AddUnique(this); }
 
-		virtual CRule *Set(EOutput eOutput) { m_eOutput = eOutput; return this; }
+		virtual CRule *SetOutput(bool bOutput) { m_bOutput = bOutput; return this; }
 		virtual CRule *SetID(int iID) { m_iID = iID; return this; }
 
-		virtual CRule *Set(ERepeat eRepeat) { ASSERT(0); return this; }
+		virtual CRule *SetAllowRenaming(bool bAllowRenaming) { ASSERT(0); return this; }
 		virtual CRule *Set(ESequence eSequence) { ASSERT(0); return this; }
 		virtual CRule *AddChild(CRule const *pChild) { ASSERT(0); return this; }
 
-		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const = 0;
+		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const = 0;
 	};
 
-	class CTerminal: public CRule {
+	class CNothing: public CRule {
+  public:
+    CNothing() {}
+
+    virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const;
+  };
+  
+  class CTerminal: public CRule {
 	public:
 		CToken::ETokenType m_eToken;
 
 		CTerminal(CToken::ETokenType eToken): m_eToken(eToken) {}
 
-		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const;
+		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const;
 	};
 
 	class CNonTerminal: public CRule {
 	public:
-		ERepeat m_eRepeat;
+    bool m_bAllowRenaming;
 		ESequence m_eSequence;
 		CRule const *m_pChildren[MAX_CHILD_RULES];
 
@@ -68,11 +61,11 @@ public:
 
 		virtual void AddToHash(CHash<CRule const *> &hashRules) const;
 
-		virtual CRule *Set(ERepeat eRepeat) { m_eRepeat = eRepeat; return this; }
+    virtual CRule *SetAllowRenaming(bool bAllowRenaming) { m_bAllowRenaming = bAllowRenaming; m_bOutput |= bAllowRenaming; return this; }
 		virtual CRule *Set(ESequence eSequence) { m_eSequence = eSequence; return this; }
 		virtual CRule *AddChild(CRule const *pChild);
 
-		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const;
+		virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const;
 	};
 
 	class CNode {
@@ -97,8 +90,12 @@ public:
 
 	bool Parse(CList<CToken *> &lstTokens, CNode *&pParsed);
 
-	static CRule *NewNT() { return new CNonTerminal(); }
+	static CRule *NewNT()                         { return new CNonTerminal(); }
 	static CRule *NewT(CToken::ETokenType eToken) { return new CTerminal(eToken); }
+  static CRule *NewEmpty()                      { return new CNothing(); }
+  static CRule *NewOptional(CRule *pContent);
+  static CRule *NewZeroPlus(CRule *pContent);
+  static CRule *NewOnePlus(CRule *pContent);
 };
 
 #endif

@@ -4,147 +4,159 @@
     <ClCompile Include="..\Src\Frontend.cpp" />
     <ClCompile Include="..\Src\SOS.cpp" />
     <ClCompile Include="..\Src\stdafx.cpp" />
-    <ClCompile Include="..\..\Base\Array.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\AVLTree.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Base.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Debug.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\File.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Hash.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\List.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Matrix.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Parse.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Rect.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Str.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Util.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Var.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\VarUtil.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\Vector.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="..\Src\Token.cpp" />
-    <ClCompile Include="..\..\Base\Bits.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="..\Src\Variable.cpp" />
     <ClCompile Include="..\Src\Execution.cpp" />
-    <ClCompile Include="..\..\Base\Encode.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="..\Src\BNF.cpp" />
-    <ClCompile Include="..\..\Base\HashInner.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Base\RTTI.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
     <ClCompile Include="..\Src\Error.cpp" />
     <ClCompile Include="..\Src\Interpreter.cpp" />
     <ClCompile Include="..\Src\Library.cpp" />
-    <ClCompile Include="..\..\Base\WinFile.cpp">
+    <ClCompile Include="..\..\Framework\Base\Base.cpp">
       <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Bits.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Debug.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Encode.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Hash.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\HashInner.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\List.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Parse.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Random.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\RTTI.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Str.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Util.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Var.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\VarUtil.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Array.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\AVLTree.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\File.cpp">
+      <Filter>OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Threads.cpp">
+      <Filter>OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Timing.cpp">
+      <Filter>OS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp">
+      <Filter>OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp">
+      <Filter>OS\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp">
+      <Filter>OS\Windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />
     <ClInclude Include="..\Src\stdafx.h" />
-    <ClInclude Include="..\..\Base\Array.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\AVLTree.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Base.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Debug.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\File.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Hash.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\List.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Matrix.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Parse.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Rect.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Str.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Util.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Var.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\VarUtil.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\Vector.h">
-      <Filter>Base</Filter>
-    </ClInclude>
     <ClInclude Include="..\Src\Token.h" />
     <ClInclude Include="..\Src\Error.h" />
-    <ClInclude Include="..\..\Base\Bits.h">
-      <Filter>Base</Filter>
-    </ClInclude>
     <ClInclude Include="..\Src\Variable.h" />
     <ClInclude Include="..\Src\Execution.h" />
-    <ClInclude Include="..\..\Base\Encode.h">
-      <Filter>Base</Filter>
-    </ClInclude>
     <ClInclude Include="..\Src\BNF.h" />
-    <ClInclude Include="..\..\Base\HashInner.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Base\RTTI.h">
-      <Filter>Base</Filter>
-    </ClInclude>
     <ClInclude Include="..\Src\BNFGrammar.h" />
     <ClInclude Include="..\Src\Compiler.h" />
     <ClInclude Include="..\Src\Interpreter.h" />
     <ClInclude Include="..\Src\Library.h" />
-    <ClInclude Include="..\..\Base\WinFile.h">
+    <ClInclude Include="..\..\Framework\Base\Base.h">
       <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Bits.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Debug.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Encode.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Hash.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\HashInner.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\List.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Parse.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Random.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\RTTI.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Str.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Util.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Var.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\VarUtil.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Array.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\AVLTree.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\File.h">
+      <Filter>OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Threads.h">
+      <Filter>OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Timing.h">
+      <Filter>OS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h">
+      <Filter>OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h">
+      <Filter>OS\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h">
+      <Filter>OS\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +165,12 @@
   <ItemGroup>
     <Filter Include="Base">
       <UniqueIdentifier>{7a370e5b-2433-4532-b414-4ebec6fc667d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OS">
+      <UniqueIdentifier>{a99f07d2-4813-41fa-96e3-e35ca3e509f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OS\Windows">
+      <UniqueIdentifier>{f385e837-0e65-452d-a191-2be4a6e89b89}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

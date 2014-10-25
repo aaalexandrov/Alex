@@ -1,3 +1,5 @@
+- Fix Parse::Float2Str & Str2Float to work properly with large values
+
 - Lexical closures
 - Non-constant upvalues
 - Co-routines

@@ -11,6 +11,7 @@ CValue2String::TValueString CBNFGrammar::s_arrRID2Str[] = {
 	VAL2STR(RID_FunctionCall),
 	VAL2STR(RID_ParamList),
 	VAL2STR(RID_Operand),
+  VAL2STR(RID_DotIndex),
 	VAL2STR(RID_Table),
 	VAL2STR(RID_Return),
 	VAL2STR(RID_Power),
@@ -38,29 +39,29 @@ CBNFGrammar::CBNFGrammar()
 
 void CBNFGrammar::InitRules()
 {
-	CRule *pProgram = NewNT()->SetID(RID_Program);
-	CRule *pConstant = NewNT()->SetID(RID_Constant);
-	CRule *pVariable = NewNT()->SetID(RID_Variable);
-	CRule *pFunctionDef = NewNT()->SetID(RID_FunctionDef);
-	CRule *pFunctionCall = NewNT()->SetID(RID_FunctionCall);
-	CRule *pParamList = NewNT()->SetID(RID_ParamList);
-	CRule *pOperand = NewNT()->SetID(RID_Operand);
-	CRule *pDotIndex = NewNT()->SetID(RID_DotIndex);
-  CRule *pTable = NewNT()->SetID(RID_Table);
-	CRule *pReturn = NewNT()->SetID(RID_Return);
-	CRule *pPower = NewNT()->SetID(RID_Power);
-	CRule *pMult = NewNT()->SetID(RID_Mult);
-	CRule *pSum = NewNT()->SetID(RID_Sum);
-  CRule *pConcat = NewNT()->SetID(RID_Concat);
-	CRule *pComparison = NewNT()->SetID(RID_Comparison);
-	CRule *pNot = NewNT()->SetID(RID_Not);
-	CRule *pAnd = NewNT()->SetID(RID_And);
-	CRule *pOr = NewNT()->SetID(RID_Or);
-	CRule *pLocals = NewNT()->SetID(RID_Locals);
-	CRule *pLValue = NewNT()->SetID(RID_LValue);
-	CRule *pAssignment = NewNT()->SetID(RID_Assignment);
-	CRule *pIf = NewNT()->SetID(RID_If);
-	CRule *pWhile = NewNT()->SetID(RID_While);
+	CRule *pProgram = NewNT()->SetID(RID_Program)->SetOutput(true);
+	CRule *pConstant = NewNT()->SetID(RID_Constant)->SetOutput(true);
+	CRule *pVariable = NewNT()->SetID(RID_Variable)->SetOutput(true);
+	CRule *pFunctionDef = NewNT()->SetID(RID_FunctionDef)->SetOutput(true);
+	CRule *pFunctionCall = NewNT()->SetID(RID_FunctionCall)->SetOutput(true);
+	CRule *pParamList = NewNT()->SetID(RID_ParamList)->SetOutput(true);
+	CRule *pOperand = NewNT()->SetID(RID_Operand)->SetOutput(true);
+	CRule *pDotIndex = NewNT()->SetID(RID_DotIndex)->SetOutput(true);
+  CRule *pTable = NewNT()->SetID(RID_Table)->SetOutput(true);
+	CRule *pReturn = NewNT()->SetID(RID_Return)->SetOutput(true);
+	CRule *pPower = NewNT()->SetID(RID_Power)->SetOutput(true);
+	CRule *pMult = NewNT()->SetID(RID_Mult)->SetOutput(true);
+	CRule *pSum = NewNT()->SetID(RID_Sum)->SetOutput(true);
+  CRule *pConcat = NewNT()->SetID(RID_Concat)->SetOutput(true);
+	CRule *pComparison = NewNT()->SetID(RID_Comparison)->SetOutput(true);
+	CRule *pNot = NewNT()->SetID(RID_Not)->SetOutput(true);
+	CRule *pAnd = NewNT()->SetID(RID_And)->SetOutput(true);
+	CRule *pOr = NewNT()->SetID(RID_Or)->SetOutput(true);
+	CRule *pLocals = NewNT()->SetID(RID_Locals)->SetOutput(true);
+	CRule *pLValue = NewNT()->SetID(RID_LValue)->SetOutput(true);
+	CRule *pAssignment = NewNT()->SetID(RID_Assignment)->SetOutput(true);
+	CRule *pIf = NewNT()->SetID(RID_If)->SetOutput(true);
+	CRule *pWhile = NewNT()->SetID(RID_While)->SetOutput(true);
 
 	CRule *pIndexable = NewNT();
 	CRule *pIndex = NewNT();
@@ -72,162 +73,156 @@ void CBNFGrammar::InitRules()
 	CRule *pOperator = NewNT();
 
 	pConstant->Set(S_Alternative)->
-		AddChild(NewT(CToken::TT_NIL))->
-		AddChild(NewT(CToken::TT_TRUE))->
-		AddChild(NewT(CToken::TT_FALSE))->
-		AddChild(NewT(CToken::TT_NUMBER))->
-		AddChild(NewT(CToken::TT_STRING))->
+    AddChild(NewT(CToken::TT_NIL)->SetOutput(true))->
+		AddChild(NewT(CToken::TT_TRUE)->SetOutput(true))->
+		AddChild(NewT(CToken::TT_FALSE)->SetOutput(true))->
+		AddChild(NewT(CToken::TT_NUMBER)->SetOutput(true))->
+		AddChild(NewT(CToken::TT_STRING)->SetOutput(true))->
 		AddChild(pTable);
 
 	pVariable->
-		AddChild(NewT(CToken::TT_VARIABLE));
+		AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true));
 
 	pIdentifierList->
-	  AddChild(NewT(CToken::TT_VARIABLE))->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
-			AddChild(NewT(CToken::TT_VARIABLE)));
+	  AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))->
+		AddChild(NewZeroPlus(NewNT()->
+		  AddChild(NewT(CToken::TT_COMMA))->
+			AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))));
 
-	pFunctionDef->Set(O_Output)->
-		AddChild(NewT(CToken::TT_FUNCTION)->Set(O_NoOutput))->
-		AddChild(NewT(CToken::TT_OPENBRACE)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroOne)->Set(O_Output)->
-			AddChild(pIdentifierList))->
-		AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->Set(O_Output)->
-		  AddChild(pOperator))->
-		AddChild(NewT(CToken::TT_END)->Set(O_NoOutput));
+	pFunctionDef->SetAllowRenaming(true)->
+		AddChild(NewT(CToken::TT_FUNCTION))->
+		AddChild(NewT(CToken::TT_OPENBRACE))->
+		AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->
+			AddChild(pIdentifierList)))->
+		AddChild(NewT(CToken::TT_CLOSEBRACE))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
+		  AddChild(NewZeroPlus(pOperator)))->
+		AddChild(NewT(CToken::TT_END));
 
-	pParamList->Set(O_Output)->
-		AddChild(NewT(CToken::TT_OPENBRACE)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroOne)->
-			AddChild(pExpressionList))->
-		AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput));
+	pParamList->SetAllowRenaming(true)->
+		AddChild(NewT(CToken::TT_OPENBRACE))->
+		AddChild(NewOptional(pExpressionList))->
+		AddChild(NewT(CToken::TT_CLOSEBRACE));
 
 	pFunctionCall->
 		AddChild(NewNT()->Set(S_Alternative)->
 		  AddChild(NewNT()->
 			  AddChild(pVariable)->
-				AddChild(NewNT()->Set(R_ZeroInfinity)->
-				  AddChild(pIndex)))->
+				AddChild(NewZeroPlus(pIndex)))->
 			AddChild(pFunctionDef))->
 		AddChild(pParamList)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewNT()->Set(R_ZeroInfinity)->
-			  AddChild(pIndex))->
-		  AddChild(pParamList));
+		AddChild(NewZeroPlus(NewNT()->
+		  AddChild(NewZeroPlus(pIndex))->
+		  AddChild(pParamList)));
 
 	pTableKey->Set(S_Alternative)->
-		AddChild(NewT(CToken::TT_VARIABLE))->
+		AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))->
 		AddChild(pConstant);
 
-	pTableValue->Set(O_Output)->
-		AddChild(NewNT()->Set(R_ZeroOne)->
+	pTableValue->SetAllowRenaming(true)->
+		AddChild(NewOptional(NewNT()->
 		  AddChild(pTableKey)->
-			AddChild(NewT(CToken::TT_ASSIGN)->Set(O_NoOutput)))->
+			AddChild(NewT(CToken::TT_ASSIGN))))->
 		AddChild(pExpression);
 
 	pTable->
-		AddChild(NewT(CToken::TT_OPENCURLY)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroOne)->Set(O_Output)->
+		AddChild(NewT(CToken::TT_OPENCURLY))->
+		AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->
 		  AddChild(pTableValue)->
-			AddChild(NewNT()->Set(R_ZeroInfinity)->
-			  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
-				AddChild(pTableValue))->
-			AddChild(NewNT()->Set(R_ZeroOne)->
-			  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))))->
-		AddChild(NewT(CToken::TT_CLOSECURLY)->Set(O_NoOutput));
+			AddChild(NewZeroPlus(NewNT()->
+			  AddChild(NewT(CToken::TT_COMMA))->
+				AddChild(pTableValue)))->
+			AddChild(NewOptional(NewT(CToken::TT_COMMA)))))->
+		AddChild(NewT(CToken::TT_CLOSECURLY));
 
-	pReturn->Set(O_Output)->
-		AddChild(NewT(CToken::TT_RETURN)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroOne)->
-		  AddChild(pExpressionList));
+	pReturn->SetAllowRenaming(true)->
+		AddChild(NewT(CToken::TT_RETURN))->
+		AddChild(NewOptional(pExpressionList));
 
 	pIndexable->Set(S_Alternative)->
 		AddChild(pFunctionCall)->
 		AddChild(pVariable)->
 		AddChild(NewNT()->
-		  AddChild(NewT(CToken::TT_OPENBRACE)->Set(O_NoOutput))->
+		  AddChild(NewT(CToken::TT_OPENBRACE))->
 			AddChild(pExpression)->
-			AddChild(NewT(CToken::TT_CLOSEBRACE)->Set(O_NoOutput)));
+			AddChild(NewT(CToken::TT_CLOSEBRACE)));
 
 	pDotIndex->
-    AddChild(NewT(CToken::TT_DOT)->Set(O_NoOutput))->
-    AddChild(NewT(CToken::TT_VARIABLE));
+    AddChild(NewT(CToken::TT_DOT))->
+    AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true));
 
   pIndex->Set(S_Alternative)->
     AddChild(NewNT()->
-		  AddChild(NewT(CToken::TT_OPENBRACKET)->Set(O_NoOutput))->
+		  AddChild(NewT(CToken::TT_OPENBRACKET))->
 		  AddChild(pExpression)->
-		  AddChild(NewT(CToken::TT_CLOSEBRACKET)->Set(O_NoOutput)))->
+		  AddChild(NewT(CToken::TT_CLOSEBRACKET)))->
     AddChild(pDotIndex);
 
 	pOperand->Set(S_Alternative)->
 		AddChild(pConstant)->
 		AddChild(NewNT()->
 		  AddChild(pIndexable)->
-			AddChild(NewNT()->Set(R_ZeroInfinity)->
-			  AddChild(pIndex)));
+			AddChild(NewZeroPlus(pIndex)));
 
 	pPower->
 		AddChild(pOperand)->
-		AddChild(NewNT()->Set(R_ZeroOne)->
-		  AddChild(NewT(CToken::TT_POWER)->Set(O_NoOutput))->
-			AddChild(pPower));
-
+    AddChild(NewOptional(NewNT()->
+		  AddChild(NewT(CToken::TT_POWER))->
+			AddChild(pPower)));
+  
 	pMult->
 		AddChild(pPower)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
+		AddChild(NewZeroPlus(NewNT()->
 		  AddChild(NewNT()->Set(S_Alternative)->
-			  AddChild(NewT(CToken::TT_MULTIPLY))->
-				AddChild(NewT(CToken::TT_DIVIDE)))->
-			AddChild(pPower));
+			  AddChild(NewT(CToken::TT_MULTIPLY)->SetOutput(true))->
+				AddChild(NewT(CToken::TT_DIVIDE)->SetOutput(true)))->
+			AddChild(pPower)));
 
 	pSum->
-		AddChild(NewNT()->Set(R_ZeroOne)->Set(S_Alternative)->
-		  AddChild(NewT(CToken::TT_PLUS))->
-			AddChild(NewT(CToken::TT_MINUS)))->
+		AddChild(NewNT()->Set(S_Alternative)->
+		  AddChild(NewT(CToken::TT_PLUS)->SetOutput(true))->
+			AddChild(NewT(CToken::TT_MINUS)->SetOutput(true))->
+      AddChild(NewEmpty()))->
 		AddChild(pMult)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
+		AddChild(NewZeroPlus(NewNT()->
 		  AddChild(NewNT()->Set(S_Alternative)->
-			  AddChild(NewT(CToken::TT_PLUS))->
-				AddChild(NewT(CToken::TT_MINUS)))->
-			AddChild(pMult));
+			  AddChild(NewT(CToken::TT_PLUS)->SetOutput(true))->
+				AddChild(NewT(CToken::TT_MINUS)->SetOutput(true)))->
+			AddChild(pMult)));
 
   pConcat->
     AddChild(pSum)->
-    AddChild(NewNT()->Set(R_ZeroInfinity)->
-      AddChild(NewT(CToken::TT_CONCAT)->Set(O_NoOutput))->
-      AddChild(pSum));
+    AddChild(NewZeroPlus(NewNT()->
+      AddChild(NewT(CToken::TT_CONCAT))->
+      AddChild(pSum)));
 
 	pComparison->
 		AddChild(pConcat)->
-		AddChild(NewNT()->Set(R_ZeroOne)->
+		AddChild(NewOptional(NewNT()->
 		  AddChild(NewNT()->Set(S_Alternative)->
-			  AddChild(NewT(CToken::TT_EQUAL))->
-        AddChild(NewT(CToken::TT_NOT_EQUAL))->
-        AddChild(NewT(CToken::TT_LESS_EQUAL))->
-        AddChild(NewT(CToken::TT_GREAT_EQUAL))->
-        AddChild(NewT(CToken::TT_LESS))->
-        AddChild(NewT(CToken::TT_GREAT)))->
-			AddChild(pConcat));
+			  AddChild(NewT(CToken::TT_EQUAL)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_NOT_EQUAL)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_LESS_EQUAL)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_GREAT_EQUAL)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_LESS)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_GREAT)->SetOutput(true)))->
+			AddChild(pConcat)));
 
 	pNot->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewT(CToken::TT_NOT)))->
+		AddChild(NewZeroPlus(NewT(CToken::TT_NOT)->SetOutput(true)))->
 		AddChild(pComparison);
 
 	pAnd->
 		AddChild(pNot)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewT(CToken::TT_AND)->Set(O_NoOutput))->
-			AddChild(pNot));
+		AddChild(NewZeroPlus(NewNT()->
+		  AddChild(NewT(CToken::TT_AND))->
+			AddChild(pNot)));
 
 	pOr->
 		AddChild(pAnd)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewT(CToken::TT_OR)->Set(O_NoOutput))->
-			AddChild(pAnd));
+		AddChild(NewZeroPlus(NewNT()->
+		  AddChild(NewT(CToken::TT_OR))->
+			AddChild(pAnd)));
 
 	pExpression->Set(S_Alternative)->
 		AddChild(pOr)->
@@ -235,55 +230,53 @@ void CBNFGrammar::InitRules()
 
 	pExpressionList->
 		AddChild(pExpression)->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->
-		  AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
-			AddChild(pExpression));
+		AddChild(NewZeroPlus(NewNT()->
+		  AddChild(NewT(CToken::TT_COMMA))->
+			AddChild(pExpression)));
 
 	pLocals->
-		AddChild(NewT(CToken::TT_LOCAL)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(O_Output)->
+		AddChild(NewT(CToken::TT_LOCAL))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
 		  AddChild(pIdentifierList))->
-		AddChild(NewNT()->Set(R_ZeroOne)->Set(O_Output)->
-			AddChild(NewT(CToken::TT_ASSIGN)->Set(O_NoOutput))->
-			AddChild(pExpressionList));
+		AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->
+			AddChild(NewT(CToken::TT_ASSIGN))->
+			AddChild(pExpressionList)));
 
 	pLValue->Set(S_Alternative)->
 		AddChild(NewNT()->
 		  AddChild(pIndexable)->
-			AddChild(pIndex)->
-			AddChild(NewNT()->Set(R_ZeroInfinity)->
-			  AddChild(pIndex)))->
-		AddChild(NewT(CToken::TT_VARIABLE));
+      AddChild(NewOnePlus(pIndex)))->
+		AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true));
 
 	pAssignment->
-		AddChild(NewNT()->Set(O_Output)->
+		AddChild(NewNT()->SetAllowRenaming(true)->
 			AddChild(pLValue)->
-			AddChild(NewNT()->Set(R_ZeroInfinity)->
-  			AddChild(NewT(CToken::TT_COMMA)->Set(O_NoOutput))->
-				AddChild(pLValue)))->
-		AddChild(NewT(CToken::TT_ASSIGN)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(O_Output)->
+			AddChild(NewZeroPlus(NewNT()->
+  			AddChild(NewT(CToken::TT_COMMA))->
+				AddChild(pLValue))))->
+		AddChild(NewT(CToken::TT_ASSIGN))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
 			AddChild(pExpressionList));
 
 	pIf->
-		AddChild(NewT(CToken::TT_IF)->Set(O_NoOutput))->
+		AddChild(NewT(CToken::TT_IF))->
 		AddChild(pExpression)->
-		AddChild(NewT(CToken::TT_THEN)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->Set(O_Output)->
-		  AddChild(pOperator))->
-		AddChild(NewNT()->Set(R_ZeroOne)->
-		  AddChild(NewT(CToken::TT_ELSE)->Set(O_NoOutput))->
-			AddChild(NewNT()->Set(R_ZeroInfinity)->Set(O_Output)->
-			  AddChild(pOperator)))->
-		AddChild(NewT(CToken::TT_END)->Set(O_NoOutput));
+		AddChild(NewT(CToken::TT_THEN))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
+		  AddChild(NewZeroPlus(pOperator)))->
+		AddChild(NewOptional(NewNT()->
+		  AddChild(NewT(CToken::TT_ELSE))->
+			AddChild(NewNT()->SetAllowRenaming(true)->
+			  AddChild(NewZeroPlus(pOperator)))))->
+		AddChild(NewT(CToken::TT_END));
 
 	pWhile->
-		AddChild(NewT(CToken::TT_WHILE)->Set(O_NoOutput))->
+		AddChild(NewT(CToken::TT_WHILE))->
 		AddChild(pExpression)->
-		AddChild(NewT(CToken::TT_DO)->Set(O_NoOutput))->
-		AddChild(NewNT()->Set(R_ZeroInfinity)->Set(O_Output)->
-		  AddChild(pOperator))->
-		AddChild(NewT(CToken::TT_END)->Set(O_NoOutput));
+		AddChild(NewT(CToken::TT_DO))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
+		  AddChild(NewZeroPlus(pOperator)))->
+		AddChild(NewT(CToken::TT_END));
 
 	pOperator->Set(S_Alternative)->
 		AddChild(pIf)->
@@ -293,8 +286,8 @@ void CBNFGrammar::InitRules()
 		AddChild(pAssignment)->
 		AddChild(pFunctionCall);
 
-	pProgram->Set(R_ZeroInfinity)->
-		AddChild(pOperator);
+	pProgram->
+		AddChild(NewZeroPlus(pOperator));
 
 	SetRule(*pProgram);
 }
@@ -317,7 +310,7 @@ void CBNFGrammar::Dump(CNode *pParsed, int iIndent)
 		return;
 	CStrAny sIndent(ST_STR, ' ', iIndent);
 	printf("%s", sIndent.m_pBuf);
-	if (!pParsed->m_arrChildren.m_iCount) {
+	if (!pParsed->m_arrChildren.m_iCount && pParsed->m_pToken) {
 		CStrAny sToken = pParsed->m_pToken->ToString();
 		printf("%s, ", sToken.m_pBuf);
 	}

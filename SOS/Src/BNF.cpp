@@ -1,13 +1,24 @@
 #include "stdafx.h"
 #include "BNF.h"
 
+// CBNFParser::CNothing -------------------------------------------------------
+
+bool CBNFParser::CNothing::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
+{
+  if (m_bOutput) {
+    CNode *pNode = new CNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
+    kParent.m_arrChildren.Append(pNode);
+  }
+  return true;
+}
+
 // CBNFParser::CTerminal ------------------------------------------------------
 
-bool CBNFParser::CTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const
+bool CBNFParser::CTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
 {
 	if (!pFirstToken || pFirstToken->Data->m_eType != m_eToken)
 		return false;
-	if (CombineOutput(m_eOutput, eOutput) != O_NoOutput) {
+	if (m_bOutput) {
 		CNode *pNode = new CNode(pFirstToken->Data, m_iID > 0 ? this : kParent.m_pRule);
 		kParent.m_arrChildren.Append(pNode);
 	} 
@@ -18,7 +29,7 @@ bool CBNFParser::CTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &k
 // CBNFParser::CNonTerminal ---------------------------------------------------
 
 CBNFParser::CNonTerminal::CNonTerminal()
-	: m_eSequence(S_Sequence), m_eRepeat(R_One)
+	: m_bAllowRenaming(false), m_eSequence(S_Sequence)
 {
 	for (int i = 0; i < MAX_CHILD_RULES; ++i)
 	  m_pChildren[i] = 0;
@@ -55,51 +66,47 @@ CBNFParser::CRule *CBNFParser::CNonTerminal::AddChild(CRule const *pChild)
 	return this;
 }
 
-bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent, EOutput eOutput) const
+bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
 {
 	CNode *pNode;
-	if ((m_iID > 0 || m_eOutput == O_Output)) {
+	if (m_bOutput) {
 		pNode = new CNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
 		kParent.m_arrChildren.Append(pNode);
 	} else
 		pNode = &kParent;
-	eOutput = CombineOutput(m_eOutput, eOutput);
-	bool bMatchFound, bAnyMatch = false;
-	do {
-		CList<CToken *>::TNode *pPrevFirstToken = pFirstToken;
-		int iPrevParsedCount = pNode->m_arrChildren.m_iCount;
-		int i;
-		for (i = 0; i < MAX_CHILD_RULES && m_pChildren[i]; ++i) {
-			if (m_pChildren[i]->Match(pFirstToken, *pNode, eOutput)) {
-				if (m_eSequence == S_Alternative)
-					break;
-			} else {
-				if (m_eSequence == S_Sequence) {
-					while (pNode->m_arrChildren.m_iCount > iPrevParsedCount) {
-						delete pNode->m_arrChildren.Last();
-						--pNode->m_arrChildren.m_iCount;
-					}
-					break;
+
+  CList<CToken *>::TNode *pPrevFirstToken = pFirstToken;
+	int iPrevParsedCount = pNode->m_arrChildren.m_iCount;
+	int i;
+	for (i = 0; i < MAX_CHILD_RULES && m_pChildren[i]; ++i) {
+		if (m_pChildren[i]->Match(pFirstToken, *pNode)) {
+			if (m_eSequence == S_Alternative)
+				break;
+		} else {
+			if (m_eSequence == S_Sequence) {
+				while (pNode->m_arrChildren.m_iCount > iPrevParsedCount) {
+					delete pNode->m_arrChildren.Last();
+					--pNode->m_arrChildren.m_iCount;
 				}
+				break;
 			}
 		}
-		bMatchFound = i < MAX_CHILD_RULES && m_pChildren[i];
-		if (m_eSequence == S_Sequence)
-			bMatchFound = !bMatchFound;
-		if (bMatchFound)
-			bAnyMatch = true;
-		else {
-			pFirstToken = pPrevFirstToken;
-			ASSERT(pNode->m_arrChildren.m_iCount == iPrevParsedCount);
-		}
-	} while (m_eRepeat == R_ZeroInfinity && bMatchFound);
-	if (pNode != &kParent) {
-		if (!bAnyMatch && (m_eOutput != O_Output || m_eRepeat != R_ZeroOne && m_eRepeat != R_ZeroInfinity)) {
+	}
+	bool bMatchFound = i < MAX_CHILD_RULES && m_pChildren[i];
+	if (m_eSequence == S_Sequence)
+		bMatchFound = !bMatchFound;
+	if (!bMatchFound)	{
+		pFirstToken = pPrevFirstToken;
+		ASSERT(pNode->m_arrChildren.m_iCount == iPrevParsedCount);
+	}
+
+  if (pNode != &kParent) {
+		if (!bMatchFound) {
 			ASSERT(kParent.m_arrChildren.Last() == pNode && !pNode->m_arrChildren.m_iCount);
 			delete pNode;
 			--kParent.m_arrChildren.m_iCount;
 		} else {
-			if (m_eOutput != O_Output && eOutput == O_NoRenaming && pNode->m_arrChildren.m_iCount == 1) {
+      if (!m_bAllowRenaming && pNode->m_arrChildren.m_iCount == 1) {
   			ASSERT(kParent.m_arrChildren.Last() == pNode);
 				kParent.m_arrChildren.Last() = pNode->m_arrChildren[0];
 				pNode->m_arrChildren.SetCount(0);
@@ -107,9 +114,8 @@ bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode
 			}
 		}
 	}
-	if (!bAnyMatch && (m_eRepeat == R_ZeroOne || m_eRepeat == R_ZeroInfinity))
-		bAnyMatch = true;
-	return bAnyMatch;
+
+	return bMatchFound;
 }
 
 // CBNFParser -----------------------------------------------------------------
@@ -130,11 +136,38 @@ bool CBNFParser::Parse(CList<CToken *> &lstTokens, CNode *&pParsed)
 	pParsed = 0;
 	CList<CToken *>::TNode *pFirst = lstTokens.m_pHead;
 	pParsed = new CNode(pFirst ? pFirst->Data : 0, m_pRootRule);
-	bool bMatch = m_pRootRule->Match(pFirst, *pParsed, m_pRootRule->m_eOutput);
+	bool bMatch = m_pRootRule->Match(pFirst, *pParsed);
 	if (!bMatch || pFirst) {
 		delete pParsed;
 		pParsed = 0;
 		bMatch = false;
 	}
 	return bMatch;
+}
+
+CBNFParser::CRule *CBNFParser::NewOptional(CRule *pContent)
+{ 
+  return NewNT()->Set(S_Alternative)->
+    AddChild(pContent)->
+    AddChild(NewEmpty()->SetOutput(pContent->m_bOutput));
+}
+
+CBNFParser::CRule *CBNFParser::NewZeroPlus(CRule *pContent)
+{
+  CRule *pRule = NewNT();
+  return pRule->Set(S_Alternative)->
+    AddChild(NewNT()->
+      AddChild(pContent)->
+      AddChild(pRule))->
+    AddChild(NewEmpty());
+}
+
+CBNFParser::CRule *CBNFParser::NewOnePlus(CRule *pContent)
+{
+  CRule *pRule = NewNT(); 
+  return pRule->
+    AddChild(pContent)->
+    AddChild(NewNT()->Set(S_Alternative)->
+      AddChild(pRule)->
+      AddChild(NewEmpty()));
 }

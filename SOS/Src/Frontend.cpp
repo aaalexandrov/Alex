@@ -19,6 +19,9 @@ int ProcessInput()
       CCompileChain kChain;
       CArray<CValue> arrParams;
       err = kChain.Compile(&g_kInterpreter, sInput);
+      kChain.m_kGrammar.Dump();
+      if (kChain.m_kCompiler.m_pCode)
+        kChain.m_kCompiler.m_pCode->Dump();
       if (err == IERR_OK) {
         err = g_kInterpreter.Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
 				if (err == IERR_OK) {
