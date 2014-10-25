@@ -67,7 +67,7 @@ end
 
 function initTextures()
 	global gridTexture = GR.Texture()
-	GR.init(gridTexture, "data/grid.png")
+	GR.init(gridTexture, "data/grid2.png")
 end
 
 function doneTextures()
