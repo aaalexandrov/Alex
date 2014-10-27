@@ -1,10 +1,11 @@
-type Shader
+type Shader <: Resource
 	program::GLuint
 	uniforms::Dict{Symbol, UniformVar}
 	samplers::Vector{Symbol}
 	blocks::Vector{UniformBlock}
+	worldTransform::Symbol
 	
-	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[])
+	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[], :model)
 end
 
 isvalid(shader::Shader) = shader.program != 0
@@ -197,6 +198,8 @@ function inituniforms(shader::Shader)
 		end
 	end
 	
+	@assert haskey(shader.uniforms, shader.worldTransform)
+
 	glUseProgram(0)
 end
 

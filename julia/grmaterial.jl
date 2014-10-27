@@ -19,7 +19,7 @@ end
 
 isvalid(mat::Material) = isvalid(mat.shader)
 
-function apply(mat::Material)
+function apply(mat::Material, renderer::Union(Renderer, Nothing) = nothing)
 	apply(mat.shader)
 	
 	for (u, v) in mat.uniforms
@@ -33,8 +33,11 @@ function apply(mat::Material)
 		end
 	end
 	
-	apply(mat.states)
+	apply(mat.states, renderer)
 end
+
+setworldtransform(mat::Material, m::Matrix) = setuniform(mat, mat.shader.worldTransform, m)
+getworldtransform(mat::Material) = getuniform(mat, mat.shader.worldTransform)
 
 setstate(mat::Material, state::RenderState) = setstate(mat.states, state)
 getstate{T <: RenderState}(mat::Material, ::Type{T}, default) = getstate(mat.states, T, default)

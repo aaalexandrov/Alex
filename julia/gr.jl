@@ -3,19 +3,24 @@ module GR
 using OGL
 import Shapes
 
-abstract AbstractMesh
-abstract AbstractTexture
+abstract AbstractRenderer
+abstract Renderable
+abstract Resource
+
+abstract AbstractMesh <: Resource
+abstract AbstractTexture <: Resource
 
 include("grtypes.jl")
 
+include("grcamera.jl")
+include("grstate.jl")
+include("grrenderer.jl")
 include("grmesh.jl")
 include("gruniforms.jl")
 include("grshader.jl")
 include("grtexture.jl")
-include("grstate.jl")
 include("grmaterial.jl")
 include("grmodel.jl")
-include("grcamera.jl")
 
 
 export Vec2, Vec3, Vec4, Matrix4

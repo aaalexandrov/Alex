@@ -122,9 +122,9 @@ end
 const rotMatrix = Math3D.rotz(float32(pi / 18000), eye(Float32, 4))
 
 function update()
-	currentModel = GR.getuniform(triangleMaterial, :model)
+	currentModel = GR.gettransform(diskModel)
 	newModel = rotMatrix * currentModel
-	GR.setuniform(triangleMaterial, :model, newModel)
+	GR.settransform(diskModel, newModel)
 end
 
 clearColor = (0f0, 0f0, 1f0, 1f0)
@@ -172,7 +172,7 @@ function openWindow()
 		frames += 1
 	end
 
-	println("Average FPS: $(frames / (time() - startTime))")
+	info("Average FPS: $(frames / (time() - startTime))")
 
 	done()
 

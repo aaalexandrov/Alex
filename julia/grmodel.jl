@@ -1,13 +1,34 @@
-type Model
+type Model <: Renderable
 	mesh::Mesh
 	material::Material
+    transform::Matrix{Float32}
+    boundDirty::Bool
+    bound::Shapes.Shape{Float32}
+
+    Model(mesh::Mesh, material::Material) = new(mesh, material, eye(Float32, 4), true)
 end
 
 isvalid(model::Model) = isvalid(model.mesh) && isvalid(model.material)
 
-function render(model::Model)
-	@assert isvalid(model)
+gettransform(model::Model) = model.transform
+function settransform(model::Model, m::Matrix{Float32}) 
+    @assert isvalid(model)
+    model.transform[:, :] = m
+    model.boundDirty = true
+end
 
-	apply(model.material)
-	render(model.mesh)
+function getbound(model::Model)
+    @assert isvalid(model)
+    if model.boundDirty
+        model.bound = Shapes.transform(mesh.bound, transform)
+        model.boundDirty = false
+    end
+    model.bound
+end
+
+function render(model::Model, renderer::Union(Renderer, Nothing) = nothing)
+    @assert isvalid(model)
+    setworldtransform(model.material, model.transform)
+    apply(model.material, renderer)
+    render(model.mesh)
 end

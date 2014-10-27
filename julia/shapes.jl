@@ -43,6 +43,8 @@ isvalid{T}(l::Line{T}) = size(l.p)==(3, 2) && len2(l.p[:, 1] - l.p[:, 2]) >= eps
 getvector{T}(l::Line{T}) = l.p[:, 2] - l.p[:, 1]
 getpoint{T}(l::Line{T}, t::T) = lerp(l.p[:, 1], l.p[:, 2], t)
 
+tranform{T}(l::Line{T}, m::Matrix{T}) = Line{T}((m*[l.p; 1 1])[1:3, :])
+
 
 type Plane{T} <: Shape{T}
 	p::Array{T, 1}
@@ -60,6 +62,9 @@ function getpoint{T}(p::Plane{T})
 	i = indmax(p.p[1:3])
 	return T[x==i ? -p.p[4]/p.p[i] : 0 for x=1:3]
 end
+
+# multiply plane by inverse transpose of matrix
+transform{T}(p::Plane{T}, m::Matrix{T}) = Plane{T}(At_ldiv_B(m, p.p))
 
 
 type Sphere{T} <: Shape{T}
@@ -84,6 +89,13 @@ function addpoint{T}(s::Sphere{T}, p::Vector{T})
 	end
 	s
 end
+
+function transform{T}(s::Sphere{T}, m::Matrix{T})
+	c = (m*[s.c, 1])[1:3]
+	scale = maximum([len(m[1:3, i]) for i=1:3])
+	Sphere{T}(c, s.r * scale)
+end
+
 
 type AABB{T} <: Shape{T}
 	p::Array{T, 2}
@@ -110,6 +122,17 @@ function addpoint{T}(ab::AABB{T}, p::Vector{T})
 	ab
 end
 
+function transform!{T}(ab::AABB{T}, m::Matrix{T})
+	transformed = [(m*[ab.p[x, 1], ab.p[y, 2], ab.p[z, 3], 1])[1:3] for x=1:2, y=1:2, z=1:2]
+	@assert size(transformed)==(3, 8)
+	abNew = AABB{T}(hcat(transformed[:, 1], transformed[:, 1]))
+	for i in 2:8
+		addpoint(abNew, transformed[:, i])
+	end
+	abNew
+end
+
+
 # todo: add Capsule and OBB
 
 
@@ -131,6 +154,16 @@ end
 isvalid{T}(c::Convex{T}) = size(planes, 1) == 4 && size(planes, 2) > 0
 setplane{T}(c::Convex{T}, planeIndex::Int, p::Vector{T}) = c.planes[:, planeIndex] = p / len(p[1:3])
 
+function transform{T}(c::Convex{T}, m::Matrix{T})
+	planes = At_ldiv_B(m, c.planes)
+	for i = 1:size(planes, 2)
+		planes[:, i] /= len(planes[1:3, i])
+	end
+	return Convex{T}(planes)
+end
+
+
+# Intersection functions
 
 function getintersection{T}(l::Line{T}, p::Plane{T})
 	@assert isvalid(l)

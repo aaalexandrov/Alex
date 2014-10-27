@@ -51,5 +51,5 @@ function calc_frustum(cam::Camera, dest::Matrix{Float32})
 						  normalized_plane(Float32[ 0, -1,  0], ptMax),
 						  normalized_plane(Float32[ 0,  0, -1], ptMax))
 
-	dest[:,:] = transpose(cam.proj * getview(cam)) * projSpaceFrust
+	dest[:,:] = At_mul_B(cam.proj * getview(cam), projSpaceFrust)
 end
