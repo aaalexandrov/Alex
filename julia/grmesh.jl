@@ -116,7 +116,7 @@ function initbound(mesh::Mesh, vertex2point::Function)
 		Shapes.addpoint(sphere, p)
 		Shapes.addpoint(box, p)
 	end
-	mesh.bound = volume(box) < volume(sphere) ? box : sphere
+	mesh.bound = Shapes.volume(box) < Shapes.volume(sphere) ? box : sphere
 end
 
 function done(mesh::Mesh)

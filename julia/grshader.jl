@@ -4,8 +4,10 @@ type Shader <: Resource
 	samplers::Vector{Symbol}
 	blocks::Vector{UniformBlock}
 	worldTransform::Symbol
+	viewTransform::Symbol
+	projTransform::Symbol
 	
-	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[], :model)
+	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[], :model, :view, :projection)
 end
 
 isvalid(shader::Shader) = shader.program != 0

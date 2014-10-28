@@ -8,16 +8,16 @@ type Renderer
     clearStencil::Union(Int, Nothing)
     clearDepth::Union(Float64, Nothing)
 
-    Renderer() = new(Camera(), Set{Renderable}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 0)
+    Renderer() = new(Camera(), Set{Renderable}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 0.0)
 end
 
 global renderer_instance = nothing
 
-renderer() = renderer_instance::Union{Renderer, Nothing}
+renderer() = renderer_instance::Union(Renderer, Nothing)
 
 function init(renderer::Renderer)
     @assert renderer_instance == nothing
-    renderer_instance = renderer
+    global renderer_instance = renderer
 end
 
 function done(renderer::Renderer)
@@ -25,7 +25,7 @@ function done(renderer::Renderer)
         done(r)
     end
     empty!(renderer.resources)
-    renderer_instance = nothing
+    global renderer_instance = nothing
 end
 
 function add(renderer::Renderer, resource::Resource)
@@ -40,25 +40,27 @@ function add(renderer::Renderer, renderable::Renderable)
     push!(renderer.toRender, renderable)
 end
 
-setClearColor(renderer::Renderer, c) = renderer.clearColor = c
-setClearStencil(renderer::Renderer, s) = renderer.clearStencil = s
-setClearDepth(renderer::Renderer, d) = renderer.clearDepth = d
+set_clear_color(renderer::Renderer, c) = renderer.clearColor = c
+set_clear_stencil(renderer::Renderer, s) = renderer.clearStencil = s
+set_clear_depth(renderer::Renderer, d) = renderer.clearDepth = d
+
+getcamera(renderer::Renderer) = renderer.camera
 
 function render_frame(renderer::Renderer)
     gl_clear_buffers(renderer.clearColor, renderer.clearStencil, renderer.clearDepth)
     # cull
     frustum = getfrustum(renderer.camera)
-    filter!(r->!outside(frustum, getbound(r)), renderer.toRender)
+    filter!(r->!Shapes.outside(frustum, getbound(r)), renderer.toRender)
     # sort
     if renderer.sortFunc != identity
-        sort!(toRender, lt = renderer.sortFunc)
+        sort!(renderer.toRender, lt = renderer.sortFunc)
     end
     # render
     for r in renderer.toRender
         render(r, renderer)
     end
 
-    empty!(toRender)
+    empty!(renderer.toRender)
 end
 
 function apply(holder::RenderStateHolder, renderer::Renderer) 

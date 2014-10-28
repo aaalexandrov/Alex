@@ -20,7 +20,7 @@ end
 function getbound(model::Model)
     @assert isvalid(model)
     if model.boundDirty
-        model.bound = Shapes.transform(mesh.bound, transform)
+        model.bound = Shapes.transform(model.mesh.bound, model.transform)
         model.boundDirty = false
     end
     model.bound
@@ -28,7 +28,7 @@ end
 
 function render(model::Model, renderer::Union(Renderer, Nothing) = nothing)
     @assert isvalid(model)
-    setworldtransform(model.material, model.transform)
+    set_world_transform(model.material, model.transform)
     apply(model.material, renderer)
     render(model.mesh)
 end

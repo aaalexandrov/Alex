@@ -43,7 +43,7 @@ isvalid{T}(l::Line{T}) = size(l.p)==(3, 2) && len2(l.p[:, 1] - l.p[:, 2]) >= eps
 getvector{T}(l::Line{T}) = l.p[:, 2] - l.p[:, 1]
 getpoint{T}(l::Line{T}, t::T) = lerp(l.p[:, 1], l.p[:, 2], t)
 
-tranform{T}(l::Line{T}, m::Matrix{T}) = Line{T}((m*[l.p; 1 1])[1:3, :])
+transform{T}(l::Line{T}, m::Matrix{T}) = Line{T}((m*[l.p; 1 1])[1:3, :])
 
 
 type Plane{T} <: Shape{T}
@@ -122,9 +122,17 @@ function addpoint{T}(ab::AABB{T}, p::Vector{T})
 	ab
 end
 
-function transform!{T}(ab::AABB{T}, m::Matrix{T})
-	transformed = [(m*[ab.p[x, 1], ab.p[y, 2], ab.p[z, 3], 1])[1:3] for x=1:2, y=1:2, z=1:2]
-	@assert size(transformed)==(3, 8)
+function transform{T}(ab::AABB{T}, m::Matrix{T})
+	transformed = Array(T, 3, 8)
+	i = 1
+	for x = 1:2
+		for y = 1:2
+			for z = 1:2
+				transformed[:, i] = (m*[ab.p[1, x], ab.p[2, y], ab.p[3, z], 1])[1:3]
+				i += 1
+			end
+		end
+	end
 	abNew = AABB{T}(hcat(transformed[:, 1], transformed[:, 1]))
 	for i in 2:8
 		addpoint(abNew, transformed[:, i])
@@ -151,7 +159,7 @@ function Convex{T}(planes::Plane{T}...)
 	c
 end
 
-isvalid{T}(c::Convex{T}) = size(planes, 1) == 4 && size(planes, 2) > 0
+isvalid{T}(c::Convex{T}) = size(c.planes, 1) == 4 && size(c.planes, 2) > 0
 setplane{T}(c::Convex{T}, planeIndex::Int, p::Vector{T}) = c.planes[:, planeIndex] = p / len(p[1:3])
 
 function transform{T}(c::Convex{T}, m::Matrix{T})
@@ -159,7 +167,7 @@ function transform{T}(c::Convex{T}, m::Matrix{T})
 	for i = 1:size(planes, 2)
 		planes[:, i] /= len(planes[1:3, i])
 	end
-	return Convex{T}(planes)
+	Convex{T}(planes)
 end
 
 

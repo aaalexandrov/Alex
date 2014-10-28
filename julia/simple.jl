@@ -1,3 +1,10 @@
+function reload()
+	GLFW.Terminate()
+	include("shapes.jl")
+	include("gr.jl")
+	include("simple.jl")
+end
+
 module Simple
 
 import GLFW
@@ -29,6 +36,8 @@ end
 
 VertPosUV(x, y, z, u, v) = VertPosUV(Vec3(x, y, z), Vec2(u, v))
 
+vert2pos(v) = [v.position.x, v.position.y, v.position.z]
+
 global triangleMesh, simpleShader, gridTexture, triangleMaterial, triangleModel, diskMesh, diskModel
 
 function initMeshes()
@@ -36,7 +45,7 @@ function initMeshes()
 	triangleInd = Uint16[0, 1, 2]
 
 	global triangleMesh = GR.Mesh()
-	GR.init(triangleMesh, triangleVert, triangleInd)
+	GR.init(triangleMesh, triangleVert, triangleInd, vert2pos)
 
 	diskInd, diskPoints = Geom.regularpoly(3)
 	diskVerts = Array(VertPosUV, size(diskPoints, 2))
@@ -45,7 +54,7 @@ function initMeshes()
 		diskVerts[i] = VertPosUV(p[1], p[2], p[3], p[1], p[2])
 	end
 	global diskMesh = GR.Mesh()
-	GR.init(diskMesh, diskVerts, diskInd)
+	GR.init(diskMesh, diskVerts, diskInd, vert2pos)
 end
 
 function doneMeshes()
@@ -99,24 +108,37 @@ function doneModels()
 	global diskModel = nothing
 end
 
+clearColor = (0f0, 0f0, 1f0, 1f0)
+
 function init()
+	renderer = GR.Renderer()
+	GR.init(renderer)
+	GR.set_clear_color(renderer, clearColor)
+
 	initShaders()
 	initTextures()
 	initMeshes()
 	initModels()
+
+	renderer
 end
 
-function done()
+function done(renderer::GR.Renderer)
 	doneModels()
 	doneMeshes()
 	doneTextures()
 	doneShaders()
+
+	GR.done(renderer)
 end
 
-function render()
+function render(renderer::GR.Renderer)
 	# GR.render(triangleMesh)
 	# GR.render(triangleModel)
-	GR.render(diskModel)
+	# GR.render(diskModel)
+	GR.add(renderer, diskModel)
+
+	GR.render_frame(renderer)
 end
 
 const rotMatrix = Math3D.rotz(float32(pi / 18000), eye(Float32, 4))
@@ -127,17 +149,12 @@ function update()
 	GR.settransform(diskModel, newModel)
 end
 
-clearColor = (0f0, 0f0, 1f0, 1f0)
-
-function setClearColor(r, g, b, a = 1f0)
-	global clearColor = (convert(Float32, r), convert(Float32, g), convert(Float32, b), convert(Float32, a))
-end
-
-function setViewport(width::Integer, height::Integer)
+function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	OGL.glViewport(0, 0, width, height)
 
 	m = Math3D.ortho(2, 2height / width, -1f0, 1)
-	GR.setuniform(triangleMaterial, :projection, m)
+	# GR.setuniform(triangleMaterial, :projection, m)
+	GR.setproj(GR.getcamera(renderer), m)
 end
 
 function openWindow()
@@ -151,18 +168,16 @@ function openWindow()
 	# update opengl function pointers on windows
 	OGL.updateGL()
 
-	init()
+	renderer = init()
 
-	setViewport(GLFW.GetFramebufferSize(window)...)
-	GLFW.SetFramebufferSizeCallback(window, (win::GLFW.Window, width::Cint, height::Cint) -> setViewport(width, height))
+	setViewport(renderer, GLFW.GetFramebufferSize(window)...)
+	GLFW.SetFramebufferSizeCallback(window, (win::GLFW.Window, width::Cint, height::Cint) -> setViewport(renderer, width, height))
 
 	startTime = time()
 	frames = 0
 
 	while !GLFW.WindowShouldClose(window)
-		OGL.gl_clear_buffers(clearColor, 0, 0)
-
-		render()
+		render(renderer)
 		update()
 
 		GLFW.SwapBuffers(window)
@@ -174,7 +189,7 @@ function openWindow()
 
 	info("Average FPS: $(frames / (time() - startTime))")
 
-	done()
+	done(renderer)
 
 	GLFW.Terminate()
 end

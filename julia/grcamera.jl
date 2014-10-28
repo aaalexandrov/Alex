@@ -6,7 +6,7 @@ type Camera
 	viewDirty::Bool
 	frustumDirty::Bool
 
-	Camera() = new(eye(Float32, 4), eye(Float32, 4), eye(Float32, 4), Convex(Float32, 6), false, true)
+	Camera() = new(eye(Float32, 4), eye(Float32, 4), eye(Float32, 4), Shapes.Convex(Float32, 6), false, true)
 end
 
 function setxform(cam::Camera, xform::Matrix{Float32})
@@ -28,8 +28,10 @@ function setproj(cam::Camera, proj::Matrix{Float32})
 	cam.frustumDirty = true
 end
 
+getproj(cam::Camera) = cam.proj
+
 function getfrustum(cam::Camera)
-	if cam.frustimDirty
+	if cam.frustumDirty
 		calc_frustum(cam, cam.frustum.planes)
 		cam.frustumDirty = false
 	end
@@ -37,7 +39,7 @@ function getfrustum(cam::Camera)
 end
 
 function normalized_plane(n, p)
-	nn = n / len(n)
+	nn = n / Shapes.len(n)
 	[nn, -dot(p, nn)]
 end
 
@@ -53,3 +55,4 @@ function calc_frustum(cam::Camera, dest::Matrix{Float32})
 
 	dest[:,:] = At_mul_B(cam.proj * getview(cam), projSpaceFrust)
 end
+
