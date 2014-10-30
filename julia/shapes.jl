@@ -6,10 +6,49 @@ export isvalid, getnormal, getpoint, volume, addpoint, setplane, getintersection
 
 iszero{T}(x::T) = abs(x) < eps(T)
 
+len2(x, y, z) = x*x + y*y + z*z
 len2(x) = sumabs2(x)
+len(x, y, z) = sqrt(len2(x, y, z))
 len(x) = sqrt(len2(x))
 
 lerp(x, y, t) = x + (y-x)*t
+
+function scale3{T}(m::AbstractArray{T, 2})
+	l2 = max(len2(m[1,1], m[2,1], m[3,1]), len2(m[1,2], m[2,2], m[3,2]), len2(m[1,3], m[2,3], m[3,3]))
+	sqrt(l2)
+end
+
+function transform_p3{T}(result::AbstractArray{T, 1}, m::AbstractArray{T, 2}, p::AbstractArray{T, 1})
+	@simd for i = 1:3
+		@inbounds result[i] = m[i,1]*p[1] + m[i,2]*p[2] + m[i,3]*p[3] + m[i,4]
+	end
+	nothing
+end
+
+function transform_p3{T}(result::AbstractArray{T, 2}, m::AbstractArray{T, 2}, p::AbstractArray{T, 2})
+	for c = 1:size(p, 2)
+		@simd for r = 1:3
+			@inbounds result[r, c] = m[r,1]*p[1,c] + m[r,2]*p[2,c] + m[r,3]*p[3,c] + m[r,4]
+		end
+	end
+	nothing
+end
+
+function transform_p4{T}(result::AbstractArray{T, 1}, m::AbstractArray{T, 2}, p::AbstractArray{T, 1})
+	@simd for i = 1:3
+		@inbounds result[i] = m[i,1]*p[1] + m[i,2]*p[2] + m[i,3]*p[3] + m[i,4]*p[4]
+	end
+	nothing
+end
+
+function transform_p4{T}(result::AbstractArray{T, 2}, m::AbstractArray{T, 2}, p::AbstractArray{T, 2})
+	for c = 1:size(p, 2)
+		@simd for r = 1:4
+			@inbounds result[r, c] = m[r,1]*p[1,c] + m[r,2]*p[2,c] + m[r,3]*p[3,c] + m[r,4]*p[4,c]
+		end
+	end
+	nothing
+end
 
 make_interval(a, b) = a < b ? (a, b) : (b, a)
 empty_interval(i) = i[1] > i[2]
@@ -19,7 +58,7 @@ intersect_interval(min1, max1, min2, max2) = (max(min1, min2), min(max1, max2))
 function quadroots(a, b, c)
 	d = b*b-4a*c
 	if d < zero(d)
-		return (nan(a), nan(a))
+		return nan(a), nan(a)
 	end
 	sd = sqrt(d)
 	x1 = (-b-sd)/2a
@@ -30,9 +69,14 @@ end
 
 abstract Shape{T <: Real}
 
+similar{S <: Shape}(s::S) = S()
+
 
 type Line{T} <: Shape{T}
 	p::Array{T, 2}
+
+	Line(p::Array{T, 2}) = new(p)
+	Line() = new(Array(T, 3, 2))
 end
 
 Line{T}(x1::T, y1, z1, x2, y2, z2) = Line{T}(T[x1 x2; y1 y2; z1 z2])
@@ -43,11 +87,21 @@ isvalid{T}(l::Line{T}) = size(l.p)==(3, 2) && len2(l.p[:, 1] - l.p[:, 2]) >= eps
 getvector{T}(l::Line{T}) = l.p[:, 2] - l.p[:, 1]
 getpoint{T}(l::Line{T}, t::T) = lerp(l.p[:, 1], l.p[:, 2], t)
 
-transform{T}(l::Line{T}, m::Matrix{T}) = Line{T}((m*[l.p; 1 1])[1:3, :])
+function transform{T}(lDest::Line{T}, m::Matrix{T}, l::Line{T})
+	for c = 1:2
+		@simd for r = 1:3
+			@inbounds lDest.p[r, c] = m[r,1]*l.p[1,c] + m[r,2]*l.p[2,c] + m[r,3]*l.p[3,c] + m[r,4]
+		end
+	end
+	nothing
+end
 
 
 type Plane{T} <: Shape{T}
 	p::Array{T, 1}
+
+	Plane(p::Array{T, 1}) = new(p)
+	Plane() = new(Array(T, 4))
 end
 
 Plane{T}(a::T, b, c, d) = Plane{T}(T[a, b, c, d])
@@ -64,12 +118,22 @@ function getpoint{T}(p::Plane{T})
 end
 
 # multiply plane by inverse transpose of matrix
-transform{T}(p::Plane{T}, m::Matrix{T}) = Plane{T}(At_ldiv_B(m, p.p))
+function transform{T}(pDest::Plane{T}, m::Matrix{T}, p::Plane{T}) 
+	m_it = transpose(inv(m))
+	transform_p4(pDest.p, m_it, p.p)
+	nothing
+end
+
+# transform with inverse transpose pre-computed
+transform_it{T}(pDest::Plane{T}, m_it::Matrix{T}, p::Plane{T}) = transform_p4(pDest.p, m_it, p.p)
 
 
 type Sphere{T} <: Shape{T}
 	c::Array{T, 1}
 	r::T
+
+	Sphere(c::Array{T, 1}, r) = new(c, r)
+	Sphere() = new(Array(T, 3), 0)
 end
 
 Sphere{T}(cx::T, cy, cz, r) = Sphere{T}(T[cx, cy, cz], convert(T, r))
@@ -90,15 +154,17 @@ function addpoint{T}(s::Sphere{T}, p::Vector{T})
 	s
 end
 
-function transform{T}(s::Sphere{T}, m::Matrix{T})
-	c = (m*[s.c, 1])[1:3]
-	scale = maximum([len(m[1:3, i]) for i=1:3])
-	Sphere{T}(c, s.r * scale)
+function transform{T}(sDest::Sphere{T}, m::Matrix{T}, s::Sphere{T})
+	transform_p3(sDest.c, m, s.c)
+	sDest.r = s.r * scale3(m)
 end
 
 
 type AABB{T} <: Shape{T}
 	p::Array{T, 2}
+
+	AABB(p::Array{T, 2}) = new(p)
+	AABB() = new(Array(T, 3, 2))
 end
 
 AABB{T}(xmin::T, ymin, zmin, xmax, ymax, zmax) = AABB{T}(T[xmin xmax; ymin ymax; zmin zmax])
@@ -107,37 +173,47 @@ AABB(pmin, pmax) = AABB(pmin..., pmax...)
 isvalid{T}(aabb::AABB{T}) = size(aabb.p) == (3, 2) && aabb.p[1, 1] <= aabb.p[1, 2] && aabb.p[2, 1] <= aabb.p[2, 2] && aabb.p[3, 1] <= aabb.p[3, 2]
 volume(ab::AABB) = prod([ab.p[i, 2] - ab.p[i, 1] for i=1:3])
 
-function addpoint{T}(ab::AABB{T}, p::Vector{T})
-	@assert isvalid(ab)
+function addpoint!{T}(minMax::Matrix{T}, p::Vector{T})
+	@assert size(minMax) == (3, 2)
 	@assert length(p) == 3
 
 	for i = 1:3
-		if p[i] < ab.p[i, 1]
-			ab.p[i, 1] = p[i]
+		if p[i] < minMax[i, 1]
+			minMax[i, 1] = p[i]
 		end
-		if ab.p[i, 2] < p[i]
-			ab.p[i, 2] = p[i]
+		if minMax[i, 2] < p[i]
+			minMax[i, 2] = p[i]
 		end
 	end
-	ab
+	nothing
 end
 
-function transform{T}(ab::AABB{T}, m::Matrix{T})
-	transformed = Array(T, 3, 8)
-	i = 1
-	for x = 1:2
-		for y = 1:2
-			for z = 1:2
-				transformed[:, i] = (m*[ab.p[1, x], ab.p[2, y], ab.p[3, z], 1])[1:3]
-				i += 1
-			end
-		end
+addpoint{T}(ab::AABB{T}, p::Vector{T}) = addpoint!(ab.p, p)
+
+function transform{T}(abDest::AABB{T}, m::Matrix{T}, ab::AABB{T})
+	t = Array(T, 3)
+	p = Array(T, 3)
+	p[1] = ab.p[1, 1]
+	p[2] = ab.p[2, 1]
+	p[3] = ab.p[3, 1]
+	transform_p3(t, m, p)
+	abDest.p[1, 1] = t[1]
+	abDest.p[2, 1] = t[2]
+	abDest.p[3, 1] = t[3]
+	abDest.p[1, 2] = t[1]
+	abDest.p[2, 2] = t[2]
+	abDest.p[3, 2] = t[3]
+	for i = 1:7
+		x = i & 1
+		y = (i & 2)>>1
+		z = (i & 4)>>2
+		p[1] = ab.p[1, x+1]
+		p[2] = ab.p[2, y+1]
+		p[3] = ab.p[3, z+1]
+		transform_p3(t, m, p)
+		addpoint!(abDest.p, t)
 	end
-	abNew = AABB{T}(hcat(transformed[:, 1], transformed[:, 1]))
-	for i in 2:8
-		addpoint(abNew, transformed[:, i])
-	end
-	abNew
+	nothing
 end
 
 
