@@ -11,6 +11,29 @@ abstract Vec{T, SZ, N} <: AbstractArray{T, N}
 const vecFields1d = [:x, :y, :z, :w]
 const vecFields2d = [symbol("m$(r)_$c") for r=1:4, c=1:4]
 
+function field_names(sz::(Integer,); allowShort::Bool = true)
+	n = sz[1]
+	const vecFields = [:x, :y, :z, :w]
+	if allowShort && n <= length(vecFields)
+		return vecFields[1:n]
+	end
+	[symbol("e$i") for i=1:n]
+end
+
+function field_names(sz::(Integer, Integer...); allowShort::Bool = false)
+	firstNames = field_names(sz[1:end-1], allowShort = false)
+	names = Array(Symbol, sz)
+	ind = 1
+	for i = 1:sz[end]
+		for j = 1:length(firstNames)
+			pref = string(firstNames[j])
+			names[ind] = symbol("$(pref)_$i")
+			ind += 1
+		end
+	end
+	names
+end
+
 vec_fields(sz::(Integer,)) = [:($(vecFields1d[i])::T) for i = 1:sz[1]]
 vec_fields(sz::(Integer, Integer)) = [:($(vecFields2d[r, c])::T) for r = 1:sz[1], c = 1:sz[2]]
 
