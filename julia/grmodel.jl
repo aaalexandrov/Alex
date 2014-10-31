@@ -20,7 +20,10 @@ end
 function getbound(model::Model)
     @assert isvalid(model)
     if model.boundDirty
-        model.bound = Shapes.transform(model.mesh.bound, model.transform)
+        if !isdefined(model, :bound)
+            model.bound = Shapes.similar(model.mesh.bound)
+        end
+        Shapes.transform(model.bound, model.transform, model.mesh.bound)
         model.boundDirty = false
     end
     model.bound

@@ -1,7 +1,7 @@
 module Shapes
 
 export Shape, Line, Plane, Sphere, AABB, Convex
-export isvalid, getnormal, getpoint, volume, addpoint, setplane, getintersection, intersect, outside
+export isvalid, getnormal, getpoint, volume, addpoint, setplane, getintersection, intersect, outside, similar
 
 
 iszero{T}(x::T) = abs(x) < eps(T)
@@ -151,12 +151,13 @@ function addpoint{T}(s::Sphere{T}, p::Vector{T})
 		s.r = (d+s.r)/2
 		s.c = lerp(p, s.c, s.r/d)
 	end
-	s
+	nothing
 end
 
 function transform{T}(sDest::Sphere{T}, m::Matrix{T}, s::Sphere{T})
 	transform_p3(sDest.c, m, s.c)
 	sDest.r = s.r * scale3(m)
+	nothing
 end
 
 
@@ -238,12 +239,22 @@ end
 isvalid{T}(c::Convex{T}) = size(c.planes, 1) == 4 && size(c.planes, 2) > 0
 setplane{T}(c::Convex{T}, planeIndex::Int, p::Vector{T}) = c.planes[:, planeIndex] = p / len(p[1:3])
 
-function transform{T}(c::Convex{T}, m::Matrix{T})
-	planes = At_ldiv_B(m, c.planes)
-	for i = 1:size(planes, 2)
-		planes[:, i] /= len(planes[1:3, i])
+transform{T}(cDest::Convex{T}, m::Matrix{T}, c::Convex{T}) = transform_it(cDest, transpose(inv(m)), c)
+
+function transform_it{T}(cDest::Convex{T}, m_it::Matrix{T}, c::Convex{T})
+	cols = size(c.planes, 2)
+	if size(cDest.planes, 2) != cols
+		cDest.planes = Array(T, 3, cols)
 	end
-	Convex{T}(planes)
+	A_mul_B!(cDest.planes, m_it, c.planes)
+	for i = 1:cols
+		invL = 1/len(cDest.planes[1, i], cDest.planes[2, i], cDest.planes[3, i])
+		cDest.planes[1, i] *= invL
+		cDest.planes[2, i] *= invL
+		cDest.planes[3, i] *= invL
+		cDest.planes[4, i] *= invL
+	end
+	nothing
 end
 
 
