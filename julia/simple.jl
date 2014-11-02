@@ -1,8 +1,8 @@
-function reload()
+function reld()
 	GLFW.Terminate()
-	include("shapes.jl")
-	include("gr.jl")
-	include("simple.jl")
+    reload("shapes.jl")
+    reload("gr.jl")
+    reload("simple.jl")
 end
 
 module Simple

@@ -8,9 +8,6 @@ export Vec, VecN
 
 abstract Vec{T, SZ, N} <: AbstractArray{T, N}
 
-const vecFields1d = [:x, :y, :z, :w]
-const vecFields2d = [symbol("m$(r)_$c") for r=1:4, c=1:4]
-
 function field_names(sz::(Integer,); allowShort::Bool = true)
 	n = sz[1]
 	const vecFields = [:x, :y, :z, :w]
@@ -34,9 +31,6 @@ function field_names(sz::(Integer, Integer...); allowShort::Bool = false)
 	names
 end
 
-vec_fields(sz::(Integer,)) = [:($(vecFields1d[i])::T) for i = 1:sz[1]]
-vec_fields(sz::(Integer, Integer)) = [:($(vecFields2d[r, c])::T) for r = 1:sz[1], c = 1:sz[2]]
-
 tuple_to_string(t::(), sep) = ""
 tuple_to_string(t::(Any,), sep) = "$(t[1])"
 tuple_to_string(t::(Any, Any...), sep) = "$(t[1])$sep" * tuple_to_string(Base.tail(t), sep)
@@ -44,11 +38,11 @@ tuple_to_string(t::(Any, Any...), sep) = "$(t[1])$sep" * tuple_to_string(Base.ta
 vec_name(sz::(Integer, Integer...)) = symbol("Vec" * tuple_to_string(sz, 'x'))
 
 function gen_vec(sz::(Integer, Integer...))
-	fields = vec_fields(sz)
-	params = [p.args[1] for p in fields]
+	fieldNames = field_names(sz)
+	fields = [:($(fieldNames[i])::T) for i = 1:length(fieldNames)]
 	vecSym = vec_name(sz)
-	constr = Expr(:(=), Expr(:call, vecSym, params...), Expr(:block, Expr(:call, :new, params...)))
-	exp = Expr(:export, vecSym)
+	constr = Expr(:(=), Expr(:call, vecSym, fieldNames...), Expr(:block, Expr(:call, :new, fieldNames...)))
+	expo = Expr(:export, vecSym)
 	res = quote
 		type $vecSym{T} <: Vec{T, $sz, $(length(sz))}
 			$(fields...)
@@ -56,7 +50,8 @@ function gen_vec(sz::(Integer, Integer...))
 			$constr
 		end
 		$vecSym{T}(x::T, rest...) = $vecSym{T}(x, rest...)
-		$exp
+		field_names{T}(::Vec{T, $sz, $(length(sz))}) = $fieldNames
+		$expo
 	end
 	res
 end
@@ -78,19 +73,23 @@ size{T, SZ}(v::Vec{T, SZ}) = SZ
 
 similar{T, SZ}(v::Vec{T, SZ}, e = T, sz::(Integer, Integer...) = SZ) = VecN(e, sz)
 
-getindex{T, R}(v::Vec{T, (R,)}, i::Integer) = getfield(v, vecFields1d[i])
-setindex!{T, R}(v::Vec{T, (R,)}, x, i::Integer) = setfield!(v, vecFields1d[i], convert(T, x))
+# these are needed to disambiguate with existing abstract array methods
+getindex(v::Vec, i::Real) = getfield(v, field_names(v)[i])
+getindex(v::Vec, ind::AbstractArray) = map(f->getfield(v, f), field_names(v)[ind])
+setindex!(v::Vec, x, i::Real) = setfield!(v, field_names(v)[i], x)
 
-function ind1to2d(rows::Integer, i::Integer)
-	c, r = divrem(i-1, rows)
-	r + 1, c + 1
+# general case
+getindex(v::Vec, indices::Real...) = getfield(v, field_names(v)[indices...])
+getindex(v::Vec, indices...) = map(f->getfield(v, f), field_names(v)[indices...]) # should we return a fixed size array instead of normal one here?
+
+setindex!(v::Vec, x, indices::Real...) = setfield!(v, field_names(v)[indices...], x)
+function setindex!(v::Vec, x, indices...)
+    fieldArr = field_names(v)[indices...]
+    for i = 1:length(fieldArr)
+        setfield!(v, fieldArr[i], x[i])
+    end
+    v
 end
-
-getindex{T, R, C}(v::Vec{T, (R, C)}, i::Integer) = getfield(v, vecFields2d[ind1to2d(R, i)...])
-setindex!{T, R, C}(v::Vec{T, (R, C)}, x, i::Integer) = setfield!(v, vecFields2d[ind1to2d(R, i)...], convert(T, x))
-
-getindex{T, R, C}(v::Vec{T, (R, C)}, i::Integer, j::Integer) = getfield(v, vecFields2d[i, j])
-setindex!{T, R, C}(v::Vec{T, (R, C)}, x, i::Integer, j::Integer) = setfield!(v, vecFields2d[i, j], convert(T, x))
 
 dot{T}(u::Vec{T, (1,)}, v::Vec{T, (1,)}) = u.x*v.x
 dot{T}(u::Vec{T, (2,)}, v::Vec{T, (2,)}) = u.x*v.x + u.y*v.y
