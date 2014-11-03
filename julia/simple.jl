@@ -141,7 +141,7 @@ function render(renderer::GR.Renderer)
 	GR.render_frame(renderer)
 end
 
-const rotMatrix = Math3D.rotz(float32(pi / 18000), eye(Float32, 4))
+const rotMatrix = Math3D.rotz(eye(Float32, 4), float32(pi / 18000))
 
 function update()
 	currentModel = GR.gettransform(diskModel)

@@ -27,7 +27,7 @@ function orthogonalize!(v::Vector, n::Vector)
 	v -= nUnit * dot(v, nUnit)
 end
 
-function rotx(angle::Real, m::Matrix)
+function rotx(m::Matrix, angle::Real)
 	s = sin(angle)
 	c = cos(angle)
 	m[1:3, 1] = [1, 0, 0]
@@ -36,7 +36,7 @@ function rotx(angle::Real, m::Matrix)
 	return m
 end
 
-function roty(angle::Real, m::Matrix)
+function roty(m::Matrix, angle::Real)
 	s = sin(angle)
 	c = cos(angle)
 	m[1:3, 1] = [c, 0, -s]
@@ -45,7 +45,7 @@ function roty(angle::Real, m::Matrix)
 	return m
 end
 
-function rotz(angle::Real, m::Matrix)
+function rotz(m::Matrix, angle::Real)
 	s = sin(angle)
 	c = cos(angle)
 	m[1:3, 1] = [c, s, 0]
@@ -54,11 +54,11 @@ function rotz(angle::Real, m::Matrix)
 	return m
 end
 
-rotx(angle::Real) = rotx(angle, Array(typeof(angle), 3, 3))
-roty(angle::Real) = roty(angle, Array(typeof(angle), 3, 3))
-rotz(angle::Real) = rotz(angle, Array(typeof(angle), 3, 3))
+rotx(angle::Real) = rotx(Array(typeof(angle), 3, 3), angle)
+roty(angle::Real) = roty(Array(typeof(angle), 3, 3), angle)
+rotz(angle::Real) = rotz(Array(typeof(angle), 3, 3), angle)
 
-function rot(axis::Vector, angle::Real, m::Matrix)
+function rot(m::Matrix, axis::Vector, angle::Real)
 	u = normalize(axis[1:3])
 	s = sin(angle)
 	c = cos(angle)
@@ -68,16 +68,16 @@ function rot(axis::Vector, angle::Real, m::Matrix)
 	return m
 end
 
-rot(axis::Vector, angle::Real) = rot(axis, angle, Array(typeof(angle), 3, 3))
+rot(axis::Vector, angle::Real) = rot(Array(typeof(angle), 3, 3), axis, angle)
 
-function trans(t::Vector, m::Matrix)
+function trans(m::Matrix, t::Vector)
 	m[1:3, 4] = t[1:3]
 	return m
 end
 
-trans(t::Vector) = trans(t, eye(eltype(t), 4))
+trans(t::Vector) = trans(eye(eltype(t), 4), t)
 
-function perspective(left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real, m::Matrix)
+function perspective(m::Matrix, left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real)
 	m[1:4, 1] = [2near/(right-left),        0,                         0,                       0]
 	m[1:4, 2] = [0,                         2near/(top-bottom),        0,                       0]
 	m[1:4, 3] = [(right+left)/(right-left), (top+bottom)/(top-bottom), (-far-near)/(far-near), -1]
@@ -85,11 +85,11 @@ function perspective(left::Real, right::Real, top::Real, bottom::Real, near::Rea
 	return m
 end
 
-perspective(left::Real, right::Real, top::Real, near::Real, far::Real) = perspective(left, right, top, bottom, near, far, Array(typeof(near), 4, 4))
-perspective(width::Real, height::Real, near::Real, far::Real, m::Matrix) = perspective(-0.5width, 0.5width, -0.5height, 0.5height, near, far, m)
-perspective(width::Real, height::Real, near::Real, far::Real) = perspective(width, height, near, far, Array(typeof(near), 4, 4))
+perspective(left::Real, right::Real, top::Real, near::Real, far::Real) = perspective(Array(typeof(near), 4, 4), left, right, top, bottom, near, far)
+perspective(m::Matrix, width::Real, height::Real, near::Real, far::Real) = perspective(m, -0.5width, 0.5width, -0.5height, 0.5height, near, far)
+perspective(width::Real, height::Real, near::Real, far::Real) = perspective(Array(typeof(near), 4, 4), width, height, near, far)
 
-function ortho(left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real, m::Matrix)
+function ortho(m::Matrix, left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real)
 	m[1:4, 1] = [2/(right-left),             0,                          0,                      0]
 	m[1:4, 2] = [0,                          2/(top-bottom),             0,                      0]
 	m[1:4, 3] = [0,                          0,                          -2/(far-near),          0]
@@ -97,8 +97,8 @@ function ortho(left::Real, right::Real, top::Real, bottom::Real, near::Real, far
 	return m
 end
 
-ortho(left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real) = ortho(left, right, top, bottom, near, far, Array(typeof(near), 4, 4))
-ortho(width::Real, height::Real, near::Real, far::Real, m::Matrix) = ortho(-0.5width, 0.5width, -0.5height, 0.5height, near, far, m)
-ortho(width::Real, height::Real, near::Real, far::Real) = ortho(width, height, near, far, Array(typeof(near), 4, 4))
+ortho(left::Real, right::Real, top::Real, bottom::Real, near::Real, far::Real) = ortho(Array(typeof(near), 4, 4), left, right, top, bottom, near, far)
+ortho(m::Matrix, width::Real, height::Real, near::Real, far::Real) = ortho(m, -0.5width, 0.5width, -0.5height, 0.5height, near, far)
+ortho(width::Real, height::Real, near::Real, far::Real) = ortho(Array(typeof(near), 4, 4), width, height, near, far)
 
 end
