@@ -50,7 +50,7 @@ function gen_vec(sz::(Integer, Integer...))
 			$constr
 		end
 		$vecSym{T}(x::T, rest...) = $vecSym{T}(x, rest...)
-		field_names{T}(::Vec{T, $sz, $(length(sz))}) = $fieldNames
+        field_names{T}(::Vec{T, $sz, $(length(sz))}) = $fieldNames
 		$expo
 	end
 	res
