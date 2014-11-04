@@ -6,28 +6,30 @@ type Shader <: Resource
 	worldTransform::Symbol
 	viewTransform::Symbol
 	projTransform::Symbol
+	id::Symbol
 	
 	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[], :model, :view, :projection)
 end
 
 isvalid(shader::Shader) = shader.program != 0
 
-function init(shader::Shader, vsPath::String, psPath::String)
+function init(shader::Shader, path::String; id::Symbol = symbol(path))
 	local vsSource, psSource
-	open(vsPath) do f
+	open(path * ".vs") do f
 		vsSource = readbytes(f)
 	end
 	
-	open(psPath) do f
+	open(path * ".fs") do f
 		psSource = readbytes(f)
 	end
 	
-	init(shader, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource))
+	init(shader, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), id = id)
 end
 
-function init(shader::Shader, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psLength::Int)
+function init(shader::Shader, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psLength::Int; id::Symbol = :shader)
 	@assert !isvalid(shader)
 	
+	shader.id = id
 	vertexShader = compileshader(VERTEX_SHADER, vs, vsLength)
 	if vertexShader != 0
 		fragmentShader = compileshader(FRAGMENT_SHADER, ps, psLength)

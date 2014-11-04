@@ -1,6 +1,6 @@
 type Renderer
 	camera::Camera
-    resources::Set{Renderable}
+    resources::Dict{Symbol, Resource}
     renderState::RenderStateHolder
     toRender::Vector{Renderable}
     sortFunc::Function
@@ -8,7 +8,7 @@ type Renderer
     clearStencil::Union(Int, Nothing)
     clearDepth::Union(Float64, Nothing)
 
-    Renderer() = new(Camera(), Set{Renderable}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 0.0)
+    Renderer() = new(Camera(), Dict{Symbol, Resource}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 0.0)
 end
 
 global renderer_instance = nothing
@@ -21,19 +21,40 @@ function init(renderer::Renderer)
 end
 
 function done(renderer::Renderer)
-    for r in renderer.resources
+    for r in values(renderer.resources)
         done(r)
     end
     empty!(renderer.resources)
     global renderer_instance = nothing
 end
 
-function add(renderer::Renderer, resource::Resource)
-    push!(renderer.resources, resource)
+function add_resource(renderer::Renderer, resource::Resource)
+    if haskey(renderer.resources, resource.id)
+        resource.id = symbol("$(resource.id)_$(object_id(resource))")
+        @assert !haskey(renderer.resources, resource.id)
+    end
+    renderer.resources[resource.id] = resource
 end
 
-function remove(renderer::Renderer, resource::Resource)
-    pop!(renderer.resources, resource)
+function remove_resource(renderer::Renderer, resource::Resource)
+    delete!(renderer.resources, resource.id)
+end
+
+get_resource(renderer::Renderer, id::Symbol) = get(renderer.resources, id, nothing)
+
+function init_resource{T}(renderer::Renderer, ::Type{T}, params...; id::Symbol = :none)
+    res = T()
+    if id == :none
+        init(res, params...)
+    else
+        init(res, params..., id = id)
+    end
+    add_resource(renderer, res)
+end
+
+function done_resource(renderer::Renderer, resource::Resource)
+    remove_resource(renderer, resource)
+    done(resource)
 end
 
 function add(renderer::Renderer, renderable::Renderable)

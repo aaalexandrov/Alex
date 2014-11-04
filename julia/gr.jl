@@ -7,6 +7,9 @@ abstract AbstractRenderer
 abstract Renderable
 abstract Resource
 
+setid(r::Resource, id::Symbol) = r.id = id
+getid(r::Resource) = r.id
+
 abstract AbstractMesh <: Resource
 abstract AbstractTexture <: Resource
 

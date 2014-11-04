@@ -75,17 +75,19 @@ type Mesh <: AbstractMesh
 	vertices::Vector
 	indices::Vector{Uint16}
 	bound::Shapes.Shape
+	id::Symbol
 
 	Mesh() = new(0, 0, VertexLayout())
 end
 
 isvalid(mesh::Mesh) = mesh.vbo != 0 && mesh.ibo != 0 && isvalid(mesh.layout)
 
-function init{T}(mesh::Mesh, vertices::Vector{T}, indices::Vector{Uint16}, vertex2point::Function = identity)
+function init{T}(mesh::Mesh, vertices::Vector{T}, indices::Vector{Uint16}, vertex2point::Function = identity; id::Symbol = :mesh)
 	@assert !isvalid(mesh)
 	@assert !isempty(vertices)
 	@assert !isempty(indices)
 
+	mesh.id = id
 	buffers = GLuint[0, 0]
 	glGenBuffers(2, buffers)
 

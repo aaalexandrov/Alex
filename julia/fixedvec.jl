@@ -1,8 +1,8 @@
 module FixedVec
 
-import Base: size, getindex, setindex!, similar, dot
+import Base: size, getindex, setindex!, similar, dot, A_mul_B!
 
-export size, getindex, setindex!, similar, dot
+export size, getindex, setindex!, similar, dot, A_mul_B!
 export Vec, VecN
 
 
@@ -95,6 +95,14 @@ dot{T}(u::Vec{T, (1,)}, v::Vec{T, (1,)}) = u.x*v.x
 dot{T}(u::Vec{T, (2,)}, v::Vec{T, (2,)}) = u.x*v.x + u.y*v.y
 dot{T}(u::Vec{T, (3,)}, v::Vec{T, (3,)}) = u.x*v.x + u.y*v.y + u.z*v.z
 dot{T}(u::Vec{T, (4,)}, v::Vec{T, (4,)}) = u.x*v.x + u.y*v.y + u.z*v.z + u.w*v.w
+
+function A_mul_B!{T}(dst::Vec{T, (4,)}, m::Vec{T, (4, 4)}, v::Vec{T, (4,)})
+	dst.x = m.e1_1*v.x + m.e1_2*v.y + m.e1_3*v.z + m.e1_4*v.w
+	dst.y = m.e2_1*v.x + m.e2_2*v.y + m.e2_3*v.z + m.e2_4*v.w
+	dst.z = m.e3_1*v.x + m.e3_2*v.y + m.e3_3*v.z + m.e3_4*v.w
+	dst.w = m.e4_1*v.x + m.e4_2*v.y + m.e4_3*v.z + m.e4_4*v.w
+	dst
+end
 
 
 end

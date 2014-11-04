@@ -1,5 +1,6 @@
 type Texture <: AbstractTexture
 	texture::GLuint
+	id::Symbol
 
 	Texture() = new(0)
 end
@@ -9,9 +10,10 @@ isvalid(tex::Texture) = tex.texture != 0
 import Images
 import FixedPointNumbers: Ufixed8
 
-function init(tex::Texture, texPath::String)
+function init(tex::Texture, texPath::String; id::Symbol = symbol(texPath))
 	@assert !isvalid(tex)
 
+	tex.id = id
 	texture = GLuint[0]
 	glGenTextures(1, texture)
 	tex.texture = texture[1]

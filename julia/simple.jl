@@ -1,8 +1,8 @@
-function reld()
+function reload()
 	GLFW.Terminate()
-    reload("shapes.jl")
-    reload("gr.jl")
-    reload("simple.jl")
+    Base.reload("shapes.jl")
+    Base.reload("gr.jl")
+    Base.reload("simple.jl")
 end
 
 module Simple
@@ -38,14 +38,13 @@ VertPosUV(x, y, z, u, v) = VertPosUV(Vec3(x, y, z), Vec2(u, v))
 
 vert2pos(v) = [v.position.x, v.position.y, v.position.z]
 
-global triangleMesh, simpleShader, gridTexture, triangleMaterial, triangleModel, diskMesh, diskModel
+global triangleMaterial, triangleModel, diskModel
 
-function initMeshes()
+function initMeshes(renderer::GR.Renderer)
 	triangleVert = [VertPosUV(-1, -1, 0, 0, 0), VertPosUV(1, -1, 0, 1, 0), VertPosUV(0, 1, 0, 0.5, 1)]
 	triangleInd = Uint16[0, 1, 2]
 
-	global triangleMesh = GR.Mesh()
-	GR.init(triangleMesh, triangleVert, triangleInd, vert2pos)
+	GR.init_resource(renderer, GR.Mesh, triangleVert, triangleInd, vert2pos, id = :triangle)
 
 	diskInd, diskPoints = Geom.regularpoly(3)
 	diskVerts = Array(VertPosUV, size(diskPoints, 2))
@@ -53,38 +52,24 @@ function initMeshes()
 		p = diskPoints[:, i]
 		diskVerts[i] = VertPosUV(p[1], p[2], p[3], p[1], p[2])
 	end
-	global diskMesh = GR.Mesh()
-	GR.init(diskMesh, diskVerts, diskInd, vert2pos)
+	
+	GR.init_resource(renderer, GR.Mesh, diskVerts, diskInd, vert2pos, id = :disk)	
 end
 
-function doneMeshes()
-	GR.done(diskMesh)
-	global diskMesh = nothing
-	GR.done(triangleMesh)
-	global triangleMesh = nothing
+function initShaders(renderer::GR.Renderer)
+	GR.init_resource(renderer, GR.Shader, "simple")
 end
 
-function initShaders()
-	global simpleShader = GR.Shader()
-	GR.init(simpleShader, "simple.vs", "simple.fs")
+function initTextures(renderer::GR.Renderer)
+	GR.init_resource(renderer, GR.Texture, "data/grid2.png")
 end
 
-function doneShaders()
-	GR.done(simpleShader)
-	global simpleShader = nothing
-end
+function initModels(renderer::GR.Renderer)
+	simpleShader = GR.get_resource(renderer, :simple)
+	gridTexture = GR.get_resource(renderer, symbol("data/grid2.png"))
+	triangleMesh = GR.get_resource(renderer, :triangle)
+	diskMesh = GR.get_resource(renderer, :disk)
 
-function initTextures()
-	global gridTexture = GR.Texture()
-	GR.init(gridTexture, "data/grid2.png")
-end
-
-function doneTextures()
-	GR.done(gridTexture)
-	global gridTexture = nothing
-end
-
-function initModels()
 	global triangleMaterial = GR.Material(simpleShader)
 
 	ident = eye(Float32, 4) # identity matrix 4x4
@@ -115,27 +100,21 @@ function init()
 	GR.init(renderer)
 	GR.set_clear_color(renderer, clearColor)
 
-	initShaders()
-	initTextures()
-	initMeshes()
-	initModels()
+	initShaders(renderer)
+	initTextures(renderer)
+	initMeshes(renderer)
+	initModels(renderer)
 
 	renderer
 end
 
 function done(renderer::GR.Renderer)
 	doneModels()
-	doneMeshes()
-	doneTextures()
-	doneShaders()
 
 	GR.done(renderer)
 end
 
 function render(renderer::GR.Renderer)
-	# GR.render(triangleMesh)
-	# GR.render(triangleModel)
-	# GR.render(diskModel)
 	GR.add(renderer, diskModel)
 
 	GR.render_frame(renderer)
