@@ -1,10 +1,3 @@
-function reload()
-	GLFW.Terminate()
-    Base.reload("shapes.jl")
-    Base.reload("gr.jl")
-    Base.reload("simple.jl")
-end
-
 module Simple
 
 import GLFW
@@ -13,6 +6,18 @@ import OGL
 import GR
 import Geom
 import Math3D
+import SimpleCam
+
+function rld()
+	GLFW.Terminate()
+	Base.reload("math3d.jl")
+	Base.reload("geom.jl")
+    Base.reload("shapes.jl")
+    Base.reload("gr.jl")
+    Base.reload("simplecam.jl")
+    Base.reload("simple.jl")
+end
+
 
 import GR: Vec2, Vec3, Vec4, Matrix4
 
@@ -39,6 +44,7 @@ VertPosUV(x, y, z, u, v) = VertPosUV(Vec3(x, y, z), Vec2(u, v))
 vert2pos(v) = [v.position.x, v.position.y, v.position.z]
 
 global triangleMaterial, triangleModel, diskModel
+global freeCam
 
 function initMeshes(renderer::GR.Renderer)
 	triangleVert = [VertPosUV(-1, -1, 0, 0, 0), VertPosUV(1, -1, 0, 1, 0), VertPosUV(0, 1, 0, 0.5, 1)]
@@ -93,6 +99,15 @@ function doneModels()
 	global diskModel = nothing
 end
 
+function initCamera(renderer::GR.Renderer)
+	global window
+	global freeCam = SimpleCam.FreeCamera(renderer, window, Float32[0.5, 0.5, 0.5], Float32[pi/8, pi/8, pi/8])
+end
+
+function doneCamera()
+	global freeCam = nothing
+end
+
 clearColor = (0f0, 0f0, 1f0, 1f0)
 
 function init()
@@ -104,11 +119,13 @@ function init()
 	initTextures(renderer)
 	initMeshes(renderer)
 	initModels(renderer)
+	initCamera(renderer)
 
 	renderer
 end
 
 function done(renderer::GR.Renderer)
+	doneCamera()
 	doneModels()
 
 	GR.done(renderer)
@@ -120,20 +137,34 @@ function render(renderer::GR.Renderer)
 	GR.render_frame(renderer)
 end
 
-const rotMatrix = Math3D.rotz(eye(Float32, 4), float32(pi / 18000))
+global lastTime = time()
 
 function update()
+	global lastTime
+	timeNow = time()
+	deltaTime = timeNow - lastTime
 	currentModel = GR.gettransform(diskModel)
+	rotMatrix = Math3D.rotz(eye(Float32, 4), float32(deltaTime * pi / 2))
 	newModel = rotMatrix * currentModel
 	GR.settransform(diskModel, newModel)
+	lastTime = timeNow
+end
+
+function process_input()
+	global freeCam
+	SimpleCam.process_input(freeCam)
 end
 
 function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	OGL.glViewport(0, 0, width, height)
 
-	m = Math3D.ortho(2, 2height / width, -1f0, 1)
+	# m = Math3D.ortho(2, 2height / width, -1f0, 1)
+	m = Math3D.persp_horizontal_fov(pi/2, width / height, 0.1f0, 100, leftHanded = true)
+	# m = Math3D.perspective(0.5, 0.5, 0.5f0, 10)
 	# GR.setuniform(triangleMaterial, :projection, m)
-	GR.setproj(GR.getcamera(renderer), m)
+	camera = GR.getcamera(renderer)
+	GR.setproj(camera, m)
+	GR.settransform(camera, Math3D.trans(Float32[0, 0, -1]))
 end
 
 function openWindow()
@@ -161,6 +192,8 @@ function openWindow()
 
 		GLFW.SwapBuffers(window)
 		GLFW.PollEvents()
+
+		process_input()
 
 		yield()
 		frames += 1

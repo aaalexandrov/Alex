@@ -9,11 +9,13 @@ type Camera
 	Camera() = new(eye(Float32, 4), eye(Float32, 4), eye(Float32, 4), Shapes.Convex(Float32, 6), false, true)
 end
 
-function setxform(cam::Camera, xform::Matrix{Float32})
+function settransform(cam::Camera, xform::Matrix{Float32})
 	cam.xform[:,:] = xform
 	cam.viewDirty = true
 	cam.frustumDirty = true
 end
+
+gettransform(cam::Camera) = cam.xform
 
 function getview(cam::Camera)
 	if cam.viewDirty

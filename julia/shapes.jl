@@ -14,7 +14,7 @@ len(x) = sqrt(len2(x))
 lerp(x, y, t) = x + (y-x)*t
 
 function scale3{T}(m::AbstractArray{T, 2})
-	l2 = max(len2(m[1,1], m[2,1], m[3,1]), len2(m[1,2], m[2,2], m[3,2]), len2(m[1,3], m[2,3], m[3,3]))
+	l2 = max(len2(m[1,1], m[1,2], m[1,3]), len2(m[2,1], m[2,2], m[2,3]), len2(m[3,1], m[3,2], m[3,3]))
 	sqrt(l2)
 end
 
