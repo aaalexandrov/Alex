@@ -75,7 +75,10 @@ public:
 		CArray<CNode *> m_arrChildren;
 
 		CNode(CToken *pToken, CRule const *pRule): m_pToken(pToken), m_pRule(pRule) {}
+		CNode(CNode const &kNode): m_pToken(kNode.m_pToken), m_pRule(kNode.m_pRule), m_arrChildren(Max(1, kNode.m_arrChildren.m_iCount)) { AppendChildren(kNode.m_arrChildren); }
 		~CNode() { m_arrChildren.DeleteAll(); }
+
+		void AppendChildren(CArray<CNode *> const &kChildren);
 	};
 
 public:

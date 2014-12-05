@@ -68,54 +68,46 @@ CBNFParser::CRule *CBNFParser::CNonTerminal::AddChild(CRule const *pChild)
 
 bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
 {
-	CNode *pNode;
-	if (m_bOutput) {
-		pNode = new CNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
-		kParent.m_arrChildren.Append(pNode);
-	} else
-		pNode = &kParent;
+	CNode kNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
+	CList<CToken *>::TNode *pNewFirstToken = pFirstToken;
 
-  CList<CToken *>::TNode *pPrevFirstToken = pFirstToken;
-	int iPrevParsedCount = pNode->m_arrChildren.m_iCount;
-	int i;
-	for (i = 0; i < MAX_CHILD_RULES && m_pChildren[i]; ++i) {
-		if (m_pChildren[i]->Match(pFirstToken, *pNode)) {
-			if (m_eSequence == S_Alternative)
-				break;
-		} else {
-			if (m_eSequence == S_Sequence) {
-				while (pNode->m_arrChildren.m_iCount > iPrevParsedCount) {
-					delete pNode->m_arrChildren.Last();
-					--pNode->m_arrChildren.m_iCount;
-				}
+	bool bMatchFound;
+	if (m_eSequence == S_Alternative) {
+		bMatchFound = false;
+		for (int i = 0; i < MAX_CHILD_RULES && m_pChildren[i]; ++i)
+			if (m_pChildren[i]->Match(pNewFirstToken, kNode)) {
+				bMatchFound = true;
 				break;
 			}
-		}
-	}
-	bool bMatchFound = i < MAX_CHILD_RULES && m_pChildren[i];
-	if (m_eSequence == S_Sequence)
-		bMatchFound = !bMatchFound;
-	if (!bMatchFound)	{
-		pFirstToken = pPrevFirstToken;
-		ASSERT(pNode->m_arrChildren.m_iCount == iPrevParsedCount);
+	} else {
+		bMatchFound = true;
+		for (int i = 0; i < MAX_CHILD_RULES && m_pChildren[i]; ++i)
+			if (!m_pChildren[i]->Match(pNewFirstToken, kNode)) {
+				bMatchFound = false;
+				break;
+			}
 	}
 
-  if (pNode != &kParent) {
-		if (!bMatchFound) {
-			ASSERT(kParent.m_arrChildren.Last() == pNode && !pNode->m_arrChildren.m_iCount);
-			delete pNode;
-			--kParent.m_arrChildren.m_iCount;
-		} else {
-      if (!m_bAllowRenaming && pNode->m_arrChildren.m_iCount == 1) {
-  			ASSERT(kParent.m_arrChildren.Last() == pNode);
-				kParent.m_arrChildren.Last() = pNode->m_arrChildren[0];
-				pNode->m_arrChildren.SetCount(0);
-				delete pNode;
-			}
-		}
+	if (bMatchFound) {
+		if (m_bOutput && (m_bAllowRenaming || kNode.m_arrChildren.m_iCount != 1)) {
+			CNode* pNode = new CNode(kNode);
+			kParent.m_arrChildren.Append(pNode);
+		} else 
+			kParent.AppendChildren(kNode.m_arrChildren);
+		// Remove child nodes from temporary node so they don't get destroyed
+		kNode.m_arrChildren.SetCount(0);
+		pFirstToken = pNewFirstToken;
 	}
 
 	return bMatchFound;
+}
+
+// CBNFParser::CNode ----------------------------------------------------------
+
+void CBNFParser::CNode::AppendChildren(CArray<CNode *> const &kChildren)
+{
+	for (int i = 0; i < kChildren.m_iCount; ++i)
+		m_arrChildren.Append(kChildren[i]);
 }
 
 // CBNFParser -----------------------------------------------------------------
