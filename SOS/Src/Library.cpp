@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Library.h"
 #include "Interpreter.h"
+#include "Compiler.h"
 
 EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
 {
@@ -11,7 +12,7 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tostring").GetHeader()), CValue(ToString));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
 
-  CStrAny s(ST_CONST, "print");
+	kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "compile").GetHeader()), CValue(Compile));
 
   return IERR_OK;
 }
@@ -96,4 +97,34 @@ EInterpretError CFunctionLibrary::ToNumber(CExecution &kExecution, CArray<CValue
       arrParams[i].ClearValue();
   }
   return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::Compile(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+	if (arrParams.m_iCount < 1 || arrParams[0].m_btType != CValue::VT_STRING) {
+		arrParams.SetCount(0);
+		return IERR_OK;
+	}
+	CStrAny sCode(arrParams[0].m_pStrValue);
+	bool bDumpGrammar = arrParams.m_iCount >=2 && arrParams[1].GetBool();
+
+  CCompileChain kChain;
+  EInterpretError err = kChain.Compile(kExecution.m_pInterpreter, sCode);
+	if (err == IERR_OK) {
+		if (bDumpGrammar)
+			kChain.m_kGrammar.Dump();
+		arrParams.SetCount(1);
+		arrParams[0] = CValue(kChain.m_kCompiler.m_pCode);
+	} else {
+		if (bDumpGrammar)
+			fprintf(stdout, "Compile error: %s\n", g_IERR2Str.GetStr(err).m_pBuf);
+		arrParams.SetCount(0);
+	}
+
+	return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::Eval(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+	return IERR_OK;
 }
