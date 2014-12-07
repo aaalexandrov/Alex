@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />
+    <None Include="C:\Alex\SOS\Src\test.sos" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Base">

@@ -18,6 +18,7 @@ public:
 
 	static EInterpretError Compile(CExecution &kExecution, CArray<CValue> &arrParams);
 	static EInterpretError Eval(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError EvalFile(CExecution &kExecution, CArray<CValue> &arrParams);
 };
 
 #endif

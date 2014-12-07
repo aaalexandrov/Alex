@@ -2,6 +2,7 @@
 #include "Library.h"
 #include "Interpreter.h"
 #include "Compiler.h"
+#include "File.h"
 
 EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
 {
@@ -13,6 +14,8 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
 
 	kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "compile").GetHeader()), CValue(Compile));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "eval").GetHeader()), CValue(Eval));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "evalfile").GetHeader()), CValue(EvalFile));
 
   return IERR_OK;
 }
@@ -126,5 +129,43 @@ EInterpretError CFunctionLibrary::Compile(CExecution &kExecution, CArray<CValue>
 
 EInterpretError CFunctionLibrary::Eval(CExecution &kExecution, CArray<CValue> &arrParams)
 {
-	return IERR_OK;
+  EInterpretError err = IERR_OPERAND_TYPE;
+  if (arrParams.m_iCount >= 1 && arrParams[0].m_btType == CValue::VT_STRING) {
+    CStrAny sCode(arrParams[0].m_pStrValue);
+    CCompileChain kChain;
+    err = kChain.Compile(kExecution.m_pInterpreter, sCode);
+	  if (err == IERR_OK) {
+      arrParams.SetCount(0);
+      err = kExecution.m_pInterpreter->Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
+    }
+  }
+
+	return err;
+}
+
+EInterpretError CFunctionLibrary::EvalFile(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  EInterpretError err = IERR_OPERAND_TYPE;
+  if (arrParams.m_iCount >= 1 && arrParams[0].m_btType == CValue::VT_STRING) {
+    CStrAny sFile(arrParams[0].m_pStrValue);
+    CFile *pFile = CFileSystem::Get()->OpenFile(sFile, CFile::FOF_READ);
+    if (pFile) {
+      int iSize = (int) pFile->GetSize();
+      char *pBuf = new char[iSize];
+      CFile::ERRCODE errFile = pFile->Read(pBuf, iSize);
+      delete pFile;
+      if (!errFile) {
+        CStrAny sCode(ST_PART, pBuf, iSize);
+        CCompileChain kChain;
+        err = kChain.Compile(kExecution.m_pInterpreter, sCode);
+	      if (err == IERR_OK) {
+          arrParams.SetCount(0);
+          err = kExecution.m_pInterpreter->Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
+        }
+      }
+      delete pBuf;
+    }
+  }
+
+	return err;
 }

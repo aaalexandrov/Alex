@@ -170,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />
+    <None Include="C:\Alex\SOS\Src\test.sos" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
