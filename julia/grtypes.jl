@@ -1,7 +1,7 @@
 immutable Vec2
 	x::Float32
 	y::Float32
-	
+
 	Vec2() = new()
 	Vec2(x, y) = new(x, y)
 end
@@ -10,7 +10,7 @@ immutable Vec3
 	x::Float32
 	y::Float32
 	z::Float32
-	
+
 	Vec3() = new()
 	Vec3(x, y, z) = new(x, y, z)
 end
@@ -39,7 +39,7 @@ immutable Matrix4 <: AbstractImmutableMatrix
 	c2::MatrixColumn4
 	c3::MatrixColumn4
 	c4::MatrixColumn4
-	
+
 	Matrix4() = new()
 end
 
@@ -55,12 +55,29 @@ end
 
 get_sampler_type{GLTYPE}(::Type{SamplerType{GLTYPE}}) = GLTYPE
 
-const gl2jlTypes = 
-	(Uint16 => DataType)[FLOAT => Float32, FLOAT_VEC2 => Vec2, FLOAT_VEC3 => Vec3, FLOAT_VEC4 => Vec4, FLOAT_MAT4 => Matrix4, SAMPLER_2D => SamplerType{int64(SAMPLER_2D)}]
+const gl2jlTypes =
+	Dict{Uint16, DataType}([
+		(FLOAT, Float32),
+		(FLOAT_VEC2, Vec2),
+		(FLOAT_VEC3, Vec3),
+		(FLOAT_VEC4, Vec4),
+		(FLOAT_MAT4, Matrix4),
+		(SAMPLER_2D, SamplerType{int64(SAMPLER_2D)})
+	])
 
 gl2jltype(glType::Integer) = gl2jlTypes[glType]
 
-const jl2glTypes = 
-	(DataType => Uint16)[Float32 => FLOAT, Float64 => DOUBLE, Float16 => HALF_FLOAT, Uint16 => UNSIGNED_SHORT, Int16 => SHORT, Uint8 => UNSIGNED_BYTE, Int8 => BYTE, Uint32 => UNSIGNED_INT, Int32 => INT]
+const jl2glTypes =
+	Dict{DataType, Uint16}([
+		(Float32, FLOAT),
+		(Float64, DOUBLE),
+		(Float16, HALF_FLOAT),
+		(Uint16, UNSIGNED_SHORT),
+		(Int16, SHORT),
+		(Uint8, UNSIGNED_BYTE),
+		(Int8, BYTE),
+		(Uint32, UNSIGNED_INT),
+		(Int32, INT)
+	])
 
 jl2gltype(jlType::DataType) = jl2glTypes[jlType]

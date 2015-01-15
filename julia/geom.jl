@@ -85,7 +85,7 @@ function facenormals(indices::Vector{Uint16}, points::Matrix{Float32})
 	normals = similar(pts)
 	ind = similar(indices)
 	iPt = 1
-	emitted = ((Uint16, Uint16) => Uint16)[]
+	emitted = Dict{(Uint16, Uint16), Uint16}()
 	const minCos = cos(pi/180)
 	for i = 1:length(indices)
 		index = indices[i] + 1

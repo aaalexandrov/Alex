@@ -114,7 +114,7 @@ function init()
 	renderer = GR.Renderer()
 	GR.init(renderer)
 	GR.set_clear_color(renderer, clearColor)
-
+	
 	initShaders(renderer)
 	initTextures(renderer)
 	initMeshes(renderer)
@@ -179,7 +179,7 @@ function openWindow()
 	OGL.updateGL()
 
 	renderer = init()
-
+	
 	setViewport(renderer, GLFW.GetFramebufferSize(window)...)
 	GLFW.SetFramebufferSizeCallback(window, (win::GLFW.Window, width::Cint, height::Cint) -> setViewport(renderer, width, height))
 

@@ -22,7 +22,6 @@ function init(shader::Shader, path::String; id::Symbol = symbol(path))
 	open(path * ".fs") do f
 		psSource = readbytes(f)
 	end
-	
 	init(shader, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), id = id)
 end
 
@@ -53,7 +52,7 @@ function init(shader::Shader, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psL
 		end
 		glDeleteShader(vertexShader)
 	end
-	
+
 	if isvalid(shader)
 		initblocks(shader)
 		inituniforms(shader)
@@ -178,7 +177,6 @@ function inituniforms(shader::Shader)
 
 	# set program so we can set sampler uniforms
 	glUseProgram(shader.program)
-	
 	for i in 1:count
 		glGetActiveUniformName(shader.program, uniformIndices[i], length(nameBuf), C_NULL, nameBuf)
 		@assert glGetError() == NO_ERROR
@@ -191,7 +189,6 @@ function inituniforms(shader::Shader)
 						 uniformArrayStrides[i],
 						 uniformMatrixStrides[i],
 						 get_block_id(shader, uniformBlockIndices[i]))
-							  
 		shader.uniforms[var.name] = var
 		
 		if var.varType <: SamplerType

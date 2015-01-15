@@ -60,10 +60,10 @@ type UniformVar
 	name::Symbol
 	varType::DataType
 	index::GLint
-	offset::Uint32
-	arraySize::Uint32
-	arrayStride::Uint32
-	matrixStride::Uint32
+	offset::Int32
+	arraySize::Int32
+	arrayStride::Int32
+	matrixStride::Int32
 	blockId::Int32
 end
 
