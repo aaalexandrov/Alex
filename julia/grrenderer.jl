@@ -84,7 +84,7 @@ function render_frame(renderer::Renderer)
     empty!(renderer.toRender)
 end
 
-function apply(holder::RenderStateHolder, renderer::Renderer) 
+function apply(holder::RenderStateHolder, renderer::Renderer)
     for state in values(holder.states)
         set_and_apply(renderer.renderState, state)
     end

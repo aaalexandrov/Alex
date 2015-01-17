@@ -118,7 +118,7 @@ function getpoint{T}(p::Plane{T})
 end
 
 # multiply plane by inverse transpose of matrix
-function transform{T}(pDest::Plane{T}, m::Matrix{T}, p::Plane{T}) 
+function transform{T}(pDest::Plane{T}, m::Matrix{T}, p::Plane{T})
 	m_it = transpose(inv(m))
 	transform_p4(pDest.p, m_it, p.p)
 	nothing

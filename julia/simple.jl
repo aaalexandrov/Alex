@@ -52,18 +52,18 @@ function initMeshes(renderer::GR.Renderer)
 
 	GR.init_resource(renderer, GR.Mesh, triangleVert, triangleInd, vert2pos, id = :triangle)
 
-	diskInd, diskPoints = Geom.regularpoly(3)
+	diskInd, diskPoints = Geom.regularpoly(5)
 	diskVerts = Array(VertPosUV, size(diskPoints, 2))
 	for i in 1:length(diskVerts)
 		p = diskPoints[:, i]
 		diskVerts[i] = VertPosUV(p[1], p[2], p[3], p[1], p[2])
 	end
-	
-	GR.init_resource(renderer, GR.Mesh, diskVerts, diskInd, vert2pos, id = :disk)	
+
+	GR.init_resource(renderer, GR.Mesh, diskVerts, diskInd, vert2pos, id = :disk)
 end
 
 function initShaders(renderer::GR.Renderer)
-	GR.init_resource(renderer, GR.Shader, "simple")
+	GR.init_resource(renderer, GR.Shader, "data/simple")
 end
 
 function initTextures(renderer::GR.Renderer)
@@ -71,7 +71,7 @@ function initTextures(renderer::GR.Renderer)
 end
 
 function initModels(renderer::GR.Renderer)
-	simpleShader = GR.get_resource(renderer, :simple)
+	simpleShader = GR.get_resource(renderer, symbol("data/simple"))
 	gridTexture = GR.get_resource(renderer, symbol("data/grid2.png"))
 	triangleMesh = GR.get_resource(renderer, :triangle)
 	diskMesh = GR.get_resource(renderer, :disk)
@@ -114,7 +114,7 @@ function init()
 	renderer = GR.Renderer()
 	GR.init(renderer)
 	GR.set_clear_color(renderer, clearColor)
-	
+
 	initShaders(renderer)
 	initTextures(renderer)
 	initMeshes(renderer)
@@ -179,7 +179,7 @@ function openWindow()
 	OGL.updateGL()
 
 	renderer = init()
-	
+
 	setViewport(renderer, GLFW.GetFramebufferSize(window)...)
 	GLFW.SetFramebufferSizeCallback(window, (win::GLFW.Window, width::Cint, height::Cint) -> setViewport(renderer, width, height))
 

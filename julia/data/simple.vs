@@ -15,6 +15,5 @@ uniform PerInstance
 void main()
 {
 	fragTexCoord = texCoord;
-	
     gl_Position = projection * view * model * vert;
 }

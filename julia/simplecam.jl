@@ -40,4 +40,3 @@ function process_input(cam::FreeCamera)
 end
 
 end
-

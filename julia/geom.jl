@@ -71,7 +71,7 @@ function smoothnormals(indices::Vector{Uint16}, points::Matrix{Float32})
 		for ni in unique(nIndices)
 			n += triNormals[:, ni]
 		end
-		
+
 		normals[:, v] = normalize(n)
 	end
 	return indices, points, normals
@@ -115,10 +115,10 @@ function meshcat(meshes::(Vector{Uint16}, Matrix{Float32}, Matrix{Float32})...)
 	nextPt = 1
 	for m in meshes
 		ind, pts, norm = m
-		
+
 		indices[nextInd:nextInd+length(ind)-1] = [i + nextPt - 1 for i in ind]
 		nextInd += length(ind)
-		
+
 		points[:, nextPt:nextPt+size(pts, 2)-1] = pts
 		normals[:, nextPt:nextPt+size(pts, 2)-1] = norm
 		nextPt += size(pts, 2)
@@ -134,12 +134,12 @@ function regularpoly(sides::Int, z::Float32 = 0f0)
 		c = cos(ang)
 		points[:, i] = [cos(ang), sin(ang), z]
 	end
-	
+
 	indices = Array(Uint16, (sides - 2) * 3)
 	for i in 0:sides-3
 		indices[3i+1:3i+3] = [0, i+1, i+2]
 	end
-	
+
 	return indices, points
 end
 
@@ -152,11 +152,11 @@ function prism(sides::Int, zMin::Float32 = -1f0, zMax::Float32 = 1f0; smooth::Bo
 
 	sideInd = Array(Uint16, 6sides)
 	sidePoints = Array(Float32, 3, 2sides)
-	
+
 	for i in 1:sides
 		sidePoints[:, 2(i-1)+1] = minPoints[:, i]
 		sidePoints[:, 2(i-1)+2] = maxPoints[:, i]
-		
+
 		nextInd = i % sides + 1
 		sideInd[6(i-1)+1 : 6(i-1)+6] = [2(i-1), 2(nextInd-1), 2(nextInd-1)+1, 2(i-1), 2(nextInd-1)+1, 2(i-1)+1]
 	end
@@ -165,7 +165,7 @@ function prism(sides::Int, zMin::Float32 = -1f0, zMax::Float32 = 1f0; smooth::Bo
 	minMesh = normFunc(minInd, minPoints)
 	maxMesh = normFunc(maxInd, maxPoints)
 	sideMesh = normFunc(sideInd, sidePoints)
-	
+
 	return meshcat(minMesh, maxMesh, sideMesh)
 end
 
@@ -180,27 +180,27 @@ function pyramid(sides::Int, zMin::Float32 = 0f0, zMax::Float32 = 1f0; smooth::B
 	for i = 1:sides
 		sidePoints[:, 2(i-1)+1] = minPoints[:, i]
 		sidePoints[:, 2(i-1)+2] = apex
-		
+
 		nextInd = i % sides + 1
 		sideInd[3(i-1)+1:3(i-1)+3] = [2(i-1), 2(nextInd-1), 2(i-1)+1]
 	end
-	
+
 	normFunc = smooth ? smoothnormals : facenormals
 	minMesh = normFunc(minInd, minPoints)
 	sideMesh = normFunc(sideInd, sidePoints)
-	
+
 	return meshcat(minMesh, sideMesh)
 end
 
 function sphere(segments::Int, rh::Float32 = 1f0, rv::Float32 = 1f0; smooth::Bool = true)
 	vsegments = div(segments, 2) - 1
-	
+
 	ind = Array(Uint16, 6segments*vsegments)
 	points = Array(Float32, 3, segments * vsegments + 2)
 	ptsCount = size(points, 2)
 	points[:, end] = Float32[0, 0, rv]
 	points[:, end-1] = Float32[0, 0, -rv]
-	
+
 	nextInd = 1
 	for x = 0:segments-1
 		nextX = (x+1) % segments
@@ -215,17 +215,17 @@ function sphere(segments::Int, rh::Float32 = 1f0, rv::Float32 = 1f0; smooth::Boo
 			cosV = cos(angV)
 			points[:, 1+baseX+y] = Float32[rh*sinV*cosH, rh*sinV*sinH, rv*cosV]
 		end
-		
+
 		for y = 1:vsegments-1
-			ind[nextInd:nextInd+5] = [baseX+y, nextBaseX+y, nextBaseX+y-1, baseX+y, nextBaseX+y-1, baseX+y-1] 
+			ind[nextInd:nextInd+5] = [baseX+y, nextBaseX+y, nextBaseX+y-1, baseX+y, nextBaseX+y-1, baseX+y-1]
 			nextInd += 6
 		end
-		
+
 		ind[nextInd:nextInd+5] = [baseX, nextBaseX, ptsCount-1, nextBaseX+vsegments-1, baseX+vsegments-1, ptsCount-2]
 		nextInd += 6
 	end
 	@assert nextInd == length(ind) + 1
-	
+
 	normFunc = smooth ? smoothnormals : facenormals
 	return normFunc(ind, points)
 end

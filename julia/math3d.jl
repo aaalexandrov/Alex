@@ -3,19 +3,19 @@ module Math3D
 export normalize, normalize!, orthogonalize, orthogonalize!
 export rotx, roty, rotz, rot, trans, perspective, ortho
 
-function normalize(v::Vector) 
+function normalize(v::Vector)
 	l2 = sumabs2(v)
 	l2 < eps() ? v : v / sqrt(l2)
 end
 
-function normalize!(v::Vector) 
+function normalize!(v::Vector)
 	l2 = sumabs2(v)
-	if l < eps()
+	if l2 < eps()
 		v
 	else
-		v /= sqrt(sumabs2(v))
+		v /= sqrt(l2)
 	end
-end	
+end
 
 function orthogonalize(v::Vector, n::Vector)
 	nUnit = normalize(n)
@@ -103,7 +103,7 @@ function rot(m::Matrix, axis::Vector, angle::Real)
 	m[3,1] = uz*ux*(1-c)-uy*s
 
 	m[1,2] = ux*uy*(1-c)-uz*s
-	m[2,2] = c+uy*uy*(1-c) 
+	m[2,2] = c+uy*uy*(1-c)
 	m[3,2] = uz*uy*(1-c)+ux*s
 
 	m[1,3] = ux*uz*(1-c)+uy*s

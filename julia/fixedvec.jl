@@ -60,10 +60,8 @@ for n = 1:4
 	eval(gen_vec((n,)))
 end
 
-for c=1:4
-	for r=1:4
-		eval(gen_vec((r, c)))
-	end
+for c=1:4, r=1:4
+	eval(gen_vec((r, c)))
 end
 
 VecN{T}(::Type{T}, sz::(Integer, Integer...)) = subtypes(Vec{T, sz, length(sz)})[1]()
