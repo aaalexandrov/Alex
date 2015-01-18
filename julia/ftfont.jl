@@ -233,6 +233,7 @@ function loadfont(faceName::String; sizeX = 32, sizeY = 32, faceIndex = 0, chars
     return font
 end
 
+# tests, to be removed / split from here
 import Images
 
 function testdraw(canvas, pos, bmp, box)
