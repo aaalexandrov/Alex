@@ -15,47 +15,102 @@ type Font
     style::String
     size::Vec2{Float32}
     lineDistance::Float32
+    ascent::Float32
+    descent::Float32
     glyphs::Dict{Char, Glyph}
     kerning::Dict{(Char, Char), Vec2{Float32}}
     bitmap::Array{Uint8, 2}
 
-    Font(family, style, charWidth, charHeight, lineDistance, bmpWidth, bmpHeight) =
-        new(family, style, Vec2{Float32}(charWidth, charHeight), lineDistance, Dict{Char, Glyph}(), Dict{(Char, Char), Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
+    Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, bmpWidth, bmpHeight) =
+        new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{(Char, Char), Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
 end
 
-function addglyph(font::Font, char::Char, bmp::Array{Uint8, 2}, origin::Vec2{Float32}, advance::Vec2{Float32}, x, y, charHeight)
-    @assert size(bmp, 2) < charHeight
-    if x + size(bmp, 1) > size(font.bitmap, 1)
-        x = 1
-        y += charHeight
+Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, maxCharWidth, maxCharHeight, charCount) =
+    Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, font_bitmap_size(maxCharWidth + 1, maxCharHeight + 1, charCount)...)
+
+function font_bitmap_size(charWidth, charHeight, charCount)
+    totalPixels = charWidth * charHeight * charCount
+    width = ceil(sqrt(totalPixels) / charWidth) * charWidth
+    height = ceil((totalPixels / width) / charHeight) * charHeight
+
+    @assert (width / charWidth) * (height / charHeight) >= charCount
+
+    return int(width), int(height)
+end
+
+type GlyphPosition
+    x::Int
+    y::Int
+    yMax::Int
+
+    GlyphPosition() = new(1, 1, 1)
+end
+
+function addglyph(font::Font, char::Char, bmp::Array{Uint8, 2}, origin::Vec2{Float32}, advance::Vec2{Float32}, pos::GlyphPosition)
+    @assert size(bmp, 1) < size(font.bitmap, 1)
+    @assert size(bmp, 2) < size(font.bitmap, 2)
+    if pos.x + size(bmp, 1) > size(font.bitmap, 1)
+        pos.x = 1
+        pos.y = pos.yMax + 2
     end
-    @assert x <= size(font.bitmap, 1)
-    @assert y <= size(font.bitmap, 2)
+    @assert pos.x <= size(font.bitmap, 1)
+    @assert pos.y <= size(font.bitmap, 2)
 
-    xmax = x + size(bmp, 1) - 1
-    ymax = y + size(bmp, 2) - 1
-    glyph = Glyph(char, rect(Int, x, y, xmax, ymax), origin, advance)
-    font.glyphs[char] = glyph
+    xmax = pos.x + size(bmp, 1) - 1
+    ymax = pos.y + size(bmp, 2) - 1
 
-    font.bitmap[x:xmax, y:ymax] = bmp
-    x = xmax + 2
+    font.glyphs[char] = Glyph(char, rect(Int, pos.x, pos.y, xmax, ymax), origin, advance)
+    font.bitmap[pos.x:xmax, pos.y:ymax] = bmp
 
-    return x, y
+    pos.x = xmax + 2
+    pos.yMax = max(pos.yMax, ymax)
 end
 
 function addkerning(font::Font, c1::Char, c2::Char, distance::Vec2{Float32})
     @assert haskey(font.glyphs, c1) && haskey(font.glyphs, c2)
+    @assert !haskey(font.kerning, (c1, c2))
     font.kerning[(c1, c2)] = distance
 end
 
 function adding_done(font::Font)
+    # maybe calculate the real ascent and descent from the glyph data as well, since the FreeType data can be off
     corner = one(Vec2{Int})
     for g in values(font.glyphs)
         corner = max(corner, g.box.max)
     end
     corner += one(Vec2{Int})
-    if corner.x < size(font.bitmap, 1) || corner.size(font.bitmap, 2)
+    if corner.x < size(font.bitmap, 1) || corner.y < size(font.bitmap, 2)
         font.bitmap = font.bitmap[1:corner.x, 1:corner.y]
+    end
+end
+
+type TextCursor
+    pos::Vec2{Float32}
+    lastChar::Char
+
+    TextCursor(x, y) = new(Vec2{Float32}(x, y), 0)
+end
+
+function setpos(cursor::TextCursor, x, y)
+    if x != cursor.pos.x || y != cursor.pos.y
+        # we reset the last drawn character when we move the cursor so kerning only takes place when we draw continuous text
+        cursor.pos = Vec2{Float32}(x, y)
+        cursor.lastChar = 0
+    end
+end
+
+function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::String)
+    for c in s
+        glyph = font.glyphs[c]
+        if cursor.lastChar != 0
+            pair = (cursor.lastChar, c)
+            if haskey(font.kerning, pair)
+                cursor.pos += font.kerning[pair]
+            end
+        end
+        drawRect(cursor.pos - glyph.origin, font.bitmap, glyph.box)
+        cursor.pos += glyph.advance
+        cursor.lastChar = c
     end
 end
 
@@ -88,16 +143,6 @@ function max_glyph_size(face::FT_Face, faceRec::FreeType.FT_FaceRec, chars)
     return width, height
 end
 
-function font_bitmap_size(charWidth, charHeight, charCount)
-    totalPixels = charWidth * charHeight * charCount
-    width = ceil(sqrt(totalPixels) / charWidth) * charWidth
-    height = ceil((totalPixels / width) / charHeight) * charHeight
-
-    @assert (width / charWidth) * (height / charHeight) >= charCount
-
-    return int(width), int(height)
-end
-
 function glyph_bitmap(bmpRec::FreeType.FT_Bitmap)
     @assert bmpRec.pixel_mode == FreeType.FT_PIXEL_MODE_GRAY
     bmp = Array(Uint8, bmpRec.width, bmpRec.rows)
@@ -125,7 +170,7 @@ function get_kerning(face::FT_Face, c1::Char, c2::Char, divisor::Float32)
     return Vec2{Float32}(kernVec[1].x / divisor, kernVec[1].y / divisor)
 end
 
-function loadfont(faceName::String; cellWidth = 32, cellHeight = 32, faceIndex = 0, chars = '\u0000':'\u00ff', kerning::Bool = true)
+function loadfont(faceName::String; sizeX = 32, sizeY = 32, faceIndex = 0, chars = '\u0000':'\u00ff')
     face = (FT_Face)[C_NULL]
     err = FT_New_Face(ftLib[1], faceName, int32(faceIndex), face)
     if err != 0
@@ -133,33 +178,28 @@ function loadfont(faceName::String; cellWidth = 32, cellHeight = 32, faceIndex =
         return nothing
     end
 
-    err = FT_Set_Pixel_Sizes(face[1], uint32(cellWidth), uint32(cellHeight))
+    err = FT_Set_Pixel_Sizes(face[1], uint32(sizeX), uint32(sizeY))
     font = nothing
     if err != 0
         info("Couldn't set the pixel size for font $faceName with error $err")
     else
         faceRec = unsafe_load(face[1])
 
-        charWidth, charHeight = max_glyph_size(face[1], faceRec, chars)
+        maxCharWidth, maxCharHeight = max_glyph_size(face[1], faceRec, chars)
 
-        # add a single pixel boundary between character boxes in the bitmap so it can be used for rendering without further processing
-        charWidth += 1
-        charHeight += 1
-
-        bmpWidth, bmpHeight = font_bitmap_size(charWidth, charHeight, length(chars))
-
-        lineDist = round(float32(faceRec.height) / faceRec.units_per_EM * cellHeight)
+        emScale = float32(sizeY) / faceRec.units_per_EM
+        lineDist = round(faceRec.height * emScale)
+        ascent = round(faceRec.ascender * emScale)
+        descent = round(faceRec.descender * emScale)
 
         font = Font(bytestring(faceRec.family_name),
                     bytestring(faceRec.style_name),
-                    cellWidth,
-                    cellHeight,
-                    lineDist,
-                    bmpWidth,
-                    bmpHeight)
+                    sizeX, sizeY,
+                    lineDist, ascent, descent,
+                    maxCharWidth, maxCharHeight, length(chars))
 
         # load glyphs
-        x, y = 1, 1
+        charPos = GlyphPosition()
         for c in chars
             err = FT_Load_Char(face[1], c, FT_LOAD_RENDER)
             @assert err == 0
@@ -167,10 +207,10 @@ function loadfont(faceName::String; cellWidth = 32, cellHeight = 32, faceIndex =
             @assert glyphRec.format == FreeType.FT_GLYPH_FORMAT_BITMAP
             glyphBmp = glyph_bitmap(glyphRec.bitmap)
 
-            x, y = addglyph(font, c, glyphBmp,
-                            Vec2{Float32}(glyphRec.bitmap_left, glyphRec.bitmap_top),
-                            Vec2{Float32}(glyphRec.advance.x / 64f0, glyphRec.advance.y / 64f0),
-                            x, y, charHeight)
+            addglyph(font, c, glyphBmp,
+                     Vec2{Float32}(-glyphRec.bitmap_left, glyphRec.bitmap_top),
+                     Vec2{Float32}(glyphRec.advance.x / 64f0, glyphRec.advance.y / 64f0),
+                     charPos)
         end
 
         # query kerning info
@@ -189,10 +229,17 @@ function loadfont(faceName::String; cellWidth = 32, cellHeight = 32, faceIndex =
     end
 
     err = FT_Done_Face(face[1])
+    @assert err == 0
     return font
 end
 
 import Images
+
+function testdraw(canvas, pos, bmp, box)
+    dst = Vec2{Int}(pos.x, pos.y)
+    dstMax = dst + size(box)
+    canvas[dst.x:dstMax.x, dst.y:dstMax.y] += bmp[box.min.x:box.max.x, box.min.y:box.max.y]
+end
 
 global font
 function test()
@@ -202,6 +249,15 @@ function test()
     Images.imwrite(Images.grayim(font.bitmap), "font.png")
 
     FTFont.done()
+
+    canvas = zeros(Uint8, 1024, 256)
+    cursor = TextCursor(font.size.x, font.lineDistance)
+    drawFunc = (pos, bmp, box)->testdraw(canvas, pos, bmp, box)
+    drawtext(drawFunc, font, cursor, "The quick brown fox jumps over the lazy dog!")
+    setpos(cursor, font.size.x, 2font.lineDistance)
+    drawtext(drawFunc, font, cursor, "Aveline F")
+    drawtext(drawFunc, font, cursor, ".") # if the font supports kerning, the '.' should be moved closer to the 'F' at the end of the previous drawtext()
+    Images.imwrite(Images.grayim(canvas), "fox.png")
 end
 
 end
