@@ -122,9 +122,8 @@ function textbox(font::Font, cursor::TextCursor, s::String)
     tempCursor = TextCursor(cursor)
     boxMax = rect(Float32)
     drawtext(font, tempCursor, s) do pos, bmp, box
-        posMax = Vec2{Float32}(pos.x + box.max.x - box.min.x, pos.y + box.max.y - box.min.y)
         boxMax.min = min(boxMax.min, pos)
-        boxMax.max = max(boxMax.max, posMax)
+        boxMax.max = max(boxMax.max, pos + size(box))
     end
     return boxMax
 end
@@ -286,7 +285,7 @@ function test()
     canvas[box.min.x:box.max.x, box.max.y] = 255
     canvas[box.min.x, box.min.y:box.max.y] = 255
     canvas[box.max.x, box.min.y:box.max.y] = 255
-    
+
     Images.imwrite(Images.grayim(canvas), "fox.png")
 end
 

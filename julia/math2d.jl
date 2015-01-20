@@ -11,9 +11,9 @@ immutable Vec2{T}
 end
 
 size{T}(::Type{Vec2{T}}) = (2,)
-size{T}(::Vec2{T}) = size(Vec2{T})
+size(v::Vec2) = size(typeof(v))
 eltype{T}(::Type{Vec2{T}}) = T
-eltype{T}(::Vec2{T}) = eltype(Vec2{T})
+eltype(v::Vec2) = eltype(typeof(v))
 
 dot(v1::Vec2, v2::Vec2) = v1.x*v2.x + v1.y*v2.y
 
@@ -28,24 +28,26 @@ end
 orthogonal(v::Vec2) = Vec2(v.y, -v.x)
 
 zero{T}(::Type{Vec2{T}}) = Vec2(zero(T), zero(T))
-zero{T}(::Vec2{T}) = Vec2(zero(T), zero(T))
+zero(v::Vec2) = zero(typeof(v))
 one{T}(::Type{Vec2{T}}) = Vec2(one(T), one(T))
-one{T}(::Vec2{T}) = Vec2(one(T), one(T))
+one(v::Vec2) = one(typeof(v))
 typemin{T}(::Type{Vec2{T}}) = Vec2(typemin(T), typemin(T))
+typemin(v::Vec2) = typemin(typeof(v))
 typemax{T}(::Type{Vec2{T}}) = Vec2(typemax(T), typemax(T))
+typemax(v::Vec2) = typemax(typeof(v))
 
 (+)(v::Vec2) = v
-(-){T}(v::Vec2{T}) = Vec2{T}(-v.x, -v.y)
+(-)(v::Vec2) = Vec2(-v.x, -v.y)
 
-(+){T}(v1::Vec2{T}, v2::Vec2{T}) = Vec2{T}(v1.x + v2.x, v1.y + v2.y)
-(-){T}(v1::Vec2{T}, v2::Vec2{T}) = Vec2{T}(v1.x - v2.x, v1.y - v2.y)
-(*){T}(v1::Vec2{T}, v2::Vec2{T}) = Vec2{T}(v1.x * v2.x, v1.y * v2.y)
-(/){T}(v1::Vec2{T}, v2::Vec2{T}) = Vec2{T}(v1.x / v2.x, v1.y / v2.y)
+(+)(v1::Vec2, v2::Vec2) = Vec2(v1.x + v2.x, v1.y + v2.y)
+(-)(v1::Vec2, v2::Vec2) = Vec2(v1.x - v2.x, v1.y - v2.y)
+(*)(v1::Vec2, v2::Vec2) = Vec2(v1.x * v2.x, v1.y * v2.y)
+(/)(v1::Vec2, v2::Vec2) = Vec2(v1.x / v2.x, v1.y / v2.y)
 
-(*){T}(v::Vec2{T}, n::Number) = Vec2{T}(v.x * n, v.y * n)
-(*){T}(n::Number, v::Vec2{T}) = Vec2{T}(n * v.x, n * v.y)
-(/){T}(v::Vec2{T}, n::Number) = Vec2{T}(v.x / n, v.y / n)
-(/){T}(n::Number, v::Vec2{T}) = Vec2{T}(n / v.x, n / v.y)
+(*)(v::Vec2, n::Number) = Vec2(v.x * n, v.y * n)
+(*)(n::Number, v::Vec2) = Vec2(n * v.x, n * v.y)
+(/)(v::Vec2, n::Number) = Vec2(v.x / n, v.y / n)
+(/)(n::Number, v::Vec2) = Vec2(n / v.x, n / v.y)
 
 (.<)(v1::Vec2, v2::Vec2) = v1.x < v2.x && v1.y < v2.y
 
