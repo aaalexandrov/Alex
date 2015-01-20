@@ -24,9 +24,9 @@ function init(tex::Texture, texPath::String; id::Symbol = symbol(texPath))
 	if eltype(data) != Images.RGBA{Ufixed8}
 		data = convert(Array{Images.RGBA{Ufixed8}}, img.data)
 	end
-	glBindTexture(TEXTURE_2D, tex.texture)
-	glTexImage2D(TEXTURE_2D, 0, RGBA, w, h, 0, RGBA, UNSIGNED_BYTE, data)
-	glGenerateMipmap(TEXTURE_2D)
+	glBindTexture(GL_TEXTURE_2D, tex.texture)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+	glGenerateMipmap(GL_TEXTURE_2D)
 end
 
 function done(tex::Texture)
@@ -40,9 +40,8 @@ end
 function apply(tex::Texture, index::Int)
 	@assert isvalid(tex)
 
-	glActiveTexture(convert(GLenum, TEXTURE0 + index))
-	glBindTexture(TEXTURE_2D, tex.texture)
+	glActiveTexture(convert(GLenum, GL_TEXTURE0 + index))
+	glBindTexture(GL_TEXTURE_2D, tex.texture)
 end
 
 # todo: add functions to set texture / sampler parameters
-

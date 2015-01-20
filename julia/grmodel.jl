@@ -11,7 +11,7 @@ end
 isvalid(model::Model) = isvalid(model.mesh) && isvalid(model.material)
 
 gettransform(model::Model) = model.transform
-function settransform(model::Model, m::Matrix{Float32}) 
+function settransform(model::Model, m::Matrix{Float32})
     @assert isvalid(model)
     model.transform[:, :] = m
     model.boundDirty = true

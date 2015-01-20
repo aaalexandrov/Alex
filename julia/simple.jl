@@ -2,7 +2,7 @@ module Simple
 
 import GLFW
 
-import OGL
+import ModernGL
 import GR
 import Geom
 import Math3D
@@ -156,7 +156,7 @@ function process_input()
 end
 
 function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
-	OGL.glViewport(0, 0, width, height)
+	ModernGL.glViewport(0, 0, width, height)
 
 	# m = Math3D.ortho(2, 2height / width, -1f0, 1)
 	m = Math3D.persp_horizontal_fov(pi/2, width / height, 0.1f0, 100, leftHanded = true)
@@ -174,9 +174,6 @@ function openWindow()
 	global window = GLFW.CreateWindow(640, 480, "Simple.jl")
 	GLFW.MakeContextCurrent(window)
 	GLFW.SwapInterval(0)
-
-	# update opengl function pointers on windows
-	OGL.updateGL()
 
 	renderer = init()
 

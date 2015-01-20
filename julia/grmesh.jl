@@ -16,8 +16,8 @@ function init(vl::VertexLayout, mesh::AbstractMesh)
 
 	glBindVertexArray(vl.vao)
 
-	glBindBuffer(ARRAY_BUFFER, mesh.vbo)
-	glBindBuffer(ELEMENT_ARRAY_BUFFER, mesh.ibo)
+	glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo)
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo)
 
 	initbuffers(mesh)
 
@@ -29,7 +29,7 @@ function init(vl::VertexLayout, mesh::AbstractMesh)
 		glType, elements = typeelements(fieldType)
 
 		glEnableVertexAttribArray(i-1)
-		glVertexAttribPointer(i-1, elements, glType, FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldOffsets[i]))
+		glVertexAttribPointer(i-1, elements, glType, GL_FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldOffsets[i]))
 	end
 
 	glBindVertexArray(0)
@@ -102,8 +102,8 @@ end
 
 function initbuffers(mesh::Mesh)
 	# buffers should have been bound at this point, we just set the contents
-	glBufferData(ARRAY_BUFFER, sizeof(mesh.vertices), mesh.vertices, STATIC_DRAW)
-	glBufferData(ELEMENT_ARRAY_BUFFER, sizeof(mesh.indices), mesh.indices, STATIC_DRAW)
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mesh.vertices), mesh.vertices, GL_STATIC_DRAW)
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(mesh.indices), mesh.indices, GL_STATIC_DRAW)
 end
 
 function initbound(mesh::Mesh, vertex2point::Function)
@@ -146,6 +146,6 @@ end
 
 indextype(mesh::Mesh) = jl2gltype(eltype(mesh.indices))
 
-primitivemode(mesh::Mesh) = TRIANGLES
+primitivemode(mesh::Mesh) = GL_TRIANGLES
 
 indexcount(mesh::Mesh) = length(mesh.indices)

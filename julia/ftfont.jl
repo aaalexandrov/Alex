@@ -20,6 +20,7 @@ type Font
     glyphs::Dict{Char, Glyph}
     kerning::Dict{(Char, Char), Vec2{Float32}}
     bitmap::Array{Uint8, 2}
+    fallbackGlyph::Glyph
 
     Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, bmpWidth, bmpHeight) =
         new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{(Char, Char), Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
@@ -59,8 +60,13 @@ function addglyph(font::Font, char::Char, bmp::Array{Uint8, 2}, origin::Vec2{Flo
     xmax = pos.x + size(bmp, 1) - 1
     ymax = pos.y + size(bmp, 2) - 1
 
-    font.glyphs[char] = Glyph(char, rect(Int, pos.x, pos.y, xmax, ymax), origin, advance)
+    glyph = Glyph(char, rect(Int, pos.x, pos.y, xmax, ymax), origin, advance)
+    font.glyphs[char] = glyph
     font.bitmap[pos.x:xmax, pos.y:ymax] = bmp
+    # the first added glyph is used as a fallback when a glyph is missing while drawing
+    if !isdefined(font, :fallbackGlyph)
+        font.fallbackGlyph = glyph
+    end
 
     pos.x = xmax + 2
     pos.yMax = max(pos.yMax, ymax)
@@ -89,6 +95,7 @@ type TextCursor
     lastChar::Char
 
     TextCursor(x, y) = new(Vec2{Float32}(x, y), 0)
+    TextCursor(cursor::TextCursor) = new(cursor.pos, cursor.lastChar)
 end
 
 function setpos(cursor::TextCursor, x, y)
@@ -101,17 +108,25 @@ end
 
 function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::String)
     for c in s
-        glyph = font.glyphs[c]
+        glyph = get(font.glyphs, c, font.fallbackGlyph)
         if cursor.lastChar != 0
-            pair = (cursor.lastChar, c)
-            if haskey(font.kerning, pair)
-                cursor.pos += font.kerning[pair]
-            end
+            cursor.pos += get(font.kerning, (cursor.lastChar, c), zero(Vec2{Float32}))
         end
         drawRect(cursor.pos - glyph.origin, font.bitmap, glyph.box)
         cursor.pos += glyph.advance
         cursor.lastChar = c
     end
+end
+
+function textbox(font::Font, cursor::TextCursor, s::String)
+    tempCursor = TextCursor(cursor)
+    boxMax = rect(Float32)
+    drawtext(font, tempCursor, s) do pos, bmp, box
+        posMax = Vec2{Float32}(pos.x + box.max.x - box.min.x, pos.y + box.max.y - box.min.y)
+        boxMax.min = min(boxMax.min, pos)
+        boxMax.max = max(boxMax.max, posMax)
+    end
+    return boxMax
 end
 
 const ftLib = (FT_Library)[C_NULL]
@@ -255,9 +270,23 @@ function test()
     cursor = TextCursor(font.size.x, font.lineDistance)
     drawFunc = (pos, bmp, box)->testdraw(canvas, pos, bmp, box)
     drawtext(drawFunc, font, cursor, "The quick brown fox jumps over the lazy dog!")
+
     setpos(cursor, font.size.x, 2font.lineDistance)
     drawtext(drawFunc, font, cursor, "Aveline F")
     drawtext(drawFunc, font, cursor, ".") # if the font supports kerning, the '.' should be moved closer to the 'F' at the end of the previous drawtext()
+    drawtext(drawFunc, font, cursor, "\u1000")
+
+    setpos(cursor, font.size.x, 3font.lineDistance)
+    s = "Яваш щета фира?"
+    box = textbox(font, cursor, s)
+    drawtext(drawFunc, font, cursor, s)
+    box.min -= one(box.min)
+    box.max += one(box.max)
+    canvas[box.min.x:box.max.x, box.min.y] = 255
+    canvas[box.min.x:box.max.x, box.max.y] = 255
+    canvas[box.min.x, box.min.y:box.max.y] = 255
+    canvas[box.max.x, box.min.y:box.max.y] = 255
+    
     Images.imwrite(Images.grayim(canvas), "fox.png")
 end
 

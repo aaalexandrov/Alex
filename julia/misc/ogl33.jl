@@ -37,16 +37,16 @@ fnPtrSym(cNameStr::String) = symbol("$(cNameStr)_fnPtr")
 
 macro getGLFun(jlFun, cFun)
 	cNameStr = string(cFun.args[1].args[1])
-	
+
 	fnPtr = fnPtrSym(cNameStr)
-	
+
 	assignment = :($fnPtr = C_NULL)
 	functionDef = macroexpand(:(@getCFun $libGL $jlFun $cFun $fnPtr))
 	registerFunc = :(push!(functionNames, $cNameStr))
 	exportClause = Expr(:export, jlFun)
-	
+
 	result = Expr(:block, assignment, functionDef, registerFunc, exportClause)
-	
+
 	return esc(result)
 end
 
@@ -60,10 +60,10 @@ function updateGL()
 		if proc == C_NULL
 			try
 				proc = @eval cglobal(($cNameStr, $libGL))
-			catch 
+			catch
 			end
 		end
-		
+
 		if proc != C_NULL
 			fnPtr = fnPtrSym(cNameStr)
 			@eval $fnPtr = $proc

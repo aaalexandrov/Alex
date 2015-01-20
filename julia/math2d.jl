@@ -1,9 +1,9 @@
 module Math2D
 
-import Base: size, eltype, isempty, min, max, union, intersect, zero, one, dot
+import Base: size, eltype, isempty, min, max, union, intersect, zero, one, dot, typemin, typemax
 
 export Vec2, Box, Rect
-export size, eltype, len, len2, min, max, isempty, union, intersect, zero, one, normalize, orthogonal, dot, rect
+export size, eltype, len, len2, min, max, isempty, union, intersect, zero, one, normalize, orthogonal, dot, rect, typemin, typemax
 
 immutable Vec2{T}
     x::T
@@ -28,7 +28,11 @@ end
 orthogonal(v::Vec2) = Vec2(v.y, -v.x)
 
 zero{T}(::Type{Vec2{T}}) = Vec2(zero(T), zero(T))
+zero{T}(::Vec2{T}) = Vec2(zero(T), zero(T))
 one{T}(::Type{Vec2{T}}) = Vec2(one(T), one(T))
+one{T}(::Vec2{T}) = Vec2(one(T), one(T))
+typemin{T}(::Type{Vec2{T}}) = Vec2(typemin(T), typemin(T))
+typemax{T}(::Type{Vec2{T}}) = Vec2(typemax(T), typemax(T))
 
 (+)(v::Vec2) = v
 (-){T}(v::Vec2{T}) = Vec2{T}(-v.x, -v.y)
@@ -67,6 +71,6 @@ intersect(bs::Box...) = Box(max([b.min for b in bs]), min([b.max for b in bs]))
 typealias Rect{T} Box{Vec2{T}}
 
 rect(T, minX, minY, maxX, maxY) = Box(Vec2{T}(minX, minY), Vec2{T}(maxX, maxY))
-rect(T) = Box(zero(Vec2{T}), -one(Vec2{T}))
+rect(T) = Box(typemax(Vec2{T}), typemin(Vec2{T}))
 
 end

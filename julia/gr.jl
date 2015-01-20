@@ -1,6 +1,8 @@
 module GR
 
-using OGL
+using ModernGL
+using OGLHelper
+
 import Shapes
 
 abstract AbstractRenderer

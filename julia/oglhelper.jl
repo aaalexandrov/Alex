@@ -1,3 +1,7 @@
+module OGLHelper
+
+using ModernGL
+
 glUniform(index::GLint, value::Float32) = glUniform1f(index, value)
 glUniform(index::GLint, value::(Float32, Float32)) = glUniform2f(index, value[1], value[2])
 glUniform(index::GLint, value::(Float32, Float32, Float32)) = glUniform3f(index, value[1], value[2], value[3])
@@ -23,7 +27,7 @@ macro notranspose(func)
 	end
 end
 
-const uniformFuncTable = 
+const uniformFuncTable =
 	[glUniform1fv         nofunc                             nofunc                             nofunc                            ;
 	 glUniform2fv         @notranspose(glUniformMatrix2fv)   @notranspose(glUniformMatrix3x2fv) @notranspose(glUniformMatrix4x2fv);
 	 glUniform3fv         @notranspose(glUniformMatrix2x3fv) @notranspose(glUniformMatrix3fv)   @notranspose(glUniformMatrix4x3fv);
@@ -53,11 +57,11 @@ function glUniform(index::GLint, value::Array{Float32, 3})
 	glUniformFunc(index, uint(elements), convert(Ptr{Float32}, value))
 end
 
-# todo: add glUniform for Vector{Int32 & Uint32} 
+# todo: add glUniform for Vector{Int32 & Uint32}
 
 function gl_get_current_program()
 	currentProgram = GLint[0]
-	glGetIntegerv(CURRENT_PROGRAM, currentProgram)
+	glGetIntegerv(GL_CURRENT_PROGRAM, currentProgram)
 	return currentProgram[1]
 end
 
@@ -65,18 +69,20 @@ function gl_clear_buffers(color, depth, stencil)
 	mask = 0
 	if color != nothing
 		glClearColor(color...)
-		mask |= OGL.COLOR_BUFFER_BIT
+		mask |= GL_COLOR_BUFFER_BIT
 	end
 	if depth != nothing
 		glClearDepth(depth)
-		mask |= OGL.DEPTH_BUFFER_BIT
+		mask |= GL_DEPTH_BUFFER_BIT
 	end
 	if stencil != nothing
 		glClearStencil(stencil)
-		mask |= OGL.STENCIL_BUFFER_BIT
+		mask |= GL_STENCIL_BUFFER_BIT
 	end
 	glClear(mask)
 end
 
 
 export glUniform, gl_get_current_program, gl_clear_buffers
+
+end

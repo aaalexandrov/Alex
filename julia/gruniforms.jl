@@ -4,7 +4,7 @@ type UniformBlock
 	binding::GLuint
 	size::Uint32
 	name::Symbol
-	
+
 	UniformBlock() = new (0, 0, 0, 0)
 end
 
@@ -13,26 +13,26 @@ isvalid(block::UniformBlock) = block.ubo != 0
 function init(block::UniformBlock, program::GLuint, blockIndex::GLuint)
 	block.index = blockIndex
 	val = GLint[1]
-	
-	glGetActiveUniformBlockiv(program, block.index, UNIFORM_BLOCK_BINDING, val)
-	@assert glGetError() == NO_ERROR
+
+	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_BINDING, val)
+	@assert glGetError() == GL_NO_ERROR
 	block.binding = val[1]
-	
-	glGetActiveUniformBlockiv(program, block.index, UNIFORM_BLOCK_DATA_SIZE, val)
-	@assert glGetError() == NO_ERROR
+
+	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_DATA_SIZE, val)
+	@assert glGetError() == GL_NO_ERROR
 	block.size = val[1]
-	
-	glGetActiveUniformBlockiv(program, block.index, UNIFORM_BLOCK_NAME_LENGTH, val)
-	@assert glGetError() == NO_ERROR
+
+	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_NAME_LENGTH, val)
+	@assert glGetError() == GL_NO_ERROR
 	nameBuf = Array(Uint8, val[1])
 	glGetActiveUniformBlockName(program, block.index, length(nameBuf), C_NULL, nameBuf)
-	@assert glGetError() == NO_ERROR
+	@assert glGetError() == GL_NO_ERROR
 	block.name = symbol(bytestring(nameBuf))
-	
+
 	ubo = GLuint[0]
 	glGenBuffers(1, ubo)
 	block.ubo = ubo[1]
-	
+
 	data = zeros(Uint8, block.size)
 	setbufferdata(block, data)
 end
@@ -47,12 +47,12 @@ end
 
 function setbufferdata(block::UniformBlock, data)
 	@assert sizeof(data) == block.size
-	glBindBuffer(UNIFORM_BUFFER, block.ubo)
-	glBufferData(UNIFORM_BUFFER, sizeof(data), data, DYNAMIC_DRAW)
+	glBindBuffer(GL_UNIFORM_BUFFER, block.ubo)
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(data), data, GL_DYNAMIC_DRAW)
 end
 
 function apply(block::UniformBlock)
-	glBindBufferBase(UNIFORM_BUFFER, block.binding, block.ubo)
+	glBindBufferBase(GL_UNIFORM_BUFFER, block.binding, block.ubo)
 end
 
 

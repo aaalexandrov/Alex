@@ -57,27 +57,27 @@ get_sampler_type{GLTYPE}(::Type{SamplerType{GLTYPE}}) = GLTYPE
 
 const gl2jlTypes =
 	Dict{Uint16, DataType}([
-		(FLOAT, Float32),
-		(FLOAT_VEC2, Vec2),
-		(FLOAT_VEC3, Vec3),
-		(FLOAT_VEC4, Vec4),
-		(FLOAT_MAT4, Matrix4),
-		(SAMPLER_2D, SamplerType{int64(SAMPLER_2D)})
+		(GL_FLOAT, Float32),
+		(GL_FLOAT_VEC2, Vec2),
+		(GL_FLOAT_VEC3, Vec3),
+		(GL_FLOAT_VEC4, Vec4),
+		(GL_FLOAT_MAT4, Matrix4),
+		(GL_SAMPLER_2D, SamplerType{int64(GL_SAMPLER_2D)})
 	])
 
 gl2jltype(glType::Integer) = gl2jlTypes[glType]
 
 const jl2glTypes =
 	Dict{DataType, Uint16}([
-		(Float32, FLOAT),
-		(Float64, DOUBLE),
-		(Float16, HALF_FLOAT),
-		(Uint16, UNSIGNED_SHORT),
-		(Int16, SHORT),
-		(Uint8, UNSIGNED_BYTE),
-		(Int8, BYTE),
-		(Uint32, UNSIGNED_INT),
-		(Int32, INT)
+		(Float32, GL_FLOAT),
+		(Float64, GL_DOUBLE),
+		(Float16, GL_HALF_FLOAT),
+		(Uint16,  GL_UNSIGNED_SHORT),
+		(Int16,   GL_SHORT),
+		(Uint8,   GL_UNSIGNED_BYTE),
+		(Int8,    GL_BYTE),
+		(Uint32,  GL_UNSIGNED_INT),
+		(Int32,   GL_INT)
 	])
 
 jl2gltype(jlType::DataType) = jl2glTypes[jlType]
