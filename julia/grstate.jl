@@ -89,7 +89,7 @@ end
 type RenderStateHolder
 	# we store the states with their type's supertype as key, i.e. all the AlphaBlendStates will go to the same position
 	states::Dict{DataType, RenderState}
-	
+
 	RenderStateHolder() = new(Dict{DataType, RenderState}())
 end
 
@@ -102,16 +102,10 @@ function getstate{T <: RenderState}(holder::RenderStateHolder, ::Type{T}, defaul
 	get(holder.states, T, default)
 end
 
-function apply(holder::RenderStateHolder, ::Nothing)
-	for state in values(holder.states)
-		setstate(state)
-	end
-end
-
 function set_and_apply(holder::RenderStateHolder, state::RenderState)
 	key = super(typeof(state))
 	if !haskey(holder.states, key) || holder.states[key] != state
 		holder.states[key] = state
 		setstate(state)
-	end	
+	end
 end

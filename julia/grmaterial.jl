@@ -1,10 +1,10 @@
 type UniformBlockBuffer
 	block::UniformBlock
 	buffer::Vector{Uint8}
-	
+
 	# todo: add the option to have own GL buffer object
 	# todo: add info for dirty region
-	
+
 	UniformBlockBuffer(block::UniformBlock) = new(block, zeros(Uint8, block.size))
 end
 
@@ -13,7 +13,7 @@ type Material
 	uniforms::Dict{Symbol, Any}
 	blockBuffers::Vector{UniformBlockBuffer}
 	states::RenderStateHolder
-	
+
 	Material(shader::Shader) = new(shader, Dict{Symbol, Any}(), Array(UniformBlockBuffer, length(shader.blocks)), RenderStateHolder())
 end
 
@@ -35,22 +35,22 @@ set_camera_transforms(mat::Material, cam::Camera) = set_camera_transforms(mat, g
 set_camera_transforms(mat::Material, ::Nothing) = nothing
 getcamera(::Nothing) = nothing
 
-function apply(mat::Material, renderer::Union(Renderer, Nothing) = nothing)
+function apply(mat::Material, renderer::Renderer)
 	apply(mat.shader)
-	
+
 	set_camera_transforms(mat, getcamera(renderer))
 
 	for (u, v) in mat.uniforms
 		setuniform(mat.shader, u, v)
 	end
-	
+
 	for i in 1:length(mat.blockBuffers)
 		if isdefined(mat.blockBuffers, i)
 			buffer = mat.blockBuffers[i]
 			setbufferdata(buffer.block, buffer.buffer)
 		end
 	end
-	
+
 	apply(mat.states, renderer)
 end
 

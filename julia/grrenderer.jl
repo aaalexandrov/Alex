@@ -1,4 +1,4 @@
-type Renderer
+type Renderer <: AbstractRenderer
 	camera::Camera
     resources::Dict{Symbol, Resource}
     renderState::RenderStateHolder
@@ -21,14 +21,15 @@ function init(renderer::Renderer)
 end
 
 function done(renderer::Renderer)
-    for r in values(renderer.resources)
-        done(r)
-    end
-    empty!(renderer.resources)
+	while !isempty(renderer.resources)
+		id, res = first(renderer.resources)
+		done(res)
+	end
     global renderer_instance = nothing
 end
 
-function add_resource(renderer::Renderer, resource::Resource)
+function add_renderer_resource(resource::Resource)
+	renderer = resource.renderer
     if haskey(renderer.resources, resource.id)
         resource.id = symbol("$(resource.id)_$(object_id(resource))")
         @assert !haskey(renderer.resources, resource.id)
@@ -36,26 +37,11 @@ function add_resource(renderer::Renderer, resource::Resource)
     renderer.resources[resource.id] = resource
 end
 
-function remove_resource(renderer::Renderer, resource::Resource)
-    delete!(renderer.resources, resource.id)
+function remove_renderer_resource(resource::Resource)
+    delete!(resource.renderer.resources, resource.id)
 end
 
 get_resource(renderer::Renderer, id::Symbol) = get(renderer.resources, id, nothing)
-
-function init_resource{T}(renderer::Renderer, ::Type{T}, params...; id::Symbol = :none)
-    res = T()
-    if id == :none
-        init(res, params...)
-    else
-        init(res, params..., id = id)
-    end
-    add_resource(renderer, res)
-end
-
-function done_resource(renderer::Renderer, resource::Resource)
-    remove_resource(renderer, resource)
-    done(resource)
-end
 
 function add(renderer::Renderer, renderable::Renderable)
     push!(renderer.toRender, renderable)

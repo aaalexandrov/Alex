@@ -50,7 +50,7 @@ function initMeshes(renderer::GR.Renderer)
 	triangleVert = [VertPosUV(-1, -1, 0, 0, 0), VertPosUV(1, -1, 0, 1, 0), VertPosUV(0, 1, 0, 0.5, 1)]
 	triangleInd = Uint16[0, 1, 2]
 
-	GR.init_resource(renderer, GR.Mesh, triangleVert, triangleInd, vert2pos, id = :triangle)
+	GR.init(GR.Mesh(), renderer, triangleVert, triangleInd, vert2pos, id = :triangle)
 
 	diskInd, diskPoints = Geom.regularpoly(5)
 	diskVerts = Array(VertPosUV, size(diskPoints, 2))
@@ -59,20 +59,23 @@ function initMeshes(renderer::GR.Renderer)
 		diskVerts[i] = VertPosUV(p[1], p[2], p[3], p[1], p[2])
 	end
 
-	GR.init_resource(renderer, GR.Mesh, diskVerts, diskInd, vert2pos, id = :disk)
+	GR.init(GR.Mesh(), renderer, diskVerts, diskInd, vert2pos, id = :disk)
 end
 
 function initShaders(renderer::GR.Renderer)
-	GR.init_resource(renderer, GR.Shader, "data/simple")
+	GR.init(GR.Shader(), renderer, "data/simple")
 end
 
+global texName = "data/grid2.png"
+#global texName = "fox.png"
+
 function initTextures(renderer::GR.Renderer)
-	GR.init_resource(renderer, GR.Texture, "data/grid2.png")
+	GR.init(GR.Texture(), renderer, texName)
 end
 
 function initModels(renderer::GR.Renderer)
 	simpleShader = GR.get_resource(renderer, symbol("data/simple"))
-	gridTexture = GR.get_resource(renderer, symbol("data/grid2.png"))
+	gridTexture = GR.get_resource(renderer, symbol(texName))
 	triangleMesh = GR.get_resource(renderer, :triangle)
 	diskMesh = GR.get_resource(renderer, :disk)
 

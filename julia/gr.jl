@@ -9,8 +9,14 @@ abstract AbstractRenderer
 abstract Renderable
 abstract Resource
 
-setid(r::Resource, id::Symbol) = r.id = id
+function init_resource(r::Resource, renderer::AbstractRenderer, id::Symbol)
+    r.renderer = renderer
+    r.id = id
+    add_renderer_resource(r)
+end
+
 getid(r::Resource) = r.id
+getrenderer(r::Resource) = r.renderer
 
 abstract AbstractMesh <: Resource
 abstract AbstractTexture <: Resource

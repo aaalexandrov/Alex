@@ -11,9 +11,12 @@ isvalid(font::Font) = isdefined(font, :font) && isdefined(font, :texture) && isv
 
 function init(font::Font, ftFont::FTFont.Font)
     @assert !isvalid(font)
+    font.font = ftFont
+    font.texture = 
 end
 
 function done(font::Font)
     if isvalid(font)
+        done(font.texture)
     end
 end
