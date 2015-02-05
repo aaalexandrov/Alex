@@ -165,9 +165,8 @@ function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	m = Math3D.persp_horizontal_fov(pi/2, width / height, 0.1f0, 100, leftHanded = true)
 	# m = Math3D.perspective(0.5, 0.5, 0.5f0, 10)
 	# GR.setuniform(triangleMaterial, :projection, m)
-	camera = GR.getcamera(renderer)
-	GR.setproj(camera, m)
-	GR.settransform(camera, Math3D.trans(Float32[0, 0, -1]))
+	GR.setproj(renderer.camera, m)
+	GR.settransform(renderer.camera, Math3D.trans(Float32[0, 0, -1]))
 end
 
 function openWindow()

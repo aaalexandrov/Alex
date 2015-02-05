@@ -32,13 +32,11 @@ function set_camera_transforms(mat::Material, view::Matrix, proj::Matrix)
 end
 
 set_camera_transforms(mat::Material, cam::Camera) = set_camera_transforms(mat, getview(cam), getproj(cam))
-set_camera_transforms(mat::Material, ::Nothing) = nothing
-getcamera(::Nothing) = nothing
 
 function apply(mat::Material, renderer::Renderer)
 	apply(mat.shader)
 
-	set_camera_transforms(mat, getcamera(renderer))
+	set_camera_transforms(mat, renderer.camera)
 
 	for (u, v) in mat.uniforms
 		setuniform(mat.shader, u, v)

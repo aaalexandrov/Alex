@@ -55,9 +55,9 @@ function typeelements(jlType::DataType)
 		# simple type
 		return (jl2gltype(jlType), 1)
 	else
-		elType = nothing
+		elType = Nothing
 		for t in jlType.types
-			if elType == nothing
+			if elType == Nothing
 				elType = t
 			elseif elType != t
 				error("typeelements: A field with non-uniform types found")
@@ -74,6 +74,7 @@ type Mesh <: AbstractMesh
 	layout::VertexLayout
 	vertices::Vector
 	indices::Vector{Uint16}
+	indexLength::Int
 	bound::Shapes.Shape
 	id::Symbol
 	renderer::Renderer
@@ -96,6 +97,7 @@ function init{T}(mesh::Mesh, renderer::Renderer, vertices::Vector{T}, indices::V
 	mesh.ibo = buffers[2]
 	mesh.vertices = vertices
 	mesh.indices = indices
+	mesh.indexLength = length(indices)
 
 	init(mesh.layout, mesh)
 	initbound(mesh, vertex2point)
@@ -103,12 +105,15 @@ end
 
 function initbuffers(mesh::Mesh)
 	# buffers should have been bound at this point, we just set the contents
+	# todo: add parameters to specify dynamic and stream draw, not just static
 	glBufferData(GL_ARRAY_BUFFER, sizeof(mesh.vertices), mesh.vertices, GL_STATIC_DRAW)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(mesh.indices), mesh.indices, GL_STATIC_DRAW)
 end
 
 function initbound(mesh::Mesh, vertex2point::Function)
 	if vertex2point == identity
+		# mesh occupies all of space so it will never be clipped
+		mesh.bound = Shapes.Space()
 		return
 	end
 	p = vertex2point(mesh.vertices[1])
@@ -135,6 +140,15 @@ function done(mesh::Mesh)
 	end
 end
 
+function updatebuffers(mesh::Mesh)
+	@assert isvalid(mesh)
+
+	glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo)
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo)
+
+	initbuffers(mesh)
+end
+
 function apply(mesh::Mesh)
 	@assert isvalid(mesh)
 
@@ -151,4 +165,4 @@ indextype(mesh::Mesh) = jl2gltype(eltype(mesh.indices))
 
 primitivemode(mesh::Mesh) = GL_TRIANGLES
 
-indexcount(mesh::Mesh) = length(mesh.indices)
+indexcount(mesh::Mesh) = mesh.indexLength

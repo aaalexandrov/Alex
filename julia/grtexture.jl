@@ -30,7 +30,7 @@ function init(tex::Texture, renderer::Renderer, data::Array; id::Symbol = :textu
 	elseif pixelSize == 3
 		pixelFormat = GL_RGB
 	else
-		error("Texture init: unsupported texture format")
+		error("init(Texture): unsupported texture format")
 	end
 	glBindTexture(GL_TEXTURE_2D, tex.texture)
 	glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, w, h, 0, pixelFormat, GL_UNSIGNED_BYTE, data)

@@ -51,8 +51,6 @@ set_clear_color(renderer::Renderer, c) = renderer.clearColor = c
 set_clear_stencil(renderer::Renderer, s) = renderer.clearStencil = s
 set_clear_depth(renderer::Renderer, d) = renderer.clearDepth = d
 
-getcamera(renderer::Renderer) = renderer.camera
-
 function render_frame(renderer::Renderer)
     gl_clear_buffers(renderer.clearColor, renderer.clearStencil, renderer.clearDepth)
     # cull

@@ -11,7 +11,7 @@ type FreeCamera
     deltaAngles::Vector{Float32}
     lastTime::Float64
 
-    FreeCamera(renderer::GR.Renderer, window::GLFW.Window, deltaTrans::Vector{Float32}, deltaAngles::Vector{Float32}) = new(GR.getcamera(renderer), window, deltaTrans, deltaAngles, time())
+    FreeCamera(renderer::GR.Renderer, window::GLFW.Window, deltaTrans::Vector{Float32}, deltaAngles::Vector{Float32}) = new(renderer.camera, window, deltaTrans, deltaAngles, time())
 end
 
 function update(cam::FreeCamera, trans::Vector{Float32}, angles::Vector{Float32}, timeNow::Float64)

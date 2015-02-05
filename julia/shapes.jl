@@ -1,6 +1,8 @@
 module Shapes
 
-export Shape, Line, Plane, Sphere, AABB, Convex
+import Base: similar
+
+export Shape, Space, Line, Plane, Sphere, AABB, Convex
 export isvalid, getnormal, getpoint, volume, addpoint, setplane, getintersection, intersect, outside, similar
 
 
@@ -70,6 +72,14 @@ end
 abstract Shape{T <: Real}
 
 similar{S <: Shape}(s::S) = S()
+
+# all space
+type Space <: Shape
+end
+
+isvalid(s::Space) = true
+
+transform(sDest::Space, m::Matrix, s::Space) = nothing
 
 
 type Line{T} <: Shape{T}
@@ -355,6 +365,8 @@ end
 
 intersect(p1::Plane, p2::Plane) = getintersection(p1, p2) != nothing
 
+
+outside(c::Convex, s::Space) = false
 
 function outside{T}(c::Convex{T}, s::Sphere{T})
 	@assert isvalid(c)
