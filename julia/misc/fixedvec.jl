@@ -1,44 +1,67 @@
 module FixedVec
 
-import Base: size, getindex, setindex!, similar, dot, A_mul_B!
+import Base: size, length, endof, ndims, getindex, setindex!, similar, start, next, done, dot, A_mul_B!
 
-export size, getindex, setindex!, similar, dot, A_mul_B!
+export size, length, endof, ndims, getindex, setindex!, similar, start, next, done, dot, A_mul_B!
 export Vec, VecN
 
 
 abstract Vec{T, SZ, N} <: AbstractArray{T, N}
 
-function field_names(sz::(Integer,); allowShort::Bool = true)
-	n = sz[1]
-	const vecFields = [:x, :y, :z, :w]
-	if allowShort && n <= length(vecFields)
-		return vecFields[1:n]
+function product(f, it)
+	for i in it
+		f(i)
 	end
-	[symbol("e$i") for i=1:n]
+	nothing
 end
 
-function field_names(sz::(Integer, Integer...); allowShort::Bool = false)
-	firstNames = field_names(sz[1:end-1], allowShort = false)
-	names = Array(Symbol, sz)
-	ind = 1
-	for i = 1:sz[end]
-		for j = 1:length(firstNames)
-			pref = string(firstNames[j])
-			names[ind] = symbol("$(pref)_$i")
-			ind += 1
+function product(f, it1, it2)
+	for i2 in it2, i1 in it1
+		f(i1, i2)
+	end
+	nothing
+end
+
+function product(f, it1, it2, it3)
+	for i3 in it3, i2 in it2, i1 in it1
+		f(i1, i2, i3)
+	end
+	nothing
+end
+
+function product(f, it, its...)
+	product(its...) do is...
+		for i in it
+			f(i, is...)
 		end
 	end
-	names
+	nothing
 end
 
 tuple_to_string(t::(), sep) = ""
 tuple_to_string(t::(Any,), sep) = "$(t[1])"
 tuple_to_string(t::(Any, Any...), sep) = "$(t[1])$sep" * tuple_to_string(Base.tail(t), sep)
 
+function field_names(sz::(Integer...); allowShort::Bool = true)
+	const vecFields = [:x, :y, :z, :w]
+	res = Array(Symbol, sz)
+	n = 1
+	shortNames = allowShort && sz[1] <= length(vecFields)
+	product(shortNames? vecFields[1:sz[1]] : 1:sz[1], [1:sz[i] for i = 2:length(sz)]...) do is...
+		field = tuple_to_string(tuple(is...), "_")
+		if !shortNames
+			field = "e" * field
+		end
+		res[n] = symbol(field)
+		n += 1
+	end
+	return res
+end
+
 vec_name(sz::(Integer, Integer...)) = symbol("Vec" * tuple_to_string(sz, 'x'))
 
 function gen_vec(sz::(Integer, Integer...))
-	fieldNames = field_names(sz)
+	fieldNames = field_names(sz; allowShort = length(sz) == 1)
 	fields = [:($(fieldNames[i])::T) for i = 1:length(fieldNames)]
 	vecSym = vec_name(sz)
 	constr = Expr(:(=), Expr(:call, vecSym, fieldNames...), Expr(:block, Expr(:call, :new, fieldNames...)))
@@ -50,7 +73,6 @@ function gen_vec(sz::(Integer, Integer...))
 			$constr
 		end
 		$vecSym{T}(x::T, rest...) = $vecSym{T}(x, rest...)
-        field_names{T}(::Vec{T, $sz, $(length(sz))}) = $fieldNames
 		$expo
 	end
 	res
@@ -68,25 +90,54 @@ VecN{T}(::Type{T}, sz::(Integer, Integer...)) = subtypes(Vec{T, sz, length(sz)})
 VecN(t::Type, dims::Integer...) = VecN(t, tuple(dims...))
 
 size{T, SZ}(v::Vec{T, SZ}) = SZ
+size{T, SZ, N}(v::Vec{T, SZ, N}, i::Int) = i <= N? SZ[i] : 1
+length{T, SZ}(v::Vec{T, SZ}) = prod(SZ)::Int
+endof{T, SZ}(v::Vec{T, SZ}) = prod(SZ)::Int
+ndims{T, SZ, N}(v::Vec{T, SZ, N}) = N
 
 similar{T, SZ}(v::Vec{T, SZ}, e = T, sz::(Integer, Integer...) = SZ) = VecN(e, sz)
 
-# these are needed to disambiguate with existing abstract array methods
-getindex(v::Vec, i::Real) = getfield(v, field_names(v)[i])
-getindex(v::Vec, ind::AbstractArray) = map(f->getfield(v, f), field_names(v)[ind])
-setindex!(v::Vec, x, i::Real) = setfield!(v, field_names(v)[i], x)
+start(v::Vec) = 1
+done{T, SZ}(v::Vec{T, SZ}, state::Int) = state > prod(SZ)::Int
+next{T, SZ}(v::Vec{T, SZ}, state::Int) = v[state], state+1
 
-# general case
-getindex(v::Vec, indices::Real...) = getfield(v, field_names(v)[indices...])
-getindex(v::Vec, indices...) = map(f->getfield(v, f), field_names(v)[indices...]) # should we return a fixed size array instead of normal one here?
+# needed to disambiguate with existing abstract array methods
+function getindex{T}(v::Vec{T}, a::AbstractArray)
+	res = VecN(T, length(a))
+	n = 1
+	for i in a
+		res[n] = v[i]
+		n += 1
+	end
+	return res
+end
 
-setindex!(v::Vec, x, indices::Real...) = setfield!(v, field_names(v)[indices...], x)
-function setindex!(v::Vec, x, indices...)
-    fieldArr = field_names(v)[indices...]
-    for i = 1:length(fieldArr)
-        setfield!(v, fieldArr[i], x[i])
-    end
-    v
+getindex(v::Vec, i::Real) = v.(i)
+getindex{T, SZ}(v::Vec{T, SZ}, indices::Real...) = v.(sub2ind(SZ, indices...))
+function getindex{T, SZ}(v::Vec{T, SZ}, indices...)
+	lastDim = length(indices)
+	while isa(indices[lastDim], Real)
+		lastDim -= 1
+	end
+	szRes = tuple([length(indices[i]) for i in 1:lastDim]...)
+	res = VecN(T, szRes)
+	n = 1
+	product(indices...) do is...
+		res[n] = v[is...]
+		n += 1
+	end
+	return res
+end
+
+setindex!(v::Vec, x, i::Real) = v.(i) = x
+setindex!{T, SZ}(v::Vec{T, SZ}, x, indices::Real...) = v.(sub2ind(SZ, indices...)) = x
+function setindex!{T, SZ}(v::Vec{T, SZ}, x, indices...)
+	i = 1
+	product(indices...) do is...
+		v[is...] = x[i]
+		i += 1
+	end
+	return x
 end
 
 dot{T}(u::Vec{T, (1,)}, v::Vec{T, (1,)}) = u.x*v.x
@@ -101,6 +152,5 @@ function A_mul_B!{T}(dst::Vec{T, (4,)}, m::Vec{T, (4, 4)}, v::Vec{T, (4,)})
 	dst.w = m.e4_1*v.x + m.e4_2*v.y + m.e4_3*v.z + m.e4_4*v.w
 	dst
 end
-
 
 end
