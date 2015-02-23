@@ -128,7 +128,7 @@ function textbox(font::Font, cursor::TextCursor, s::String)
     return boxMax
 end
 
-fontname(font::FTFont) = "$(font.family)_$(font.style)($(font.size.x)x$(font.size.y))"
+fontname(font::Font) = "$(font.family)_$(font.style)($(font.size.x)x$(font.size.y))"
 
 const ftLib = (FT_Library)[C_NULL]
 

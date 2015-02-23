@@ -21,17 +21,17 @@ getrenderer(r::Resource) = r.renderer
 abstract AbstractMesh <: Resource
 abstract AbstractTexture <: Resource
 
-include("grtypes.jl")
+include("GRTypes.jl")
 
-include("grcamera.jl")
-include("grstate.jl")
-include("grrenderer.jl")
-include("grmesh.jl")
-include("gruniforms.jl")
-include("grshader.jl")
-include("grtexture.jl")
-include("grmaterial.jl")
-include("grmodel.jl")
+include("GRCamera.jl")
+include("GRState.jl")
+include("GRRenderer.jl")
+include("GRMesh.jl")
+include("GRUniforms.jl")
+include("GRShader.jl")
+include("GRTexture.jl")
+include("GRMaterial.jl")
+include("GRModel.jl")
 
 
 export Vec2, Vec3, Vec4, Matrix4

@@ -23,7 +23,7 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataT
     setuniform(material, textureUniform, texture)
 
     mesh = Mesh()
-    init(mesh, shader.renderer, Array(vertexType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6), vertex2point; id = symbol("Mesh_" * fontName))
+    init(mesh, shader.renderer, Array(vertexType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6), vertex2point; id = symbol("Mesh_" * fontName), usage = :dynamic)
     mesh.indexLength = 0
 
     font.font = ftFont
@@ -40,20 +40,28 @@ function done(font::Font)
     end
 end
 
-function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int})
+function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color)
     @assert font.model.mesh.indexLength < length(font.model.mesh.indices)
     baseIndex = font.model.mesh.indexLength
     baseVertex = baseIndex * 4 / 6
     indices = font.model.mesh.indices
     vertices = font.model.mesh.vertices
 
-    
+    vertType = eltype(vertices)
+    vertices[baseIndex] = vertType()
 end
 
-function drawtext(font::Font, cursor::FTFont.TextCursor, s::String)
+function drawtext(font::Font, cursor::FTFont.TextCursor, s::String, color)
     @assert isvalid(font)
-    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int})->drawchar(font, pos, bmp, box)
+    startIndexLength = font.model.mesh.indexLength
+    startVertexLength = startIndexLength * 4 / 6
+
+    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color)->drawchar(font, pos, bmp, box)
     drawtext(drawFunc, font.font, cursor, s)
+
+    endIndexLength = font.model.mesh.indexLength
+    endVertexLength = endIndexLength * 4 / 6
+    updatebuffers(font.model.mesh, startVertexLength:endVertexLength, startIndexLength:endVertexLength)
 end
 
 function cleartext(font::Font)

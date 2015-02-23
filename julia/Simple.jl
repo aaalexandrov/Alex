@@ -10,12 +10,12 @@ import SimpleCam
 
 function rld()
 	GLFW.Terminate()
-	Base.reload("math3d.jl")
-	Base.reload("geom.jl")
-    Base.reload("shapes.jl")
-    Base.reload("gr.jl")
-    Base.reload("simplecam.jl")
-    Base.reload("simple.jl")
+	Base.reload("Math3D.jl")
+	Base.reload("Geom.jl")
+    Base.reload("Shapes.jl")
+    Base.reload("GR.jl")
+    Base.reload("SimpleCam.jl")
+    Base.reload("Simple.jl")
 end
 
 
@@ -173,6 +173,8 @@ function openWindow()
 	GLFW.Init()
 	GLFW.WindowHint(GLFW.DEPTH_BITS, 24)
 	GLFW.WindowHint(GLFW.STENCIL_BITS, 8)
+	GLFW.WindowHint(GLFW.CONTEXT_VERSION_MAJOR, 3)
+	GLFW.WindowHint(GLFW.CONTEXT_VERSION_MINOR, 3)
 	global window = GLFW.CreateWindow(640, 480, "Simple.jl")
 	GLFW.MakeContextCurrent(window)
 	GLFW.SwapInterval(0)
