@@ -7,6 +7,8 @@ import GR
 import Geom
 import Math3D
 import SimpleCam
+import OGLHelper
+import FTFont
 
 function rld()
 	GLFW.Terminate()
@@ -41,10 +43,20 @@ end
 
 VertPosUV(x, y, z, u, v) = VertPosUV(Vec3(x, y, z), Vec2(u, v))
 
+immutable VertPosColorUV
+	position::Vec3
+	color::Vec4
+	uv::Vec2
+end
+
+VertPosColorUV(x, y, z, r, g, b, a, u, v) = VertPosColorUV(Vec3(x, y, z), Vec4(r, g, b, a), Vec2(u, v))
+
 vert2pos(v) = [v.position.x, v.position.y, v.position.z]
 
 global triangleMaterial, triangleModel, diskModel
 global freeCam
+global font
+
 
 function initMeshes(renderer::GR.Renderer)
 	triangleVert = [VertPosUV(-1, -1, 0, 0, 0), VertPosUV(1, -1, 0, 1, 0), VertPosUV(0, 1, 0, 0.5, 1)]
@@ -64,6 +76,7 @@ end
 
 function initShaders(renderer::GR.Renderer)
 	GR.init(GR.Shader(), renderer, "data/simple")
+	GR.init(GR.Shader(), renderer, "data/font")
 end
 
 global texName = "data/grid2.png"
@@ -71,6 +84,30 @@ global texName = "data/grid2.png"
 
 function initTextures(renderer::GR.Renderer)
 	GR.init(GR.Texture(), renderer, texName)
+end
+
+function initFonts(renderer::GR.Renderer)
+	fontShader = GR.get_resource(renderer, symbol("data/font"))
+	# set the view and projection transform uniforms to something non-existent
+	# so they're not set every frame from the renderer's camera
+	fontShader.viewTransform = :none
+	fontShader.projTransform = :none
+
+	GR.apply(fontShader)
+	GR.setuniform(fontShader, :view, eye(Float32, 4))
+
+	FTFont.init()
+	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
+	FTFont.done()
+
+	font = GR.Font(GR.Font(), fontShader, VertPosColorUV, vert2pos)
+	GR.setuniform(font.material, :emissiveColor, (1f0, 1f0, 1f0, 1f0))
+	cursor = FTFont.TextCursor(font.size.x, font.lineDistance)
+	GR.drawText(font, cursor, "Try that for size", (1f0, 0f0, 1f0, 1f0))
+end
+
+function doneFonts()
+	font = nothing
 end
 
 function initModels(renderer::GR.Renderer)
@@ -120,6 +157,7 @@ function init()
 
 	initShaders(renderer)
 	initTextures(renderer)
+	initFonts(renderer)
 	initMeshes(renderer)
 	initModels(renderer)
 	initCamera(renderer)
@@ -136,6 +174,7 @@ end
 
 function render(renderer::GR.Renderer)
 	GR.add(renderer, diskModel)
+	GR.add(renderer, font.model)
 
 	GR.render_frame(renderer)
 end
@@ -167,6 +206,10 @@ function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	# GR.setuniform(triangleMaterial, :projection, m)
 	GR.setproj(renderer.camera, m)
 	GR.settransform(renderer.camera, Math3D.trans(Float32[0, 0, -1]))
+
+	m = Math3D.ortho(0, width - 1, 0, height - 1, -1.0f, 1.0f)
+	GR.apply(font.model.material.shader)
+	GR.setuniform(font.model.material.shader, :proj, m)
 end
 
 function openWindow()
@@ -180,6 +223,8 @@ function openWindow()
 	GLFW.SwapInterval(0)
 
 	renderer = init()
+
+	OGLHelper.gl_info()
 
 	setViewport(renderer, GLFW.GetFramebufferSize(window)...)
 	GLFW.SetFramebufferSizeCallback(window, (win::GLFW.Window, width::Cint, height::Cint) -> setViewport(renderer, width, height))

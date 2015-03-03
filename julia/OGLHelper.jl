@@ -82,6 +82,13 @@ function gl_clear_buffers(color, depth, stencil)
 	glClear(mask)
 end
 
+function gl_info()
+	vendor = bytestring(glGetString(GL_VENDOR))
+	version = bytestring(glGetString(GL_VERSION))
+	renderer = bytestring(glGetString(GL_RENDERER))
+	info("OpenGL Vendor: $vendor, Version: $version, Renderer: $renderer")
+end
+
 
 export glUniform, gl_get_current_program, gl_clear_buffers
 

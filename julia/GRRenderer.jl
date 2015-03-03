@@ -1,10 +1,12 @@
+typealias Color (Float32, Float32, Float32, Float32)
+
 type Renderer <: AbstractRenderer
 	camera::Camera
     resources::Dict{Symbol, Resource}
     renderState::RenderStateHolder
     toRender::Vector{Renderable}
     sortFunc::Function
-    clearColor::Union((Float32, Float32, Float32, Float32), Nothing)
+    clearColor::Union(Color, Nothing)
     clearStencil::Union(Int, Nothing)
     clearDepth::Union(Float64, Nothing)
 

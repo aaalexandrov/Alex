@@ -12,7 +12,7 @@ end
 isvalid(font::Font) = isdefined(font, :font) && isvalid(font.model)
 
 
-function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataType, vertex2point::Function = identity; texureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 4096)
+function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataType, vertex2point::Function = identity; texureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 2048)
     @assert isvalid(shader)
 
     fontName = fontname(font.font)
@@ -40,15 +40,30 @@ function done(font::Font)
     end
 end
 
-function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color)
+function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color::Color)
     @assert font.model.mesh.indexLength < length(font.model.mesh.indices)
     baseIndex = font.model.mesh.indexLength
     baseVertex = baseIndex * 4 / 6
     indices = font.model.mesh.indices
     vertices = font.model.mesh.vertices
+    texWidth, texHeight = size(font.font.bitmap)
+    boxF = rect(Float32, box.min.x - 1, box.min.y - 1, box.max.x, box.max.y)
+    boxFSize = size(boxF)
 
     vertType = eltype(vertices)
-    vertices[baseIndex] = vertType()
+    vertices[baseVertex+1] = vertType(pos.x, pos.y, 0, color..., boxF.min.x / texWidth, boxF.min.y / texHeight)
+    vertices[baseVertex+2] = vertType(pos.x, pos.y + boxFSize.y, 0, color..., boxF.min.x / texWidth, boxF.max.y / texHeight)
+    vertices[baseVertex+3] = vertType(pos.x + boxFSize.x, pos.y, 0, color..., boxF.max.x / texWidth, boxF.min.y / texHeight)
+    vertices[baseVertex+4] = vertType(pos.x + boxFSize.x, pos.y + boxFSize.y, 0, color..., boxF.max.x / texWidth, boxF.max.y / texHeight)
+
+    indices[baseIndex+1] = baseVertex
+    indices[baseIndex+2] = baseVertex + 3
+    indices[baseIndex+3] = baseVertex + 1
+    indices[baseIndex+4] = baseVertex
+    indices[baseIndex+5] = baseVertex + 2
+    indices[baseIndex+6] = baseVertex + 3
+
+    font.model.mesh.indexLength += 6
 end
 
 function drawtext(font::Font, cursor::FTFont.TextCursor, s::String, color)
