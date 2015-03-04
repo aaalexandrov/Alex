@@ -9,25 +9,25 @@ type AlphaBlendDisabled <: AlphaBlendState
 end
 
 function setstate(::AlphaBlendDisabled)
-	glDisable(BLEND)
+	glDisable(GL_BLEND)
 end
 
 type AlphaBlendSrcAlpha <: AlphaBlendState
 end
 
 function setstate(::AlphaBlendSrcAlpha)
-	glEnable(BLEND)
-	glBlendEquationSeparate(FUNC_ADD, FUNC_ADD)
-	glBlendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, SRC_ALPHA, ZERO)
+	glEnable(GL_BLEND)
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD)
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ZERO)
 end
 
 type AlphaBlendAdditive <: AlphaBlendState
 end
 
 function setstate(::AlphaBlendAdditive)
-	glEnable(BLEND)
-	glBlendEquationSeparate(FUNC_ADD, FUNC_ADD)
-	glBlendFuncSeparate(SRC_ALPHA, ONE, SRC_ALPHA, ZERO)
+	glEnable(GL_BLEND)
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD)
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_SRC_ALPHA, GL_ZERO)
 end
 
 type AlphaBlendConstant <: AlphaBlendState
@@ -35,12 +35,12 @@ type AlphaBlendConstant <: AlphaBlendState
 end
 
 function setstate(state::AlphaBlendConstant)
-	glEnable(BLEND)
+	glEnable(GL_BLEND)
 	glBlendColor(state.color...)
-	glBlendEquationSeparate(FUNC_ADD, FUNC_ADD)
-	@assert glGetError() == NO_ERROR
-	glBlendFuncSeparate(CONSTANT_COLOR, ONE_MINUS_CONSTANT_COLOR, CONSTANT_ALPHA, ZERO)
-	@assert glGetError() == NO_ERROR
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD)
+	@assert glGetError() == GL_NO_ERROR
+	glBlendFuncSeparate(GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA, GL_ZERO)
+	@assert glGetError() == GL_NO_ERROR
 end
 
 
@@ -48,7 +48,7 @@ type StencilStateDisabled <: StencilState
 end
 
 function setstate(::StencilStateDisabled)
-	glDisable(STENCIL_TEST)
+	glDisable(GL_STENCIL_TEST)
 end
 
 
@@ -56,15 +56,15 @@ type DepthStateDisabled <: DepthState
 end
 
 function setstate(::DepthStateDisabled)
-	glDisable(DEPTH_TEST)
+	glDisable(GL_DEPTH_TEST)
 end
 
 type DepthStateLess <: DepthState
 end
 
 function setstate(::DepthStateLess)
-	glEnable(DEPTH_TEST)
-	glDepthFunc(LESS)
+	glEnable(GL_DEPTH_TEST)
+	glDepthFunc(GL_LESS)
 end
 
 
@@ -72,17 +72,17 @@ type CullStateDisabled <: CullState
 end
 
 function setstate(::CullStateDisabled)
-	glDisable(CULL_FACE)
+	glDisable(GL_CULL_FACE)
 end
 
 type CullStateCCW <: CullState
 end
 
 function setstate(::CullStateCCW)
-	glEnable(CULL_FACE)
+	glEnable(GL_CULL_FACE)
 	# Poly orientation is CCW and we cull the back faces
-	glFrontFace(CCW)
-	glCullFace(BACK)
+	glFrontFace(GL_CCW)
+	glCullFace(GL_BACK)
 end
 
 

@@ -83,7 +83,7 @@ end
 
 function setvalue(var::UniformVar, buffer::Vector{Uint8}, array::Array, index::Int = 1)
 	ptr = getptr(var, buffer, index)
-	@assert ismatrix(var.varType)
+	# @assert ismatrix(var.varType)
 	@assert sizeof(var.varType) == sizeof(array)
 	# todo: make this respect the var's matrix stride, if any
 	unsafe_copy!(convert(Ptr{Uint8}, ptr), convert(Ptr{Uint8}, pointer(array)), sizeof(var.varType))

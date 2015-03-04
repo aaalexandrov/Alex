@@ -93,17 +93,22 @@ function initFonts(renderer::GR.Renderer)
 	fontShader.viewTransform = :none
 	fontShader.projTransform = :none
 
-	GR.apply(fontShader)
-	GR.setuniform(fontShader, :view, eye(Float32, 4))
-
 	FTFont.init()
 	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
 	FTFont.done()
 
-	font = GR.Font(GR.Font(), fontShader, VertPosColorUV, vert2pos)
-	GR.setuniform(font.material, :emissiveColor, (1f0, 1f0, 1f0, 1f0))
-	cursor = FTFont.TextCursor(font.size.x, font.lineDistance)
-	GR.drawText(font, cursor, "Try that for size", (1f0, 0f0, 1f0, 1f0))
+	global font = GR.Font()
+	GR.init(font, ftFont, fontShader, VertPosColorUV)
+	GR.setuniform(font.model.material, :emissiveColor, Float32[1, 1, 1, 1])
+	GR.setuniform(font.model.material, :view, eye(Float32, 4))
+
+	# GR.setstate(font.model.material, GR.CullStateDisabled())
+	GR.setstate(font.model.material, GR.AlphaBlendSrcAlpha())
+
+	cursor = FTFont.TextCursor(ftFont.size.x, ftFont.lineDistance)
+	GR.drawtext(font, cursor, "Try that for size", (1f0, 0f0, 1f0, 1f0))
+	cursor = FTFont.TextCursor(ftFont.size.x, 2ftFont.lineDistance)
+	GR.drawtext(font, cursor, "Kk фФ", (1f0, 0f0, 0f0, 1f0))
 end
 
 function doneFonts()
@@ -125,6 +130,9 @@ function initModels(renderer::GR.Renderer)
 
 	GR.setuniform(triangleMaterial, :emissiveColor, (1f0, 1f0, 1f0, 1f0))
 	GR.setuniform(triangleMaterial, :diffuseTexture, gridTexture)
+
+	# fontTex = GR.getuniform(font.model.material, :diffuseTexture)
+	# GR.setuniform(triangleMaterial, :diffuseTexture, fontTex)
 
 	# GR.setstate(triangleMaterial, GR.AlphaBlendConstant((0.5f0, 0.5f0, 0.5f0, 0.5f0)))
 	# GR.setstate(triangleMaterial, GR.AlphaBlendDisabled())
@@ -207,9 +215,9 @@ function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	GR.setproj(renderer.camera, m)
 	GR.settransform(renderer.camera, Math3D.trans(Float32[0, 0, -1]))
 
-	m = Math3D.ortho(0, width - 1, 0, height - 1, -1.0f, 1.0f)
-	GR.apply(font.model.material.shader)
-	GR.setuniform(font.model.material.shader, :proj, m)
+	global font
+	m = Math3D.ortho(0, width - 1, 0, height - 1, -1.0f0, 1.0f0)
+	GR.setuniform(font.model.material, :projection, m)
 end
 
 function openWindow()

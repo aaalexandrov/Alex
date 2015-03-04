@@ -57,4 +57,3 @@ function calc_frustum(cam::Camera, dest::Matrix{Float32})
 
 	dest[:,:] = At_mul_B(cam.proj * getview(cam), projSpaceFrust)
 end
-

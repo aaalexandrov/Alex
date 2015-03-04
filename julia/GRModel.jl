@@ -3,7 +3,7 @@ type Model <: Renderable
 	material::Material
     transform::Matrix{Float32}
     boundDirty::Bool
-    bound::Shapes.Shape{Float32}
+    bound::Shapes.Shape
 
     Model(mesh::Mesh, material::Material) = new(mesh, material, eye(Float32, 4), true, similar(mesh.bound))
 end

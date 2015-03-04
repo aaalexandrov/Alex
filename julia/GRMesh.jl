@@ -150,7 +150,7 @@ end
 function update_gl_buffer{T}(bufferType::GLenum, buffer::GLuint, data::Vector{T}, range::UnitRange)
     if !isempty(range)
         glBindBuffer(bufferType, buffer)
-        glBufferSubData(bufferType, range.start * sizeof(T), length(range) * sizeof(T), pointer(data, range.start))
+        glBufferSubData(bufferType, (range.start - 1) * sizeof(T), length(range) * sizeof(T), pointer(data, range.start))
     end
 end
 

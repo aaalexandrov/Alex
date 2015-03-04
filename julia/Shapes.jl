@@ -372,7 +372,7 @@ function outside{T}(c::Convex{T}, s::Sphere{T})
 	@assert isvalid(c)
 	@assert isvalid(s)
 	for i = 1:size(c.planes, 2)
-		if dot(c.planes[1:3, i], s.c) + c.planes[4, i] < -c.r
+		if dot(c.planes[1:3, i], s.c) + c.planes[4, i] < -s.r
 			return true
 		end
 	end

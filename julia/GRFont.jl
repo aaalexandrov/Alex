@@ -6,18 +6,18 @@ type Font
     vertexType::DataType
     textureUniform::Symbol
 
-    Font = new()
+    Font() = new()
 end
 
 isvalid(font::Font) = isdefined(font, :font) && isvalid(font.model)
 
 
-function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataType, vertex2point::Function = identity; texureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 2048)
+function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataType, vertex2point::Function = identity; textureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 2048)
     @assert isvalid(shader)
 
-    fontName = fontname(font.font)
+    fontName = FTFont.fontname(ftFont)
     texture = Texture()
-    init(texture, shader.renderer, font.font.bitmap; id = symbol("Tex_" * fontName)
+    init(texture, shader.renderer, ftFont.bitmap; id = symbol("Tex_" * fontName))
 
     material = Material(shader)
     setuniform(material, textureUniform, texture)
@@ -43,11 +43,11 @@ end
 function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color::Color)
     @assert font.model.mesh.indexLength < length(font.model.mesh.indices)
     baseIndex = font.model.mesh.indexLength
-    baseVertex = baseIndex * 4 / 6
+    baseVertex = div(baseIndex * 4, 6)
     indices = font.model.mesh.indices
     vertices = font.model.mesh.vertices
     texWidth, texHeight = size(font.font.bitmap)
-    boxF = rect(Float32, box.min.x - 1, box.min.y - 1, box.max.x, box.max.y)
+    boxF = FTFont.rect(Float32, box.min.x - 1, box.min.y - 1, box.max.x, box.max.y)
     boxFSize = size(boxF)
 
     vertType = eltype(vertices)
@@ -69,14 +69,14 @@ end
 function drawtext(font::Font, cursor::FTFont.TextCursor, s::String, color)
     @assert isvalid(font)
     startIndexLength = font.model.mesh.indexLength
-    startVertexLength = startIndexLength * 4 / 6
+    startVertexLength = div(startIndexLength * 4, 6)
 
-    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color)->drawchar(font, pos, bmp, box)
-    drawtext(drawFunc, font.font, cursor, s)
+    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int})->drawchar(font, pos, bmp, box, color)
+    FTFont.drawtext(drawFunc, font.font, cursor, s)
 
     endIndexLength = font.model.mesh.indexLength
-    endVertexLength = endIndexLength * 4 / 6
-    updatebuffers(font.model.mesh, startVertexLength:endVertexLength, startIndexLength:endVertexLength)
+    endVertexLength = div(endIndexLength * 4, 6)
+    updatebuffers(font.model.mesh, startVertexLength+1:endVertexLength, startIndexLength+1:endIndexLength)
 end
 
 function cleartext(font::Font)
