@@ -64,7 +64,7 @@ function initMeshes(renderer::GR.Renderer)
 
 	GR.init(GR.Mesh(), renderer, triangleVert, triangleInd, vert2pos, id = :triangle)
 
-	diskInd, diskPoints = Geom.regularpoly(5)
+	diskInd, diskPoints = Geom.sphere(10; smooth = true) # Geom.regularpoly(5)
 	diskVerts = Array(VertPosUV, size(diskPoints, 2))
 	for i in 1:length(diskVerts)
 		p = diskPoints[:, i]
@@ -122,6 +122,7 @@ function initModels(renderer::GR.Renderer)
 	diskMesh = GR.get_resource(renderer, :disk)
 
 	global triangleMaterial = GR.Material(simpleShader)
+    GR.setstate(triangleMaterial, GR.CullStateCCW())
 
 	ident = eye(Float32, 4) # identity matrix 4x4
 	GR.setuniform(triangleMaterial, :projection, ident)

@@ -90,8 +90,8 @@ function facenormals(indices::Vector{Uint16}, points::Matrix{Float32})
 	for i = 1:length(indices)
 		index = indices[i] + 1
 		ni = triNIndices[div(i-1, 3)+1]
-		ind[i] = get!(emitted, (index, ni), iPt)
-		if ind[i] == iPt
+		ind[i] = get!(emitted, (index, ni), iPt - 1)
+		if ind[i] == iPt - 1
 			pts[:, iPt] = points[:, index]
 			normals[:, iPt] = triNormals[:, ni]
 			iPt += 1
@@ -209,11 +209,11 @@ function sphere(segments::Int, rh::Float32 = 1f0, rv::Float32 = 1f0; smooth::Boo
 		angH = x*2pi/segments
 		sinH = sin(angH)
 		cosH = cos(angH)
-		for y = 0:vsegments-1
-			angV = (y+1)*pi/(vsegments+2)
+		for y = 1:vsegments
+			angV = y*pi/(vsegments+1)
 			sinV = sin(angV)
 			cosV = cos(angV)
-			points[:, 1+baseX+y] = Float32[rh*sinV*cosH, rh*sinV*sinH, rv*cosV]
+			points[:, baseX+y] = Float32[rh*sinV*cosH, rh*sinV*sinH, rv*cosV]
 		end
 
 		for y = 1:vsegments-1
