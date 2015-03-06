@@ -1,20 +1,20 @@
+empty_setup_material(model) = nothing
+
 type Shader <: Resource
 	program::GLuint
 	uniforms::Dict{Symbol, UniformVar}
 	samplers::Vector{Symbol}
 	blocks::Vector{UniformBlock}
-	worldTransform::Symbol
-	viewTransform::Symbol
-	projTransform::Symbol
+    setupMaterial::Function
 	id::Symbol
 	renderer::Renderer
 
-	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[], :model, :view, :projection)
+	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[])
 end
 
 isvalid(shader::Shader) = shader.program != 0
 
-function init(shader::Shader, renderer::Renderer, path::String; id::Symbol = symbol(path))
+function init(shader::Shader, renderer::Renderer, path::String, setupMaterial::Function = empty_setup_material; id::Symbol = symbol(path))
 	local vsSource, psSource
 	open(path * ".vs") do f
 		vsSource = readbytes(f)
@@ -23,10 +23,10 @@ function init(shader::Shader, renderer::Renderer, path::String; id::Symbol = sym
 	open(path * ".fs") do f
 		psSource = readbytes(f)
 	end
-	init(shader, renderer, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), id = id)
+	init(shader, renderer, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), setupMaterial, id = id)
 end
 
-function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psLength::Int; id::Symbol = :shader)
+function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psLength::Int, setupMaterial::Function = empty_setup_material; id::Symbol = :shader)
 	@assert !isvalid(shader)
 
 	vertexShader = compileshader(GL_VERTEX_SHADER, vs, vsLength)
@@ -43,9 +43,10 @@ function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int,
 			linkSuccess = GLint[0]
 			glGetProgramiv(shader.program, GL_LINK_STATUS, linkSuccess)
 			if linkSuccess[1] != GL_TRUE
+                msg = get_program_info_log(shader.program)
+				info("Error linking shader program id $id\n$msg")
 				glDeleteProgram(shader.program)
 				shader.program = 0
-				info("Error linking shader program")
 			end
 
 			glDeleteShader(fragmentShader)
@@ -54,6 +55,7 @@ function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int,
 	end
 
 	if isvalid(shader)
+        shader.setupMaterial = setupMaterial
 		init_resource(shader, renderer, id)
 		initblocks(shader)
 		inituniforms(shader)
@@ -83,6 +85,18 @@ function apply(shader::Shader)
 	end
 end
 
+function get_info_log(glObj::GLuint, get::Function, getInfoLog::Function)
+	logLength = GLint[0]
+    get(glObj, GL_INFO_LOG_LENGTH, logLength)
+
+    message = Array(Uint8, logLength[1])
+    getInfoLog(glObj, logLength[1], C_NULL, message)
+    bytestring(message)
+end
+
+get_shader_info_log(shaderObj::GLuint) = get_info_log(shaderObj, glGetShaderiv, glGetShaderInfoLog)
+get_program_info_log(programObj::GLuint) = get_info_log(programObj, glGetProgramiv, glGetProgramInfoLog)
+
 function compileshader(shaderType::Uint32, source::Ptr{Uint8}, sourceLength::Int)
 	shaderObj = glCreateShader(shaderType)
 
@@ -96,12 +110,7 @@ function compileshader(shaderType::Uint32, source::Ptr{Uint8}, sourceLength::Int
 	glGetShaderiv(shaderObj, GL_COMPILE_STATUS, compileSuccess)
 
 	if compileSuccess[1] != GL_TRUE
-		logLength = GLint[0]
-		glGetShaderiv(shaderObj, GL_INFO_LOG_LENGTH, logLength)
-
-		message = Array(Uint8, logLength[1])
-		glGetShaderInfoLog(shaderObj, logLength[1], C_NULL, message)
-		msg = bytestring(message)
+        msg = get_shader_info_log(shaderObj)
 		shaderTypeName = shaderType == GL_VERTEX_SHADER ? "VERTEX" : (shaderType == GL_FRAGMENT_SHADER ? "FRAGMENT" : "$shaderType")
 		info("Error compiling shader type $shaderTypeName\n$msg")
 
@@ -201,8 +210,6 @@ function inituniforms(shader::Shader)
 		end
 	end
 
-	@assert haskey(shader.uniforms, shader.worldTransform)
-
 	glUseProgram(0)
 end
 
@@ -224,7 +231,8 @@ function setuniform(shader::Shader, uniform::Symbol, value)
 		return true
 	end
 
-	return false
+	info("Attempt to set inexistent uniform $uniform in shader $(shader.name)")
+    return false
 end
 
 function setuniform(shader::Shader, uniform::Symbol, tex::AbstractTexture)

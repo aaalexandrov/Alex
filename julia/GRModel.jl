@@ -28,7 +28,7 @@ end
 
 function render(model::Model, renderer::Renderer)
     @assert isvalid(model)
-    set_world_transform(model.material, model.transform)
+    model.material.shader.setupMaterial(model)
     apply(model.material, renderer)
     render(model.mesh)
 end

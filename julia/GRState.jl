@@ -93,6 +93,11 @@ type RenderStateHolder
 	RenderStateHolder() = new(Dict{DataType, RenderState}())
 end
 
+function resetstate(holder::RenderStateHolder, state::RenderState) 
+	@assert super(T) == RenderState
+    delete!(holder.states, state)
+end
+
 function setstate(holder::RenderStateHolder, state::RenderState)
 	holder.states[super(typeof(state))] = state
 end

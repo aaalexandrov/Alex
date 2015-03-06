@@ -21,6 +21,8 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataT
 
     material = Material(shader)
     setuniform(material, textureUniform, texture)
+    setstate(material, AlphaBlendSrcAlpha())
+    setstate(material, DepthStateDisabled())
 
     mesh = Mesh()
     init(mesh, shader.renderer, Array(vertexType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6), vertex2point; id = symbol("Mesh_" * fontName), usage = :dynamic)
