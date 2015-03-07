@@ -5,6 +5,7 @@ type Font
     model::Model
     vertexType::DataType
     textureUniform::Symbol
+    charCount::Int
 
     Font() = new()
 end
@@ -32,6 +33,7 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataT
     font.vertexType = vertexType
     font.textureUniform = textureUniform
     font.model = Model(mesh, material)
+    font.charCount = 0
 end
 
 function done(font::Font)
@@ -44,8 +46,8 @@ end
 
 function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color::Color)
     @assert font.model.mesh.indexLength < length(font.model.mesh.indices)
-    baseIndex = font.model.mesh.indexLength
-    baseVertex = div(baseIndex * 4, 6)
+    baseIndex = font.charCount * 6
+    baseVertex = font.charCount * 4
     indices = font.model.mesh.indices
     vertices = font.model.mesh.vertices
     texWidth, texHeight = size(font.font.bitmap)
@@ -65,23 +67,31 @@ function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, b
     indices[baseIndex+5] = baseVertex + 3
     indices[baseIndex+6] = baseVertex + 2
 
-    font.model.mesh.indexLength += 6
+    font.charCount += 1
 end
 
 function drawtext(font::Font, cursor::FTFont.TextCursor, s::String, color)
     @assert isvalid(font)
-    startIndexLength = font.model.mesh.indexLength
-    startVertexLength = div(startIndexLength * 4, 6)
-
     drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int})->drawchar(font, pos, bmp, box, color)
     FTFont.drawtext(drawFunc, font.font, cursor, s)
-
-    endIndexLength = font.model.mesh.indexLength
-    endVertexLength = div(endIndexLength * 4, 6)
-    updatebuffers(font.model.mesh, startVertexLength+1:endVertexLength, startIndexLength+1:endIndexLength)
 end
 
 function cleartext(font::Font)
     @assert isvalid(font)
     font.model.mesh.indexLength = 0
+    font.charCount = 0
+end
+
+function updatemodel(font::Font)
+    indexLength = font.model.mesh.indexLength
+    @assert font.charCount * 6 >= indexLength
+    if font.charCount * 6 > indexLength
+        updatebuffers(font.model.mesh, div(indexLength*4, 6)+1:font.charCount*4, indexLength+1:font.charCount*6)
+        font.model.mesh.indexLength = font.charCount*6
+    end
+end
+
+function add(renderer::Renderer, font::Font)
+    updatemodel(font)
+    add(renderer, font.model)
 end

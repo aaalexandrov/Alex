@@ -100,7 +100,7 @@ function initFonts(renderer::GR.Renderer)
 	fontShader = GR.get_resource(renderer, symbol("data/font"))
 
 	FTFont.init()
-	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
+	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; sizeXY = (20, 20), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
 	FTFont.done()
 
 	ident = eye(Float32, 4)
@@ -110,10 +110,11 @@ function initFonts(renderer::GR.Renderer)
 	GR.setuniform(font.model.material, :view, ident)
     GR.setuniform(font.model.material, :model, ident)
 
-	cursor = FTFont.TextCursor(ftFont.size.x, ftFont.lineDistance)
-	GR.drawtext(font, cursor, "Try that for size", (1f0, 0f0, 1f0, 1f0))
+#=	cursor = FTFont.TextCursor(ftFont.size.x, ftFont.lineDistance)
+	GR.drawtext(font, cursor, "Try that for size", (1f0, 1f0, 0f0, 1f0))
 	cursor = FTFont.TextCursor(ftFont.size.x, 2ftFont.lineDistance)
 	GR.drawtext(font, cursor, "Kk фФ", (1f0, 0f0, 0f0, 1f0))
+=#    
 end
 
 function doneFonts()
@@ -217,12 +218,13 @@ end
 function render(renderer::GR.Renderer)
 	GR.add(renderer, diskModel)
     GR.add(renderer, triangleModel)
-	GR.add(renderer, font.model)
+	GR.add(renderer, font)
 
 	GR.render_frame(renderer)
 end
 
 global lastTime = time()
+global frameCount = 1
 
 function update()
 	global lastTime
@@ -232,6 +234,17 @@ function update()
 	rotMatrix = Math3D.rotz(eye(Float32, 4), float32(deltaTime * pi / 2))
 	newModel = rotMatrix * currentModel
 	GR.settransform(diskModel, newModel)
+    
+    if deltaTime > 0
+        global font, frameCount
+        GR.cleartext(font)
+        cursor = FTFont.TextCursor(font.font.size.x, font.font.lineDistance)
+        GR.drawtext(font, cursor, "FPS: " * string(round(frameCount / deltaTime, 2)), (1f0, 1f0, 0f0, 1f0))
+        frameCount = 1
+    else
+        frameCount += 1
+    end
+    
 	lastTime = timeNow
 end
 
