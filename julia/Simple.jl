@@ -100,7 +100,7 @@ function initFonts(renderer::GR.Renderer)
 	fontShader = GR.get_resource(renderer, symbol("data/font"))
 
 	FTFont.init()
-	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; sizeXY = (20, 20), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
+	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; sizeXY = (16, 16), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
 	FTFont.done()
 
 	ident = eye(Float32, 4)
@@ -264,7 +264,7 @@ function setViewport(renderer::GR.Renderer, width::Integer, height::Integer)
 	GR.settransform(renderer.camera, Math3D.trans(Float32[0, 0, -1]))
 
 	global font
-	m = Math3D.ortho(0, width - 1, 0, height - 1, -1.0f0, 1.0f0)
+	m = Math3D.ortho(0, width, 0, height, -1.0f0, 1.0f0)
 	GR.setuniform(font.model.material, :projection, m)
 end
 
@@ -301,7 +301,7 @@ function openWindow()
 		frames += 1
 	end
 
-	info("Average FPS: $(frames / (time() - startTime))")
+	info("Average FPS: $(round(frames / (time() - startTime), 2))")
 
 	done(renderer)
 
