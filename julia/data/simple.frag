@@ -4,7 +4,14 @@ in  vec2 fragTexCoord;
 
 out vec4 fragColor;
 
-uniform vec4      emissiveColor;
+uniform PerInstance
+{
+	mat4 projection;
+	mat4 view;
+	mat4 model;
+    
+    vec4 emissiveColor;
+};
 uniform sampler2D diffuseTexture;
 
 void main()

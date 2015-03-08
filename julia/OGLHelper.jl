@@ -22,7 +22,7 @@ nofunc(x...) = nothing
 macro notranspose(func)
 	quote
 		function (location::GLint, count::GLsizei, value::Ptr{GLfloat})
-			$func(location, count, FALSE, value)
+			$func(location, count, GL_FALSE, value)
 		end
 	end
 end
@@ -41,20 +41,20 @@ end
 
 function glUniform(index::GLint, value::Vector{Float32})
 	glUniformFunc = get_uniform_func_float(length(value), 1)
-	glUniformFunc(index, uint(1), convert(Ptr{Float32}, value))
+	glUniformFunc(index, one(GLsizei), convert(Ptr{Float32}, value))
 end
 
 function glUniform(index::GLint, value::Matrix{Float32})
 	rows, cols = size(value)
 	glUniformMatrixFunc = get_uniform_func_float(rows, cols)
-	glUniformMatrixFunc(index, uint(1), convert(Ptr{Float32}, value))
+	glUniformMatrixFunc(index, one(GLsizei), convert(Ptr{Float32}, value))
 end
 
 function glUniform(index::GLint, value::Array{Float32, 3})
 	rows, cols, elements = size(value)
 	local glUniformFunc
 	glUniformFunc = get_uniform_func_float(rows, cols)
-	glUniformFunc(index, uint(elements), convert(Ptr{Float32}, value))
+	glUniformFunc(index, convert(GLsizei, elements), convert(Ptr{Float32}, value))
 end
 
 # todo: add glUniform for Vector{Int32 & Uint32}
@@ -82,7 +82,14 @@ function gl_clear_buffers(color, depth, stencil)
 	glClear(mask)
 end
 
+function gl_info()
+	vendor = bytestring(glGetString(GL_VENDOR))
+	version = bytestring(glGetString(GL_VERSION))
+	renderer = bytestring(glGetString(GL_RENDERER))
+	info("OpenGL Vendor: $vendor, Version: $version, Renderer: $renderer")
+end
 
-export glUniform, gl_get_current_program, gl_clear_buffers
+
+export glUniform, gl_get_current_program, gl_clear_buffers, gl_info
 
 end

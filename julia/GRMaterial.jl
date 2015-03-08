@@ -19,24 +19,8 @@ end
 
 isvalid(mat::Material) = isvalid(mat.shader)
 
-
-set_world_transform(mat::Material, m::Matrix) = setuniform(mat, mat.shader.worldTransform, m)
-get_world_transform(mat::Material) = getuniform(mat, mat.shader.worldTransform)
-has_world_transform(mat::Material) = hasuniform(mat, mat.shader.worldTransform)
-
-function set_camera_transforms(mat::Material, view::Matrix, proj::Matrix)
-	# these will not be set to a material that doesn't have them already
-	# this way these transforms can use a separate material that can be updated and applied to the shader once per frame
-	setuniform(mat, mat.shader.viewTransform, view, allowAdd = false)
-	setuniform(mat, mat.shader.projTransform, proj, allowAdd = false)
-end
-
-set_camera_transforms(mat::Material, cam::Camera) = set_camera_transforms(mat, getview(cam), getproj(cam))
-
 function apply(mat::Material, renderer::Renderer)
 	apply(mat.shader)
-
-	set_camera_transforms(mat, renderer.camera)
 
 	for (u, v) in mat.uniforms
 		setuniform(mat.shader, u, v)
@@ -52,6 +36,7 @@ function apply(mat::Material, renderer::Renderer)
 	apply(mat.states, renderer)
 end
 
+resetstate(mat::Material, state::RenderState) = resetstate(mat.states, state)
 setstate(mat::Material, state::RenderState) = setstate(mat.states, state)
 getstate{T <: RenderState}(mat::Material, ::Type{T}, default) = getstate(mat.states, T, default)
 

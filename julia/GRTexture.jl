@@ -32,6 +32,7 @@ function init(tex::Texture, renderer::Renderer, data::Array; id::Symbol = :textu
 	else
 		error("init(Texture): unsupported texture format")
 	end
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 	glBindTexture(GL_TEXTURE_2D, tex.texture)
 	glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, w, h, 0, pixelFormat, GL_UNSIGNED_BYTE, data)
 	glGenerateMipmap(GL_TEXTURE_2D)

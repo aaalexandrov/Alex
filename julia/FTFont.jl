@@ -186,7 +186,7 @@ function get_kerning(face::FT_Face, c1::Char, c2::Char, divisor::Float32)
     return Vec2{Float32}(kernVec[1].x / divisor, kernVec[1].y / divisor)
 end
 
-function loadfont(faceName::String; sizeX = 32, sizeY = 32, faceIndex = 0, chars = '\u0000':'\u00ff')
+function loadfont(faceName::String; sizeXY::(Real, Real) = (32, 32), faceIndex::Real = 0, chars = '\u0000':'\u00ff')
     face = (FT_Face)[C_NULL]
     err = FT_New_Face(ftLib[1], faceName, int32(faceIndex), face)
     if err != 0
@@ -194,7 +194,7 @@ function loadfont(faceName::String; sizeX = 32, sizeY = 32, faceIndex = 0, chars
         return nothing
     end
 
-    err = FT_Set_Pixel_Sizes(face[1], uint32(sizeX), uint32(sizeY))
+    err = FT_Set_Pixel_Sizes(face[1], uint32(sizeXY[1]), uint32(sizeXY[2]))
     font = nothing
     if err != 0
         info("Couldn't set the pixel size for font $faceName with error $err")
@@ -203,14 +203,14 @@ function loadfont(faceName::String; sizeX = 32, sizeY = 32, faceIndex = 0, chars
 
         maxCharWidth, maxCharHeight = max_glyph_size(face[1], faceRec, chars)
 
-        emScale = float32(sizeY) / faceRec.units_per_EM
+        emScale = float32(sizeXY[2]) / faceRec.units_per_EM
         lineDist = round(faceRec.height * emScale)
         ascent = round(faceRec.ascender * emScale)
         descent = round(faceRec.descender * emScale)
 
         font = Font(bytestring(faceRec.family_name),
                     bytestring(faceRec.style_name),
-                    sizeX, sizeY,
+                    sizeXY[1], sizeXY[2],
                     lineDist, ascent, descent,
                     maxCharWidth, maxCharHeight, length(chars))
 

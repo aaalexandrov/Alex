@@ -25,6 +25,12 @@ immutable Vec4
 	Vec4(x, y, z, w) = new(x, y, z, w)
 end
 
+immutable MatrixColumn3
+	e1::Float32
+	e2::Float32
+	e3::Float32
+end
+
 immutable MatrixColumn4
 	e1::Float32
 	e2::Float32
@@ -33,6 +39,14 @@ immutable MatrixColumn4
 end
 
 abstract AbstractImmutableMatrix
+
+immutable Matrix3 <: AbstractImmutableMatrix
+	c1::MatrixColumn3
+	c2::MatrixColumn3
+	c3::MatrixColumn3
+
+	Matrix4() = new()
+end
 
 immutable Matrix4 <: AbstractImmutableMatrix
 	c1::MatrixColumn4
@@ -45,8 +59,13 @@ end
 
 import Base: size, eltype
 
+eltype(::Type{Matrix3}) = Float32
+size(::Type{Matrix3}) = (3, 3)
+
 eltype(::Type{Matrix4}) = Float32
 size(::Type{Matrix4}) = (4, 4)
+
+size{T<:AbstractImmutableMatrix}(::Type{T}, i) = size(T)[i]
 
 ismatrix(t::DataType) = t <: AbstractImmutableMatrix
 
@@ -61,6 +80,7 @@ const gl2jlTypes =
 		(GL_FLOAT_VEC2, Vec2),
 		(GL_FLOAT_VEC3, Vec3),
 		(GL_FLOAT_VEC4, Vec4),
+        (GL_FLOAT_MAT3, Matrix3),
 		(GL_FLOAT_MAT4, Matrix4),
 		(GL_SAMPLER_2D, SamplerType{int64(GL_SAMPLER_2D)})
 	])

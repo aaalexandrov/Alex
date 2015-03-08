@@ -14,10 +14,9 @@ function init(block::UniformBlock, program::GLuint, blockIndex::GLuint)
 	block.index = blockIndex
 	val = GLint[1]
 
-	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_BINDING, val)
-	@assert glGetError() == GL_NO_ERROR
-	block.binding = val[1]
-
+    block.binding = block.index
+    glUniformBlockBinding(program, block.index, block.binding)
+    
 	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_DATA_SIZE, val)
 	@assert glGetError() == GL_NO_ERROR
 	block.size = val[1]
@@ -83,10 +82,28 @@ end
 
 function setvalue(var::UniformVar, buffer::Vector{Uint8}, array::Array, index::Int = 1)
 	ptr = getptr(var, buffer, index)
-	@assert ismatrix(var.varType)
-	@assert sizeof(var.varType) == sizeof(array)
-	# todo: make this respect the var's matrix stride, if any
-	unsafe_copy!(convert(Ptr{Uint8}, ptr), convert(Ptr{Uint8}, pointer(array)), sizeof(var.varType))
+	# @assert ismatrix(var.varType)
+    if sizeof(var.varType) != sizeof(array)
+        info("$(var.name) has size $(sizeof(var.varType)), trying to set value of size $(sizeof(array))")
+        @assert sizeof(var.varType) == sizeof(array)
+    end
+
+    if !ismatrix(var.varType) || size(var.varType, 1) == 4
+        unsafe_copy!(convert(Ptr{Uint8}, ptr), convert(Ptr{Uint8}, pointer(array)), sizeof(var.varType))
+    else
+        elType = eltype(var.varType)
+        elSize = sizeof(elType)
+        rowSize = size(var.varType, 1)
+        @assert rowSize < 4
+        pSrc = convert(Ptr{elType}, pointer(array))
+        pDst = convert(Ptr{elType}, ptr)
+        for col = 1:length(array)/rowSize
+            unsafe_copy!(pDst, pSrc, rowSize)
+            pDst += 4elSize
+            pSrc += rowSize * elSize
+        end
+        @assert pSrc == pointer(array) + length(array) * sizeof(eltype(array))
+    end
 end
 
 load_ptr{T}(p::Ptr{T}) = unsafe_load(p)

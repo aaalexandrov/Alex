@@ -32,6 +32,7 @@ include("GRShader.jl")
 include("GRTexture.jl")
 include("GRMaterial.jl")
 include("GRModel.jl")
+include("GRFont.jl")
 
 
 export Vec2, Vec3, Vec4, Matrix4
