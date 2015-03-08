@@ -66,7 +66,7 @@ function initShaders(renderer::GR.Renderer)
 	GR.init(GR.Shader(), renderer, "data/simple")
 end
 
-global texName = "data/grid2.png"
+global texName = "data/Locator_Grid.png"
 #global texName = "fox.png"
 
 function initTextures(renderer::GR.Renderer)
