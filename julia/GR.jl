@@ -4,6 +4,7 @@ using ModernGL
 using OGLHelper
 
 import Shapes
+import DevIL
 
 abstract AbstractRenderer
 abstract Renderable

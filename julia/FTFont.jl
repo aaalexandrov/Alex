@@ -232,7 +232,6 @@ function loadfont(faceName::String; sizeXY::(Real, Real) = (32, 32), faceIndex::
         # query kerning info
         if faceRec.face_flags & FreeType.FT_FACE_FLAG_KERNING != 0
             kernDivisor = (faceRec.face_flags & FreeType.FT_FACE_FLAG_SCALABLE != 0) ? 64f0 : 1f0
-            info
             for c1 in chars, c2 in chars
                 kerning = get_kerning(face[1], c1, c2, kernDivisor)
                 if kerning != zero(Vec2{Float32})
@@ -247,48 +246,6 @@ function loadfont(faceName::String; sizeXY::(Real, Real) = (32, 32), faceIndex::
     err = FT_Done_Face(face[1])
     @assert err == 0
     return font
-end
-
-# tests, to be removed / split from here
-import Images
-
-function testdraw(canvas, pos, bmp, box)
-    dst = Vec2{Int}(pos.x, pos.y)
-    dstMax = dst + size(box)
-    canvas[dst.x:dstMax.x, dst.y:dstMax.y] += bmp[box.min.x:box.max.x, box.min.y:box.max.y]
-end
-
-global font
-function test()
-    FTFont.init()
-
-    global font = FTFont.loadfont("data/roboto-regular.ttf"; chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
-    Images.imwrite(Images.grayim(font.bitmap), "font.png")
-
-    FTFont.done()
-
-    canvas = zeros(Uint8, 1024, 256)
-    cursor = TextCursor(font.size.x, font.lineDistance)
-    drawFunc = (pos, bmp, box)->testdraw(canvas, pos, bmp, box)
-    drawtext(drawFunc, font, cursor, "The quick brown fox jumps over the lazy dog!")
-
-    setpos(cursor, font.size.x, 2font.lineDistance)
-    drawtext(drawFunc, font, cursor, "Aveline F")
-    drawtext(drawFunc, font, cursor, ".") # if the font supports kerning, the '.' should be moved closer to the 'F' at the end of the previous drawtext()
-    drawtext(drawFunc, font, cursor, "\u1000")
-
-    setpos(cursor, font.size.x, 3font.lineDistance)
-    s = "Яваш щета фира?"
-    box = textbox(font, cursor, s)
-    drawtext(drawFunc, font, cursor, s)
-    box.min -= one(box.min)
-    box.max += one(box.max)
-    canvas[box.min.x:box.max.x, box.min.y] = 255
-    canvas[box.min.x:box.max.x, box.max.y] = 255
-    canvas[box.min.x, box.min.y:box.max.y] = 255
-    canvas[box.max.x, box.min.y:box.max.y] = 255
-
-    Images.imwrite(Images.grayim(canvas), "fox.png")
 end
 
 end

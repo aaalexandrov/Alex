@@ -90,7 +90,8 @@ function initShaders(renderer::GR.Renderer)
     GR.init(GR.Shader(), renderer, "data/diffuse", setup_matrices)
 end
 
-global texName = "data/Locator_Grid.png"
+#global texName = "data/Locator_Grid.png"
+global texName = "data/grid2.png"
 
 function initTextures(renderer::GR.Renderer)
 	GR.init(GR.Texture(), renderer, texName)
@@ -100,7 +101,7 @@ function initFonts(renderer::GR.Renderer)
 	fontShader = GR.get_resource(renderer, symbol("data/font"))
 
 	FTFont.init()
-	ftFont = FTFont.loadfont("data/roboto-regular.ttf"; sizeXY = (16, 16), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
+	ftFont = FTFont.loadfont("data/Roboto-Regular.ttf"; sizeXY = (16, 16), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
 	FTFont.done()
 
 	ident = eye(Float32, 4)
@@ -109,12 +110,6 @@ function initFonts(renderer::GR.Renderer)
 	GR.setuniform(font.model.material, :emissiveColor, Float32[1, 1, 1, 1])
 	GR.setuniform(font.model.material, :view, ident)
     GR.setuniform(font.model.material, :model, ident)
-
-#=	cursor = FTFont.TextCursor(ftFont.size.x, ftFont.lineDistance)
-	GR.drawtext(font, cursor, "Try that for size", (1f0, 1f0, 0f0, 1f0))
-	cursor = FTFont.TextCursor(ftFont.size.x, 2ftFont.lineDistance)
-	GR.drawtext(font, cursor, "Kk фФ", (1f0, 0f0, 0f0, 1f0))
-=#
 end
 
 function doneFonts()
@@ -128,6 +123,7 @@ function initMaterials(renderer::GR.Renderer)
 	global triangleMaterial = GR.Material(simpleShader)
     GR.setstate(triangleMaterial, GR.CullStateCCW())
     GR.setstate(triangleMaterial, GR.DepthStateLess())
+	GR.setstate(triangleMaterial, GR.AlphaBlendDisabled())
 
 	ident = eye(Float32, 4) # identity matrix 4x4
 	GR.setuniform(triangleMaterial, :projection, ident)
@@ -145,6 +141,7 @@ function initMaterials(renderer::GR.Renderer)
     global diskMaterial = GR.Material(diffuseShader)
     GR.setstate(diskMaterial, GR.CullStateCCW())
     GR.setstate(diskMaterial, GR.DepthStateLess())
+	GR.setstate(diskMaterial, GR.AlphaBlendDisabled())
 
    	GR.setuniform(diskMaterial, :projection, ident)
 	GR.setuniform(diskMaterial, :view, ident)

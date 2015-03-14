@@ -20,9 +20,11 @@ renderer() = renderer_instance::Union(Renderer, Nothing)
 function init(renderer::Renderer)
     @assert renderer_instance == nothing
     global renderer_instance = renderer
+	DevIL.ilInit()
 end
 
 function done(renderer::Renderer)
+	DevIL.ilShutDown()
 	while !isempty(renderer.resources)
 		id, res = first(renderer.resources)
 		done(res)

@@ -2,12 +2,10 @@ const version = (3,3)
 
 const libGL = @windows ? "opengl32" : "libGL"
 
-const __ofTypeSym = symbol("::")
-
 macro getCFun(lib, jlFun, cFun, address...)
     arguments = map(function (arg)
                         if isa(arg, Symbol)
-                            arg = Expr(__ofTypeSym, arg)
+                            arg = Expr(:(::), arg)
                         end
                         return arg
                     end, cFun.args[1].args[2:end])
