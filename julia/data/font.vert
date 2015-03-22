@@ -1,6 +1,6 @@
 #version 330
 
-layout (location = 0) in vec4 vert;
+layout (location = 0) in vec3 position;
 layout (location = 1) in vec4 color;
 layout (location = 2) in vec2 texCoord;
 
@@ -20,5 +20,5 @@ void main()
 {
 	vertColor = color * emissiveColor;
 	vertTexCoord = texCoord;
-    gl_Position = projection * view * model * vert;
+    gl_Position = projection * view * model * vec4(position, 1);
 }

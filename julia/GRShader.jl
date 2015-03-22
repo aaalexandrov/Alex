@@ -7,6 +7,7 @@ type Shader <: Resource
 	blocks::Vector{UniformBlock}
     setupMaterial::Function
 	id::Symbol
+	attribType::DataType
 	renderer::Renderer
 
 	Shader() = new(0, Dict{Symbol, UniformVar}(), Symbol[], UniformBlock[])
@@ -59,6 +60,8 @@ function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int,
 		init_resource(shader, renderer, id)
 		initblocks(shader)
 		inituniforms(shader)
+
+		initattributes(shader)
 	end
 end
 
@@ -218,6 +221,53 @@ function doneblocks(shader::Shader)
 		done(block)
 	end
 	empty!(shader.blocks)
+end
+
+function initattributes(shader::Shader)
+	@assert isvalid(shader)
+
+	val = GLint[0]
+
+	glGetProgramiv(shader.program, GL_ACTIVE_ATTRIBUTES, val)
+	@assert glGetError() == GL_NO_ERROR
+	attribCount = val[1]
+
+	glGetProgramiv(shader.program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, val)
+	@assert glGetError() == GL_NO_ERROR
+	nameBuf = Array(Uint8, val[1])
+
+	typeBuf = GLenum[0]
+	sizeBuf = GLint[0]
+
+	typeFields = Array(Expr, attribCount)
+	for i = 1:attribCount
+		glGetActiveAttrib(shader.program, i-1, length(nameBuf), C_NULL, sizeBuf, typeBuf, nameBuf)
+		@assert glGetError() == GL_NO_ERROR
+		
+		location = glGetAttribLocation(shader.program, nameBuf) + 1
+		@assert glGetError() == GL_NO_ERROR
+		@assert 1 <= location <= attribCount
+
+		# todo: add support for attribute arrays (via fixed size array types)
+		if sizeBuf[1] != 1
+			error("Vertex attribute arrays aren't supported in shader program $(shader.id), vertex attribute $nameBuf")
+		end
+
+		nameSym = symbol(nameBuf)
+		jlType = gl2jltype(typeBuf[1])
+
+		typeFields[location] = :($nameSym::$jlType)
+	end
+
+	typeSym = symbol("Vert#" * join(map(string, typeFields), "#"))
+	typeExpr = quote
+		immutable $typeSym
+			$(typeFields...)
+		end
+		$typeSym
+	end
+
+	shader.attribType = eval(typeExpr)
 end
 
 get_sampler_index(shader::Shader, name::Symbol) = findfirst(shader.samplers, name)

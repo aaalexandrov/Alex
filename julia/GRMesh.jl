@@ -26,10 +26,10 @@ function init(vl::VertexLayout, mesh::AbstractMesh, usage::Symbol)
 
     for i = 1:length(layoutType.types)
         fieldType = layoutType.types[i]
-        glType, elements = typeelements(fieldType)
+        jlType, elements = typeelements(fieldType)
 
         glEnableVertexAttribArray(i-1)
-        glVertexAttribPointer(i-1, elements, glType, GL_FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldOffsets[i]))
+        glVertexAttribPointer(i-1, elements, jl2gltype(jlType), GL_FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldOffsets[i]))
     end
 
     glBindVertexArray(0)
@@ -48,23 +48,6 @@ function apply(vl::VertexLayout)
     @assert isvalid(vl)
 
     glBindVertexArray(vl.vao)
-end
-
-function typeelements(jlType::DataType)
-    if isempty(jlType.names)
-        # simple type
-        return (jl2gltype(jlType), 1)
-    else
-        elType = Nothing
-        for t in jlType.types
-            if elType == Nothing
-                elType = t
-            elseif elType != t
-                error("typeelements: A field with non-uniform types found")
-            end
-        end
-        return (jl2gltype(elType), length(jlType.names))
-    end
 end
 
 
@@ -178,3 +161,4 @@ indextype(mesh::Mesh) = jl2gltype(eltype(mesh.indices))
 primitivemode(mesh::Mesh) = GL_TRIANGLES
 
 indexcount(mesh::Mesh) = mesh.indexLength
+

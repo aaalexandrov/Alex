@@ -29,10 +29,10 @@ function process_input(cam::FreeCamera)
     deltaTime = timeNow - cam.lastTime
 
     trans[1] = (GLFW.GetKey(cam.window, GLFW.KEY_D) - GLFW.GetKey(cam.window, GLFW.KEY_A)) * cam.deltaTrans[1] * deltaTime
-    trans[2] = (GLFW.GetKey(cam.window, GLFW.KEY_G) - GLFW.GetKey(cam.window, GLFW.KEY_T)) * cam.deltaTrans[2] * deltaTime
+    trans[2] = (GLFW.GetKey(cam.window, GLFW.KEY_F) - GLFW.GetKey(cam.window, GLFW.KEY_R)) * cam.deltaTrans[2] * deltaTime
     trans[3] = (GLFW.GetKey(cam.window, GLFW.KEY_W) - GLFW.GetKey(cam.window, GLFW.KEY_S)) * cam.deltaTrans[3] * deltaTime
 
-    angles[1] = (GLFW.GetKey(cam.window, GLFW.KEY_F) - GLFW.GetKey(cam.window, GLFW.KEY_R)) * cam.deltaAngles[1] * deltaTime
+    angles[1] = (GLFW.GetKey(cam.window, GLFW.KEY_G) - GLFW.GetKey(cam.window, GLFW.KEY_T)) * cam.deltaAngles[1] * deltaTime
     angles[2] = (GLFW.GetKey(cam.window, GLFW.KEY_E) - GLFW.GetKey(cam.window, GLFW.KEY_Q)) * cam.deltaAngles[2] * deltaTime
     angles[3] = (GLFW.GetKey(cam.window, GLFW.KEY_Z) - GLFW.GetKey(cam.window, GLFW.KEY_C)) * cam.deltaAngles[3] * deltaTime
 

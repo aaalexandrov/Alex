@@ -179,7 +179,7 @@ end
 
 function initCamera(renderer::GR.Renderer)
 	global window
-	global freeCam = SimpleCam.FreeCamera(renderer, window, Float32[0.5, 0.5, 0.5], Float32[pi/8, pi/8, pi/8])
+	global freeCam = SimpleCam.FreeCamera(renderer, window, Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2])
 end
 
 function doneCamera()

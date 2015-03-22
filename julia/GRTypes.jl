@@ -101,3 +101,36 @@ const jl2glTypes =
 	])
 
 jl2gltype(jlType::DataType) = jl2glTypes[jlType]
+
+function typeelements(dataType::DataType)
+    if isempty(dataType.names)
+        # simple type
+        return (dataType, 1)
+    else
+        elType = Nothing
+        for t in dataType.types
+            if elType == Nothing
+                elType = t
+            elseif elType != t
+                error("typeelements: A field with non-uniform types found")
+            end
+        end
+        return (elType, length(dataType.names))
+    end
+end
+
+function set_array_field{T}(vert::Vector{T}, field::Symbol, values::Array)
+	fieldInd = findfirst(T.names, field)
+	elType, elCount = typeelements(T.types[fieldInd])
+	offs = fieldoffsets(T)[fieldInd]
+	dst = convert(Ptr{elType}, pointer(vert)) + offs
+	valueStride = length(values) / length(vert)
+	srcBase = 0
+	for vertInd = 0:length(vert)-1
+		for elInd = 1:elCount
+			unsafe_store!(dst, values[srcBase+elInd], elInd)
+		end
+		dst += sizeof(T)
+		srcBase += valueStride
+	end
+end
