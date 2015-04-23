@@ -13,7 +13,7 @@ end
 isvalid(font::Font) = isdefined(font, :font) && isvalid(font.model)
 
 
-function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataType, vertex2point::Function = identity; textureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 2048)
+function init(font::Font, ftFont::FTFont.Font, shader::Shader; positionFunc::Function = identity, textureUniform::Symbol = :diffuseTexture, maxCharacters::Int = 2048)
     @assert isvalid(shader)
 
     fontName = FTFont.fontname(ftFont)
@@ -26,11 +26,11 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader, vertexType::DataT
     setstate(material, DepthStateDisabled())
 
     mesh = Mesh()
-    init(mesh, shader.renderer, Array(vertexType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6), vertex2point; id = symbol("Mesh_" * fontName), usage = :dynamic)
+    init(mesh, shader.renderer, Array(shader.attribType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6); positionFunc = positionFunc, id = symbol("Mesh_" * fontName), usage = :dynamic)
     mesh.indexLength = 0
 
     font.font = ftFont
-    font.vertexType = vertexType
+    font.vertexType = shader.attribType
     font.textureUniform = textureUniform
     font.model = Model(mesh, material)
     font.charCount = 0
@@ -55,10 +55,11 @@ function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, b
     boxFSize = size(boxF)
 
     vertType = eltype(vertices)
-    vertices[baseVertex+1] = vertType(pos.x, pos.y, 0, color..., boxF.min.x / texWidth, boxF.min.y / texHeight)
-    vertices[baseVertex+2] = vertType(pos.x, pos.y + boxFSize.y, 0, color..., boxF.min.x / texWidth, boxF.max.y / texHeight)
-    vertices[baseVertex+3] = vertType(pos.x + boxFSize.x, pos.y, 0, color..., boxF.max.x / texWidth, boxF.min.y / texHeight)
-    vertices[baseVertex+4] = vertType(pos.x + boxFSize.x, pos.y + boxFSize.y, 0, color..., boxF.max.x / texWidth, boxF.max.y / texHeight)
+	vecColor = Vec4(color...)
+    vertices[baseVertex+1] = vertType(Vec3(pos.x,              pos.y,              0), vecColor, Vec2(boxF.min.x / texWidth, boxF.min.y / texHeight))
+    vertices[baseVertex+2] = vertType(Vec3(pos.x,              pos.y + boxFSize.y, 0), vecColor, Vec2(boxF.min.x / texWidth, boxF.max.y / texHeight))
+    vertices[baseVertex+3] = vertType(Vec3(pos.x + boxFSize.x, pos.y,              0), vecColor, Vec2(boxF.max.x / texWidth, boxF.min.y / texHeight))
+    vertices[baseVertex+4] = vertType(Vec3(pos.x + boxFSize.x, pos.y + boxFSize.y, 0), vecColor, Vec2(boxF.max.x / texWidth, boxF.max.y / texHeight))
 
     indices[baseIndex+1] = baseVertex
     indices[baseIndex+2] = baseVertex + 1

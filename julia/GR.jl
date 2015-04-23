@@ -27,9 +27,9 @@ include("GRTypes.jl")
 include("GRCamera.jl")
 include("GRState.jl")
 include("GRRenderer.jl")
-include("GRMesh.jl")
 include("GRUniforms.jl")
 include("GRShader.jl")
+include("GRMesh.jl")
 include("GRTexture.jl")
 include("GRMaterial.jl")
 include("GRModel.jl")
@@ -38,6 +38,6 @@ include("GRFont.jl")
 
 export Vec2, Vec3, Vec4, Matrix4
 export VertexLayout, Mesh, Shader, Texture, Material, Model
-export isvalid, init, done, apply, setuniform, getuniform, render
+export isvalid, init, done, apply, setuniform, getuniform, render, position_func
 
 end

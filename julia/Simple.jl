@@ -21,57 +21,24 @@ function rld()
 end
 
 
-import GR: Vec2, Vec3, Vec4, Matrix4
-
-immutable VertPos
-	position::Vec3
-end
-VertPos(x, y, z) = VertPos(Vec3(x, y, z))
-
-immutable VertPosNorm
-	position::Vec3
-	normal::Vec3
-end
-VertPosNorm(x, y, z, nx, ny, nz) = VertPosNorm(Vec3(x, y, z), Vec3(nx, ny, nz))
-
-immutable VertPosUV
-	position::Vec3
-	uv::Vec2
-end
-VertPosUV(x, y, z, u, v) = VertPosUV(Vec3(x, y, z), Vec2(u, v))
-
-immutable VertPosNormUV
-	position::Vec3
-	normal::Vec3
-    uv::Vec2
-end
-VertPosNormUV(x, y, z, nx, ny, nz, u, v) = VertPosNormUV(Vec3(x, y, z), Vec3(nx, ny, nz), Vec2(u, v))
-
-immutable VertPosColorUV
-	position::Vec3
-	color::Vec4
-	uv::Vec2
-end
-VertPosColorUV(x, y, z, r, g, b, a, u, v) = VertPosColorUV(Vec3(x, y, z), Vec4(r, g, b, a), Vec2(u, v))
-
-vert2pos(v) = [v.position.x, v.position.y, v.position.z]
-
 global triangleMaterial, triangleModel, diskMaterial, diskModel
 global freeCam
 global font
 
 
 function initMeshes(renderer::GR.Renderer)
-	triangleVert = [VertPosUV(-1, -1, 0, 0, 0), VertPosUV(1, -1, 0, 1, 0), VertPosUV(0, 1, 0, 0.5, 1)]
+	simpleShader = GR.get_resource(renderer, symbol("data/simple"))
+	trianglePos = Float32[-1  1  0;
+	 			          -1 -1  1;
+				           0  0  0]
+	triangleUV = Float32[0 1 0.5;
+	                     0 0   1]
 	triangleInd = Uint16[0, 2, 1]
-	GR.init(GR.Mesh(), renderer, triangleVert, triangleInd, vert2pos, id = :triangle)
+	GR.init(GR.Mesh(), simpleShader, Dict{Symbol, Array}([(:position, trianglePos), (:texCoord, triangleUV)]), triangleInd; positionFunc = GR.position_func(:position), id = :triangle)
 
 	diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
-    diskVerts = [VertPosNormUV(diskPoints[1, i], diskPoints[2, i], diskPoints[3, i],
-                               diskNormals[1, i], diskNormals[2, i], diskNormals[3, i],
-                               diskPoints[1, i], diskPoints[2, i])
-                 for i in 1:size(diskPoints, 2)]
-	GR.init(GR.Mesh(), renderer, diskVerts, diskInd, vert2pos, id = :disk)
+	diffuseShader = GR.get_resource(renderer, symbol("data/diffuse"))
+	GR.init(GR.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GR.position_func(:position), id = :disk)
 end
 
 function setup_matrices(model::GR.Model)
@@ -106,7 +73,7 @@ function initFonts(renderer::GR.Renderer)
 
 	ident = eye(Float32, 4)
     global font = GR.Font()
-	GR.init(font, ftFont, fontShader, VertPosColorUV)
+	GR.init(font, ftFont, fontShader)
 	GR.setuniform(font.model.material, :emissiveColor, Float32[1, 1, 1, 1])
 	GR.setuniform(font.model.material, :view, ident)
     GR.setuniform(font.model.material, :model, ident)

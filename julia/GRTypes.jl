@@ -25,6 +25,9 @@ immutable Vec4
 	Vec4(x, y, z, w) = new(x, y, z, w)
 end
 
+vec2array{T}(v::T) = [v.x, v.y, v.z]
+position_func(positionField::Symbol) = v->vec2array(v.(positionField))
+
 immutable MatrixColumn3
 	e1::Float32
 	e2::Float32
@@ -132,5 +135,11 @@ function set_array_field{T}(vert::Vector{T}, field::Symbol, values::Array)
 		end
 		dst += sizeof(T)
 		srcBase += valueStride
+	end
+end
+
+function set_array_fields{T}(vert::Vector{T}, fieldArrays::Dict{Symbol, Array})
+	for (field, values) in fieldArrays
+		set_array_field(vert, field, values)
 	end
 end
