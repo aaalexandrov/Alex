@@ -1,0 +1,248 @@
+1:
+  colorHull: '181818'
+  colorPrimary: dfd8c5
+  colorSecondary: 717e5c
+  colorWindow: e4d4b0
+  displayNameID: 505346
+  material: ardishapur
+  skinMaterialID: 1
+2:
+  colorHull: '181818'
+  colorPrimary: 6d98c9
+  colorSecondary: a9aaad
+  colorWindow: d6f7f9
+  displayNameID: 505347
+  material: kador
+  skinMaterialID: 2
+3:
+  colorHull: '222222'
+  colorPrimary: 6c7276
+  colorSecondary: 3b719d
+  colorWindow: b8d4cb
+  displayNameID: 505345
+  material: quafe
+  skinMaterialID: 3
+4:
+  colorHull: '181818'
+  colorPrimary: '393939'
+  colorSecondary: b8b8b8
+  colorWindow: b4cddb
+  displayNameID: 505348
+  material: khanid
+  skinMaterialID: 4
+5:
+  colorHull: '181818'
+  colorPrimary: 6d312c
+  colorSecondary: c2a468
+  colorWindow: e4d4b0
+  displayNameID: 505349
+  material: sarum
+  skinMaterialID: 5
+6:
+  colorHull: '181818'
+  colorPrimary: '777777'
+  colorSecondary: '784234'
+  colorWindow: e4d4b0
+  displayNameID: 505350
+  material: tash-murkon
+  skinMaterialID: 6
+7:
+  colorHull: 6c6c6c
+  colorPrimary: '373737'
+  colorSecondary: c6ae6d
+  colorWindow: cae3f6
+  displayNameID: 505351
+  material: ishukone
+  skinMaterialID: 7
+8:
+  colorHull: 6c6c6c
+  colorPrimary: '272727'
+  colorSecondary: 5c221d
+  colorWindow: fbb16c
+  displayNameID: 505352
+  material: kaalakiota
+  skinMaterialID: 8
+9:
+  colorHull: 6c6c6c
+  colorPrimary: '545046'
+  colorSecondary: 88482b
+  colorWindow: fbc27e
+  displayNameID: 505353
+  material: laidai
+  skinMaterialID: 9
+10:
+  colorHull: '505050'
+  colorPrimary: '373737'
+  colorSecondary: 7b3c27
+  colorWindow: cae3f6
+  displayNameID: 505354
+  material: noh
+  skinMaterialID: 10
+11:
+  colorHull: 6c6c6c
+  colorPrimary: 2f3539
+  colorSecondary: d9d9d9
+  colorWindow: cae3f6
+  displayNameID: 505355
+  material: sukuuvestaa
+  skinMaterialID: 11
+12:
+  colorHull: 5e605c
+  colorPrimary: 474b3e
+  colorSecondary: cbcac8
+  colorWindow: d0ddf7
+  displayNameID: 505356
+  material: wiyrkomi
+  skinMaterialID: 12
+13:
+  colorHull: '222222'
+  colorPrimary: 6e6e6e
+  colorSecondary: 5b362c
+  colorWindow: ffcba2
+  displayNameID: 505357
+  material: aliastra
+  skinMaterialID: 13
+14:
+  colorHull: '222222'
+  colorPrimary: '838383'
+  colorSecondary: 917f5b
+  colorWindow: b8d4cb
+  displayNameID: 505358
+  material: duvolle
+  skinMaterialID: 14
+15:
+  colorHull: '222222'
+  colorPrimary: 6e6e6e
+  colorSecondary: 9c5b22
+  colorWindow: b8d4cb
+  displayNameID: 505359
+  material: innerzone
+  skinMaterialID: 15
+16:
+  colorHull: '222222'
+  colorPrimary: 5b6063
+  colorSecondary: 3b4873
+  colorWindow: b8d4cb
+  displayNameID: 505360
+  material: syndicate
+  skinMaterialID: 16
+17:
+  colorHull: '222222'
+  colorPrimary: 6e6e6e
+  colorSecondary: d5af41
+  colorWindow: b8d4cb
+  displayNameID: 505361
+  material: interbus
+  skinMaterialID: 17
+18:
+  colorHull: '414141'
+  colorPrimary: e5e5e5
+  colorSecondary: '112332'
+  colorWindow: b6dade
+  displayNameID: 505362
+  material: police
+  skinMaterialID: 18
+19:
+  colorHull: '222222'
+  colorPrimary: 868e92
+  colorSecondary: 5c3628
+  colorWindow: b8d4cb
+  displayNameID: 505363
+  material: roden
+  skinMaterialID: 19
+20:
+  colorHull: '242424'
+  colorPrimary: 5f765f
+  colorSecondary: d4d4d4
+  colorWindow: da9f6b
+  displayNameID: 505364
+  material: justice
+  skinMaterialID: 20
+21:
+  colorHull: '242424'
+  colorPrimary: 9d9690
+  colorSecondary: b19357
+  colorWindow: d7b073
+  displayNameID: 505365
+  material: nefantar
+  skinMaterialID: 21
+22:
+  colorHull: '242424'
+  colorPrimary: '906255'
+  colorSecondary: '252525'
+  colorWindow: d7b073
+  displayNameID: 505366
+  material: krusual
+  skinMaterialID: 22
+23:
+  colorHull: '242424'
+  colorPrimary: 1a1a1a
+  colorSecondary: 686b71
+  colorWindow: d7b073
+  displayNameID: 505367
+  material: sebiestor
+  skinMaterialID: 23
+24:
+  colorHull: '242424'
+  colorPrimary: cccdcf
+  colorSecondary: 5c5247
+  colorWindow: 93bdca
+  displayNameID: 505368
+  material: thukker
+  skinMaterialID: 24
+25:
+  colorHull: '181818'
+  colorPrimary: 91877a
+  colorSecondary: 461a13
+  colorWindow: ec9b66
+  displayNameID: 505369
+  material: bloodraider
+  skinMaterialID: 25
+26:
+  colorHull: '242424'
+  colorPrimary: 90846c
+  colorSecondary: 5e5043
+  colorWindow: fbc27e
+  displayNameID: 505370
+  material: guristas
+  skinMaterialID: 26
+27:
+  colorHull: '666666'
+  colorPrimary: bbb6ac
+  colorSecondary: dcb75e
+  colorWindow: b9ddf8
+  displayNameID: 505371
+  material: development
+  skinMaterialID: 27
+28:
+  colorHull: '181818'
+  colorPrimary: dddddd
+  colorSecondary: c6ae6d
+  colorWindow: ffce93
+  displayNameID: 505373
+  material: serenity
+  skinMaterialID: 28
+29:
+  colorHull: 4d4d4d
+  colorPrimary: 3b4340
+  colorSecondary: '050505'
+  colorWindow: c2e6b8
+  displayNameID: 505374
+  material: serpentis
+  skinMaterialID: 29
+30:
+  colorHull: 4e473a
+  colorPrimary: 2c2216
+  colorSecondary: 36422a
+  colorWindow: 7196a8
+  displayNameID: 505375
+  material: vherokior
+  skinMaterialID: 30
+31:
+  colorHull: '666666'
+  colorPrimary: bbb6ac
+  colorSecondary: dcb75e
+  colorWindow: b9ddf8
+  displayNameID: 505659
+  material: buddy
+  skinMaterialID: 31

@@ -1,0 +1,3177 @@
+5:
+  allowCCPDevs: true
+  internalName: Megathron Quafe
+  skinID: 5
+  skinMaterialID: '3'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: true
+8:
+  allowCCPDevs: true
+  internalName: Dominix Quafe
+  skinID: 8
+  skinMaterialID: '3'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: true
+9:
+  allowCCPDevs: true
+  internalName: Oracle Khanid
+  skinID: 9
+  skinMaterialID: '4'
+  types:
+  - 4302
+  visibleSerenity: true
+  visibleTranquility: true
+10:
+  allowCCPDevs: true
+  internalName: Oracle Sarum
+  skinID: 10
+  skinMaterialID: '5'
+  types:
+  - 4302
+  visibleSerenity: true
+  visibleTranquility: true
+11:
+  allowCCPDevs: true
+  internalName: Prophecy Blood Raiders
+  skinID: 11
+  skinMaterialID: '25'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: true
+12:
+  allowCCPDevs: true
+  internalName: Prophecy Kador
+  skinID: 12
+  skinMaterialID: '2'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: true
+13:
+  allowCCPDevs: true
+  internalName: Prophecy Tash-Murkon
+  skinID: 13
+  skinMaterialID: '6'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: true
+14:
+  allowCCPDevs: true
+  internalName: Ferox Guristas
+  skinID: 14
+  skinMaterialID: '26'
+  types:
+  - 16227
+  visibleSerenity: true
+  visibleTranquility: true
+15:
+  allowCCPDevs: true
+  internalName: Ferox Laidai
+  skinID: 15
+  skinMaterialID: '9'
+  types:
+  - 16227
+  visibleSerenity: true
+  visibleTranquility: true
+16:
+  allowCCPDevs: true
+  internalName: Naga Wiyrkomi
+  skinID: 16
+  skinMaterialID: '12'
+  types:
+  - 4306
+  visibleSerenity: true
+  visibleTranquility: true
+17:
+  allowCCPDevs: false
+  internalName: Brutix Inner Zone Shipping
+  skinID: 17
+  skinMaterialID: '15'
+  types:
+  - 16229
+  visibleSerenity: false
+  visibleTranquility: false
+18:
+  allowCCPDevs: true
+  internalName: Brutix Intaki Syndicate
+  skinID: 18
+  skinMaterialID: '16'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: true
+19:
+  allowCCPDevs: true
+  internalName: Brutix Serpentis
+  skinID: 19
+  skinMaterialID: '29'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: true
+20:
+  allowCCPDevs: true
+  internalName: Myrmidon Intaki Syndicate
+  skinID: 20
+  skinMaterialID: '16'
+  types:
+  - 24700
+  visibleSerenity: true
+  visibleTranquility: true
+23:
+  allowCCPDevs: true
+  internalName: Dominix Intaki Syndicate
+  skinID: 23
+  skinMaterialID: '16'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: true
+24:
+  allowCCPDevs: true
+  internalName: Myrmidon InterBus
+  skinID: 24
+  skinMaterialID: '17'
+  types:
+  - 24700
+  visibleSerenity: true
+  visibleTranquility: true
+25:
+  allowCCPDevs: true
+  internalName: Talos Duvolle
+  skinID: 25
+  skinMaterialID: '14'
+  types:
+  - 4308
+  visibleSerenity: true
+  visibleTranquility: true
+26:
+  allowCCPDevs: true
+  internalName: Talos InterBus
+  skinID: 26
+  skinMaterialID: '17'
+  types:
+  - 4308
+  visibleSerenity: true
+  visibleTranquility: true
+27:
+  allowCCPDevs: true
+  internalName: Cyclone Krusual
+  skinID: 27
+  skinMaterialID: '22'
+  types:
+  - 16231
+  visibleSerenity: true
+  visibleTranquility: true
+28:
+  allowCCPDevs: true
+  internalName: Cyclone Thukker Tribe
+  skinID: 28
+  skinMaterialID: '24'
+  types:
+  - 16231
+  visibleSerenity: true
+  visibleTranquility: true
+29:
+  allowCCPDevs: true
+  internalName: Hurricane Sebiestor
+  skinID: 29
+  skinMaterialID: '23'
+  types:
+  - 24702
+  visibleSerenity: true
+  visibleTranquility: true
+30:
+  allowCCPDevs: true
+  internalName: Tornado Nefantar
+  skinID: 30
+  skinMaterialID: '21'
+  types:
+  - 4310
+  visibleSerenity: true
+  visibleTranquility: true
+32:
+  allowCCPDevs: true
+  internalName: Abaddon Kador
+  skinID: 32
+  skinMaterialID: '2'
+  types:
+  - 24692
+  visibleSerenity: true
+  visibleTranquility: true
+33:
+  allowCCPDevs: true
+  internalName: Abaddon Tash-Murkon
+  skinID: 33
+  skinMaterialID: '6'
+  types:
+  - 24692
+  visibleSerenity: true
+  visibleTranquility: true
+34:
+  allowCCPDevs: true
+  internalName: Armageddon Kador
+  skinID: 34
+  skinMaterialID: '2'
+  types:
+  - 643
+  visibleSerenity: true
+  visibleTranquility: true
+35:
+  allowCCPDevs: true
+  internalName: Armageddon Tash-Murkon
+  skinID: 35
+  skinMaterialID: '6'
+  types:
+  - 643
+  visibleSerenity: true
+  visibleTranquility: true
+37:
+  allowCCPDevs: true
+  internalName: Apocalypse Ardishapur
+  skinID: 37
+  skinMaterialID: '1'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: true
+38:
+  allowCCPDevs: true
+  internalName: Apocalypse Khanid
+  skinID: 38
+  skinMaterialID: '4'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: true
+39:
+  allowCCPDevs: true
+  internalName: Raven Wiyrkomi
+  skinID: 39
+  skinMaterialID: '12'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: true
+40:
+  allowCCPDevs: true
+  internalName: Rokh Nugoeihuvi
+  skinID: 40
+  skinMaterialID: '10'
+  types:
+  - 24688
+  visibleSerenity: true
+  visibleTranquility: true
+41:
+  allowCCPDevs: true
+  internalName: Rokh Wiyrkomi
+  skinID: 41
+  skinMaterialID: '12'
+  types:
+  - 24688
+  visibleSerenity: true
+  visibleTranquility: true
+42:
+  allowCCPDevs: false
+  internalName: Scorpion Ishukone
+  skinID: 42
+  skinMaterialID: '7'
+  types:
+  - 640
+  visibleSerenity: true
+  visibleTranquility: true
+43:
+  allowCCPDevs: true
+  internalName: Dominix Inner Zone Shipping
+  skinID: 43
+  skinMaterialID: '15'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: true
+44:
+  allowCCPDevs: true
+  internalName: Harbinger Kador
+  skinID: 44
+  skinMaterialID: '2'
+  types:
+  - 24696
+  visibleSerenity: true
+  visibleTranquility: true
+45:
+  allowCCPDevs: true
+  internalName: Harbinger Khanid
+  skinID: 45
+  skinMaterialID: '4'
+  types:
+  - 24696
+  visibleSerenity: true
+  visibleTranquility: true
+61:
+  allowCCPDevs: true
+  internalName: Hyperion Aliastra
+  skinID: 61
+  skinMaterialID: '13'
+  types:
+  - 24690
+  visibleSerenity: true
+  visibleTranquility: true
+62:
+  allowCCPDevs: true
+  internalName: Hyperion Inner Zone Shipping
+  skinID: 62
+  skinMaterialID: '15'
+  types:
+  - 24690
+  visibleSerenity: true
+  visibleTranquility: true
+63:
+  allowCCPDevs: true
+  internalName: Megathron Inner Zone Shipping
+  skinID: 63
+  skinMaterialID: '15'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: true
+64:
+  allowCCPDevs: true
+  internalName: Megathron Intaki Syndicate
+  skinID: 64
+  skinMaterialID: '16'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: true
+65:
+  allowCCPDevs: true
+  internalName: Maelstrom Krusual
+  skinID: 65
+  skinMaterialID: '22'
+  types:
+  - 24694
+  visibleSerenity: true
+  visibleTranquility: true
+66:
+  allowCCPDevs: true
+  internalName: Maelstrom Nefantar
+  skinID: 66
+  skinMaterialID: '21'
+  types:
+  - 24694
+  visibleSerenity: true
+  visibleTranquility: true
+67:
+  allowCCPDevs: true
+  internalName: Typhoon Krusual
+  skinID: 67
+  skinMaterialID: '22'
+  types:
+  - 644
+  visibleSerenity: true
+  visibleTranquility: true
+68:
+  allowCCPDevs: true
+  internalName: Orca ORE Development
+  skinID: 68
+  skinMaterialID: '31'
+  types:
+  - 28606
+  visibleSerenity: true
+  visibleTranquility: true
+69:
+  allowCCPDevs: true
+  internalName: Rorqual ORE Development
+  skinID: 69
+  skinMaterialID: '31'
+  types:
+  - 28352
+  visibleSerenity: true
+  visibleTranquility: true
+70:
+  allowCCPDevs: true
+  internalName: Archon Kador
+  skinID: 70
+  skinMaterialID: '2'
+  types:
+  - 23757
+  visibleSerenity: true
+  visibleTranquility: true
+71:
+  allowCCPDevs: true
+  internalName: Archon Tash-Murkon
+  skinID: 71
+  skinMaterialID: '6'
+  types:
+  - 23757
+  visibleSerenity: true
+  visibleTranquility: true
+72:
+  allowCCPDevs: true
+  internalName: Aeon Khanid
+  skinID: 72
+  skinMaterialID: '4'
+  types:
+  - 23919
+  visibleSerenity: true
+  visibleTranquility: true
+73:
+  allowCCPDevs: true
+  internalName: Aeon Sarum
+  skinID: 73
+  skinMaterialID: '5'
+  types:
+  - 23919
+  visibleSerenity: true
+  visibleTranquility: true
+74:
+  allowCCPDevs: true
+  internalName: Chimera Laidai
+  skinID: 74
+  skinMaterialID: '9'
+  types:
+  - 23915
+  visibleSerenity: true
+  visibleTranquility: true
+75:
+  allowCCPDevs: true
+  internalName: Wyvern Wiyrkomi
+  skinID: 75
+  skinMaterialID: '12'
+  types:
+  - 23917
+  visibleSerenity: true
+  visibleTranquility: true
+76:
+  allowCCPDevs: true
+  internalName: Thanatos Quafe
+  skinID: 76
+  skinMaterialID: '3'
+  types:
+  - 23911
+  visibleSerenity: true
+  visibleTranquility: true
+77:
+  allowCCPDevs: true
+  internalName: Thanatos Roden
+  skinID: 77
+  skinMaterialID: '19'
+  types:
+  - 23911
+  visibleSerenity: true
+  visibleTranquility: true
+78:
+  allowCCPDevs: true
+  internalName: Nyx InterBus
+  skinID: 78
+  skinMaterialID: '17'
+  types:
+  - 23913
+  visibleSerenity: true
+  visibleTranquility: true
+79:
+  allowCCPDevs: true
+  internalName: Nyx Quafe
+  skinID: 79
+  skinMaterialID: '3'
+  types:
+  - 23913
+  visibleSerenity: true
+  visibleTranquility: true
+80:
+  allowCCPDevs: true
+  internalName: Nidhoggur Krusual
+  skinID: 80
+  skinMaterialID: '22'
+  types:
+  - 24483
+  visibleSerenity: true
+  visibleTranquility: true
+81:
+  allowCCPDevs: true
+  internalName: Hel Sebiestor
+  skinID: 81
+  skinMaterialID: '23'
+  types:
+  - 22852
+  visibleSerenity: true
+  visibleTranquility: true
+82:
+  allowCCPDevs: true
+  internalName: Revelation Kador
+  skinID: 82
+  skinMaterialID: '2'
+  types:
+  - 19720
+  visibleSerenity: true
+  visibleTranquility: true
+83:
+  allowCCPDevs: true
+  internalName: Revelation Sarum
+  skinID: 83
+  skinMaterialID: '5'
+  types:
+  - 19720
+  visibleSerenity: true
+  visibleTranquility: true
+84:
+  allowCCPDevs: true
+  internalName: Phoenix Laidai
+  skinID: 84
+  skinMaterialID: '9'
+  types:
+  - 19726
+  visibleSerenity: true
+  visibleTranquility: true
+85:
+  allowCCPDevs: true
+  internalName: Phoenix Wiyrkomi
+  skinID: 85
+  skinMaterialID: '12'
+  types:
+  - 19726
+  visibleSerenity: true
+  visibleTranquility: true
+86:
+  allowCCPDevs: true
+  internalName: Moros InterBus
+  skinID: 86
+  skinMaterialID: '17'
+  types:
+  - 19724
+  visibleSerenity: true
+  visibleTranquility: true
+87:
+  allowCCPDevs: true
+  internalName: Moros Roden
+  skinID: 87
+  skinMaterialID: '19'
+  types:
+  - 19724
+  visibleSerenity: true
+  visibleTranquility: true
+88:
+  allowCCPDevs: true
+  internalName: Naglfar Justice
+  skinID: 88
+  skinMaterialID: '20'
+  types:
+  - 19722
+  visibleSerenity: true
+  visibleTranquility: true
+89:
+  allowCCPDevs: true
+  internalName: Providence Ardishapur
+  skinID: 89
+  skinMaterialID: '1'
+  types:
+  - 20183
+  visibleSerenity: true
+  visibleTranquility: true
+90:
+  allowCCPDevs: true
+  internalName: Providence Kador
+  skinID: 90
+  skinMaterialID: '2'
+  types:
+  - 20183
+  visibleSerenity: true
+  visibleTranquility: true
+91:
+  allowCCPDevs: true
+  internalName: Charon Wiyrkomi
+  skinID: 91
+  skinMaterialID: '12'
+  types:
+  - 20185
+  visibleSerenity: true
+  visibleTranquility: true
+92:
+  allowCCPDevs: true
+  internalName: Obelisk Inner Zone Shipping
+  skinID: 92
+  skinMaterialID: '15'
+  types:
+  - 20187
+  visibleSerenity: true
+  visibleTranquility: true
+93:
+  allowCCPDevs: true
+  internalName: Obelisk Quafe
+  skinID: 93
+  skinMaterialID: '3'
+  types:
+  - 20187
+  visibleSerenity: true
+  visibleTranquility: true
+94:
+  allowCCPDevs: true
+  internalName: Fenrir Krusual
+  skinID: 94
+  skinMaterialID: '22'
+  types:
+  - 20189
+  visibleSerenity: true
+  visibleTranquility: true
+95:
+  allowCCPDevs: true
+  internalName: Avatar Kador
+  skinID: 95
+  skinMaterialID: '2'
+  types:
+  - 11567
+  visibleSerenity: true
+  visibleTranquility: true
+96:
+  allowCCPDevs: true
+  internalName: Avatar Khanid
+  skinID: 96
+  skinMaterialID: '4'
+  types:
+  - 11567
+  visibleSerenity: true
+  visibleTranquility: true
+97:
+  allowCCPDevs: true
+  internalName: Erebus Duvolle
+  skinID: 97
+  skinMaterialID: '14'
+  types:
+  - 671
+  visibleSerenity: true
+  visibleTranquility: true
+98:
+  allowCCPDevs: true
+  internalName: Erebus InterBus
+  skinID: 98
+  skinMaterialID: '17'
+  types:
+  - 671
+  visibleSerenity: true
+  visibleTranquility: true
+99:
+  allowCCPDevs: true
+  internalName: Arbitrator Ardishapur
+  skinID: 99
+  skinMaterialID: '1'
+  types:
+  - 628
+  visibleSerenity: true
+  visibleTranquility: true
+100:
+  allowCCPDevs: true
+  internalName: Arbitrator Kador
+  skinID: 100
+  skinMaterialID: '2'
+  types:
+  - 628
+  visibleSerenity: true
+  visibleTranquility: true
+101:
+  allowCCPDevs: true
+  internalName: Augoror Ardishapur
+  skinID: 101
+  skinMaterialID: '1'
+  types:
+  - 625
+  visibleSerenity: true
+  visibleTranquility: true
+102:
+  allowCCPDevs: true
+  internalName: Augoror Khanid
+  skinID: 102
+  skinMaterialID: '4'
+  types:
+  - 625
+  visibleSerenity: true
+  visibleTranquility: true
+103:
+  allowCCPDevs: true
+  internalName: Maller Kador
+  skinID: 103
+  skinMaterialID: '2'
+  types:
+  - 624
+  visibleSerenity: true
+  visibleTranquility: true
+104:
+  allowCCPDevs: true
+  internalName: Maller Tash-Murkon
+  skinID: 104
+  skinMaterialID: '6'
+  types:
+  - 624
+  visibleSerenity: true
+  visibleTranquility: true
+105:
+  allowCCPDevs: true
+  internalName: Omen Kador
+  skinID: 105
+  skinMaterialID: '2'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: true
+106:
+  allowCCPDevs: true
+  internalName: Omen Sarum
+  skinID: 106
+  skinMaterialID: '5'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: true
+107:
+  allowCCPDevs: true
+  internalName: Omen Tash-Murkon
+  skinID: 107
+  skinMaterialID: '6'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: true
+108:
+  allowCCPDevs: true
+  internalName: Caracal Nugoeihuvi
+  skinID: 108
+  skinMaterialID: '10'
+  types:
+  - 621
+  visibleSerenity: true
+  visibleTranquility: true
+109:
+  allowCCPDevs: true
+  internalName: Caracal Wiyrkomi
+  skinID: 109
+  skinMaterialID: '12'
+  types:
+  - 621
+  visibleSerenity: true
+  visibleTranquility: true
+110:
+  allowCCPDevs: true
+  internalName: Moa Laidai
+  skinID: 110
+  skinMaterialID: '9'
+  types:
+  - 623
+  visibleSerenity: true
+  visibleTranquility: true
+111:
+  allowCCPDevs: true
+  internalName: Osprey Wiyrkomi
+  skinID: 111
+  skinMaterialID: '12'
+  types:
+  - 620
+  visibleSerenity: true
+  visibleTranquility: true
+112:
+  allowCCPDevs: true
+  internalName: Celestis Intaki Syndicate
+  skinID: 112
+  skinMaterialID: '16'
+  types:
+  - 633
+  visibleSerenity: true
+  visibleTranquility: true
+113:
+  allowCCPDevs: true
+  internalName: Celestis InterBus
+  skinID: 113
+  skinMaterialID: '17'
+  types:
+  - 633
+  visibleSerenity: true
+  visibleTranquility: true
+114:
+  allowCCPDevs: true
+  internalName: Exequror Intaki Syndicate
+  skinID: 114
+  skinMaterialID: '16'
+  types:
+  - 634
+  visibleSerenity: true
+  visibleTranquility: true
+115:
+  allowCCPDevs: true
+  internalName: Thorax Aliastra
+  skinID: 115
+  skinMaterialID: '13'
+  types:
+  - 627
+  visibleSerenity: true
+  visibleTranquility: true
+116:
+  allowCCPDevs: true
+  internalName: Thorax Inner Zone Shipping
+  skinID: 116
+  skinMaterialID: '15'
+  types:
+  - 627
+  visibleSerenity: true
+  visibleTranquility: true
+117:
+  allowCCPDevs: true
+  internalName: Vexor Intaki Syndicate
+  skinID: 117
+  skinMaterialID: '16'
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: true
+118:
+  allowCCPDevs: true
+  internalName: Vexor InterBus
+  skinID: 118
+  skinMaterialID: 17
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: true
+119:
+  allowCCPDevs: true
+  internalName: Vexor Quafe
+  skinID: 119
+  skinMaterialID: '3'
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: true
+120:
+  allowCCPDevs: true
+  internalName: Bellicose Krusual
+  skinID: 120
+  skinMaterialID: '22'
+  types:
+  - 630
+  visibleSerenity: true
+  visibleTranquility: true
+121:
+  allowCCPDevs: true
+  internalName: Stabber Krusual
+  skinID: 121
+  skinMaterialID: '22'
+  types:
+  - 622
+  visibleSerenity: true
+  visibleTranquility: true
+122:
+  allowCCPDevs: true
+  internalName: Stabber Nefantar
+  skinID: 122
+  skinMaterialID: '21'
+  types:
+  - 622
+  visibleSerenity: true
+  visibleTranquility: true
+123:
+  allowCCPDevs: true
+  internalName: Coercer Ardishapur
+  skinID: 123
+  skinMaterialID: '1'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: true
+124:
+  allowCCPDevs: true
+  internalName: Coercer Blood Raiders
+  skinID: 124
+  skinMaterialID: '25'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: true
+125:
+  allowCCPDevs: true
+  internalName: Coercer Sarum
+  skinID: 125
+  skinMaterialID: '5'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: true
+126:
+  allowCCPDevs: true
+  internalName: Dragoon Khanid
+  skinID: 126
+  skinMaterialID: '4'
+  types:
+  - 32874
+  visibleSerenity: true
+  visibleTranquility: true
+127:
+  allowCCPDevs: true
+  internalName: Dragoon Tash-Murkon
+  skinID: 127
+  skinMaterialID: '6'
+  types:
+  - 32874
+  visibleSerenity: true
+  visibleTranquility: true
+128:
+  allowCCPDevs: true
+  internalName: Cormorant Guristas
+  skinID: 128
+  skinMaterialID: '26'
+  types:
+  - 16238
+  visibleSerenity: true
+  visibleTranquility: true
+129:
+  allowCCPDevs: true
+  internalName: Algos Intaki Syndicate
+  skinID: 129
+  skinMaterialID: '16'
+  types:
+  - 32872
+  visibleSerenity: true
+  visibleTranquility: true
+130:
+  allowCCPDevs: true
+  internalName: Algos InterBus
+  skinID: 130
+  skinMaterialID: '17'
+  types:
+  - 32872
+  visibleSerenity: true
+  visibleTranquility: true
+131:
+  allowCCPDevs: true
+  internalName: Catalyst Aliastra
+  skinID: 131
+  skinMaterialID: '13'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+132:
+  allowCCPDevs: true
+  internalName: Catalyst Inner Zone Shipping
+  skinID: 132
+  skinMaterialID: '15'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+133:
+  allowCCPDevs: true
+  internalName: Catalyst Intaki Syndicate
+  skinID: 133
+  skinMaterialID: '16'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+134:
+  allowCCPDevs: true
+  internalName: Catalyst InterBus
+  skinID: 134
+  skinMaterialID: '17'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+135:
+  allowCCPDevs: true
+  internalName: Catalyst Quafe
+  skinID: 135
+  skinMaterialID: '3'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+136:
+  allowCCPDevs: true
+  internalName: Catalyst Serpentis
+  skinID: 136
+  skinMaterialID: '29'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: true
+137:
+  allowCCPDevs: true
+  internalName: Talwar Sebiestor
+  skinID: 137
+  skinMaterialID: '23'
+  types:
+  - 32878
+  visibleSerenity: true
+  visibleTranquility: true
+138:
+  allowCCPDevs: true
+  internalName: Thrasher Nefantar
+  skinID: 138
+  skinMaterialID: '21'
+  types:
+  - 16242
+  visibleSerenity: true
+  visibleTranquility: true
+139:
+  allowCCPDevs: true
+  internalName: Thrasher Thukker Tribe
+  skinID: 139
+  skinMaterialID: '24'
+  types:
+  - 16242
+  visibleSerenity: true
+  visibleTranquility: true
+140:
+  allowCCPDevs: true
+  internalName: Comet Police Pursuit
+  skinID: 140
+  skinMaterialID: '18'
+  types:
+  - 17841
+  visibleSerenity: true
+  visibleTranquility: true
+141:
+  allowCCPDevs: true
+  internalName: Crucifier Kador
+  skinID: 141
+  skinMaterialID: '2'
+  types:
+  - 2161
+  visibleSerenity: true
+  visibleTranquility: true
+142:
+  allowCCPDevs: true
+  internalName: Crucifier Sarum
+  skinID: 142
+  skinMaterialID: '5'
+  types:
+  - 2161
+  visibleSerenity: true
+  visibleTranquility: true
+143:
+  allowCCPDevs: true
+  internalName: Executioner Ardishapur
+  skinID: 143
+  skinMaterialID: '1'
+  types:
+  - 589
+  visibleSerenity: true
+  visibleTranquility: true
+144:
+  allowCCPDevs: true
+  internalName: Executioner Kador
+  skinID: 144
+  skinMaterialID: '2'
+  types:
+  - 589
+  visibleSerenity: true
+  visibleTranquility: true
+145:
+  allowCCPDevs: true
+  internalName: Inquisitor Khanid
+  skinID: 145
+  skinMaterialID: '4'
+  types:
+  - 590
+  visibleSerenity: true
+  visibleTranquility: true
+146:
+  allowCCPDevs: true
+  internalName: Inquisitor Tash-Murkon
+  skinID: 146
+  skinMaterialID: '6'
+  types:
+  - 590
+  visibleSerenity: true
+  visibleTranquility: true
+147:
+  allowCCPDevs: true
+  internalName: Magnate Ardishapur
+  skinID: 147
+  skinMaterialID: '1'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: true
+148:
+  allowCCPDevs: true
+  internalName: Magnate Sarum
+  skinID: 148
+  skinMaterialID: '5'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: true
+149:
+  allowCCPDevs: true
+  internalName: Magnate Tash-Murkon
+  skinID: 149
+  skinMaterialID: '6'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: true
+150:
+  allowCCPDevs: true
+  internalName: Punisher Kador
+  skinID: 150
+  skinMaterialID: '2'
+  types:
+  - 597
+  visibleSerenity: true
+  visibleTranquility: true
+151:
+  allowCCPDevs: true
+  internalName: Punisher Tash-Murkon
+  skinID: 151
+  skinMaterialID: '6'
+  types:
+  - 597
+  visibleSerenity: true
+  visibleTranquility: true
+152:
+  allowCCPDevs: true
+  internalName: Tormentor Ardishapur
+  skinID: 152
+  skinMaterialID: '1'
+  types:
+  - 591
+  visibleSerenity: true
+  visibleTranquility: true
+153:
+  allowCCPDevs: true
+  internalName: Tormentor Sarum
+  skinID: 153
+  skinMaterialID: '5'
+  types:
+  - 591
+  visibleSerenity: true
+  visibleTranquility: true
+154:
+  allowCCPDevs: true
+  internalName: Heron Sukuuvestaa
+  skinID: 154
+  skinMaterialID: '11'
+  types:
+  - 605
+  visibleSerenity: true
+  visibleTranquility: true
+155:
+  allowCCPDevs: true
+  internalName: Kestrel Wiyrkomi
+  skinID: 155
+  skinMaterialID: '12'
+  types:
+  - 602
+  visibleSerenity: true
+  visibleTranquility: true
+156:
+  allowCCPDevs: true
+  internalName: Merlin Nugoeihuvi
+  skinID: 156
+  skinMaterialID: '10'
+  types:
+  - 603
+  visibleSerenity: true
+  visibleTranquility: true
+157:
+  allowCCPDevs: true
+  internalName: Merlin Wiyrkomi
+  skinID: 157
+  skinMaterialID: '12'
+  types:
+  - 603
+  visibleSerenity: true
+  visibleTranquility: true
+158:
+  allowCCPDevs: true
+  internalName: Atron Intaki Syndicate
+  skinID: 158
+  skinMaterialID: '16'
+  types:
+  - 608
+  visibleSerenity: true
+  visibleTranquility: true
+159:
+  allowCCPDevs: true
+  internalName: Atron InterBus
+  skinID: 159
+  skinMaterialID: '17'
+  types:
+  - 608
+  visibleSerenity: true
+  visibleTranquility: true
+160:
+  allowCCPDevs: true
+  internalName: Imicus Inner Zone Shipping
+  skinID: 160
+  skinMaterialID: '15'
+  types:
+  - 607
+  visibleSerenity: true
+  visibleTranquility: true
+161:
+  allowCCPDevs: true
+  internalName: Imicus Intaki Syndicate
+  skinID: 161
+  skinMaterialID: '16'
+  types:
+  - 607
+  visibleSerenity: true
+  visibleTranquility: true
+162:
+  allowCCPDevs: true
+  internalName: Incursus Aliastra
+  skinID: 162
+  skinMaterialID: '13'
+  types:
+  - 594
+  visibleSerenity: true
+  visibleTranquility: true
+163:
+  allowCCPDevs: true
+  internalName: Incursus Inner Zone Shipping
+  skinID: 163
+  skinMaterialID: '15'
+  types:
+  - 594
+  visibleSerenity: true
+  visibleTranquility: true
+164:
+  allowCCPDevs: true
+  internalName: Maulus Inner Zone Shipping
+  skinID: 164
+  skinMaterialID: '15'
+  types:
+  - 609
+  visibleSerenity: true
+  visibleTranquility: true
+165:
+  allowCCPDevs: true
+  internalName: Maulus Intaki Syndicate
+  skinID: 165
+  skinMaterialID: '16'
+  types:
+  - 609
+  visibleSerenity: true
+  visibleTranquility: true
+166:
+  allowCCPDevs: true
+  internalName: Navitas Intaki Syndicate
+  skinID: 166
+  skinMaterialID: '16'
+  types:
+  - 592
+  visibleSerenity: true
+  visibleTranquility: true
+167:
+  allowCCPDevs: true
+  internalName: Tristan Inner Zone Shipping
+  skinID: 167
+  skinMaterialID: '15'
+  types:
+  - 593
+  visibleSerenity: true
+  visibleTranquility: true
+168:
+  allowCCPDevs: true
+  internalName: Tristan Quafe
+  skinID: 168
+  skinMaterialID: '3'
+  types:
+  - 593
+  visibleSerenity: true
+  visibleTranquility: true
+170:
+  allowCCPDevs: true
+  internalName: Rifter Krusual
+  skinID: 170
+  skinMaterialID: '22'
+  types:
+  - 587
+  visibleSerenity: true
+  visibleTranquility: true
+171:
+  allowCCPDevs: true
+  internalName: Rifter Nefantar
+  skinID: 171
+  skinMaterialID: '21'
+  types:
+  - 587
+  visibleSerenity: true
+  visibleTranquility: true
+172:
+  allowCCPDevs: true
+  internalName: Slasher Krusual
+  skinID: 172
+  skinMaterialID: '22'
+  types:
+  - 585
+  visibleSerenity: true
+  visibleTranquility: true
+173:
+  allowCCPDevs: true
+  internalName: Vigil Krusual
+  skinID: 173
+  skinMaterialID: '22'
+  types:
+  - 3766
+  visibleSerenity: true
+  visibleTranquility: true
+174:
+  allowCCPDevs: true
+  internalName: Bestower Tash-Murkon
+  skinID: 174
+  skinMaterialID: '6'
+  types:
+  - 1944
+  visibleSerenity: true
+  visibleTranquility: true
+175:
+  allowCCPDevs: true
+  internalName: Sigil Kador
+  skinID: 175
+  skinMaterialID: '2'
+  types:
+  - 19744
+  visibleSerenity: true
+  visibleTranquility: true
+176:
+  allowCCPDevs: true
+  internalName: Tayra Wiyrkomi
+  skinID: 176
+  skinMaterialID: '12'
+  types:
+  - 649
+  visibleSerenity: true
+  visibleTranquility: true
+179:
+  allowCCPDevs: true
+  internalName: Mammoth Nefantar
+  skinID: 179
+  skinMaterialID: '21'
+  types:
+  - 652
+  visibleSerenity: true
+  visibleTranquility: true
+180:
+  allowCCPDevs: true
+  internalName: Hulk ORE Development
+  skinID: 180
+  skinMaterialID: '31'
+  types:
+  - 22544
+  visibleSerenity: true
+  visibleTranquility: true
+181:
+  allowCCPDevs: true
+  internalName: Mackinaw ORE Development
+  skinID: 181
+  skinMaterialID: '31'
+  types:
+  - 22548
+  visibleSerenity: true
+  visibleTranquility: true
+182:
+  allowCCPDevs: true
+  internalName: Skiff ORE Development
+  skinID: 182
+  skinMaterialID: '31'
+  types:
+  - 22546
+  visibleSerenity: true
+  visibleTranquility: true
+183:
+  allowCCPDevs: true
+  internalName: Probe Vherokior
+  skinID: 183
+  skinMaterialID: '30'
+  types:
+  - 586
+  visibleSerenity: true
+  visibleTranquility: true
+184:
+  allowCCPDevs: true
+  internalName: Iteron Mark V Inner Zone Shipping
+  skinID: 184
+  skinMaterialID: '15'
+  types:
+  - 657
+  visibleSerenity: true
+  visibleTranquility: true
+185:
+  allowCCPDevs: true
+  internalName: Iteron Mark V InterBus
+  skinID: 185
+  skinMaterialID: '17'
+  types:
+  - 657
+  visibleSerenity: true
+  visibleTranquility: true
+187:
+  allowCCPDevs: true
+  internalName: Apocalypse Kador
+  skinID: 187
+  skinMaterialID: '2'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: true
+188:
+  allowCCPDevs: true
+  internalName: Apocalypse Tash-Murkon
+  skinID: 188
+  skinMaterialID: '6'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: true
+189:
+  allowCCPDevs: true
+  internalName: Eagle Serenity YC117
+  skinID: 189
+  skinMaterialID: '28'
+  types:
+  - 12011
+  visibleSerenity: true
+  visibleTranquility: false
+190:
+  allowCCPDevs: true
+  internalName: Ishtar Serenity YC117
+  skinID: 190
+  skinMaterialID: '28'
+  types:
+  - 12005
+  visibleSerenity: true
+  visibleTranquility: false
+191:
+  allowCCPDevs: true
+  internalName: Gila Serenity YC117
+  skinID: 191
+  skinMaterialID: '28'
+  types:
+  - 17715
+  visibleSerenity: true
+  visibleTranquility: false
+192:
+  allowCCPDevs: true
+  internalName: Drake Serenity YC117
+  skinID: 192
+  skinMaterialID: '28'
+  types:
+  - 24698
+  visibleSerenity: true
+  visibleTranquility: false
+193:
+  allowCCPDevs: true
+  internalName: Abaddon Serenity YC117
+  skinID: 193
+  skinMaterialID: '28'
+  types:
+  - 24692
+  visibleSerenity: true
+  visibleTranquility: false
+194:
+  allowCCPDevs: true
+  internalName: Apocalypse Serenity YC117
+  skinID: 194
+  skinMaterialID: '28'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+195:
+  allowCCPDevs: true
+  internalName: Apocalypse Blood Raider
+  skinID: 195
+  skinMaterialID: '25'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+196:
+  allowCCPDevs: true
+  internalName: Armageddon Serenity YC117
+  skinID: 196
+  skinMaterialID: '28'
+  types:
+  - 643
+  visibleSerenity: true
+  visibleTranquility: false
+197:
+  allowCCPDevs: true
+  internalName: Raven Serenity YC117
+  skinID: 197
+  skinMaterialID: '28'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: false
+198:
+  allowCCPDevs: true
+  internalName: Raven Guristas
+  skinID: 198
+  skinMaterialID: '26'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: false
+199:
+  allowCCPDevs: true
+  internalName: Raven Kaalakiota
+  skinID: 199
+  skinMaterialID: '8'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: false
+200:
+  allowCCPDevs: true
+  internalName: Raven Nugoeihuvi
+  skinID: 200
+  skinMaterialID: '10'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: false
+201:
+  allowCCPDevs: true
+  internalName: Dominix Serenity YC117
+  skinID: 201
+  skinMaterialID: '28'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: false
+202:
+  allowCCPDevs: true
+  internalName: Megathron Serenity YC117
+  skinID: 202
+  skinMaterialID: '28'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: false
+203:
+  allowCCPDevs: true
+  internalName: Megathron Police
+  skinID: 203
+  skinMaterialID: '18'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: false
+204:
+  allowCCPDevs: true
+  internalName: Tempest Justice
+  skinID: 204
+  skinMaterialID: '20'
+  types:
+  - 639
+  visibleSerenity: true
+  visibleTranquility: false
+205:
+  allowCCPDevs: true
+  internalName: Tempest Krusual
+  skinID: 205
+  skinMaterialID: '22'
+  types:
+  - 639
+  visibleSerenity: true
+  visibleTranquility: true
+206:
+  allowCCPDevs: true
+  internalName: Tempest Nefantar
+  skinID: 206
+  skinMaterialID: '21'
+  types:
+  - 639
+  visibleSerenity: true
+  visibleTranquility: true
+207:
+  allowCCPDevs: true
+  internalName: Paladin Blood Raider
+  skinID: 207
+  skinMaterialID: '25'
+  types:
+  - 28659
+  visibleSerenity: true
+  visibleTranquility: false
+208:
+  allowCCPDevs: true
+  internalName: Paladin Kador
+  skinID: 208
+  skinMaterialID: '2'
+  types:
+  - 28659
+  visibleSerenity: true
+  visibleTranquility: false
+209:
+  allowCCPDevs: true
+  internalName: Paladin Tash-Murkon
+  skinID: 209
+  skinMaterialID: '6'
+  types:
+  - 28659
+  visibleSerenity: true
+  visibleTranquility: false
+210:
+  allowCCPDevs: true
+  internalName: Golem Guristas
+  skinID: 210
+  skinMaterialID: '26'
+  types:
+  - 28710
+  visibleSerenity: true
+  visibleTranquility: false
+211:
+  allowCCPDevs: true
+  internalName: Golem Kaalakiota
+  skinID: 211
+  skinMaterialID: '8'
+  types:
+  - 28710
+  visibleSerenity: true
+  visibleTranquility: false
+212:
+  allowCCPDevs: true
+  internalName: Golem Nugoeihuvi
+  skinID: 212
+  skinMaterialID: '10'
+  types:
+  - 28710
+  visibleSerenity: true
+  visibleTranquility: false
+213:
+  allowCCPDevs: true
+  internalName: Kronos Inner Zone Shipping
+  skinID: 213
+  skinMaterialID: '15'
+  types:
+  - 28661
+  visibleSerenity: true
+  visibleTranquility: false
+214:
+  allowCCPDevs: true
+  internalName: Kronos Police
+  skinID: 214
+  skinMaterialID: '18'
+  types:
+  - 28661
+  visibleSerenity: true
+  visibleTranquility: false
+215:
+  allowCCPDevs: true
+  internalName: Kronos Quafe
+  skinID: 215
+  skinMaterialID: '3'
+  types:
+  - 28661
+  visibleSerenity: true
+  visibleTranquility: false
+216:
+  allowCCPDevs: true
+  internalName: Vargur Justice
+  skinID: 216
+  skinMaterialID: '20'
+  types:
+  - 28665
+  visibleSerenity: true
+  visibleTranquility: false
+217:
+  allowCCPDevs: true
+  internalName: Vargur Krusual
+  skinID: 217
+  skinMaterialID: '22'
+  types:
+  - 28665
+  visibleSerenity: true
+  visibleTranquility: false
+218:
+  allowCCPDevs: true
+  internalName: Vargur Nefantar
+  skinID: 218
+  skinMaterialID: '21'
+  types:
+  - 28665
+  visibleSerenity: true
+  visibleTranquility: false
+219:
+  allowCCPDevs: true
+  internalName: Machariel Serenity YC117
+  skinID: 219
+  skinMaterialID: '28'
+  types:
+  - 17738
+  visibleSerenity: true
+  visibleTranquility: false
+220:
+  allowCCPDevs: true
+  internalName: Rattlesnake Serenity YC117
+  skinID: 220
+  skinMaterialID: '28'
+  types:
+  - 17918
+  visibleSerenity: true
+  visibleTranquility: false
+222:
+  allowCCPDevs: true
+  internalName: Brutix Roden
+  skinID: 222
+  skinMaterialID: '19'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: true
+1014:
+  allowCCPDevs: true
+  internalName: Caracal Nugoeihuvi Serenity Only
+  skinID: 1014
+  skinMaterialID: '10'
+  types:
+  - 621
+  visibleSerenity: true
+  visibleTranquility: false
+1015:
+  allowCCPDevs: true
+  internalName: Caracal Wiyrkomi Serenity Only
+  skinID: 1015
+  skinMaterialID: '12'
+  types:
+  - 621
+  visibleSerenity: true
+  visibleTranquility: false
+1016:
+  allowCCPDevs: true
+  internalName: Augoror Khanid Serenity Only
+  skinID: 1016
+  skinMaterialID: '4'
+  types:
+  - 625
+  visibleSerenity: true
+  visibleTranquility: false
+1017:
+  allowCCPDevs: true
+  internalName: Maller Kador Serenity Only
+  skinID: 1017
+  skinMaterialID: '2'
+  types:
+  - 624
+  visibleSerenity: true
+  visibleTranquility: false
+1018:
+  allowCCPDevs: true
+  internalName: Arbitrator Kador Serenity Only
+  skinID: 1018
+  skinMaterialID: '2'
+  types:
+  - 628
+  visibleSerenity: true
+  visibleTranquility: false
+1019:
+  allowCCPDevs: true
+  internalName: Augoror Ardishapur Serenity Only
+  skinID: 1019
+  skinMaterialID: '1'
+  types:
+  - 625
+  visibleSerenity: true
+  visibleTranquility: false
+1020:
+  allowCCPDevs: true
+  internalName: Omen Sarum Serenity Only
+  skinID: 1020
+  skinMaterialID: '5'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: false
+1021:
+  allowCCPDevs: true
+  internalName: Omen Tash-Murkon Serenity Only
+  skinID: 1021
+  skinMaterialID: '6'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: false
+1022:
+  allowCCPDevs: true
+  internalName: Maller Tash-Murkon Serenity Only
+  skinID: 1022
+  skinMaterialID: '6'
+  types:
+  - 624
+  visibleSerenity: true
+  visibleTranquility: false
+1023:
+  allowCCPDevs: true
+  internalName: Omen Kador Serenity Only
+  skinID: 1023
+  skinMaterialID: '2'
+  types:
+  - 2006
+  visibleSerenity: true
+  visibleTranquility: false
+1024:
+  allowCCPDevs: true
+  internalName: Raven Wiyrkomi Serenity Only
+  skinID: 1024
+  skinMaterialID: '12'
+  types:
+  - 638
+  visibleSerenity: true
+  visibleTranquility: false
+1025:
+  allowCCPDevs: true
+  internalName: Apocalypse Khanid Serenity Only
+  skinID: 1025
+  skinMaterialID: '4'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+1026:
+  allowCCPDevs: true
+  internalName: Abaddon Tash-Murkon Serenity Only
+  skinID: 1026
+  skinMaterialID: '6'
+  types:
+  - 24692
+  visibleSerenity: true
+  visibleTranquility: false
+1027:
+  allowCCPDevs: true
+  internalName: Abaddon Kador Serenity Only
+  skinID: 1027
+  skinMaterialID: '2'
+  types:
+  - 24692
+  visibleSerenity: true
+  visibleTranquility: false
+1028:
+  allowCCPDevs: true
+  internalName: Tornado Nefantar Serenity Only
+  skinID: 1028
+  skinMaterialID: '21'
+  types:
+  - 4310
+  visibleSerenity: true
+  visibleTranquility: false
+1029:
+  allowCCPDevs: true
+  internalName: Apocalypse Ardishapur Serenity Only
+  skinID: 1029
+  skinMaterialID: '1'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+1030:
+  allowCCPDevs: true
+  internalName: Armageddon Tash-Murkon Serenity Only
+  skinID: 1030
+  skinMaterialID: '6'
+  types:
+  - 643
+  visibleSerenity: true
+  visibleTranquility: false
+1031:
+  allowCCPDevs: true
+  internalName: Armageddon Kador Serenity Only
+  skinID: 1031
+  skinMaterialID: '2'
+  types:
+  - 643
+  visibleSerenity: true
+  visibleTranquility: false
+1032:
+  allowCCPDevs: true
+  internalName: Arbitrator Ardishapur Serenity Only
+  skinID: 1032
+  skinMaterialID: '1'
+  types:
+  - 628
+  visibleSerenity: true
+  visibleTranquility: false
+1033:
+  allowCCPDevs: true
+  internalName: Erebus InterBus Serenity Only
+  skinID: 1033
+  skinMaterialID: '17'
+  types:
+  - 671
+  visibleSerenity: true
+  visibleTranquility: false
+1034:
+  allowCCPDevs: true
+  internalName: Charon Wiyrkomi Serenity Only
+  skinID: 1034
+  skinMaterialID: '12'
+  types:
+  - 20185
+  visibleSerenity: true
+  visibleTranquility: false
+1035:
+  allowCCPDevs: true
+  internalName: Providence Kador Serenity Only
+  skinID: 1035
+  skinMaterialID: '2'
+  types:
+  - 20183
+  visibleSerenity: true
+  visibleTranquility: false
+1036:
+  allowCCPDevs: true
+  internalName: Obelisk Quafe Serenity Only
+  skinID: 1036
+  skinMaterialID: '3'
+  types:
+  - 20187
+  visibleSerenity: true
+  visibleTranquility: false
+1037:
+  allowCCPDevs: true
+  internalName: Obelisk Inner Zone Shipping Serenity Only
+  skinID: 1037
+  skinMaterialID: '15'
+  types:
+  - 20187
+  visibleSerenity: true
+  visibleTranquility: false
+1038:
+  allowCCPDevs: true
+  internalName: Avatar Kador Serenity Only
+  skinID: 1038
+  skinMaterialID: '2'
+  types:
+  - 11567
+  visibleSerenity: true
+  visibleTranquility: false
+1039:
+  allowCCPDevs: true
+  internalName: Fenrir Krusual Serenity Only
+  skinID: 1039
+  skinMaterialID: '22'
+  types:
+  - 20189
+  visibleSerenity: true
+  visibleTranquility: false
+1040:
+  allowCCPDevs: true
+  internalName: Erebus Duvolle Serenity Only
+  skinID: 1040
+  skinMaterialID: '14'
+  types:
+  - 671
+  visibleSerenity: true
+  visibleTranquility: false
+1041:
+  allowCCPDevs: true
+  internalName: Avatar Khanid Serenity Only
+  skinID: 1041
+  skinMaterialID: '4'
+  types:
+  - 11567
+  visibleSerenity: true
+  visibleTranquility: false
+1042:
+  allowCCPDevs: true
+  internalName: Inquisitor Tash-Murkon Serenity Only
+  skinID: 1042
+  skinMaterialID: '6'
+  types:
+  - 590
+  visibleSerenity: true
+  visibleTranquility: false
+1043:
+  allowCCPDevs: true
+  internalName: Magnate Ardishapur Serenity Only
+  skinID: 1043
+  skinMaterialID: '1'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: false
+1044:
+  allowCCPDevs: true
+  internalName: Executioner Kador Serenity Only
+  skinID: 1044
+  skinMaterialID: '2'
+  types:
+  - 589
+  visibleSerenity: true
+  visibleTranquility: false
+1045:
+  allowCCPDevs: true
+  internalName: Crucifier Sarum Serenity Only
+  skinID: 1045
+  skinMaterialID: '5'
+  types:
+  - 2161
+  visibleSerenity: true
+  visibleTranquility: false
+1046:
+  allowCCPDevs: true
+  internalName: Executioner Ardishapur Serenity Only
+  skinID: 1046
+  skinMaterialID: '1'
+  types:
+  - 589
+  visibleSerenity: true
+  visibleTranquility: false
+1047:
+  allowCCPDevs: true
+  internalName: Comet Police Pursuit Serenity Only
+  skinID: 1047
+  skinMaterialID: '18'
+  types:
+  - 17841
+  visibleSerenity: true
+  visibleTranquility: false
+1048:
+  allowCCPDevs: true
+  internalName: Crucifier Kador Serenity Only
+  skinID: 1048
+  skinMaterialID: '2'
+  types:
+  - 2161
+  visibleSerenity: true
+  visibleTranquility: false
+1049:
+  allowCCPDevs: true
+  internalName: Magnate Sarum Serenity Only
+  skinID: 1049
+  skinMaterialID: '5'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: false
+1050:
+  allowCCPDevs: true
+  internalName: Catalyst Intaki Syndicate Serenity Only
+  skinID: 1050
+  skinMaterialID: '16'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1051:
+  allowCCPDevs: true
+  internalName: Catalyst Inner Zone Shipping Serenity Only
+  skinID: 1051
+  skinMaterialID: '15'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1052:
+  allowCCPDevs: true
+  internalName: Catalyst Aliastra Serenity Only
+  skinID: 1052
+  skinMaterialID: '13'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1053:
+  allowCCPDevs: true
+  internalName: Algos InterBus Serenity Only
+  skinID: 1053
+  skinMaterialID: '17'
+  types:
+  - 32872
+  visibleSerenity: true
+  visibleTranquility: false
+1054:
+  allowCCPDevs: true
+  internalName: Talwar Sebiestor Serenity Only
+  skinID: 1054
+  skinMaterialID: '23'
+  types:
+  - 32878
+  visibleSerenity: true
+  visibleTranquility: false
+1055:
+  allowCCPDevs: true
+  internalName: Catalyst Serpentis Serenity Only
+  skinID: 1055
+  skinMaterialID: '29'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1056:
+  allowCCPDevs: true
+  internalName: Catalyst Quafe Serenity Only
+  skinID: 1056
+  skinMaterialID: '3'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1057:
+  allowCCPDevs: true
+  internalName: Catalyst InterBus Serenity Only
+  skinID: 1057
+  skinMaterialID: '17'
+  types:
+  - 16240
+  visibleSerenity: true
+  visibleTranquility: false
+1058:
+  allowCCPDevs: true
+  internalName: Thrasher Thukker Tribe Serenity Only
+  skinID: 1058
+  skinMaterialID: '24'
+  types:
+  - 16242
+  visibleSerenity: true
+  visibleTranquility: false
+1059:
+  allowCCPDevs: true
+  internalName: Thrasher Nefantar Serenity Only
+  skinID: 1059
+  skinMaterialID: '21'
+  types:
+  - 16242
+  visibleSerenity: true
+  visibleTranquility: false
+1060:
+  allowCCPDevs: true
+  internalName: Myrmidon InterBus Serenity Only
+  skinID: 1060
+  skinMaterialID: '17'
+  types:
+  - 24700
+  visibleSerenity: true
+  visibleTranquility: false
+1061:
+  allowCCPDevs: true
+  internalName: Talos Duvolle Serenity Only
+  skinID: 1061
+  skinMaterialID: '14'
+  types:
+  - 4308
+  visibleSerenity: true
+  visibleTranquility: false
+1062:
+  allowCCPDevs: true
+  internalName: Talos InterBus Serenity Only
+  skinID: 1062
+  skinMaterialID: '17'
+  types:
+  - 4308
+  visibleSerenity: true
+  visibleTranquility: false
+1063:
+  allowCCPDevs: true
+  internalName: Cyclone Krusual Serenity Only
+  skinID: 1063
+  skinMaterialID: '22'
+  types:
+  - 16231
+  visibleSerenity: true
+  visibleTranquility: false
+1064:
+  allowCCPDevs: true
+  internalName: Myrmidon Intaki Syndicate Serenity Only
+  skinID: 1064
+  skinMaterialID: '16'
+  types:
+  - 24700
+  visibleSerenity: true
+  visibleTranquility: false
+1065:
+  allowCCPDevs: true
+  internalName: Dominix Intaki Syndicate Serenity Only
+  skinID: 1065
+  skinMaterialID: '16'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: false
+1066:
+  allowCCPDevs: true
+  internalName: Cyclone Thukker Tribe Serenity Only
+  skinID: 1066
+  skinMaterialID: '24'
+  types:
+  - 16231
+  visibleSerenity: true
+  visibleTranquility: false
+1067:
+  allowCCPDevs: true
+  internalName: Hurricane Sebiestor Serenity Only
+  skinID: 1067
+  skinMaterialID: '23'
+  types:
+  - 24702
+  visibleSerenity: true
+  visibleTranquility: false
+1068:
+  allowCCPDevs: true
+  internalName: Inquisitor Khanid Serenity Only
+  skinID: 1068
+  skinMaterialID: '4'
+  types:
+  - 590
+  visibleSerenity: true
+  visibleTranquility: false
+1069:
+  allowCCPDevs: true
+  internalName: Tayra Wiyrkomi Serenity Only
+  skinID: 1069
+  skinMaterialID: '12'
+  types:
+  - 649
+  visibleSerenity: true
+  visibleTranquility: false
+1070:
+  allowCCPDevs: true
+  internalName: Revelation Kador Serenity Only
+  skinID: 1070
+  skinMaterialID: '2'
+  types:
+  - 19720
+  visibleSerenity: true
+  visibleTranquility: false
+1071:
+  allowCCPDevs: true
+  internalName: Revelation Sarum Serenity Only
+  skinID: 1071
+  skinMaterialID: '5'
+  types:
+  - 19720
+  visibleSerenity: true
+  visibleTranquility: false
+1072:
+  allowCCPDevs: true
+  internalName: Hel Sebiestor Serenity Only
+  skinID: 1072
+  skinMaterialID: '23'
+  types:
+  - 22852
+  visibleSerenity: true
+  visibleTranquility: false
+1073:
+  allowCCPDevs: true
+  internalName: Moros InterBus Serenity Only
+  skinID: 1073
+  skinMaterialID: '17'
+  types:
+  - 19724
+  visibleSerenity: true
+  visibleTranquility: false
+1074:
+  allowCCPDevs: true
+  internalName: Moros Roden Serenity Only
+  skinID: 1074
+  skinMaterialID: '19'
+  types:
+  - 19724
+  visibleSerenity: true
+  visibleTranquility: false
+1075:
+  allowCCPDevs: true
+  internalName: Phoenix Laidai Serenity Only
+  skinID: 1075
+  skinMaterialID: '9'
+  types:
+  - 19726
+  visibleSerenity: true
+  visibleTranquility: false
+1076:
+  allowCCPDevs: true
+  internalName: Phoenix Wiyrkomi Serenity Only
+  skinID: 1076
+  skinMaterialID: '12'
+  types:
+  - 19726
+  visibleSerenity: true
+  visibleTranquility: false
+1077:
+  allowCCPDevs: true
+  internalName: Magnate Tash-Murkon Serenity Only
+  skinID: 1077
+  skinMaterialID: '6'
+  types:
+  - 29248
+  visibleSerenity: true
+  visibleTranquility: false
+1078:
+  allowCCPDevs: true
+  internalName: Mammoth Nefantar Serenity Only
+  skinID: 1078
+  skinMaterialID: '21'
+  types:
+  - 652
+  visibleSerenity: true
+  visibleTranquility: false
+1079:
+  allowCCPDevs: true
+  internalName: Sigil Kador Serenity Only
+  skinID: 1079
+  skinMaterialID: '2'
+  types:
+  - 19744
+  visibleSerenity: true
+  visibleTranquility: false
+1080:
+  allowCCPDevs: true
+  internalName: Bestower Tash-Murkon Serenity Only
+  skinID: 1080
+  skinMaterialID: '6'
+  types:
+  - 1944
+  visibleSerenity: true
+  visibleTranquility: false
+1081:
+  allowCCPDevs: true
+  internalName: Vigil Krusual Serenity Only
+  skinID: 1081
+  skinMaterialID: '22'
+  types:
+  - 3766
+  visibleSerenity: true
+  visibleTranquility: false
+1082:
+  allowCCPDevs: true
+  internalName: Slasher Krusual Serenity Only
+  skinID: 1082
+  skinMaterialID: '22'
+  types:
+  - 585
+  visibleSerenity: true
+  visibleTranquility: false
+1083:
+  allowCCPDevs: true
+  internalName: Rifter Nefantar Serenity Only
+  skinID: 1083
+  skinMaterialID: '21'
+  types:
+  - 587
+  visibleSerenity: true
+  visibleTranquility: false
+1084:
+  allowCCPDevs: true
+  internalName: Rifter Krusual Serenity Only
+  skinID: 1084
+  skinMaterialID: '22'
+  types:
+  - 587
+  visibleSerenity: true
+  visibleTranquility: false
+1085:
+  allowCCPDevs: true
+  internalName: Skiff ORE Development Serenity Only
+  skinID: 1085
+  skinMaterialID: '31'
+  types:
+  - 22546
+  visibleSerenity: true
+  visibleTranquility: false
+1086:
+  allowCCPDevs: true
+  internalName: Probe Vherokior Serenity Only
+  skinID: 1086
+  skinMaterialID: '30'
+  types:
+  - 586
+  visibleSerenity: true
+  visibleTranquility: false
+1087:
+  allowCCPDevs: true
+  internalName: Hulk ORE Development Serenity Only
+  skinID: 1087
+  skinMaterialID: '31'
+  types:
+  - 22544
+  visibleSerenity: true
+  visibleTranquility: false
+1088:
+  allowCCPDevs: true
+  internalName: Mackinaw ORE Development Serenity Only
+  skinID: 1088
+  skinMaterialID: '31'
+  types:
+  - 22548
+  visibleSerenity: true
+  visibleTranquility: false
+1089:
+  allowCCPDevs: true
+  internalName: Apocalypse Kador Serenity Only
+  skinID: 1089
+  skinMaterialID: '2'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+1090:
+  allowCCPDevs: true
+  internalName: Iteron Mark V Inner Zone Shipping Serenity Only
+  skinID: 1090
+  skinMaterialID: '15'
+  types:
+  - 657
+  visibleSerenity: true
+  visibleTranquility: false
+1091:
+  allowCCPDevs: true
+  internalName: Iteron Mark V InterBus Serenity Only
+  skinID: 1091
+  skinMaterialID: '17'
+  types:
+  - 657
+  visibleSerenity: true
+  visibleTranquility: false
+1092:
+  allowCCPDevs: true
+  internalName: Apocalypse Tash-Murkon Serenity Only
+  skinID: 1092
+  skinMaterialID: '6'
+  types:
+  - 642
+  visibleSerenity: true
+  visibleTranquility: false
+1093:
+  allowCCPDevs: true
+  internalName: Prophecy Blood Raiders Serenity Only
+  skinID: 1093
+  skinMaterialID: '25'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: false
+1094:
+  allowCCPDevs: true
+  internalName: Oracle Sarum Serenity Only
+  skinID: 1094
+  skinMaterialID: '5'
+  types:
+  - 4302
+  visibleSerenity: true
+  visibleTranquility: false
+1095:
+  allowCCPDevs: true
+  internalName: Prophecy Tash-Murkon Serenity Only
+  skinID: 1095
+  skinMaterialID: '6'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: false
+1096:
+  allowCCPDevs: true
+  internalName: Prophecy Kador Serenity Only
+  skinID: 1096
+  skinMaterialID: '2'
+  types:
+  - 16233
+  visibleSerenity: true
+  visibleTranquility: false
+1097:
+  allowCCPDevs: true
+  internalName: Ferox Laidai Serenity Only
+  skinID: 1097
+  skinMaterialID: '9'
+  types:
+  - 16227
+  visibleSerenity: true
+  visibleTranquility: false
+1098:
+  allowCCPDevs: true
+  internalName: Ferox Guristas Serenity Only
+  skinID: 1098
+  skinMaterialID: '26'
+  types:
+  - 16227
+  visibleSerenity: true
+  visibleTranquility: false
+1099:
+  allowCCPDevs: true
+  internalName: Naga Wiyrkomi Serenity Only
+  skinID: 1099
+  skinMaterialID: '12'
+  types:
+  - 4306
+  visibleSerenity: true
+  visibleTranquility: false
+1100:
+  allowCCPDevs: true
+  internalName: Brutix Serpentis Serenity Only
+  skinID: 1100
+  skinMaterialID: '29'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: false
+1101:
+  allowCCPDevs: true
+  internalName: Brutix Intaki Syndicate Serenity Only
+  skinID: 1101
+  skinMaterialID: '16'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: false
+1102:
+  allowCCPDevs: true
+  internalName: Tempest Krusual Serenity Only
+  skinID: 1102
+  skinMaterialID: '22'
+  types:
+  - 639
+  visibleSerenity: true
+  visibleTranquility: false
+1103:
+  allowCCPDevs: true
+  internalName: Tempest Nefantar Serenity Only
+  skinID: 1103
+  skinMaterialID: '21'
+  types:
+  - 639
+  visibleSerenity: true
+  visibleTranquility: false
+1104:
+  allowCCPDevs: true
+  internalName: Thanatos Roden Serenity Only
+  skinID: 1104
+  skinMaterialID: '19'
+  types:
+  - 23911
+  visibleSerenity: true
+  visibleTranquility: false
+1105:
+  allowCCPDevs: true
+  internalName: Thanatos Quafe Serenity Only
+  skinID: 1105
+  skinMaterialID: '3'
+  types:
+  - 23911
+  visibleSerenity: true
+  visibleTranquility: false
+1106:
+  allowCCPDevs: true
+  internalName: Wyvern Wiyrkomi Serenity Only
+  skinID: 1106
+  skinMaterialID: '12'
+  types:
+  - 23917
+  visibleSerenity: true
+  visibleTranquility: false
+1107:
+  allowCCPDevs: true
+  internalName: Chimera Laidai Serenity Only
+  skinID: 1107
+  skinMaterialID: '9'
+  types:
+  - 23915
+  visibleSerenity: true
+  visibleTranquility: false
+1108:
+  allowCCPDevs: true
+  internalName: Aeon Sarum Serenity Only
+  skinID: 1108
+  skinMaterialID: '5'
+  types:
+  - 23919
+  visibleSerenity: true
+  visibleTranquility: false
+1109:
+  allowCCPDevs: true
+  internalName: Aeon Khanid Serenity Only
+  skinID: 1109
+  skinMaterialID: '4'
+  types:
+  - 23919
+  visibleSerenity: true
+  visibleTranquility: false
+1110:
+  allowCCPDevs: true
+  internalName: Archon Tash-Murkon Serenity Only
+  skinID: 1110
+  skinMaterialID: '6'
+  types:
+  - 23757
+  visibleSerenity: true
+  visibleTranquility: false
+1111:
+  allowCCPDevs: true
+  internalName: Archon Kador Serenity Only
+  skinID: 1111
+  skinMaterialID: '2'
+  types:
+  - 23757
+  visibleSerenity: true
+  visibleTranquility: false
+1112:
+  allowCCPDevs: true
+  internalName: Nyx Quafe Serenity Only
+  skinID: 1112
+  skinMaterialID: '3'
+  types:
+  - 23913
+  visibleSerenity: true
+  visibleTranquility: false
+1113:
+  allowCCPDevs: true
+  internalName: Nyx InterBus Serenity Only
+  skinID: 1113
+  skinMaterialID: '17'
+  types:
+  - 23913
+  visibleSerenity: true
+  visibleTranquility: false
+1114:
+  allowCCPDevs: true
+  internalName: Dominix Quafe Serenity Only
+  skinID: 1114
+  skinMaterialID: '3'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: false
+1115:
+  allowCCPDevs: true
+  internalName: Bellicose Krusual Serenity Only
+  skinID: 1115
+  skinMaterialID: '22'
+  types:
+  - 630
+  visibleSerenity: true
+  visibleTranquility: false
+1116:
+  allowCCPDevs: true
+  internalName: Stabber Krusual Serenity Only
+  skinID: 1116
+  skinMaterialID: '22'
+  types:
+  - 622
+  visibleSerenity: true
+  visibleTranquility: false
+1117:
+  allowCCPDevs: true
+  internalName: Stabber Nefantar Serenity Only
+  skinID: 1117
+  skinMaterialID: '21'
+  types:
+  - 622
+  visibleSerenity: true
+  visibleTranquility: false
+1118:
+  allowCCPDevs: true
+  internalName: Coercer Ardishapur Serenity Only
+  skinID: 1118
+  skinMaterialID: '1'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: false
+1119:
+  allowCCPDevs: true
+  internalName: Coercer Blood Raiders Serenity Only
+  skinID: 1119
+  skinMaterialID: '25'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: false
+1120:
+  allowCCPDevs: true
+  internalName: Coercer Sarum Serenity Only
+  skinID: 1120
+  skinMaterialID: '5'
+  types:
+  - 16236
+  visibleSerenity: true
+  visibleTranquility: false
+1121:
+  allowCCPDevs: true
+  internalName: Dragoon Khanid Serenity Only
+  skinID: 1121
+  skinMaterialID: '4'
+  types:
+  - 32874
+  visibleSerenity: true
+  visibleTranquility: false
+1122:
+  allowCCPDevs: true
+  internalName: Dragoon Tash-Murkon Serenity Only
+  skinID: 1122
+  skinMaterialID: '6'
+  types:
+  - 32874
+  visibleSerenity: true
+  visibleTranquility: false
+1123:
+  allowCCPDevs: true
+  internalName: Cormorant Guristas Serenity Only
+  skinID: 1123
+  skinMaterialID: '26'
+  types:
+  - 16238
+  visibleSerenity: true
+  visibleTranquility: false
+1124:
+  allowCCPDevs: true
+  internalName: Algos Intaki Syndicate Serenity Only
+  skinID: 1124
+  skinMaterialID: '16'
+  types:
+  - 32872
+  visibleSerenity: true
+  visibleTranquility: false
+1125:
+  allowCCPDevs: true
+  internalName: Hyperion Aliastra Serenity Only
+  skinID: 1125
+  skinMaterialID: '13'
+  types:
+  - 24690
+  visibleSerenity: true
+  visibleTranquility: false
+1126:
+  allowCCPDevs: true
+  internalName: Hyperion Inner Zone Shipping Serenity Only
+  skinID: 1126
+  skinMaterialID: '15'
+  types:
+  - 24690
+  visibleSerenity: true
+  visibleTranquility: false
+1127:
+  allowCCPDevs: true
+  internalName: Megathron Inner Zone Shipping Serenity Only
+  skinID: 1127
+  skinMaterialID: '15'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: false
+1128:
+  allowCCPDevs: true
+  internalName: Megathron Intaki Syndicate Serenity Only
+  skinID: 1128
+  skinMaterialID: '16'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: false
+1129:
+  allowCCPDevs: true
+  internalName: Maelstrom Krusual Serenity Only
+  skinID: 1129
+  skinMaterialID: '22'
+  types:
+  - 24694
+  visibleSerenity: true
+  visibleTranquility: false
+1130:
+  allowCCPDevs: true
+  internalName: Maelstrom Nefantar Serenity Only
+  skinID: 1130
+  skinMaterialID: '21'
+  types:
+  - 24694
+  visibleSerenity: true
+  visibleTranquility: false
+1131:
+  allowCCPDevs: true
+  internalName: Typhoon Krusual Serenity Only
+  skinID: 1131
+  skinMaterialID: '22'
+  types:
+  - 644
+  visibleSerenity: true
+  visibleTranquility: false
+1132:
+  allowCCPDevs: true
+  internalName: Orca ORE Development Serenity Only
+  skinID: 1132
+  skinMaterialID: '31'
+  types:
+  - 28606
+  visibleSerenity: true
+  visibleTranquility: false
+1133:
+  allowCCPDevs: true
+  internalName: Rorqual ORE Development Serenity Only
+  skinID: 1133
+  skinMaterialID: '31'
+  types:
+  - 28352
+  visibleSerenity: true
+  visibleTranquility: false
+1134:
+  allowCCPDevs: true
+  internalName: Tristan Quafe Serenity Only
+  skinID: 1134
+  skinMaterialID: '3'
+  types:
+  - 593
+  visibleSerenity: true
+  visibleTranquility: false
+1135:
+  allowCCPDevs: true
+  internalName: Maulus Inner Zone Shipping Serenity Only
+  skinID: 1135
+  skinMaterialID: '15'
+  types:
+  - 609
+  visibleSerenity: true
+  visibleTranquility: false
+1136:
+  allowCCPDevs: true
+  internalName: Maulus Intaki Syndicate Serenity Only
+  skinID: 1136
+  skinMaterialID: '16'
+  types:
+  - 609
+  visibleSerenity: true
+  visibleTranquility: false
+1137:
+  allowCCPDevs: true
+  internalName: Navitas Intaki Syndicate Serenity Only
+  skinID: 1137
+  skinMaterialID: '16'
+  types:
+  - 592
+  visibleSerenity: true
+  visibleTranquility: false
+1138:
+  allowCCPDevs: true
+  internalName: Tristan Inner Zone Shipping Serenity Only
+  skinID: 1138
+  skinMaterialID: '15'
+  types:
+  - 593
+  visibleSerenity: true
+  visibleTranquility: false
+1139:
+  allowCCPDevs: true
+  internalName: Imicus Inner Zone Shipping Serenity Only
+  skinID: 1139
+  skinMaterialID: '15'
+  types:
+  - 607
+  visibleSerenity: true
+  visibleTranquility: false
+1140:
+  allowCCPDevs: true
+  internalName: Imicus Intaki Syndicate Serenity Only
+  skinID: 1140
+  skinMaterialID: '16'
+  types:
+  - 607
+  visibleSerenity: true
+  visibleTranquility: false
+1141:
+  allowCCPDevs: true
+  internalName: Incursus Aliastra Serenity Only
+  skinID: 1141
+  skinMaterialID: '13'
+  types:
+  - 594
+  visibleSerenity: true
+  visibleTranquility: false
+1142:
+  allowCCPDevs: true
+  internalName: Incursus Inner Zone Shipping Serenity Only
+  skinID: 1142
+  skinMaterialID: '15'
+  types:
+  - 594
+  visibleSerenity: true
+  visibleTranquility: false
+1143:
+  allowCCPDevs: true
+  internalName: Oracle Khanid Serenity Only
+  skinID: 1143
+  skinMaterialID: '4'
+  types:
+  - 4302
+  visibleSerenity: true
+  visibleTranquility: false
+1144:
+  allowCCPDevs: true
+  internalName: Thorax Aliastra Serenity Only
+  skinID: 1144
+  skinMaterialID: '13'
+  types:
+  - 627
+  visibleSerenity: true
+  visibleTranquility: false
+1145:
+  allowCCPDevs: true
+  internalName: Exequror Intaki Syndicate Serenity Only
+  skinID: 1145
+  skinMaterialID: '16'
+  types:
+  - 634
+  visibleSerenity: true
+  visibleTranquility: false
+1146:
+  allowCCPDevs: true
+  internalName: Vexor Intaki Syndicate Serenity Only
+  skinID: 1146
+  skinMaterialID: '16'
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: false
+1147:
+  allowCCPDevs: true
+  internalName: Thorax Inner Zone Shipping Serenity Only
+  skinID: 1147
+  skinMaterialID: '15'
+  types:
+  - 627
+  visibleSerenity: true
+  visibleTranquility: false
+1148:
+  allowCCPDevs: true
+  internalName: Osprey Wiyrkomi Serenity Only
+  skinID: 1148
+  skinMaterialID: '12'
+  types:
+  - 620
+  visibleSerenity: true
+  visibleTranquility: false
+1149:
+  allowCCPDevs: true
+  internalName: Moa Laidai Serenity Only
+  skinID: 1149
+  skinMaterialID: '9'
+  types:
+  - 623
+  visibleSerenity: true
+  visibleTranquility: false
+1150:
+  allowCCPDevs: true
+  internalName: Celestis InterBus Serenity Only
+  skinID: 1150
+  skinMaterialID: '17'
+  types:
+  - 633
+  visibleSerenity: true
+  visibleTranquility: false
+1151:
+  allowCCPDevs: true
+  internalName: Celestis Intaki Syndicate Serenity Only
+  skinID: 1151
+  skinMaterialID: '16'
+  types:
+  - 633
+  visibleSerenity: true
+  visibleTranquility: false
+1152:
+  allowCCPDevs: true
+  internalName: Vexor Quafe Serenity Only
+  skinID: 1152
+  skinMaterialID: '3'
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: false
+1153:
+  allowCCPDevs: true
+  internalName: Brutix Roden Serenity Only
+  skinID: 1153
+  skinMaterialID: '19'
+  types:
+  - 16229
+  visibleSerenity: true
+  visibleTranquility: false
+1154:
+  allowCCPDevs: true
+  internalName: Naglfar Justice Serenity Only
+  skinID: 1154
+  skinMaterialID: '20'
+  types:
+  - 19722
+  visibleSerenity: true
+  visibleTranquility: false
+1155:
+  allowCCPDevs: true
+  internalName: Providence Ardishapur Serenity Only
+  skinID: 1155
+  skinMaterialID: '1'
+  types:
+  - 20183
+  visibleSerenity: true
+  visibleTranquility: false
+1156:
+  allowCCPDevs: true
+  internalName: Punisher Tash-Murkon Serenity Only
+  skinID: 1156
+  skinMaterialID: '6'
+  types:
+  - 597
+  visibleSerenity: true
+  visibleTranquility: false
+1157:
+  allowCCPDevs: true
+  internalName: Punisher Kador Serenity Only
+  skinID: 1157
+  skinMaterialID: '2'
+  types:
+  - 597
+  visibleSerenity: true
+  visibleTranquility: false
+1158:
+  allowCCPDevs: true
+  internalName: Tormentor Sarum Serenity Only
+  skinID: 1158
+  skinMaterialID: '5'
+  types:
+  - 591
+  visibleSerenity: true
+  visibleTranquility: false
+1159:
+  allowCCPDevs: true
+  internalName: Tormentor Ardishapur Serenity Only
+  skinID: 1159
+  skinMaterialID: '1'
+  types:
+  - 591
+  visibleSerenity: true
+  visibleTranquility: false
+1160:
+  allowCCPDevs: true
+  internalName: Kestrel Wiyrkomi Serenity Only
+  skinID: 1160
+  skinMaterialID: '12'
+  types:
+  - 602
+  visibleSerenity: true
+  visibleTranquility: false
+1161:
+  allowCCPDevs: true
+  internalName: Heron Sukuuvestaa Serenity Only
+  skinID: 1161
+  skinMaterialID: '11'
+  types:
+  - 605
+  visibleSerenity: true
+  visibleTranquility: false
+1162:
+  allowCCPDevs: true
+  internalName: Merlin Wiyrkomi Serenity Only
+  skinID: 1162
+  skinMaterialID: '12'
+  types:
+  - 603
+  visibleSerenity: true
+  visibleTranquility: false
+1163:
+  allowCCPDevs: true
+  internalName: Merlin Nugoeihuvi Serenity Only
+  skinID: 1163
+  skinMaterialID: '10'
+  types:
+  - 603
+  visibleSerenity: true
+  visibleTranquility: false
+1164:
+  allowCCPDevs: true
+  internalName: Atron InterBus Serenity Only
+  skinID: 1164
+  skinMaterialID: '17'
+  types:
+  - 608
+  visibleSerenity: true
+  visibleTranquility: false
+1165:
+  allowCCPDevs: true
+  internalName: Atron Intaki Syndicate Serenity Only
+  skinID: 1165
+  skinMaterialID: '16'
+  types:
+  - 608
+  visibleSerenity: true
+  visibleTranquility: false
+1166:
+  allowCCPDevs: true
+  internalName: Nidhoggur Krusual Serenity Only
+  skinID: 1166
+  skinMaterialID: '22'
+  types:
+  - 24483
+  visibleSerenity: true
+  visibleTranquility: false
+1167:
+  allowCCPDevs: true
+  internalName: Harbinger Kador Serenity Only
+  skinID: 1167
+  skinMaterialID: '2'
+  types:
+  - 24696
+  visibleSerenity: true
+  visibleTranquility: false
+1168:
+  allowCCPDevs: true
+  internalName: Harbinger Khanid Serenity Only
+  skinID: 1168
+  skinMaterialID: '4'
+  types:
+  - 24696
+  visibleSerenity: true
+  visibleTranquility: false
+1169:
+  allowCCPDevs: false
+  internalName: Scorpion Ishukone Serenity Only
+  skinID: 1169
+  skinMaterialID: '7'
+  types:
+  - 640
+  visibleSerenity: true
+  visibleTranquility: false
+1170:
+  allowCCPDevs: true
+  internalName: Dominix Inner Zone Shipping Serenity Only
+  skinID: 1170
+  skinMaterialID: '15'
+  types:
+  - 645
+  visibleSerenity: true
+  visibleTranquility: false
+1171:
+  allowCCPDevs: true
+  internalName: Rokh Nugoeihuvi Serenity Only
+  skinID: 1171
+  skinMaterialID: '10'
+  types:
+  - 24688
+  visibleSerenity: true
+  visibleTranquility: false
+1172:
+  allowCCPDevs: true
+  internalName: Rokh Wiyrkomi Serenity Only
+  skinID: 1172
+  skinMaterialID: '12'
+  types:
+  - 24688
+  visibleSerenity: true
+  visibleTranquility: false
+1173:
+  allowCCPDevs: true
+  internalName: Megathron Quafe Serenity Only
+  skinID: 1173
+  skinMaterialID: '3'
+  types:
+  - 641
+  visibleSerenity: true
+  visibleTranquility: false
+1174:
+  allowCCPDevs: true
+  internalName: Vexor InterBus Serenity
+  skinID: 1174
+  skinMaterialID: 17
+  types:
+  - 626
+  visibleSerenity: true
+  visibleTranquility: false
