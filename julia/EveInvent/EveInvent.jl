@@ -6,8 +6,37 @@ import JSON
 
 const urlCrest = "https://public-crest.eveonline.com/"
 
+const b64urlKeys   = ['+', '/', '=']
+const b64urlValues = ['-', '_', '%']
+const b64url = Dict{Char, Char}(b64urlKeys, b64urlValues)
+base64url(url::String) = replace(base64(url), b64urlKeys, c->b64url[c[1]])
+
+function read_from_cache(url::String)
+	fileName = "cache/" * base64url(url)
+	data = nothing
+	try
+		data = JSON.parsefile(fileName)
+	catch
+	end
+	return data
+end
+
+function write_to_cache(url::String, data)
+	if !isdir("cache")
+		mkdir("cache")
+	end
+	fileName = "cache/" * base64url(url)
+	open(fileName, "w+") do s
+		JSON.print(s, data, 2)
+	end
+	nothing
+end
+
 function get_crest(url::String)
-	res = nothing
+	res = read_from_cache(url)
+	if res != nothing
+		return res
+	end
 	local queryRes
 	while true
 		resp = Requests.get(url)
@@ -26,7 +55,11 @@ function get_crest(url::String)
 		url = queryRes["next"]["href"]
 	end
 	@assert !haskey(queryRes, "totalcount") || queryRes["totalcount"] == length(res["items"])
-	return haskey(res, "items")? res["items"] : res
+	if haskey(res, "items")
+		res = res["items"]
+	end
+	write_to_cache(url, res)
+	return res
 end
 
 id_from_url(url::String) = int(rsplit(url, '/', 2, false)[end])
@@ -59,6 +92,7 @@ function get_group_types(group::String)
 	end
 	return types
 end
+
 
 function init()
 	global services = get_services()
