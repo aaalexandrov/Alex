@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Accelerant Decryptor",
+    "attributes": {
+      "inventionMEModifier": 2.0,
+      "inventionMaxRunModifier": 1.0,
+      "inventionPropabilityMultiplier": 1.2,
+      "inventionTEModifier": 10.0
+    },
+    "id": 34201
+  },
+  {
+    "name": "Attainment Decryptor",
+    "attributes": {
+      "inventionMEModifier": -1.0,
+      "inventionMaxRunModifier": 4.0,
+      "inventionPropabilityMultiplier": 1.8,
+      "inventionTEModifier": 4.0
+    },
+    "id": 34202
+  },
+  {
+    "name": "Augmentation Decryptor",
+    "attributes": {
+      "inventionMEModifier": -2.0,
+      "inventionMaxRunModifier": 9.0,
+      "inventionPropabilityMultiplier": 0.6,
+      "inventionTEModifier": 2.0
+    },
+    "id": 34203
+  },
+  {
+    "name": "Parity Decryptor",
+    "attributes": {
+      "inventionMEModifier": 1.0,
+      "inventionMaxRunModifier": 3.0,
+      "inventionPropabilityMultiplier": 1.5,
+      "inventionTEModifier": -2.0
+    },
+    "id": 34204
+  },
+  {
+    "name": "Process Decryptor",
+    "attributes": {
+      "inventionMEModifier": 3.0,
+      "inventionMaxRunModifier": 0.0,
+      "inventionPropabilityMultiplier": 1.1,
+      "inventionTEModifier": 6.0
+    },
+    "id": 34205
+  },
+  {
+    "name": "Symmetry Decryptor",
+    "attributes": {
+      "inventionMEModifier": 1.0,
+      "inventionMaxRunModifier": 2.0,
+      "inventionPropabilityMultiplier": 1.0,
+      "inventionTEModifier": 8.0
+    },
+    "id": 34206
+  },
+  {
+    "name": "Optimized Attainment Decryptor",
+    "attributes": {
+      "inventionMEModifier": 1.0,
+      "inventionMaxRunModifier": 2.0,
+      "inventionPropabilityMultiplier": 1.9,
+      "inventionTEModifier": -2.0
+    },
+    "id": 34207
+  },
+  {
+    "name": "Optimized Augmentation Decryptor",
+    "attributes": {
+      "inventionMEModifier": 2.0,
+      "inventionMaxRunModifier": 7.0,
+      "inventionPropabilityMultiplier": 0.9,
+      "inventionTEModifier": 0.0
+    },
+    "id": 34208
+  }
+]
