@@ -2,6 +2,7 @@ module EveInvent
 
 import Requests
 import HttpServer
+import URIParser
 import YAML
 import JSON
 import ODBC
@@ -13,7 +14,7 @@ include("crest.jl")
 include("crestauth.jl")
 include("apiv2.jl")
 
-global config
+global config, appInfo
 global services, regions, marketGroups
 global shipTypes, blueprintTypes, blueprints, shipInventable
 global decryptors
@@ -126,7 +127,10 @@ end
 
 get_decryptors() = json_read("data/decryptors.json")
 
-get_authorization() = request_access(get_service("authEndpoint"))
+function get_authorization() 
+	global appInfo = json_read("appinfo.json")
+	return request_access(get_service("authEndpoint"), appInfo)
+end
 
 function get_config()
 	config = json_read("config.json")

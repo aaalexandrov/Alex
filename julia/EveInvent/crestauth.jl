@@ -1,16 +1,20 @@
-global serverTasks = nothing
-global server, serverClients = Array(HttpServer.Client, 1)
-global currentRequestState = nothing
-global authorizationCode, authorizationReceived
+type CrestAuthData
+	requestState::String
+	authorizationReceived::Bool
+	serverClients::Array{HttpServer.Client, 1}
+	serverTask::Task
+	server::HttpServer.Server
+	authorizationCode::String
+	
+	CrestAuthData(requestState::String) = new(requestState, false, Array(HttpServer.Client, 0))
+end
 
-function server_task(req::HttpServer.Request, res::HttpServer.Response)
-	global currentRequestState, authorizationCode
+function server_task(authData::CrestAuthData, req::HttpServer.Request, res::HttpServer.Response)
 	resp = nothing
 	try 
 		query = HttpServer.parsequerystring(req.resource[3:end])
-		if isa(query, Associative) && query["state"] == currentRequestState
-			authorizationCode = query["code"]
-			currentRequestState = nothing
+		if isa(query, Associative) && query["state"] == authData.requestState
+			authData.authorizationCode = query["code"]
 			resp = HttpServer.Response("Authorization code received, thank you")
 		end
 	catch e
@@ -24,41 +28,33 @@ function server_task(req::HttpServer.Request, res::HttpServer.Response)
 	return resp
 end
 
-function run_server()
-	global serverClients, authorizationReceived, server, serverTask
-	http = HttpServer.HttpHandler(server_task)
-	http.events["connect"] = c->push!(serverClients, c)
-	http.events["close"] = c->filter!(sc->sc!=c, serverClients)
-	http.events["write"] = (c,r)->authorizationReceived = authorizationCode != nothing
-	server = HttpServer.Server(http)
-	empty!(serverClients)
-	serverTask = @async run(server, 8321)
+function run_server(authData::CrestAuthData, port::Uint16)
+	http = HttpServer.HttpHandler((req, res)->server_task(authData, req, res))
+	http.events["connect"] = c->push!(authData.serverClients, c)
+	http.events["close"] = c->filter!(sc->sc!=c, authData.serverClients)
+	http.events["write"] = (c,r)->authData.authorizationReceived = authData.authorizationCode != nothing
+	authData.server = HttpServer.Server(http)
+	authData.serverTask = @async run(authData.server, port)
 end
 
-function stop_server()
-	global serverTask, server, serverClients
-	if serverTask != nothing
+function stop_server(authData::CrestAuthData)
+	if authData.serverTask != nothing
 		try
-			Base.throwto(serverTask, InterruptException())
+			Base.throwto(authData.serverTask, InterruptException())
 		end
-		close(server.http.sock)
-		map(serverClients) do c
-			flush(c.sock)
-			close(c.sock)
-		end
-		empty!(serverClients)
-		serverTask = nothing
-		server = nothing
+		close(authData.server.http.sock)
+		map(c->close(c.sock), authData.serverClients)
 	end
 end
 
-const clientID = "13e88dc89c364981a0b1d074e5d6f1f3"
-const secretKey = "cIzskc6lEZ2Hs7MNvqsbrh7VPtQIDsh1ZSfw5SLL"
-const callbackURL = "http://localhost:8321"
-
-function request_access_url()
-	global currentRequestState = "EveInvent$(rand(Uint))"
-	return "https://login.eveonline.com/oauth/authorize/?response_type=code&redirect_uri=$callbackURL&client_id=$clientID&scope=publicData&state=$currentRequestState"
+function request_access_url(authData::CrestAuthData, appInfo::Dict)
+	params = ["response_type" => "code", 
+			  "redirect_uri" => appInfo["callbackURL"], 
+			  "client_id" => appInfo["clientID"],
+			  "scope" => appInfo["scope"],
+			  "state" => authData.requestState]
+	queryStr = Requests.format_query_str(params)
+	return "https://login.eveonline.com/oauth/authorize/?$queryStr"
 end
 
 function open_browser(url::String)
@@ -66,35 +62,42 @@ function open_browser(url::String)
 	run(`cmd /c start $url`)
 end
 
-function request_authorization_token(endpoint::String, code::String, refresh::Bool)
-	authData = base64("$clientID:$secretKey")
+function request_authorization_token(endpoint::String, appInfo::Dict, code::String, refresh::Bool)
+	authStr = base64(appInfo["clientID"] * ":" * appInfo["secretKey"])
 	if refresh
-		dataStr="grant_type=refresh_token&refresh_token=$code"
+		params = ["grant_type" => "refresh_token",
+				  "refresh_token" => code]
 	else
-		dataStr="grant_type=authorization_code&code=$code"
+		params = ["grant_type" => "authorization_code",
+				  "code" => code]
 	end
+	dataStr = Requests.format_query_str(params)
 	resp = Requests.post(endpoint; 
 	                     data=dataStr, 
-						 headers={"Authorization" => "Basic $authData",
+						 headers={"Authorization" => "Basic $authStr",
 						          "Content-Type" => "application/x-www-form-urlencoded"})
 	return JSON.parse(resp.data)
 end
 
-function request_access(endpoint::String) 
+function request_access(endpoint::String, appInfo::Dict) 
 	auth = json_read("authorization.json")
 	if auth == nothing
-		global authorizationCode = nothing
-		global authorizationReceived = false
-		run_server()
-		open_browser(request_access_url())
-		while !authorizationReceived
+		authData = CrestAuthData("EveInvent$(rand(Uint))")
+		uri = URIParser.URI(appInfo["callbackURL"])
+		port = uri.port
+		if port == 0
+			port = uri.schema=="https"? 443 : 80
+		end
+		run_server(authData, port)
+		open_browser(request_access_url(authData, appInfo))
+		while !authData.authorizationReceived
 			yield()
 		end
-		stop_server()
-		auth = request_authorization_token(endpoint, authorizationCode, false)
+		stop_server(authData)
+		auth = request_authorization_token(endpoint, appInfo, authData.authorizationCode, false)
 		json_write("authorization.json", auth)
 	else
-		auth = request_authorization_token(endpoint, auth["refresh_token"], true)
+		auth = request_authorization_token(endpoint, appInfo, auth["refresh_token"], true)
 	end
 	return auth
 end	
