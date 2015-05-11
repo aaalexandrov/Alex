@@ -14,7 +14,7 @@ include("crest.jl")
 include("crestauth.jl")
 include("apiv2.jl")
 
-global config, appInfo
+global config
 global services, regions, marketGroups
 global shipTypes, blueprintTypes, blueprints, shipInventable
 global decryptors
@@ -127,22 +127,22 @@ end
 
 get_decryptors() = json_read("data/decryptors.json")
 
-function get_authorization() 
-	global appInfo = json_read("appinfo.json")
-	return request_access(get_service("authEndpoint"), appInfo)
-end
+get_authorization() = request_access(get_service("authEndpoint"), config["appInfo"])
 
 function get_config()
 	config = json_read("config.json")
-	characters = get_api("Account/Characters"; auth=config["api"])["characters"]
+	config["appInfo"] = json_read("appinfo.json")
+	set_api_user_agent(config["appInfo"]["userAgent"])
+	characters = get_characters(config)
 	characterInd = indexin([config["charName"]], characters[:name])[1]
 	config["charID"] = ["characterID"=>characters[characterInd, :characterID]]
 	return config
 end
 
-get_char_skills() = get_api("Char/CharacterSheet"; params=config["charID"], auth=config["api"])["skills"]
-get_char_assets() = get_api("Char/AssetList"; params=config["charID"], auth=config["api"])["assets"]
-get_char_blueprints() = get_api("Char/Blueprints"; params=config["charID"], auth=config["api"])["blueprints"]
+get_characters(config) = xml_find(get_api("Account/Characters"; auth=config["api"]), "result/:characters/*/*:")
+get_char_skills() = xml_find(get_api("Char/CharacterSheet"; params=config["charID"], auth=config["api"]), "result/:skills/*/*:")
+get_char_assets() = xml_find(get_api("Char/AssetList"; params=config["charID"], auth=config["api"]), "result/:assets/*/*:")
+get_char_blueprints() = xml_find(get_api("Char/Blueprints"; params=config["charID"], auth=config["api"]), "result/:blueprints/*/*:")
 
 function init()
 	global config = get_config()
