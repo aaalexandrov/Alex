@@ -53,13 +53,14 @@ function xml_join_attribute_values(xElem::LightXML.XMLElement, keyAttribs::Array
 end
 
 function xml_find_by_attribute(xElem::LightXML.XMLElement, key::Array, keyAttribs::Array)
+	matches = LightXML.XMLElement[]
 	for e in LightXML.child_elements(xElem)
 		attribVals = xml_join_attribute_values(e, keyAttribs)
 		if attribVals == key
-			return e
+			push!(matches, e)
 		end
 	end
-	return nothing
+	return matches
 end
 
 function add_dataframe_row!(df::DataFrames.DataFrame, keyAttribs::Array, values::Array)
@@ -100,24 +101,41 @@ function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, resu
 		end
 	end
 	if key == "*"
-		for child in LightXML.child_elements(xElem)
+		children = LightXML.child_elements(xElem)
+	elseif matchAttribs
+		children = xml_find_by_attribute(xElem, split(key, ","), keyAttribs)
+	else
+		children = LightXML.get_elements_by_tagname(xElem, key)
+	end
+	for child in children
+		if keyIndex == length(keyArr)
+			add_dataframe_row!(results, ["_content"], [LightXML.content(child)])
+		else
 			xml_find(child, keyArr, keyIndex+1, results)
 		end
-		return
 	end
-	if matchAttribs
-		child = xml_find_by_attribute(xElem, split(key, ","), keyAttribs)
-	else
-		child = LightXML.find_element(xElem, key)
+end
+
+function get_column_type(arr::DataFrames.DataArray)
+	typeInd = 1
+	for e in arr
+		try
+			int(e)
+			eiInd = 1
+		catch
+			try
+				float32(e)
+				elInd = 2
+			catch
+				elInd = 3
+			end
+		end
+		typeInd = max(typeInd, elInd)
+		if typeInd > 2
+			break
+		end
 	end
-	if child == nothing
-		return
-	end
-	if keyIndex == length(keyArr)
-		add_dataframe_row!(results, ["_content"], [LightXML.content(child)])
-		return 
-	end
-	xml_find(child, keyArr, keyIndex+1, results)
+	return [Int, Float32, eltype(arr)][typeInd]
 end
 
 # Matched paths are slash-delimited. Elements are of the kind [attribNames][:][attribValuesOrTag]

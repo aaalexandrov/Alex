@@ -126,6 +126,7 @@ get_characters(config) = xml_find(get_api("Account/Characters"; auth=config["api
 get_char_skills() = xml_find(get_api("Char/CharacterSheet"; params=config["charID"], auth=config["api"]), "result/:skills/*/*:")
 get_char_assets() = xml_find(get_api("Char/AssetList"; params=config["charID"], auth=config["api"]), "result/:assets/*/*:")
 get_char_blueprints() = xml_find(get_api("Char/Blueprints"; params=config["charID"], auth=config["api"]), "result/:blueprints/*/*:")
+get_skills() = xml_find(get_api("Eve/SkillTree"), "result/:skillGroups/*/:skills/*/*:")
 
 function init()
 	global config = get_config()
