@@ -77,7 +77,6 @@ function add_dataframe_row!(df::DataFrames.DataFrame, keyAttribs::Array, values:
 end
 
 function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, results::DataFrames.DataFrame)
-	println(LightXML.name(xElem))
 	keyAttr = LightXML.attribute(xElem, "key")
 	keyAttribs = keyAttr != nothing? split(keyAttr, ",", false) : ["name"]
 	key = keyArr[keyIndex]

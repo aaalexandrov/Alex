@@ -19,9 +19,9 @@ function json_read(fileName::String)
 	return data
 end
 
-function json_write(fileName::String, data)
+function json_write(fileName::String, data; indent::Int = 2)
 	open(fileName, "w+") do s
-		JSON.print(s, data, 2)
+		JSON.print(s, data, indent)
 	end
 end
 

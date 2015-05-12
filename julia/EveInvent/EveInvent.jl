@@ -3,9 +3,7 @@ module EveInvent
 import Requests
 import HttpServer
 import URIParser
-import YAML
 import JSON
-import ODBC
 import LightXML
 import Dates
 import DataFrames
@@ -13,6 +11,7 @@ import DataFrames
 include("crest.jl")
 include("crestauth.jl")
 include("apiv2.jl")
+include("dataimp.jl")
 
 global config
 global services, regions, marketGroups
@@ -66,8 +65,6 @@ function get_group_types(group::String)
 	return types
 end
 
-get_blueprints() = YAML.load_file("data/blueprints.yaml")
-
 function access_path(o, p::Array)
 	for i in p
 		if !(isa(o, Associative) && haskey(o, i) || isa(o, AbstractArray) && 1 <= i <= length(o))
@@ -93,39 +90,25 @@ function get_inventable_blueprints(groupTypes::Dict{Int, String})
 	return groupPrints
 end
 
-function import_decryptors()
-	ODBC.connect("esb_DATADUMP")
-	res = ODBC.query(
-		"""
-		select ta.typeID, typeName, attributeName, valueFloat
-		from dbo.dgmTypeAttributes ta, dbo.dgmAttributeTypes at, dbo.invTypes it
-		where ta.typeID in (select typeID 
-						    from dbo.invTypes it, dbo.invMarketGroups mg
-						    where it.marketGroupID=mg.marketGroupID 
-							      and mg.marketGroupName='Decryptors') 
-			  and ta.attributeID=at.attributeID
-			  and ta.typeID = it.typeID
-		order by typeID, ta.attributeID
-		"""
-	)
-	# ODBC.DataFrames.writetable("data/Decryptors.csv", res)
-	decID = -1
-	decryptors = {}
-	for row = 1:size(res, 1)
-		if decID != res[row, :typeID]
-			decID = res[row, :typeID]
-			dec = Dict{String, Any}()
-			dec["id"] = decID
-			dec["name"] = res[row, :typeName]
-			dec["attributes"] = Dict{String, Float64}()
-			push!(decryptors, dec)
-		end
-		dec["attributes"][res[row, :attributeName]] = res[row, :valueFloat]
+function get_decryptors()
+	decr = json_read("data/decryptors.json")
+	if decr == nothing
+		info("Importing decryptors from static data dump...")
+		import_decryptors()
+		decr = json_read("data/decryptors.json")
 	end
-	json_write("data/decryptors.json", decryptors)
+	return decr
 end
 
-get_decryptors() = json_read("data/decryptors.json")
+function get_blueprints()
+	bp = json_read("data/blueprints.json")
+	if bp == nothing
+		info("Importing data/blueprints.yaml")
+		import_blueprints()
+		bp = json_read("data/blueprints.json")
+	end
+	return [int(k)=>v for (k,v) in bp]
+end	
 
 get_authorization() = request_access(get_service("authEndpoint"), config["appInfo"])
 
@@ -155,9 +138,9 @@ function init()
 	global marketGroups = get_market_groups()
 	global shipTypes = get_group_types("Ships")
 	global blueprintTypes = get_group_types("Blueprints")
-	#global blueprints = get_blueprints()
-	#global shipInventable = get_inventable_blueprints(shipTypes)
-	#global decryptors = get_decryptors()
+	global blueprints = get_blueprints()
+	global shipInventable = get_inventable_blueprints(shipTypes)
+	global decryptors = get_decryptors()
 end
 
 end
