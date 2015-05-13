@@ -64,6 +64,7 @@ function get_crest(url::String, auth, timeoutHours::Float64 = inf(Float64))
 		info("GET from $url")
 		resp = Requests.get(url; headers=headers)
 		if resp.status != 200
+			info("Response status: $(resp.status)")
 			return nothing
 		end
 		queryRes = JSON.parse(resp.data)

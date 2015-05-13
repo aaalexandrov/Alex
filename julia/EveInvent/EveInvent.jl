@@ -32,6 +32,7 @@ end
 function get_services() 
 	oldServ = read_from_cache(urlCrest, inf(Float64))
 	newServ = get_crest(urlCrest, crestAuth, 0.0)
+	@assert newServ != nothing
 	if oldServ == nothing || server_version(oldServ)[1:2] != server_version(newServ)[1:2]
 		info("Server version differs from cached data, clearing cache")
 		clear_cache(".json")
@@ -118,7 +119,7 @@ function get_config()
 	set_api_user_agent(config["appInfo"]["userAgent"])
 	characters = get_characters(config)
 	characterInd = indexin([config["charName"]], characters[:name])[1]
-	config["charID"] = ["characterID"=>characters[characterInd, :characterID]]
+	config["charID"] = ["characterID"=>string(characters[characterInd, :characterID])]
 	return config
 end
 

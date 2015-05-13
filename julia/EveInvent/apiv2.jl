@@ -116,26 +116,35 @@ function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, resu
 	end
 end
 
-function get_column_type(arr::DataFrames.DataArray)
-	typeInd = 1
+function convert_column_type(arr::DataFrames.DataArray)
+	typeConvert = [int, float32]
+	types       = [Int, Float32]
+	minInd = 1
 	for e in arr
-		try
-			int(e)
-			eiInd = 1
-		catch
-			try
-				float32(e)
-				elInd = 2
-			catch
-				elInd = 3
-			end
+		if DataFrames.isna(e)
+			continue
 		end
-		typeInd = max(typeInd, elInd)
-		if typeInd > 2
-			break
+		i = minInd
+		while i <= length(typeConvert)
+			try
+				typeConvert[i](e)
+				break
+			catch
+				minInd = i+1
+				if minInd > length(typeConvert)
+					return arr
+				end
+			end
+			i += 1
 		end
 	end
-	return [Int, Float32, eltype(arr)][typeInd]
+	newArr = DataFrames.DataArray(types[minInd], length(arr))
+	for i = 1:length(arr)
+		if !DataFrames.isna(arr[i])
+			newArr[i] = typeConvert[minInd](arr[i])
+		end
+	end
+	return newArr
 end
 
 # Matched paths are slash-delimited. Elements are of the kind [attribNames][:][attribValuesOrTag]
@@ -151,6 +160,9 @@ end
 function xml_find(xElem::LightXML.XMLElement, path::String)
 	results = DataFrames.DataFrame()
 	xml_find(xElem, split(path, "/", false), 1, results)
+	for colName in names(results)
+		results[colName] = convert_column_type(results[colName])
+	end
 	return results
 end	
 
@@ -169,6 +181,7 @@ function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict())
 		info("POST to $url with data: $dataStr")
 		resp = Requests.post(url; data=dataStr, headers=headers)
 		if resp.status != 200
+			info("Response status: $(resp.status)")
 			return nothing
 		end
 		xml_write(fileName, resp.data)
