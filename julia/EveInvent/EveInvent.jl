@@ -15,7 +15,7 @@ include("dataimp.jl")
 
 global config
 global services, regions, marketGroups
-global shipTypes, blueprintTypes, blueprints, shipInventable
+global shipTypes, blueprintTypes, blueprints, inventableProducts, productionProducts, shipInventable
 global decryptors
 
 global charSkills, charBlueprints
@@ -76,21 +76,6 @@ function access_path(o, p::Array)
 	return o
 end
 
-get_product_id(blueprint, activity::String) = access_path(blueprint, ["activities", activity, "products", 1, "typeID"])
-
-function get_inventable_blueprints(groupTypes::Dict{Int, String})
-	groupPrints = Set{Int}()
-	for (b,bv) in blueprints
-		t2BlueprintID = get_product_id(bv, "invention")
-		t2Blueprint = get(blueprints, t2BlueprintID, nothing)
-		t2Product = get_product_id(t2Blueprint, "manufacturing")
-		if haskey(groupTypes, t2Product) && haskey(blueprintTypes, b) # need to check if we're looking at a blueprint because of the t3 inventable research items
-			push!(groupPrints, b)
-		end
-	end
-	return groupPrints
-end
-
 function get_decryptors()
 	decr = json_read("data/decryptors.json")
 	if decr == nothing
@@ -129,6 +114,45 @@ get_char_assets() = xml_find(get_api("Char/AssetList"; params=config["charID"], 
 get_char_blueprints() = xml_find(get_api("Char/Blueprints"; params=config["charID"], auth=config["api"]), "result/:blueprints/*/*:")
 get_skills() = xml_find(get_api("Eve/SkillTree"), "result/:skillGroups/*/:skills/*/*:")
 
+get_product_id(blueprint, activity::String) = access_path(blueprint, ["activities", activity, "products", 1, "typeID"])
+
+function get_inventable_blueprints(groupTypes::Dict{Int, String})
+	groupPrints = Set{Int}()
+	for (b,bv) in blueprints
+		t2BlueprintID = get_product_id(bv, "invention")
+		t2Blueprint = get(blueprints, t2BlueprintID, nothing)
+		t2Product = get_product_id(t2Blueprint, "manufacturing")
+		if haskey(groupTypes, t2Product) && haskey(blueprintTypes, b) # need to check if we're looking at a blueprint because of the t3 inventable research items
+			push!(groupPrints, b)
+		end
+	end
+	return groupPrints
+end
+
+function process_products(f::Function, blueprint, activity::String)
+	prods = access_path(blueprint, ["activities", activity, "products"])
+	if prods != nothing
+		for p in prods
+			f(p)
+		end
+	end
+end
+
+function process_blueprints()
+	global inventableProducts = Dict{Int, Any}()
+	global productionProducts = Dict{Int, Any}()
+	for (bid, bp) in blueprints
+		process_products(bp, "invention") do prod
+			inventableProducts[prod["typeID"]] = bp
+		end
+		process_products(bp, "manufacturing") do prod
+			productionProducts[prod["typeID"]] = bp
+		end
+	end
+	global shipInventable = get_inventable_blueprints(shipTypes)
+end
+
+
 function init()
 	global config = get_config()
 	global charSkills = get_char_skills()
@@ -141,8 +165,9 @@ function init()
 	global shipTypes = get_group_types("Ships")
 	global blueprintTypes = get_group_types("Blueprints")
 	global blueprints = get_blueprints()
-	global shipInventable = get_inventable_blueprints(shipTypes)
 	global decryptors = get_decryptors()
+	
+	process_blueprints()
 end
 
 end
