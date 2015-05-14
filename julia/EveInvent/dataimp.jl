@@ -39,3 +39,10 @@ function import_blueprints()
 	json_write("data/blueprints.json", blueprints; indent=0)
 end
 
+function import_station_assembly_lines()
+	"""
+	select als.stationID, stationName, s.solarSystemID, constellationID, s.regionID, baseTimeMultiplier, baseMaterialMultiplier, baseCostMultiplier, minCostPerHour, ast.activityID, activityName 
+	from dbo.ramAssemblyLineStations als, dbo.ramAssemblyLineTypes ast, dbo.staStations s, dbo.ramActivities a
+	where als.assemblyLineTypeID = ast.assemblyLineTypeID and als.stationID = s.stationID and ast.activityID = a.activityID	
+	"""
+end
