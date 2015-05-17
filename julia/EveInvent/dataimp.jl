@@ -1,8 +1,10 @@
 import ODBC
 import YAML
 
-function import_decryptors()
-	ODBC.connect("esb_DATADUMP")
+const dbName = "esb_DATADUMP"
+
+function import_decryptors(fileName::String)
+	ODBC.connect(dbName)
 	res = ODBC.query(
 		"""
 		select ta.typeID, typeName, attributeName, valueFloat
@@ -16,6 +18,7 @@ function import_decryptors()
 		order by typeID, ta.attributeID
 		"""
 	)
+	ODBC.disconnect()
 	# ODBC.DataFrames.writetable("data/Decryptors.csv", res)
 	decID = -1
 	decryptors = {}
@@ -30,19 +33,25 @@ function import_decryptors()
 		end
 		dec["attributes"][res[row, :attributeName]] = res[row, :valueFloat]
 	end
-	json_write("data/decryptors.json", decryptors)
+	json_write(fileName, decryptors)
 end
 
-function import_blueprints()
+function import_blueprints(fileName::String)
 	# because loading a json is so much faster than loading a yaml for some reason
 	blueprints = YAML.load_file("data/blueprints.yaml")
-	json_write("data/blueprints.json", blueprints; indent=0)
+	json_write(fileName, blueprints; indent=0)
 end
 
-function import_station_assembly_lines()
-	"""
-	select als.stationID, stationName, s.solarSystemID, constellationID, s.regionID, baseTimeMultiplier, baseMaterialMultiplier, baseCostMultiplier, minCostPerHour, ast.activityID, activityName 
-	from dbo.ramAssemblyLineStations als, dbo.ramAssemblyLineTypes ast, dbo.staStations s, dbo.ramActivities a
-	where als.assemblyLineTypeID = ast.assemblyLineTypeID and als.stationID = s.stationID and ast.activityID = a.activityID	
-	"""
+function import_station_assembly_lines(fileName::String)
+	ODBC.connect(dbName)
+	res = ODBC.query(
+		"""
+		select als.stationID, stationName, s.solarSystemID, constellationID, s.regionID, baseTimeMultiplier, baseMaterialMultiplier, baseCostMultiplier, minCostPerHour, ast.activityID, activityName 
+		from dbo.ramAssemblyLineStations als, dbo.ramAssemblyLineTypes ast, dbo.staStations s, dbo.ramActivities a
+		where als.assemblyLineTypeID = ast.assemblyLineTypeID and als.stationID = s.stationID and ast.activityID = a.activityID	
+		"""
+	)
+	#ODBC.DataFrames.writetable("data/AssemblyLines.csv", res)
+	ODBC.disconnect()
+	json_write(fileName, make_array(res))
 end

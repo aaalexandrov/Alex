@@ -1,9 +1,12 @@
-const urlCrest = "https://public-crest.eveonline.com/"
+# const urlCrest = "https://public-crest.eveonline.com/"
+const urlCrest = "https://crest-tq.eveonline.com/"
 
 const urlReplaceKeys   = ['/', '?']
 const urlReplaceValues = ['-', '.']
 const urlReplace = Dict{Char, Char}(urlReplaceKeys, urlReplaceValues)
 url_to_filename(url::String) = replace(replace(url, urlCrest[1:end-1], ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".json"
+
+int_keys(assoc::Associative) = [int(k)=>v for (k,v) in assoc]
 
 function json_read(fileName::String)
 	data = nothing
@@ -14,6 +17,19 @@ function json_read(fileName::String)
 	catch e
 		if !isa(e, SystemError)
 			rethrow()
+		end
+	end
+	if isa(data, Associative)
+		intKeys = all(keys(data)) do k
+			try
+				int(k)
+				return true
+			catch
+				return false
+			end
+		end
+		if intKeys
+			data = int_keys(data)
 		end
 	end
 	return data

@@ -26,6 +26,16 @@ function xml_read(fileName::String)
 		end
 	end
 	xroot = LightXML.root(xdoc)
+	return xroot
+end
+
+function xml_write(fileName::String, data)
+	open(fileName, "w+") do s
+		write(s, data)
+	end
+end
+
+function check_time(fileName::String, xroot::LightXML.XMLElement)
 	serverTime = LightXML.content(LightXML.find_element(xroot, "currentTime"))
 	serverCached = LightXML.content(LightXML.find_element(xroot, "cachedUntil"))
 	serverTimeF = Dates.datetime2unix(Dates.DateTime(serverTime, timeFormat))
@@ -38,11 +48,7 @@ function xml_read(fileName::String)
 	return xroot
 end
 
-function xml_write(fileName::String, data)
-	open(fileName, "w+") do s
-		write(s, data)
-	end
-end
+xml_read_timed(fileName::String) = check_time(fileName, xml_read_timed(fileName))
 
 function xml_join_attribute_values(xElem::LightXML.XMLElement, keyAttribs::Array) 
 	values = map(k->LightXML.attribute(xElem, k), keyAttribs)
@@ -117,8 +123,8 @@ function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, resu
 end
 
 function convert_column_type(arr::DataFrames.DataArray)
-	typeConvert = [int, float32]
-	types       = [Int, Float32]
+	typeConvert = [int, float64]
+	types       = [Int, Float64]
 	minInd = 1
 	for e in arr
 		if DataFrames.isna(e)
@@ -169,9 +175,9 @@ end
 global userAgent = "EveInvent Julia APIv2 library, greyalex2003@yahoo.com"
 set_api_user_agent(agent::String) = (global userAgent = agent)
 
-function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict())
+function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false)
 	fileName = api_cache_name(url)
-	data = xml_read(fileName)
+	data = ignoreCache? nothing : xml_read(fileName)
 	if data == nothing
 		params = merge(params, auth)
 		dataStr = Requests.format_query_str(params)
@@ -191,5 +197,5 @@ function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict())
 	return data
 end
 
-get_api(endpoint::String; params::Dict = Dict(), auth::Dict = Dict()) = get_api_url(urlApi * endpoint * ".xml.aspx"; params=params, auth=auth)
+get_api(endpoint::String; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false) = get_api_url(urlApi * endpoint * ".xml.aspx"; params=params, auth=auth, ignoreCache=ignoreCache)
 
