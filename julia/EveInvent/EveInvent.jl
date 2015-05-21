@@ -535,9 +535,13 @@ end
 function print_opt_row(i::Int, o)
 	name = itemTypes[o["typeID"]]["name"]
 	number = o["number"]
-	profit = fmt_float(o["profit"])
+	if haskey(o, "profit")
+		profit = "=> " * fmt_float(o["profit"])
+	else
+		profit = ""
+	end	
 	decryptor = o["decryptor"]["name"]
-	println("$i. $name x $number => $profit using $decryptor")
+	println("$i. $name x $number $profit using $decryptor")
 end
 
 function print_optimal(opt::Array)
@@ -546,34 +550,51 @@ function print_optimal(opt::Array)
 	end
 end
 
-function find_optimal(checkBPOs::Bool = true)
-	opt = optimal_invention(checkBPOs)
-	print_optimal(opt)
-	print("\nEnter rows to invent & manufacture: ")
-	rows = map(int, split(strip(readline()), [' ', ','], false))
+function print_plan(plan)
 	println("\nMaterials to manufacture")
 	materials = Dict{Int, Float64}()
 	intermediates = Dict{Int, Float64}()
 	installCost = 0.0
 	inventionCost = 0.0
-	totalProfit = 0.0
-	for i = 1:length(rows)
-		r = rows[i]
-		print_opt_row(i, opt[r])
-		productID = opt[r]["typeID"]
-		decr = opt[r]["decryptor"]
-		number = opt[r]["number"]
-		profit = opt[r]["profit"]
+	totalSell = 0.0
+	resolve_item_prices([entry["typeID"] for entry in plan])
+	for i = 1:length(plan)
+		entry = plan[i]
+		print_opt_row(i, entry)
+		productID = entry["typeID"]
+		decr = entry["decryptor"]
+		number = entry["number"]
 		invItem, invCost = invention_result(productID, decr)
 		mats, intermeds, instCost = break_materials(1.0, invItem)
 		inventionCost += invCost * number
 		installCost += instCost * number
-		totalProfit += profit
+		totalSell += itemPrices[productID]["sell"] * number
 		add_materials!(materials, mats, number)
 		add_materials!(intermediates, intermeds, number)
 	end
-	println("Expected profit $(fmt_float(totalProfit))")
+	materialCost = material_cost(materials)
+	totalProfit = totalSell - (inventionCost + installCost + materialCost)
+	println("Expected profit $(fmt_float(totalProfit))\n")
 	print_materials(materials, intermediates, installCost, inventionCost)
+end
+
+function find_optimal(checkBPOs::Bool = true)
+	opt = optimal_invention(checkBPOs)
+	print_optimal(opt)
+	print("\nEnter rows to invent & manufacture: ")
+	rows = map(int, split(strip(readline()), [' ', ','], false))
+	plan = [opt[rows[i]] for i = 1:length(rows)]
+	print_plan(plan)
+end
+
+function add_to_plan(product, decryptor, number, plan = Array(Any, 0))
+	if isa(product, String)
+		product = itemNames[product]
+	end
+	if isa(decryptor, String)
+		decryptor = filter(d->contains(d["name"], decryptor), decryptors)[1]
+	end
+	push!(plan, {"typeID"=>product, "decryptor"=>decryptor, "number"=>number})
 end
 
 function init()
