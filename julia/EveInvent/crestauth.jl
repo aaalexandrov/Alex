@@ -32,13 +32,13 @@ function run_server(authData::CrestAuthData, port::Uint16)
 	http = HttpServer.HttpHandler((req, res)->server_task(authData, req, res))
 	http.events["connect"] = c->push!(authData.serverClients, c)
 	http.events["close"] = c->filter!(sc->sc!=c, authData.serverClients)
-	http.events["write"] = (c,r)->authData.authorizationReceived = authData.authorizationCode != nothing
+	http.events["write"] = (c,r)->authData.authorizationReceived = isdefined(authData, :authorizationCode)
 	authData.server = HttpServer.Server(http)
 	authData.serverTask = @async run(authData.server, port)
 end
 
 function stop_server(authData::CrestAuthData)
-	if authData.serverTask != nothing
+	if isdefined(authData, :serverTask)
 		try
 			Base.throwto(authData.serverTask, InterruptException())
 		end
@@ -58,8 +58,12 @@ function request_access_url(authData::CrestAuthData, appInfo::Dict)
 end
 
 function open_browser(url::String)
-	url = replace(url, "&", "^&") # escape & on windows
-	run(`cmd /c start $url`)
+    if OS_NAME == :Windows
+	    url = replace(url, "&", "^&") # escape & on windows
+	    run(`cmd /c start $url`)
+    else
+        spawn(`xdg-open "$url"`)
+    end
 end
 
 function request_authorization_token(endpoint::String, appInfo::Dict, code::String, refresh::Bool)
