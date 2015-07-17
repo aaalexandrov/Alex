@@ -30,6 +30,10 @@ function xml_read(fileName::String)
 end
 
 function xml_write(fileName::String, data)
+    dirName = dirname(fileName)
+    if !isdir(dirName)
+        mkpath(dirName)
+    end
 	open(fileName, "w+") do s
 		write(s, data)
 	end
