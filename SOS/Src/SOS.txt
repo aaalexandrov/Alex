@@ -1,4 +1,5 @@
-- Fix Parse::Float2Str & Str2Float to work properly with large values
+- Track allocated memory
+- Trigger garbage collection when memory grows
 
 - Lexical closures
 - Non-constant upvalues
@@ -24,6 +25,7 @@
 - Automatic function execution parallelism
 
 
++ Fix Parse::Float2Str to work properly with large values
 + Non-stack based instruction set
 + Multiple return value rules for expressions
 + Real local variables / scoping
@@ -39,12 +41,12 @@
 
 -------------------------------------------------------------------------------
 
-Constant ::= "nil" | "true" | "false" | String | Number | Table
-Variable ::= Identifier
+Constant ::= "nil" | "true" | "false" | STRING | NUMBER | TABLE
+Variable ::= IDENTIFIER
 ParamList ::= "(" [ ExpressionList ] ")"
 Call ::= ( Variable { Index } | FunctionDef ) ParamList { { Index } ParamList }
 Indexable ::= Call | Variable | "(" Expression ")"
-DotIndex ::= "." Identifier
+DotIndex ::= "." IDENTIFIER
 Index ::= ( "[" Expression "]" ) | DotIndex
 Operand ::= Constant | ( Indexable { Index } )
 Power ::= Operand [ "^" Power ]
@@ -57,11 +59,11 @@ Not ::= { "not" } Comparison
 And ::= Not { "and" Not }
 Or ::= And { "or" And }
 
-TableKey = Identifier | Constant
+TableKey = IDENTIFIER | Constant
 TableValue = [ TableKey "=" ] Expression
 Table ::= "{" [ TableValue { "," TableValue } [ "," ] ] "}"
 
-IdentifierList ::= Identifier { "," Identifier }
+IdentifierList ::= IDENTIFIER { "," IDENTIFIER }
 FunctionDef ::= "function" "(" [ IdentifierList ] ")" { Operator } "end"
 Expression ::= Or | FunctionDef
 ExpressionList ::= Expression { "," Expression }

@@ -367,21 +367,22 @@ char *Parse::Int2Str(int i, char *pBuf, int iBufLen, int iRadix)
 char *Parse::Float2Str(float f, char *pBuf, int iBufLen, int iRadix)
 {
   float fWhole, fPower, fRem;
-  int i, iLen = 0;
+  int iLen = 0;
   char *pStart, *pEnd;
   if (f < 0) {
     pBuf[iLen++] = '-';
-    i = -(int) f;
+    fWhole = -ceilf(f);
     fPower = (float) -iRadix;
   } else {
-    i = (int) f;
+    fWhole = floorf(f);
     fPower = (float) iRadix;
   }
   pStart = pBuf + iLen;
   do {
-    pBuf[iLen++] = Value2Numeral(i % iRadix);
-    i /= iRadix;
-  } while (i && iLen < iBufLen - 1);
+    float mod = fmodf(fWhole, iRadix);
+    pBuf[iLen++] = Value2Numeral((int) mod);
+    modff(fWhole / iRadix, &fWhole);
+  } while (fWhole && iLen < iBufLen - 1);
   pEnd = pBuf + iLen - 1;
   while (pStart < pEnd)
     Util::Swap(*pStart++, *pEnd--);
@@ -390,7 +391,7 @@ char *Parse::Float2Str(float f, char *pBuf, int iBufLen, int iRadix)
     pBuf[iLen++] = '.';
     while (fRem && iLen < iBufLen - 1) {
       fRem = modff(f * fPower, &fWhole);
-      i = (int) fmod(fWhole, (float) iRadix);
+      int i = (int) fmodf(fWhole, (float) iRadix);
       fPower *= iRadix;
       pBuf[iLen++] = Value2Numeral(i);
     }
