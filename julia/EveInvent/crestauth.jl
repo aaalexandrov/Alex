@@ -80,7 +80,7 @@ function request_authorization_token(endpoint::String, appInfo::Dict, code::Stri
 	                     data=dataStr, 
 						 headers={"Authorization" => "Basic $authStr",
 						          "Content-Type" => "application/x-www-form-urlencoded"})
-	return JSON.parse(resp.data)
+	return JSON.parse(bytestring(resp.data))
 end
 
 function request_access(endpoint::String, appInfo::Dict) 

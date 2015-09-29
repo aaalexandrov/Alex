@@ -83,7 +83,7 @@ function get_crest(url::String, auth, timeoutHours::Float64 = inf(Float64))
 			info("Response status: $(resp.status)")
 			return nothing
 		end
-		queryRes = JSON.parse(resp.data)
+		queryRes = JSON.parse(bytestring(resp.data))
 		if res == nothing
 			res = queryRes
 		else
