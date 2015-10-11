@@ -1,14 +1,14 @@
 module Simple
 
 import GLFW
-
 import ModernGL
+
+import OGLHelper
 import GR
 import Geom
 import Math3D
-import SimpleCam
-import OGLHelper
 import FTFont
+import SimpleCam
 
 function rld()
 	GLFW.Terminate()

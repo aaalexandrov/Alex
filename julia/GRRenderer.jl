@@ -1,4 +1,4 @@
-typealias Color (Float32, Float32, Float32, Float32)
+typealias Color Tuple{Float32, Float32, Float32, Float32}
 
 type Renderer <: AbstractRenderer
 	camera::Camera
@@ -6,9 +6,9 @@ type Renderer <: AbstractRenderer
     renderState::RenderStateHolder
     toRender::Vector{Renderable}
     sortFunc::Function
-    clearColor::Union(Color, Nothing)
-    clearStencil::Union(Int, Nothing)
-    clearDepth::Union(Float64, Nothing)
+    clearColor::Union{Color, Nothing}
+    clearStencil::Union{Int, Nothing}
+    clearDepth::Union{Float64, Nothing}
 
     Renderer() = new(Camera(), Dict{Symbol, Resource}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 1.0)
 end

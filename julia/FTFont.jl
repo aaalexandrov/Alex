@@ -18,12 +18,12 @@ type Font
     ascent::Float32
     descent::Float32
     glyphs::Dict{Char, Glyph}
-    kerning::Dict{(Char, Char), Vec2{Float32}}
+    kerning::Dict{Tuple{Char, Char}, Vec2{Float32}}
     bitmap::Array{Uint8, 2}
     fallbackGlyph::Glyph
 
     Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, bmpWidth, bmpHeight) =
-        new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{(Char, Char), Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
+        new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{Tuple{Char, Char}, Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
 end
 
 Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, maxCharWidth, maxCharHeight, charCount) =
@@ -186,7 +186,7 @@ function get_kerning(face::FT_Face, c1::Char, c2::Char, divisor::Float32)
     return Vec2{Float32}(kernVec[1].x / divisor, kernVec[1].y / divisor)
 end
 
-function loadfont(faceName::String; sizeXY::(Real, Real) = (32, 32), faceIndex::Real = 0, chars = '\u0000':'\u00ff')
+function loadfont(faceName::String; sizeXY::Tuple{Real, Real} = (32, 32), faceIndex::Real = 0, chars = '\u0000':'\u00ff')
     face = (FT_Face)[C_NULL]
     err = FT_New_Face(ftLib[1], faceName, int32(faceIndex), face)
     if err != 0

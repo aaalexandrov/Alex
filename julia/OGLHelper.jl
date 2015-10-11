@@ -3,19 +3,19 @@ module OGLHelper
 using ModernGL
 
 glUniform(index::GLint, value::Float32) = glUniform1f(index, value)
-glUniform(index::GLint, value::(Float32, Float32)) = glUniform2f(index, value[1], value[2])
-glUniform(index::GLint, value::(Float32, Float32, Float32)) = glUniform3f(index, value[1], value[2], value[3])
-glUniform(index::GLint, value::(Float32, Float32, Float32, Float32)) = glUniform4f(index, value[1], value[2], value[3], value[4])
+glUniform(index::GLint, value::Tuple{Float32, Float32}) = glUniform2f(index, value[1], value[2])
+glUniform(index::GLint, value::Tuple{Float32, Float32, Float32}) = glUniform3f(index, value[1], value[2], value[3])
+glUniform(index::GLint, value::Tuple{Float32, Float32, Float32, Float32}) = glUniform4f(index, value[1], value[2], value[3], value[4])
 
 glUniform(index::GLint, value::Int32) = glUniform1i(index, value)
-glUniform(index::GLint, value::(Int32, Int32)) = glUniform2i(index, value[1], value[2])
-glUniform(index::GLint, value::(Int32, Int32, Int32)) = glUniform3i(index, value[1], value[2], value[3])
-glUniform(index::GLint, value::(Int32, Int32, Int32, Int32)) = glUniform4i(index, value[1], value[2], value[3], value[4])
+glUniform(index::GLint, value::Tuple{Int32, Int32}) = glUniform2i(index, value[1], value[2])
+glUniform(index::GLint, value::Tuple{Int32, Int32, Int32}) = glUniform3i(index, value[1], value[2], value[3])
+glUniform(index::GLint, value::Tuple{Int32, Int32, Int32, Int32}) = glUniform4i(index, value[1], value[2], value[3], value[4])
 
-glUniform(index::GLint, value::Uint32) = glUniform1ui(index, value)
-glUniform(index::GLint, value::(Uint32, Uint32)) = glUniform2ui(index, value[1], value[2])
-glUniform(index::GLint, value::(Uint32, Uint32, Uint32)) = glUniform3ui(index, value[1], value[2], value[3])
-glUniform(index::GLint, value::(Uint32, Uint32, Uint32, Uint32)) = glUniform4ui(index, value[1], value[2], value[3], value[4])
+glUniform(index::GLint, value::UInt32) = glUniform1ui(index, value)
+glUniform(index::GLint, value::Tuple{UInt32, UInt32}) = glUniform2ui(index, value[1], value[2])
+glUniform(index::GLint, value::Tuple{UInt32, UInt32, UInt32}) = glUniform3ui(index, value[1], value[2], value[3])
+glUniform(index::GLint, value::Tuple{UInt32, UInt32, UInt32, UInt32}) = glUniform4ui(index, value[1], value[2], value[3], value[4])
 
 nofunc(x...) = nothing
 
@@ -57,7 +57,7 @@ function glUniform(index::GLint, value::Array{Float32, 3})
 	glUniformFunc(index, convert(GLsizei, elements), convert(Ptr{Float32}, value))
 end
 
-# todo: add glUniform for Vector{Int32 & Uint32}
+# todo: add glUniform for Vector{Int32 & UInt32}
 
 function gl_get_current_program()
 	currentProgram = GLint[0]

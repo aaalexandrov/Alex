@@ -106,7 +106,8 @@ const jl2glTypes =
 jl2gltype(jlType::DataType) = jl2glTypes[jlType]
 
 function typeelements(dataType::DataType)
-    if isempty(dataType.names)
+    fieldNames = names(dataType)
+    if isempty(fieldNames)
         # simple type
         return (dataType, 1)
     else
@@ -118,12 +119,12 @@ function typeelements(dataType::DataType)
                 error("typeelements: A field with non-uniform types found")
             end
         end
-        return (elType, length(dataType.names))
+        return (elType, length(fieldNames))
     end
 end
 
 function set_array_field{T}(vert::Vector{T}, field::Symbol, values::Array)
-	fieldInd = findfirst(T.names, field)
+	fieldInd = findfirst(names(T), field)
 	elType, elCount = typeelements(T.types[fieldInd])
 	offs = fieldoffsets(T)[fieldInd]
 	dst = convert(Ptr{elType}, pointer(vert)) + offs

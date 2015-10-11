@@ -195,7 +195,7 @@ function inituniforms(shader::Shader)
 		glGetActiveUniformName(shader.program, uniformIndices[i], length(nameBuf), C_NULL, nameBuf)
 		@assert glGetError() == GL_NO_ERROR
 
-		var = UniformVar(symbol(bytestring(nameBuf)),
+		var = UniformVar(symbol(bytestring(pointer(nameBuf))),
 						 gl2jltype(uniformTypes[i]),
 						 uniformIndices[i],
 						 uniformOffsets[i],
@@ -253,7 +253,7 @@ function initattributes(shader::Shader)
 			error("Vertex attribute arrays aren't supported in shader program $(shader.id), vertex attribute $nameBuf")
 		end
 
-		nameSym = symbol(nameBuf)
+		nameSym = symbol(bytestring(pointer(nameBuf)))
 		jlType = gl2jltype(typeBuf[1])
 
 		typeFields[location] = :($nameSym::$jlType)

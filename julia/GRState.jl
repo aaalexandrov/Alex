@@ -31,7 +31,7 @@ function setstate(::AlphaBlendAdditive)
 end
 
 type AlphaBlendConstant <: AlphaBlendState
-	color::(Float32, Float32, Float32, Float32)
+	color::Tuple{Float32, Float32, Float32, Float32}
 end
 
 function setstate(state::AlphaBlendConstant)

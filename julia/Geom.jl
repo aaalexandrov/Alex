@@ -2,9 +2,9 @@ module Geom
 
 using Math3D
 
-reversetriangles(indices::Vector{Uint16}) = [indices[i + [0, 1, -1][i%3+1]] for i=1:length(indices)]
+reversetriangles(indices::Vector{UInt16}) = [indices[i + [0, 1, -1][i%3+1]] for i=1:length(indices)]
 
-function unshareindices(indices::Vector{Uint16}, points::Matrix{Float32}, tounshare::Vector{Uint16})
+function unshareindices(indices::Vector{UInt16}, points::Matrix{Float32}, tounshare::Vector{UInt16})
 	ptsCount = size(points, 2)
 	pts = Array(Float32, 3, ptsCount + length(tounshare))
 	pts[:, 1:ptsCount] = points
@@ -23,11 +23,11 @@ function unshareindices(indices::Vector{Uint16}, points::Matrix{Float32}, tounsh
 end
 
 # returns an array of unique normal vectors and an array of indices into it
-function trianglenormals(indices::Vector{Uint16}, points::Matrix{Float32})
+function trianglenormals(indices::Vector{UInt16}, points::Matrix{Float32})
 	triCount = div(length(indices), 3)
 	normals = Array(Float32, 3, triCount)
 	iN = 1
-	nIndices = Array(Uint16, triCount)
+	nIndices = Array(UInt16, triCount)
 	const minCos = cos(pi/180)
 	for i = 1:length(nIndices)
 		p0 = points[:, indices[3(i-1)+1] + 1]
@@ -46,22 +46,22 @@ function trianglenormals(indices::Vector{Uint16}, points::Matrix{Float32})
 end
 
 # for each point records an array of the indices of the indices in the index buffer that reference that point
-function pointref(indices::Vector{Uint16}, points::Matrix{Float32})
+function pointref(indices::Vector{UInt16}, points::Matrix{Float32})
 	ptCount = size(points, 2)
-	ref = [Uint16[] for i=1:ptCount]
+	ref = [UInt16[] for i=1:ptCount]
 	for i = 1:length(indices)
 		push!(ref[indices[i] + 1], i)
 	end
 	return ref
 end
 
-function smoothnormals(indices::Vector{Uint16}, points::Matrix{Float32})
+function smoothnormals(indices::Vector{UInt16}, points::Matrix{Float32})
 	triNIndices, triNormals = trianglenormals(indices, points)
 	ptsRef = pointref(indices, points)
 	normals = similar(points)
 	for v = 1:size(normals, 2)
 		# collect all normal indices for this vertex
-		nIndices = Uint16[]
+		nIndices = UInt16[]
 		for i in ptsRef[v]
 			push!(nIndices, triNIndices[div(i-1, 3)+1])
 		end
@@ -77,7 +77,7 @@ function smoothnormals(indices::Vector{Uint16}, points::Matrix{Float32})
 	return indices, points, normals
 end
 
-function facenormals(indices::Vector{Uint16}, points::Matrix{Float32})
+function facenormals(indices::Vector{UInt16}, points::Matrix{Float32})
 	triNIndices, triNormals = trianglenormals(indices, points)
 	ptsRef = pointref(indices, points)
 	ptCount = sum(r->length(r), ptsRef)
@@ -85,7 +85,7 @@ function facenormals(indices::Vector{Uint16}, points::Matrix{Float32})
 	normals = similar(pts)
 	ind = similar(indices)
 	iPt = 1
-	emitted = Dict{(Uint16, Uint16), Uint16}()
+	emitted = Dict{Tuple{UInt16, UInt16}, UInt16}()
 	const minCos = cos(pi/180)
 	for i = 1:length(indices)
 		index = indices[i] + 1
@@ -100,7 +100,7 @@ function facenormals(indices::Vector{Uint16}, points::Matrix{Float32})
 	return ind, pts[:, 1:iPt-1], normals[:, 1:iPt-1]
 end
 
-function meshcat(meshes::(Vector{Uint16}, Matrix{Float32}, Matrix{Float32})...)
+function meshcat(meshes::Tuple{Vector{UInt16}, Matrix{Float32}, Matrix{Float32}}...)
 	indCount = 0
 	ptsCount = 0
 	for m in meshes
@@ -108,7 +108,7 @@ function meshcat(meshes::(Vector{Uint16}, Matrix{Float32}, Matrix{Float32})...)
 		indCount += length(ind)
 		ptsCount += size(pts, 2)
 	end
-	indices = Array(Uint16, indCount)
+	indices = Array(UInt16, indCount)
 	points = Array(Float32, 3, ptsCount)
 	normals = similar(points)
 	nextInd = 1
@@ -135,7 +135,7 @@ function regularpoly(sides::Int, z::Float32 = 0f0)
 		points[:, i] = [cos(ang), sin(ang), z]
 	end
 
-	indices = Array(Uint16, (sides - 2) * 3)
+	indices = Array(UInt16, (sides - 2) * 3)
 	for i in 0:sides-3
 		indices[3i+1:3i+3] = [0, i+1, i+2]
 	end
@@ -150,7 +150,7 @@ function prism(sides::Int, zMin::Float32 = -1f0, zMax::Float32 = 1f0; smooth::Bo
 	minInd = reversetriangles(minInd)
 	maxInd, maxPoints = regularpoly(sides, zMax)
 
-	sideInd = Array(Uint16, 6sides)
+	sideInd = Array(UInt16, 6sides)
 	sidePoints = Array(Float32, 3, 2sides)
 
 	for i in 1:sides
@@ -173,7 +173,7 @@ function pyramid(sides::Int, zMin::Float32 = 0f0, zMax::Float32 = 1f0; smooth::B
 	minInd, minPoints = regularpoly(sides, zMin)
 	minInd = reversetriangles(minInd)
 
-	sideInd = Array(Uint16, 3sides)
+	sideInd = Array(UInt16, 3sides)
 	sidePoints = Array(Float32, 3, 2sides)
 	apex = [0, 0, zMax]
 
@@ -195,7 +195,7 @@ end
 function sphere(segments::Int, rh::Float32 = 1f0, rv::Float32 = 1f0; smooth::Bool = true)
 	vsegments = div(segments, 2) - 1
 
-	ind = Array(Uint16, 6segments*vsegments)
+	ind = Array(UInt16, 6segments*vsegments)
 	points = Array(Float32, 3, segments * vsegments + 2)
 	ptsCount = size(points, 2)
 	points[:, end] = Float32[0, 0, rv]
