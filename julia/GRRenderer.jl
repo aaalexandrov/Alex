@@ -6,16 +6,16 @@ type Renderer <: AbstractRenderer
     renderState::RenderStateHolder
     toRender::Vector{Renderable}
     sortFunc::Function
-    clearColor::Union{Color, Nothing}
-    clearStencil::Union{Int, Nothing}
-    clearDepth::Union{Float64, Nothing}
+    clearColor::Union{Color, Void}
+    clearStencil::Union{Int, Void}
+    clearDepth::Union{Float64, Void}
 
     Renderer() = new(Camera(), Dict{Symbol, Resource}(), RenderStateHolder(), Array(Renderable, 0), identity, (0f0, 0f0, 0f0, 1f0), 0, 1.0)
 end
 
 global renderer_instance = nothing
 
-renderer() = renderer_instance::Union(Renderer, Nothing)
+renderer() = renderer_instance::Union(Renderer, Void)
 
 function init(renderer::Renderer)
     @assert renderer_instance == nothing

@@ -78,42 +78,42 @@ end
 get_sampler_type{GLTYPE}(::Type{SamplerType{GLTYPE}}) = GLTYPE
 
 const gl2jlTypes =
-	Dict{Uint16, DataType}([
+	Dict{UInt16, DataType}([
 		(GL_FLOAT, Float32),
 		(GL_FLOAT_VEC2, Vec2),
 		(GL_FLOAT_VEC3, Vec3),
 		(GL_FLOAT_VEC4, Vec4),
         (GL_FLOAT_MAT3, Matrix3),
 		(GL_FLOAT_MAT4, Matrix4),
-		(GL_SAMPLER_2D, SamplerType{int64(GL_SAMPLER_2D)})
+		(GL_SAMPLER_2D, SamplerType{Int64(GL_SAMPLER_2D)})
 	])
 
 gl2jltype(glType::Integer) = gl2jlTypes[glType]
 
 const jl2glTypes =
-	Dict{DataType, Uint16}([
+	Dict{DataType, UInt16}([
 		(Float32, GL_FLOAT),
 		(Float64, GL_DOUBLE),
 		(Float16, GL_HALF_FLOAT),
-		(Uint16,  GL_UNSIGNED_SHORT),
+		(UInt16,  GL_UNSIGNED_SHORT),
 		(Int16,   GL_SHORT),
-		(Uint8,   GL_UNSIGNED_BYTE),
+		(UInt8,   GL_UNSIGNED_BYTE),
 		(Int8,    GL_BYTE),
-		(Uint32,  GL_UNSIGNED_INT),
+		(UInt32,  GL_UNSIGNED_INT),
 		(Int32,   GL_INT)
 	])
 
 jl2gltype(jlType::DataType) = jl2glTypes[jlType]
 
 function typeelements(dataType::DataType)
-    fieldNames = names(dataType)
+    fieldNames = fieldnames(dataType)
     if isempty(fieldNames)
         # simple type
         return (dataType, 1)
     else
-        elType = Nothing
+        elType = Void
         for t in dataType.types
-            if elType == Nothing
+            if elType == Void
                 elType = t
             elseif elType != t
                 error("typeelements: A field with non-uniform types found")
@@ -124,11 +124,11 @@ function typeelements(dataType::DataType)
 end
 
 function set_array_field{T}(vert::Vector{T}, field::Symbol, values::Array)
-	fieldInd = findfirst(names(T), field)
+	fieldInd = findfirst(fieldnames(T), field)
 	elType, elCount = typeelements(T.types[fieldInd])
 	offs = fieldoffsets(T)[fieldInd]
 	dst = convert(Ptr{elType}, pointer(vert)) + offs
-	valueStride = length(values) / length(vert)
+	valueStride = div(length(values), length(vert))
 	srcBase = 0
 	for vertInd = 0:length(vert)-1
 		for elInd = 1:elCount

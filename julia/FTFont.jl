@@ -11,19 +11,19 @@ type Glyph
 end
 
 type Font
-    family::String
-    style::String
+    family::AbstractString
+    style::AbstractString
     size::Vec2{Float32}
     lineDistance::Float32
     ascent::Float32
     descent::Float32
     glyphs::Dict{Char, Glyph}
     kerning::Dict{Tuple{Char, Char}, Vec2{Float32}}
-    bitmap::Array{Uint8, 2}
+    bitmap::Array{UInt8, 2}
     fallbackGlyph::Glyph
 
     Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, bmpWidth, bmpHeight) =
-        new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{Tuple{Char, Char}, Vec2{Float32}}(), zeros(Uint8, bmpWidth, bmpHeight))
+        new(family, style, Vec2{Float32}(sizeX, sizeY), lineDistance, ascent, descent, Dict{Char, Glyph}(), Dict{Tuple{Char, Char}, Vec2{Float32}}(), zeros(UInt8, bmpWidth, bmpHeight))
 end
 
 Font(family, style, sizeX, sizeY, lineDistance, ascent, descent, maxCharWidth, maxCharHeight, charCount) =
@@ -36,7 +36,7 @@ function font_bitmap_size(charWidth, charHeight, charCount)
 
     @assert (width / charWidth) * (height / charHeight) >= charCount
 
-    return int(width), int(height)
+    return Int(width), Int(height)
 end
 
 type GlyphPosition
@@ -47,7 +47,7 @@ type GlyphPosition
     GlyphPosition() = new(1, 1, 1)
 end
 
-function addglyph(font::Font, char::Char, bmp::Array{Uint8, 2}, origin::Vec2{Float32}, advance::Vec2{Float32}, pos::GlyphPosition)
+function addglyph(font::Font, char::Char, bmp::Array{UInt8, 2}, origin::Vec2{Float32}, advance::Vec2{Float32}, pos::GlyphPosition)
     @assert size(bmp, 1) < size(font.bitmap, 1)
     @assert size(bmp, 2) < size(font.bitmap, 2)
     if pos.x + size(bmp, 1) > size(font.bitmap, 1)
@@ -106,7 +106,7 @@ function setpos(cursor::TextCursor, x, y)
     end
 end
 
-function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::String)
+function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::AbstractString)
     for c in s
         glyph = get(font.glyphs, c, font.fallbackGlyph)
         if cursor.lastChar != 0
@@ -118,7 +118,7 @@ function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::String)
     end
 end
 
-function textbox(font::Font, cursor::TextCursor, s::String)
+function textbox(font::Font, cursor::TextCursor, s::AbstractString)
     tempCursor = TextCursor(cursor)
     boxMax = rect(Float32)
     drawtext(font, tempCursor, s) do pos, bmp, box
@@ -161,7 +161,7 @@ end
 
 function glyph_bitmap(bmpRec::FreeType.FT_Bitmap)
     @assert bmpRec.pixel_mode == FreeType.FT_PIXEL_MODE_GRAY
-    bmp = Array(Uint8, bmpRec.width, bmpRec.rows)
+    bmp = Array(UInt8, bmpRec.width, bmpRec.rows)
     row = bmpRec.buffer
     if bmpRec.pitch < 0
         row -= bmpRec.pitch * (rbmpRec.rows - 1)
@@ -186,15 +186,15 @@ function get_kerning(face::FT_Face, c1::Char, c2::Char, divisor::Float32)
     return Vec2{Float32}(kernVec[1].x / divisor, kernVec[1].y / divisor)
 end
 
-function loadfont(faceName::String; sizeXY::Tuple{Real, Real} = (32, 32), faceIndex::Real = 0, chars = '\u0000':'\u00ff')
+function loadfont(faceName::AbstractString; sizeXY::Tuple{Real, Real} = (32, 32), faceIndex::Real = 0, chars = '\u0000':'\u00ff')
     face = (FT_Face)[C_NULL]
-    err = FT_New_Face(ftLib[1], faceName, int32(faceIndex), face)
+    err = FT_New_Face(ftLib[1], faceName, Int32(faceIndex), face)
     if err != 0
         info("Couldn't load font $faceName with error $err")
         return nothing
     end
 
-    err = FT_Set_Pixel_Sizes(face[1], uint32(sizeXY[1]), uint32(sizeXY[2]))
+    err = FT_Set_Pixel_Sizes(face[1], UInt32(sizeXY[1]), UInt32(sizeXY[2]))
     font = nothing
     if err != 0
         info("Couldn't set the pixel size for font $faceName with error $err")
@@ -203,7 +203,7 @@ function loadfont(faceName::String; sizeXY::Tuple{Real, Real} = (32, 32), faceIn
 
         maxCharWidth, maxCharHeight = max_glyph_size(face[1], faceRec, chars)
 
-        emScale = float32(sizeXY[2]) / faceRec.units_per_EM
+        emScale = Float32(sizeXY[2]) / faceRec.units_per_EM
         lineDist = round(faceRec.height * emScale)
         ascent = round(faceRec.ascender * emScale)
         descent = round(faceRec.descender * emScale)

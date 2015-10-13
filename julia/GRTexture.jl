@@ -8,7 +8,7 @@ end
 
 isvalid(tex::Texture) = tex.texture != 0
 
-function init(tex::Texture, renderer::Renderer, data::Ptr{Uint8}, w::Integer, h::Integer, pixelFormat::GLenum; id::Symbol = :texture)
+function init(tex::Texture, renderer::Renderer, data::Ptr{UInt8}, w::Integer, h::Integer, pixelFormat::GLenum; id::Symbol = :texture)
 	@assert !isvalid(tex)
 
 	init_resource(tex, renderer, id)
@@ -44,7 +44,7 @@ const il2glFormat =
 		(DevIL.IL_ALPHA, GL_RED)
 	])
 
-function init(tex::Texture, renderer::Renderer, texPath::String; id::Symbol = symbol(texPath))
+function init(tex::Texture, renderer::Renderer, texPath::AbstractString; id::Symbol = symbol(texPath))
 	img = DevIL.ilGenImage()
 	DevIL.ilBindImage(img)
 	if DevIL.ilLoadImage(bytestring(texPath)) != DevIL.IL_TRUE

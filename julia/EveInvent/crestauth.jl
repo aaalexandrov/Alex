@@ -1,12 +1,12 @@
 type CrestAuthData
-	requestState::String
+	requestState::AbstractString
 	authorizationReceived::Bool
 	serverClients::Array{HttpServer.Client, 1}
 	serverTask::Task
 	server::HttpServer.Server
-	authorizationCode::String
+	authorizationCode::AbstractString
 	
-	CrestAuthData(requestState::String) = new(requestState, false, Array(HttpServer.Client, 0))
+	CrestAuthData(requestState::AbstractString) = new(requestState, false, Array(HttpServer.Client, 0))
 end
 
 function server_task(authData::CrestAuthData, req::HttpServer.Request, res::HttpServer.Response)
@@ -18,7 +18,7 @@ function server_task(authData::CrestAuthData, req::HttpServer.Request, res::Http
 			resp = HttpServer.Response("Authorization code received, thank you")
 		end
 	catch e
-		if !isa(e, String)
+		if !isa(e, AbstractString)
 			rethrow()
 		end
 	end
@@ -28,7 +28,7 @@ function server_task(authData::CrestAuthData, req::HttpServer.Request, res::Http
 	return resp
 end
 
-function run_server(authData::CrestAuthData, port::Uint16)
+function run_server(authData::CrestAuthData, port::UInt16)
 	http = HttpServer.HttpHandler((req, res)->server_task(authData, req, res))
 	http.events["connect"] = c->push!(authData.serverClients, c)
 	http.events["close"] = c->filter!(sc->sc!=c, authData.serverClients)
@@ -57,7 +57,7 @@ function request_access_url(authData::CrestAuthData, appInfo::Dict)
 	return "https://login.eveonline.com/oauth/authorize/?$queryStr"
 end
 
-function open_browser(url::String)
+function open_browser(url::AbstractString)
     if OS_NAME == :Windows
 	    url = replace(url, "&", "^&") # escape & on windows
 	    run(`cmd /c start $url`)
@@ -66,7 +66,7 @@ function open_browser(url::String)
     end
 end
 
-function request_authorization_token(endpoint::String, appInfo::Dict, code::String, refresh::Bool)
+function request_authorization_token(endpoint::AbstractString, appInfo::Dict, code::AbstractString, refresh::Bool)
 	authStr = base64(appInfo["clientID"] * ":" * appInfo["secretKey"])
 	if refresh
 		params = ["grant_type" => "refresh_token",
@@ -83,7 +83,7 @@ function request_authorization_token(endpoint::String, appInfo::Dict, code::Stri
 	return JSON.parse(bytestring(resp.data))
 end
 
-function request_access(endpoint::String, appInfo::Dict) 
+function request_access(endpoint::AbstractString, appInfo::Dict) 
 	auth = json_read("authorization.json")
 	if auth == nothing
 		authData = CrestAuthData("EveInvent$(rand(Uint))")

@@ -15,7 +15,7 @@ end
 
 isvalid(shader::Shader) = shader.program != 0
 
-function init(shader::Shader, renderer::Renderer, path::String, setupMaterial::Function = empty_setup_material; id::Symbol = symbol(path))
+function init(shader::Shader, renderer::Renderer, path::AbstractString, setupMaterial::Function = empty_setup_material; id::Symbol = symbol(path))
 	local vsSource, psSource
 	open(path * ".vert") do f
 		vsSource = readbytes(f)
@@ -27,7 +27,7 @@ function init(shader::Shader, renderer::Renderer, path::String, setupMaterial::F
 	init(shader, renderer, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), setupMaterial, id = id)
 end
 
-function init(shader::Shader, renderer::Renderer, vs::Ptr{Uint8}, vsLength::Int, ps::Ptr{Uint8}, psLength::Int, setupMaterial::Function = empty_setup_material; id::Symbol = :shader)
+function init(shader::Shader, renderer::Renderer, vs::Ptr{UInt8}, vsLength::Int, ps::Ptr{UInt8}, psLength::Int, setupMaterial::Function = empty_setup_material; id::Symbol = :shader)
 	@assert !isvalid(shader)
 
 	vertexShader = compileshader(GL_VERTEX_SHADER, vs, vsLength)
@@ -92,7 +92,7 @@ function get_info_log(glObj::GLuint, get::Function, getInfoLog::Function)
 	logLength = GLint[0]
     get(glObj, GL_INFO_LOG_LENGTH, logLength)
 
-    message = Array(Uint8, logLength[1])
+    message = Array(UInt8, logLength[1])
     getInfoLog(glObj, logLength[1], C_NULL, message)
     bytestring(message)
 end
@@ -100,10 +100,10 @@ end
 get_shader_info_log(shaderObj::GLuint) = get_info_log(shaderObj, glGetShaderiv, glGetShaderInfoLog)
 get_program_info_log(programObj::GLuint) = get_info_log(programObj, glGetProgramiv, glGetProgramInfoLog)
 
-function compileshader(shaderType::Uint32, source::Ptr{Uint8}, sourceLength::Int)
+function compileshader(shaderType::UInt32, source::Ptr{UInt8}, sourceLength::Int)
 	shaderObj = glCreateShader(shaderType)
 
-	srcArray = Ptr{Uint8}[source]
+	srcArray = Ptr{UInt8}[source]
 	lenArray = GLint[sourceLength]
 	glShaderSource(shaderObj, 1, srcArray, lenArray)
 
@@ -187,7 +187,7 @@ function inituniforms(shader::Shader)
 
 	glGetProgramiv(shader.program, GL_ACTIVE_UNIFORM_MAX_LENGTH, val)
 	@assert glGetError() == GL_NO_ERROR
-	nameBuf = Array(Uint8, val[1])
+	nameBuf = Array(UInt8, val[1])
 
 	# set program so we can set sampler uniforms
 	glUseProgram(shader.program)
@@ -209,7 +209,7 @@ function inituniforms(shader::Shader)
 			push!(shader.samplers, var.name)
 			# set the sampler index once
 			# sampler index can only be set via glUniform1i so we convert to Int32 to dispatch to that function
-			glUniform(var.index, int32(length(shader.samplers)))
+			glUniform(var.index, Int32(length(shader.samplers)))
 		end
 	end
 
@@ -234,7 +234,7 @@ function initattributes(shader::Shader)
 
 	glGetProgramiv(shader.program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, val)
 	@assert glGetError() == GL_NO_ERROR
-	nameBuf = Array(Uint8, val[1])
+	nameBuf = Array(UInt8, val[1])
 
 	typeBuf = GLenum[0]
 	sizeBuf = GLint[0]

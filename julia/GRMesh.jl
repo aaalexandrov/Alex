@@ -56,7 +56,7 @@ type Mesh <: AbstractMesh
     ibo::GLuint
     layout::VertexLayout
     vertices::Vector
-    indices::Vector{Uint16}
+    indices::Vector{UInt16}
     indexLength::Int
     bound::Shapes.Shape
     id::Symbol
@@ -67,7 +67,7 @@ end
 
 isvalid(mesh::Mesh) = mesh.vbo != 0 && mesh.ibo != 0 && isvalid(mesh.layout)
 
-function init{T}(mesh::Mesh, renderer::Renderer, vertices::Vector{T}, indices::Vector{Uint16}; positionFunc::Function = identity, id::Symbol = :mesh, usage::Symbol = :static)
+function init{T}(mesh::Mesh, renderer::Renderer, vertices::Vector{T}, indices::Vector{UInt16}; positionFunc::Function = identity, id::Symbol = :mesh, usage::Symbol = :static)
     @assert !isvalid(mesh)
     @assert !isempty(vertices)
     @assert !isempty(indices)
@@ -86,7 +86,7 @@ function init{T}(mesh::Mesh, renderer::Renderer, vertices::Vector{T}, indices::V
     initbound(mesh, positionFunc)
 end
 
-function init(mesh::Mesh, shader::Shader, vertFields::Dict{Symbol, Array}, indices::Vector{Uint16}; positionFunc::Function = identity, id::Symbol = :mesh, usage::Symbol = :static)
+function init(mesh::Mesh, shader::Shader, vertFields::Dict{Symbol, Array}, indices::Vector{UInt16}; positionFunc::Function = identity, id::Symbol = :mesh, usage::Symbol = :static)
 	vertices = Array(shader.attribType, size(first(vertFields)[2], 2))
 	set_array_fields(vertices, vertFields)
 	init(mesh, shader.renderer, vertices, indices; positionFunc = positionFunc, id = id, usage = usage)

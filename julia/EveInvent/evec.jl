@@ -1,8 +1,8 @@
 const evecURL = "http://api.eve-central.com/api/"
 
-evec_filename(url::String) = "cache/" * replace(replace(url, evecURL, ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".xml"
+evec_filename(url::AbstractString) = "cache/" * replace(replace(url, evecURL, ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".xml"
 
-function get_evec(endpoint::String; query=Dict{String, Any}(), timeoutHours::Float64 = 6.0)
+function get_evec(endpoint::AbstractString; query=Dict{AbstractString, Any}(), timeoutHours::Float64 = 6.0)
 	url = evecURL * endpoint * "?" * Requests.format_query_str(query)
 	fileName = evec_filename(url)
 	data = mtime(fileName) + timeoutHours * 60 * 60 > time()? xml_read(fileName) : nothing

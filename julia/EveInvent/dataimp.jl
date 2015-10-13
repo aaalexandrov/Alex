@@ -3,7 +3,7 @@ import YAML
 
 const dbName = "esb_DATADUMP"
 
-function import_decryptors(fileName::String)
+function import_decryptors(fileName::AbstractString)
 	ODBC.connect(dbName)
 	res = ODBC.query(
 		"""
@@ -25,10 +25,10 @@ function import_decryptors(fileName::String)
 	for row = 1:size(res, 1)
 		if decID != res[row, :typeID]
 			decID = res[row, :typeID]
-			dec = Dict{String, Any}()
+			dec = Dict{AbstractString, Any}()
 			dec["id"] = decID
 			dec["name"] = res[row, :typeName]
-			dec["attributes"] = Dict{String, Float64}()
+			dec["attributes"] = Dict{AbstractString, Float64}()
 			push!(decryptors, dec)
 		end
 		dec["attributes"][res[row, :attributeName]] = res[row, :valueFloat]
@@ -36,13 +36,13 @@ function import_decryptors(fileName::String)
 	json_write(fileName, decryptors)
 end
 
-function import_blueprints(fileName::String)
+function import_blueprints(fileName::AbstractString)
 	# because loading a json is so much faster than loading a yaml for some reason
 	blueprints = YAML.load_file("data/blueprints.yaml")
 	json_write(fileName, blueprints; indent=0)
 end
 
-function import_station_assembly_lines(fileName::String)
+function import_station_assembly_lines(fileName::AbstractString)
 	ODBC.connect(dbName)
 	res = ODBC.query(
 		"""

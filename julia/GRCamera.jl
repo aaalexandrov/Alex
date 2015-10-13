@@ -42,7 +42,7 @@ end
 
 function normalized_plane(n, p)
 	nn = n / Shapes.len(n)
-	[nn, -dot(p, nn)]
+	[nn; -dot(p, nn)]
 end
 
 function calc_frustum(cam::Camera, dest::Matrix{Float32})

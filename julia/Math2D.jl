@@ -1,6 +1,6 @@
 module Math2D
 
-import Base: size, eltype, isempty, min, max, union, intersect, zero, one, dot, typemin, typemax
+import Base: size, eltype, isempty, min, max, union, intersect, zero, one, dot, typemin, typemax, +, -, *, /, .<
 
 export Vec2, Box, Rect
 export size, eltype, len, len2, min, max, isempty, union, intersect, zero, one, normalize, orthogonal, dot, rect, typemin, typemax

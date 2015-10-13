@@ -29,9 +29,9 @@ macro getCFun(lib, jlFun, cFun, address...)
     return esc(ret)
 end
 
-@getCFun "opengl32" wglGetProcAddress wglGetProcAddress(lpszProc::Ptr{Uint8})::Ptr{Void}
+@getCFun "opengl32" wglGetProcAddress wglGetProcAddress(lpszProc::Ptr{UInt8})::Ptr{Void}
 
-fnPtrSym(cNameStr::String) = symbol("$(cNameStr)_fnPtr")
+fnPtrSym(cNameStr::AbstractString) = symbol("$(cNameStr)_fnPtr")
 
 macro getGLFun(jlFun, cFun)
 	cNameStr = string(cFun.args[1].args[1])
@@ -48,7 +48,7 @@ macro getGLFun(jlFun, cFun)
 	return esc(result)
 end
 
-functionNames = String[]
+functionNames = AbstractString[]
 
 export updateGL
 function updateGL()

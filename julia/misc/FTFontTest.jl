@@ -19,7 +19,7 @@ function fttest()
 
     FTFont.done()
 
-    canvas = zeros(Uint8, 1024, 256)
+    canvas = zeros(UInt8, 1024, 256)
     cursor = FTFont.TextCursor(font.size.x, font.lineDistance)
     drawFunc = (pos, bmp, box)->testdraw(canvas, pos, bmp, box)
     FTFont.drawtext(drawFunc, font, cursor, "The quick brown fox jumps over the lazy dog!")

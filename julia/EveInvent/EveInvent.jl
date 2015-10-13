@@ -27,7 +27,7 @@ global crestAuth = nothing
 
 const priceTimeout = 6.0
 
-id_from_url(url::String) = int(rsplit(url, '/', 2, false)[end])
+id_from_url(url::AbstractString) = int(rsplit(url, '/', 2, false)[end])
 
 function access_path(o, p::Array)
 	for i in p
@@ -133,7 +133,7 @@ function resolve_item_prices_evec(types)
 end
 
 get_item_categories() = get_crest(get_service(["itemCategories"]), crestAuth)
-get_item_category(catName::String) = get_crest(filter(c->c["name"]==catName, itemCategories)[1]["href"], crestAuth)
+get_item_category(catName::AbstractString) = get_crest(filter(c->c["name"]==catName, itemCategories)[1]["href"], crestAuth)
 
 function get_category_types(category)
 	types = Dict{Int, Any}()
@@ -154,15 +154,15 @@ function get_category_types(category)
 	return types
 end
 
-get_category_types(catName::String) = get_category_types(get_item_category(catName))
+get_category_types(catName::AbstractString) = get_category_types(get_item_category(catName))
 
 get_market_groups() = get_crest(get_service(["marketGroups"]), crestAuth)
-get_market_group(group::String) = filter(g->g["name"]==group, marketGroups)[1]
+get_market_group(group::AbstractString) = filter(g->g["name"]==group, marketGroups)[1]
 
-function get_group_types(group::String)
+function get_group_types(group::AbstractString)
 	typeGroup = get_market_group(group)
 	jTypes = get_crest(typeGroup["types"]["href"], crestAuth)
-	make_index(jTypes, Dict{Int, String}()) do t
+	make_index(jTypes, Dict{Int, AbstractString}()) do t
 		t["type"]["id"], t["type"]["name"]
 	end
 end
@@ -188,7 +188,7 @@ function get_industry_systems()
 	end
 end
 
-function get_or_import(fileName::String, importFunc::Function)
+function get_or_import(fileName::AbstractString, importFunc::Function)
 	data = json_read(fileName)
 	if data == nothing
 		info("Importing $fileName from static data...")
@@ -231,7 +231,7 @@ function process_market_groups()
 	global blueprintTypes = get_category_types("Blueprint")
 end
 
-get_products(blueprint, activity::String) = access_path(blueprint, ["activities", activity, "products"])
+get_products(blueprint, activity::AbstractString) = access_path(blueprint, ["activities", activity, "products"])
 
 function get_inventable_blueprints(groupTypes::Dict{Int})
 	groupPrints = Set{Int}()
@@ -252,7 +252,7 @@ function get_inventable_blueprints(groupTypes::Dict{Int})
 	return groupPrints
 end
 
-function process_products(f::Function, blueprint, activity::String)
+function process_products(f::Function, blueprint, activity::AbstractString)
 	prods = access_path(blueprint, ["activities", activity, "products"])
 	if prods != nothing
 		for p in prods
@@ -284,7 +284,7 @@ function process_blueprints()
 	end
 end
 
-system_id(systemName::String) = first(filter((id,s)->s["solarSystem"]["name"]==systemName, industrySystems))[1]
+system_id(systemName::AbstractString) = first(filter((id,s)->s["solarSystem"]["name"]==systemName, industrySystems))[1]
 
 function process_industry()
 	for line in assemblyLines
@@ -355,11 +355,11 @@ function invention_chance(baseChance::Float64, skills::Array, decryptorModifier:
 	return baseChance * skillModifier * decryptorModifier
 end
 
-function get_cost_index(system, activityName::String)
+function get_cost_index(system, activityName::AbstractString)
 	filter(c->c["activityName"]==activityName, system["systemCostIndices"])[1]["costIndex"]
 end
 
-function get_tax_rate(system, activityName::String)
+function get_tax_rate(system, activityName::AbstractString)
 	stationID = filter(l->l["activityName"]==activityName, system["assemblyLines"])[1]["stationID"]
 	return industryFacilities[stationID]["tax"]
 end
@@ -398,7 +398,7 @@ function invention_result(targetID::Int, decryptor, systemID::Int=config["invent
 	baseME += decryptor["attributes"]["inventionMEModifier"]
 	basePE += decryptor["attributes"]["inventionTEModifier"]
 	baseRuns += decryptor["attributes"]["inventionMaxRunModifier"]
-	resultItem = Dict{String, Any}()
+	resultItem = Dict{AbstractString, Any}()
 	resultItem["typeID"] = t2BPID
 	resultItem["materialEfficiency"] = int(baseME)
 	resultItem["timeEfficiency"] = int(basePE)
@@ -588,10 +588,10 @@ function find_optimal(checkBPOs::Bool = true)
 end
 
 function add_to_plan(product, decryptor, number, plan = Array(Any, 0))
-	if isa(product, String)
+	if isa(product, AbstractString)
 		product = itemNames[product]
 	end
-	if isa(decryptor, String)
+	if isa(decryptor, AbstractString)
 		decryptor = filter(d->contains(d["name"], decryptor), decryptors)[1]
 	end
 	push!(plan, {"typeID"=>product, "decryptor"=>decryptor, "number"=>number})

@@ -2,10 +2,10 @@ type UniformBlock
 	ubo::GLuint
 	index::GLuint
 	binding::GLuint
-	size::Uint32
+	size::UInt32
 	name::Symbol
 
-	UniformBlock() = new (0, 0, 0, 0)
+	UniformBlock() = new(0, 0, 0, 0)
 end
 
 isvalid(block::UniformBlock) = block.ubo != 0
@@ -23,7 +23,7 @@ function init(block::UniformBlock, program::GLuint, blockIndex::GLuint)
 
 	glGetActiveUniformBlockiv(program, block.index, GL_UNIFORM_BLOCK_NAME_LENGTH, val)
 	@assert glGetError() == GL_NO_ERROR
-	nameBuf = Array(Uint8, val[1])
+	nameBuf = Array(UInt8, val[1])
 	glGetActiveUniformBlockName(program, block.index, length(nameBuf), C_NULL, nameBuf)
 	@assert glGetError() == GL_NO_ERROR
 	block.name = symbol(nameBuf[1:end-1])
@@ -32,7 +32,7 @@ function init(block::UniformBlock, program::GLuint, blockIndex::GLuint)
 	glGenBuffers(1, ubo)
 	block.ubo = ubo[1]
 
-	data = zeros(Uint8, block.size)
+	data = zeros(UInt8, block.size)
 	setbufferdata(block, data)
 end
 
@@ -68,19 +68,19 @@ end
 
 inblock(var::UniformVar) = var.blockId >= 0
 
-function getptr(var::UniformVar, buffer::Vector{Uint8}, index::Int)
+function getptr(var::UniformVar, buffer::Vector{UInt8}, index::Int)
 	@assert 1 <= index <= var.arraySize
 	ptr = pointer(buffer) + var.offset + var.arrayStride * (index - 1)
-	@assert convert(Uint64, pointer(buffer)) <= convert(Uint64, ptr + sizeof(var.varType)) <= convert(Uint64, pointer(buffer) + length(buffer))
+	@assert convert(UInt64, pointer(buffer)) <= convert(UInt64, ptr + sizeof(var.varType)) <= convert(UInt64, pointer(buffer) + length(buffer))
 	return convert(Ptr{var.varType}, ptr)
 end
 
-function setvalue(var::UniformVar, buffer::Vector{Uint8}, value, index::Int = 1)
+function setvalue(var::UniformVar, buffer::Vector{UInt8}, value, index::Int = 1)
 	ptr = getptr(var, buffer, index)
 	unsafe_store!(ptr, value)
 end
 
-function setvalue(var::UniformVar, buffer::Vector{Uint8}, array::Array, index::Int = 1)
+function setvalue(var::UniformVar, buffer::Vector{UInt8}, array::Array, index::Int = 1)
 	ptr = getptr(var, buffer, index)
 	# @assert ismatrix(var.varType)
     if sizeof(var.varType) != sizeof(array)
@@ -89,7 +89,7 @@ function setvalue(var::UniformVar, buffer::Vector{Uint8}, array::Array, index::I
     end
 
     if !ismatrix(var.varType) || size(var.varType, 1) == 4
-        unsafe_copy!(convert(Ptr{Uint8}, ptr), convert(Ptr{Uint8}, pointer(array)), sizeof(var.varType))
+        unsafe_copy!(convert(Ptr{UInt8}, ptr), convert(Ptr{UInt8}, pointer(array)), sizeof(var.varType))
     else
         elType = eltype(var.varType)
         elSize = sizeof(elType)
@@ -108,13 +108,13 @@ end
 
 load_ptr{T}(p::Ptr{T}) = unsafe_load(p)
 
-function getvalue(var::UniformVar, buffer::Vector{Uint8}, index::Int = 1)
+function getvalue(var::UniformVar, buffer::Vector{UInt8}, index::Int = 1)
 	ptr = getptr(var, buffer, index)
 
 	if ismatrix(var.varType)
 		result = Array(eltype(var.varType), size(var.varType))
 		@assert sizeof(result) == sizeof(var.varType)
-		unsafe_copy!(convert(Ptr{Uint8}, pointer(result)), convert(Ptr{Uint8}, ptr), sizeof(var.varType))
+		unsafe_copy!(convert(Ptr{UInt8}, pointer(result)), convert(Ptr{UInt8}, ptr), sizeof(var.varType))
 		return result
 	else
 		# for some reason unsafe_load can't be called directly here, wrap it in a function

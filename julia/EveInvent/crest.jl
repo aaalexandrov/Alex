@@ -4,11 +4,11 @@ const urlCrest = "https://crest-tq.eveonline.com/"
 const urlReplaceKeys   = ['/', '?']
 const urlReplaceValues = ['-', '.']
 const urlReplace = Dict{Char, Char}(urlReplaceKeys, urlReplaceValues)
-url_to_filename(url::String) = replace(replace(url, urlCrest[1:end-1], ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".json"
+url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".json"
 
 int_keys(assoc::Associative) = [int(k)=>v for (k,v) in assoc]
 
-function json_read(fileName::String)
+function json_read(fileName::AbstractString)
 	data = nothing
 	try
 		open(fileName, "r") do s
@@ -35,13 +35,13 @@ function json_read(fileName::String)
 	return data
 end
 
-function json_write(fileName::String, data; indent::Int = 2)
+function json_write(fileName::AbstractString, data; indent::Int = 2)
 	open(fileName, "w+") do s
 		JSON.print(s, data, indent)
 	end
 end
 
-function read_from_cache(url::String, timeout::Float64)
+function read_from_cache(url::AbstractString, timeout::Float64)
 	fileName = "cache/" * url_to_filename(url)
 	data = json_read(fileName)
 	if time() - mtime(fileName) >= timeout
@@ -50,7 +50,7 @@ function read_from_cache(url::String, timeout::Float64)
 	return data
 end
 
-function write_to_cache(url::String, data)
+function write_to_cache(url::AbstractString, data)
 	if !isdir("cache")
 		mkdir("cache")
 	end
@@ -59,20 +59,20 @@ function write_to_cache(url::String, data)
 	nothing
 end
 
-function clear_cache(ext::String) 
+function clear_cache(ext::AbstractString) 
 	if isdir("cache")
 		map(f->endswith(f, ext) && rm("cache/" * f), readdir("cache"))
 	end
 end
 
-function get_crest(url::String, auth, timeoutHours::Float64 = inf(Float64))
+function get_crest(url::AbstractString, auth, timeoutHours::Float64 = inf(Float64))
 	res = read_from_cache(url, timeoutHours * 60 * 60)
 	if res != nothing
 		return res
 	end
 	local queryRes
 	orgUrl = url
-	headers = Dict{String, String}()
+	headers = Dict{AbstractString, AbstractString}()
 	if auth != nothing
 		headers["Authorization"] = auth["token_type"]*" "*auth["access_token"]
 	end

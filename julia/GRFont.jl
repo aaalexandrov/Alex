@@ -26,7 +26,7 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader; positionFunc::Fun
     setstate(material, DepthStateDisabled())
 
     mesh = Mesh()
-    init(mesh, shader.renderer, Array(shader.attribType, maxCharacters * 4), zeros(Uint16, maxCharacters * 6); positionFunc = positionFunc, id = symbol("Mesh_" * fontName), usage = :dynamic)
+    init(mesh, shader.renderer, Array(shader.attribType, maxCharacters * 4), zeros(UInt16, maxCharacters * 6); positionFunc = positionFunc, id = symbol("Mesh_" * fontName), usage = :dynamic)
     mesh.indexLength = 0
 
     font.font = ftFont
@@ -44,7 +44,7 @@ function done(font::Font)
     end
 end
 
-function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int}, color::Color)
+function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{UInt8, 2}, box::FTFont.Rect{Int}, color::Color)
     @assert font.model.mesh.indexLength < length(font.model.mesh.indices)
     baseIndex = font.charCount * 6
     baseVertex = font.charCount * 4
@@ -71,9 +71,9 @@ function drawchar(font::Font, pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, b
     font.charCount += 1
 end
 
-function drawtext(font::Font, cursor::FTFont.TextCursor, s::String, color)
+function drawtext(font::Font, cursor::FTFont.TextCursor, s::AbstractString, color)
     @assert isvalid(font)
-    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{Uint8, 2}, box::FTFont.Rect{Int})->drawchar(font, pos, bmp, box, color)
+    drawFunc = (pos::FTFont.Vec2{Float32}, bmp::Array{UInt8, 2}, box::FTFont.Rect{Int})->drawchar(font, pos, bmp, box, color)
     FTFont.drawtext(drawFunc, font.font, cursor, s)
 end
 

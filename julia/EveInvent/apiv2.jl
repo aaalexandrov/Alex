@@ -1,11 +1,11 @@
 const urlApi = "https://api.eveonline.com/"
 
-api_to_filename(url::String) = replace(rsplit(url, '/', 2, false)[2], ".aspx", "")
-api_cache_name(url::String) = "cache/" * api_to_filename(url)
+api_to_filename(url::AbstractString) = replace(rsplit(url, '/', 2, false)[2], ".aspx", "")
+api_cache_name(url::AbstractString) = "cache/" * api_to_filename(url)
 
 const timeFormat = "y-m-d H:M:S"
 
-function xml_read(fileName::String)
+function xml_read(fileName::AbstractString)
 	local xmlStr, xdoc
 	try 
 		xmlStr = readall(fileName)
@@ -29,7 +29,7 @@ function xml_read(fileName::String)
 	return xroot
 end
 
-function xml_write(fileName::String, data)
+function xml_write(fileName::AbstractString, data)
     dirName = dirname(fileName)
     if !isdir(dirName)
         mkpath(dirName)
@@ -39,7 +39,7 @@ function xml_write(fileName::String, data)
 	end
 end
 
-function check_time(fileName::String, xroot::LightXML.XMLElement)
+function check_time(fileName::AbstractString, xroot::LightXML.XMLElement)
 	serverTime = LightXML.content(LightXML.find_element(xroot, "currentTime"))
 	serverCached = LightXML.content(LightXML.find_element(xroot, "cachedUntil"))
 	serverTimeF = Dates.datetime2unix(Dates.DateTime(serverTime, timeFormat))
@@ -52,7 +52,7 @@ function check_time(fileName::String, xroot::LightXML.XMLElement)
 	return xroot
 end
 
-xml_read_timed(fileName::String) = check_time(fileName, xml_read_timed(fileName))
+xml_read_timed(fileName::AbstractString) = check_time(fileName, xml_read_timed(fileName))
 
 function xml_join_attribute_values(xElem::LightXML.XMLElement, keyAttribs::Array) 
 	values = map(k->LightXML.attribute(xElem, k), keyAttribs)
@@ -77,9 +77,9 @@ function add_dataframe_row!(df::DataFrames.DataFrame, keyAttribs::Array, values:
 	attrSyms = map(symbol, keyAttribs)
 	newCols = setdiff(attrSyms, names(df))
 	for c in newCols
-		df[c] = DataFrames.DataArray(String, size(df, 1))
+		df[c] = DataFrames.DataArray(AbstractString, size(df, 1))
 	end
-	row = DataFrames.DataArray(String, size(df, 2))
+	row = DataFrames.DataArray(AbstractString, size(df, 2))
 	attrIndices = indexin(attrSyms, names(df))
 	for i in 1:length(attrIndices)
 		row[attrIndices[i]] = values[i]
@@ -167,7 +167,7 @@ end
 # If attribValuesOrTag="*", then all child nodes are processed for matches. If attribNames="*", then all current node's attributes are selected 
 # (in the order they appear in the node).
 
-function xml_find(xElem::LightXML.XMLElement, path::String)
+function xml_find(xElem::LightXML.XMLElement, path::AbstractString)
 	results = DataFrames.DataFrame()
 	xml_find(xElem, split(path, "/", false), 1, results)
 	for colName in names(results)
@@ -177,9 +177,9 @@ function xml_find(xElem::LightXML.XMLElement, path::String)
 end	
 
 global userAgent = "EveInvent Julia APIv2 library, greyalex2003@yahoo.com"
-set_api_user_agent(agent::String) = (global userAgent = agent)
+set_api_user_agent(agent::AbstractString) = (global userAgent = agent)
 
-function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false)
+function get_api_url(url::AbstractString; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false)
 	fileName = api_cache_name(url)
 	data = ignoreCache? nothing : xml_read(fileName)
 	if data == nothing
@@ -201,5 +201,5 @@ function get_api_url(url::String; params::Dict = Dict(), auth::Dict = Dict(), ig
 	return data
 end
 
-get_api(endpoint::String; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false) = get_api_url(urlApi * endpoint * ".xml.aspx"; params=params, auth=auth, ignoreCache=ignoreCache)
+get_api(endpoint::AbstractString; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false) = get_api_url(urlApi * endpoint * ".xml.aspx"; params=params, auth=auth, ignoreCache=ignoreCache)
 

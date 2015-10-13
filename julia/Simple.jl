@@ -33,7 +33,7 @@ function initMeshes(renderer::GR.Renderer)
 				           0  0  0]
 	triangleUV = Float32[0 1 0.5;
 	                     0 0   1]
-	triangleInd = Uint16[0, 2, 1]
+	triangleInd = UInt16[0, 2, 1]
 	GR.init(GR.Mesh(), simpleShader, Dict{Symbol, Array}([(:position, trianglePos), (:texCoord, triangleUV)]), triangleInd; positionFunc = GR.position_func(:position), id = :triangle)
 
 	diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
@@ -68,7 +68,7 @@ function initFonts(renderer::GR.Renderer)
 	fontShader = GR.get_resource(renderer, symbol("data/font"))
 
 	FTFont.init()
-	ftFont = FTFont.loadfont("data/Roboto-Regular.ttf"; sizeXY = (16, 16), chars = ['\u0000':'\u00ff', 'А':'Я', 'а':'я'])
+	ftFont = FTFont.loadfont("data/Roboto-Regular.ttf"; sizeXY = (16, 16), chars = ['\u0000':'\u00ff'; 'А':'Я'; 'а':'я'])
 	FTFont.done()
 
 	ident = eye(Float32, 4)
@@ -195,7 +195,7 @@ function update()
 	timeNow = time()
 	deltaTime = timeNow - lastTime
 	currentModel = GR.gettransform(diskModel)
-	rotMatrix = Math3D.rotz(eye(Float32, 4), float32(deltaTime * pi / 2))
+	rotMatrix = Math3D.rotz(eye(Float32, 4), Float32(deltaTime * pi / 2))
 	newModel = rotMatrix * currentModel
 	GR.settransform(diskModel, newModel)
 

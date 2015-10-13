@@ -1,11 +1,11 @@
 type UniformBlockBuffer
 	block::UniformBlock
-	buffer::Vector{Uint8}
+	buffer::Vector{UInt8}
 
 	# todo: add the option to have own GL buffer object
 	# todo: add info for dirty region
 
-	UniformBlockBuffer(block::UniformBlock) = new(block, zeros(Uint8, block.size))
+	UniformBlockBuffer(block::UniformBlock) = new(block, zeros(UInt8, block.size))
 end
 
 type Material
@@ -44,7 +44,7 @@ function setuniform(mat::Material, uniform::Symbol, value; allowAdd = true)
 	if haskey(mat.shader.uniforms, uniform)
 		var = mat.shader.uniforms[uniform]
 		if inblock(var)
-			if !isdefined(mat.blockBuffers, int(var.blockId))
+			if !isdefined(mat.blockBuffers, Int(var.blockId))
 				if !allowAdd
 					return false
 				end
@@ -68,7 +68,7 @@ function getuniform(mat::Material, uniform::Symbol)
 	if haskey(mat.shader.uniforms, uniform)
 		var = mat.shader.uniforms[uniform]
 		if inblock(var)
-			if isdefined(mat.blockBuffers, int(var.blockId))
+			if isdefined(mat.blockBuffers, Int(var.blockId))
 				return getvalue(var, mat.blockBuffers[var.blockId].buffer)
 			end
 		else
@@ -83,7 +83,7 @@ function hasuniform(mat::Material, uniform::Symbol)
 		return false
 	end
 	var = mat.shader.uniforms[uniform]
-	if inblock(var) && isdefined(mat.blockBuffers, int(var.blockId))
+	if inblock(var) && isdefined(mat.blockBuffers, Int(var.blockId))
 		return true
 	end
 	return haskey(mat.uniforms, uniform)
