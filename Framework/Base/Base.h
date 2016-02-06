@@ -7,6 +7,7 @@
 
 #define ARRSIZE(ARR)      (sizeof(ARR) / sizeof((ARR)[0]))
 #define SAFE_RELEASE(p)   if (p) { p->Release(); p = 0; }
+#define SAFE_DELETE(p)    if (p) { DEL(p); p = 0; }
 
 // Macros to concatenate template parameters containing a comma, use as ID(CONCAT(Part1, Part2)) in order to pass both parts as a single parameter
 #define CONCAT(...) __VA_ARGS__
@@ -109,13 +110,13 @@ public:
 template <class T>
 class CAutoDeletePtr: public CAutoFreePtr<T, CPtrDeleter<T> > {
 public:
-  explicit CAutoDeletePtr(T *pPtr, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrDeleter<T> >(pPtr, kAlloc) {}
+  explicit CAutoDeletePtr(T *pPtr = 0, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrDeleter<T> >(pPtr, kAlloc) {}
 };
 
 template <class T>
 class CAutoReleasePtr: public CAutoFreePtr<T, CPtrReleaser<T> > {
 public:
-  explicit CAutoReleasePtr(T *pPtr, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrReleaser<T> >(pPtr, kAlloc) {}
+  explicit CAutoReleasePtr(T *pPtr = 0, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrReleaser<T> >(pPtr, kAlloc) {}
 };
 
 // Plain Old Data (POD) detection

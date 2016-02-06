@@ -46,7 +46,7 @@ bool CStateVarObj::SetVar(CVarObj::CIter *pIt, const CBaseVar &vSrc)
 {
   CBaseVar const *pVal;
   bool bRes;
-  CAutoReleasePtr<CBaseVar const> pNewVal;
+  CAutoReleasePtr<CBaseVar const> pNewVal(nullptr);
 
   pVal = TranslateValue(&vSrc);
   if (pVal != &vSrc)

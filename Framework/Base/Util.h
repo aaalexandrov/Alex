@@ -106,10 +106,10 @@ namespace Util {
   template <class T>
   inline int SolveQuadratic(T a, T b, T c, T &x1, T &x2); // Solve the equation ax^2+bx+c=0. Returns the number of real roots, and sets x1 and x2 to those roots, where x1 <= x2.
 
+  inline float abs(float a) { return fabsf(a); }
+
   template <class T>
   inline bool IsEqual(T a, T b, T delta) { return abs(a - b) <= delta; }
-
-  template <> inline bool IsEqual<float>(float a, float b, float delta) { return fabsf(a - b) <= delta; }
 
   template <class T>
   T GetEqualDelta() { return (T) 0.005; }

@@ -713,7 +713,7 @@ void CTerrain::SetCamera(CCamera *pCamera)
 bool CTerrain::Save(CFile *pFile)
 {
   int i;
-  CAutoDeletePtr<CFile> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile(nullptr);
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
@@ -743,7 +743,7 @@ bool CTerrain::Save(CFile *pFile)
 bool CTerrain::Load(CFile *pFile)
 {
   int i;
-  CAutoDeletePtr<CFile> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile(nullptr);
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();

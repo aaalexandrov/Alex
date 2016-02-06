@@ -177,7 +177,7 @@ bool CTerrain::CPatch::Init()
 
 bool CTerrain::CPatch::Save(CFile *pFile)
 {
-  CAutoDeletePtr<CFile> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile(nullptr);
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
@@ -209,7 +209,7 @@ bool CTerrain::CPatch::Save(CFile *pFile)
 bool CTerrain::CPatch::Load(CFile *pFile)
 {
   CVector<2, int> vPatchIndex;
-  CAutoDeletePtr<CFile> pPatchFile;
+  CAutoDeletePtr<CFile> pPatchFile(nullptr);
 
   if (!pFile) {
     CStrAny sName = GetSaveFileName();
@@ -329,7 +329,7 @@ bool CTerrain::CPatch::LoadMinLODMesh(CFile *pFile)
   if (!m_EdgeMap.Init(wEdgeIndices))
     return false;
 
-  CAutoDeletePtr<uint8_t> pIB, pVB;
+  CAutoDeletePtr<uint8_t> pIB(nullptr), pVB(nullptr);
   int iIBSize, iVBSize;
   CSmartPtr<CGeometry> pGeom;
   CInputDesc *pDesc;

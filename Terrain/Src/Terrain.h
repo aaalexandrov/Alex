@@ -489,7 +489,7 @@ int CTerrain::Dist2Vertices(float fDistance)
 
 float CTerrain::Vertices2Dist(int iVertices)
 {
-  return PATCH_SIZE * GetMaxResDistance() / sqrt((float) (iVertices - CPatch::EDGE_INDICES));
+  return PATCH_SIZE * GetMaxResDistance() / (float) sqrt((float) (iVertices - CPatch::EDGE_INDICES));
 }
 
 #endif

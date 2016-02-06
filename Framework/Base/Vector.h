@@ -317,7 +317,7 @@ CVector<D, T> CVector<D, T>::Div(const CVector &a, const CVector &b)
 template <int D, class T>
 typename CVector<D, T>::Num CVector<D, T>::Length() const
 {
-  return sqrt(LengthSqr());
+  return (T)sqrt(LengthSqr());
 }
 
 template <int D, class T>

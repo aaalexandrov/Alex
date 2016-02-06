@@ -66,7 +66,10 @@ public:
 };
 
 template <int BITS = 256>
-class CBitArray: public CBitArrayTpl<CBitsStatic<BITS> > {};
+class CBitArray: public CBitArrayTpl<CBitsStatic<BITS> > {
+public:
+  CBitArray() : CBitArrayTpl<CBitsStatic<BITS> >(DEF_ALLOC) {}
+};
 
 class CBitDynArray: public CBitArrayTpl<CBitsDynamic> {
 public:

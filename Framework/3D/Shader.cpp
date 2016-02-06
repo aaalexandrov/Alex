@@ -527,7 +527,7 @@ bool CTechnique::Init()
 
   HRESULT res;
   TResReporter kErrorReport(res);
-  CAutoReleasePtr<ID3D11ShaderReflection> pVSReflect, pPSReflect;
+  CAutoReleasePtr<ID3D11ShaderReflection> pVSReflect(nullptr), pPSReflect(nullptr);
   res = D3DReflect(m_pVSBlob->GetBufferPointer(), m_pVSBlob->GetBufferSize(), IID_ID3D11ShaderReflection, (void **) &pVSReflect.m_pPtr);
   if (FAILED(res))
     return false;
