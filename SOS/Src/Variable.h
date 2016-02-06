@@ -159,10 +159,10 @@ void CValue::DeleteValue()
 {
 	switch (m_btType) {
 		case VT_FRAGMENT:
-			delete m_pFragment;
+			DEL(m_pFragment);
 			break;
 		case VT_TABLE:
-			delete m_pTableValue;
+			DEL(m_pTableValue);
 			break;
     default:
       ASSERT(0);

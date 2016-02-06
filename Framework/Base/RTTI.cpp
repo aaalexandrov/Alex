@@ -47,7 +47,7 @@ public:
   CTest(int i) {}
 };
 
-CObject *CRTTITpl<CTest, CObject, true>::CreateInstance_s()             { return new CTest(0); }
+CObject *CRTTITpl<CTest, CObject, true>::CreateInstance_s()             { return NEW(CTest, (0)); }
 
 CRTTIRegisterer<CTest> g_RegTest;
 
@@ -58,7 +58,7 @@ void RTTITest()
   ASSERT(!strcmp(kTest.GetRTTI()->GetClassName(), "CTest"));
   ASSERT(!strcmp(kTest.GetRTTI()->GetBase()->GetClassName(), "CObject"));
   CTest *pTest = (CTest *) CTest::GetRTTI_s()->CreateInstance();
-  delete pTest;
+  DEL(pTest);
 }
 
 struct TRTTITest {

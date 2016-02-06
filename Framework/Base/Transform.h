@@ -8,8 +8,8 @@ class CXForm {
 public:
   CMatrix<4, 4> *m_pMatrix;
 
-  inline CXForm(CMatrix<4, 4> *pMatrix = 0)  { if (pMatrix) m_pMatrix = pMatrix; else { m_pMatrix = new CMatrix<4, 4>(); SetIdentity(); } }
-  inline ~CXForm() { delete m_pMatrix; }
+  inline CXForm(CMatrix<4, 4> *pMatrix = 0)  { if (pMatrix) m_pMatrix = pMatrix; else { m_pMatrix = NEW(ID_TYPE(CMatrix<4, 4>), ()); SetIdentity(); } }
+  inline ~CXForm() { DEL(m_pMatrix); }
 
   inline CVector<3> GetTranslation() const;
   inline CVector<3> GetScale() const;

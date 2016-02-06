@@ -37,13 +37,14 @@ public:
     T const &operator ->() const;
   };
 
+  TAllocator *m_pAllocator;
   CHashArray m_arrLists;
   int m_iCount;
 
-  CHash(int iSize = 0);
+  CHash(int iSize = 0, TAllocator &kAllocator = DEF_ALLOC);
   ~CHash();
 
-  void DeleteAll(int iSize = 0);
+  void DeleteAll(int iSize = 0, TAllocator &kElemAlloc = DEF_ALLOC);
   void Clear(int iSize = 0);
 
   void Resize(int iSize);
@@ -61,7 +62,7 @@ public:
 template <class K, class V, class H = Util::HashSize_T, class P = Util::Equal<K> >
 class CHashKV: public CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> > {
 public:
-  CHashKV(int iSize = 0): CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize) {}
+  CHashKV(int iSize = 0, TAllocator &kAllocator = DEF_ALLOC): CHash<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize, kAllocator) {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -179,7 +180,7 @@ T const &CHash<T, K, H, P>::TIter::operator ->() const
 }
 
 template <class T, class K, class H, class P>
-CHash<T, K, H, P>::CHash(int iSize): m_arrLists(iSize ? iSize : g_iHashSizes[0])
+CHash<T, K, H, P>::CHash(int iSize, TAllocator &kAllocator): m_pAllocator(&kAllocator), m_arrLists(iSize ? iSize : g_iHashSizes[0], kAllocator)
 {
   m_iCount = 0;
   m_arrLists.SetCount(m_arrLists.m_iMaxCount);
@@ -190,11 +191,11 @@ CHash<T, K, H, P>::CHash(int iSize): m_arrLists(iSize ? iSize : g_iHashSizes[0])
 template <class T, class K, class H, class P>
 CHash<T, K, H, P>::~CHash()
 {
-  m_arrLists.DeleteAll();
+  m_arrLists.DeleteAll(0, *m_pAllocator);
 }
 
 template <class T, class K, class H, class P>
-void CHash<T, K, H, P>::DeleteAll(int iSize)
+void CHash<T, K, H, P>::DeleteAll(int iSize, TAllocator &kElemAlloc)
 {
   int i;
   if (!iSize)
@@ -202,9 +203,9 @@ void CHash<T, K, H, P>::DeleteAll(int iSize)
   for (i = 0; i < m_arrLists.m_iCount; i++) {
     CHashList *&pLst = m_arrLists[i];
     if (pLst)
-      pLst->DeleteAll();
+      pLst->DeleteAll(kElemAlloc);
   }
-  m_arrLists.DeleteAll(iSize);
+  m_arrLists.DeleteAll(iSize, *m_pAllocator);
   m_iCount = 0;
   m_arrLists.SetCount(iSize);
   for (i = 0; i < m_arrLists.m_iCount; i++)
@@ -217,7 +218,7 @@ void CHash<T, K, H, P>::Clear(int iSize)
   int i;
   if (!iSize)
     iSize = g_iHashSizes[0];
-  m_arrLists.DeleteAll(iSize);
+  m_arrLists.DeleteAll(iSize, *m_pAllocator);
   m_iCount = 0;
   m_arrLists.SetCount(iSize);
   for (i = 0; i < m_arrLists.m_iCount; i++)
@@ -244,7 +245,7 @@ void CHash<T, K, H, P>::Resize(int iSize)
       uiHash %= m_arrLists.m_iCount;
       CHashList *&pLstNew = m_arrLists[(int) uiHash];
       if (!pLstNew)
-        pLstNew = new CHashList();
+        pLstNew = NEW_A(*m_pAllocator, CHashList, (*m_pAllocator));
       pLstNew->PushNodeTail(pNode);
     }
   }
@@ -273,7 +274,7 @@ void CHash<T, K, H, P>::Add(T t)
   uiHash %= m_arrLists.m_iCount;
   CHashList *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
-    pLst = new CHashList();
+    pLst = NEW_A(*m_pAllocator, CHashList, (*m_pAllocator));
 	typename CHashList::TNode *pNode = pLst->Find(t);
 	if (pNode)
     pLst->PushBefore(pNode, t);
@@ -290,7 +291,7 @@ void CHash<T, K, H, P>::AddUnique(T t)
   uiHash %= m_arrLists.m_iCount;
   CHashList *&pLst = m_arrLists[(int) uiHash];
   if (!pLst)
-    pLst = new CHashList();
+    pLst = NEW_A(*m_pAllocator, CHashList, (*m_pAllocator));
   typename CHashList::TNode *pNode = pLst->Find(t);
   if (pNode)
     pNode->Data = t;

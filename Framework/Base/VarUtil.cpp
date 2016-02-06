@@ -32,7 +32,7 @@ CVarMerge::CIter &CVarMerge::CIter::Next()
     if (!*m_pIt)
       if (m_iVar < m_pMerge->m_Vars.m_iCount - 1) {
         m_iVar++;
-        delete m_pIt;
+        DEL(m_pIt);
         m_pIt = m_pMerge->m_Vars[m_iVar].m_pVar->GetIter();
       } else
         break;
@@ -49,7 +49,7 @@ CVarMerge::CIter &CVarMerge::CIter::Prev()
     if (!*m_pIt)
       if (m_iVar > 0) {
         m_iVar--;
-        delete m_pIt;
+        DEL(m_pIt);
         m_pIt = m_pMerge->m_Vars[m_iVar].m_pVar->GetIter(GetLastIterConst());
       } else
         break;
@@ -82,7 +82,7 @@ CVarMerge::~CVarMerge()
 {
   for (int i = 0; i < m_Vars.m_iCount; i++)
     if (m_Vars[i].m_bOwned)
-      delete m_Vars[i].m_pVar;
+      DEL(m_Vars[i].m_pVar);
 }
 
 int CVarMerge::AppendBaseVar(CVarObj *pVar, bool bOwn)
@@ -98,7 +98,7 @@ int CVarMerge::AppendBaseVar(CVarObj *pVar, bool bOwn)
 void CVarMerge::RemoveLastBaseVar()
 {
   if (m_Vars[m_Vars.m_iCount - 1].m_bOwned)
-    delete m_Vars[m_Vars.m_iCount - 1].m_pVar;
+    DEL(m_Vars[m_Vars.m_iCount - 1].m_pVar);
   m_Vars.SetCount(m_Vars.m_iCount - 1);
 }
 
@@ -112,14 +112,14 @@ CVarObj::CIter *CVarMerge::GetIter(CStrAny const &sVar) const
 {
   int i;
   if (!sVar)
-    return new CIter(this, 0, 0);
+    return NEW(CIter, (this, 0, 0));
   if (sVar == GetLastIterConst())
-    return new CIter(this, m_Vars.m_iCount - 1, 0, -1);
+    return NEW(CIter, (this, m_Vars.m_iCount - 1, 0, -1));
   CVarObj::CIter *pIt;
   for (i = 0; i < m_Vars.m_iCount; i++) {
     pIt = m_Vars[i].m_pVar->GetIter(sVar);
     if (pIt)
-      return new CIter(this, i, pIt);
+      return NEW(CIter, (this, i, pIt));
   }
   return 0;
 }
@@ -164,7 +164,7 @@ void CVarTemplate::Remap(uint8_t *pNewBufBase, uint8_t *pOldBufBase, CVarObj *pD
     ASSERT(pDstVal);
     pDstVal->SetRef((uint8_t *) pDstVal->GetRef() + (pNewBufBase - pOldBufBase));
   }
-  delete pIt;
+  DEL(pIt);
   return;
 }
 
@@ -185,7 +185,7 @@ void CVarTemplate::MakeVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, uint8_t 
     }
     pDstVars->ReplaceVar(pIt->GetName(), pNewVar, bAddVars);
   }
-  delete pIt;
+  DEL(pIt);
 }
 
 void CVarTemplate::ClearVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, int iDstBufSize)
@@ -200,7 +200,7 @@ void CVarTemplate::ClearVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, int iDs
       continue;
     pDstVars->ReplaceVar(pIt->GetName(), 0);
   }
-  delete pIt;
+  DEL(pIt);
 }
 
 void CVarTemplate::CopyValues(CVarObj *pSrcVars)
@@ -213,7 +213,7 @@ void CVarTemplate::CopyValues(CVarObj *pSrcVars)
       continue;
     pIt->SetValue(pSrcVal);
   }
-  delete pIt;
+  DEL(pIt);
 }
 
 // CVarFile -------------------------------------------------------------------
@@ -225,13 +225,13 @@ CVarFile::CVarFile(CFile *pFile)
 
 CVarFile::~CVarFile()
 {
-  delete m_pFile;
+  DEL(m_pFile);
 }
 
 bool CVarFile::Read(CVarObj *pVars)
 {
   int iSize = (int) m_pFile->GetSize();
-  CAutoDeletePtr<char> pBuf(new char[iSize + 1]);
+  CAutoDeletePtr<char> pBuf(NEWARR(char, iSize + 1));
   CFile::ERRCODE err;
   err = m_pFile->Read(pBuf, iSize);
   if (err)
@@ -267,7 +267,7 @@ bool CVarFile::Write(CVarObj *pVars, int iIndent)
         bRes &= WriteIndent(iIndent);
         sRes = "";
       }
-      delete pItContext;
+      DEL(pItContext);
       sRes += CStrAny(ST_WHOLE, "}\r\n");
       err = m_pFile->Write((void *) sRes.m_pBuf, sRes.Length());
       bRes = bRes && !err;
@@ -281,7 +281,7 @@ bool CVarFile::Write(CVarObj *pVars, int iIndent)
         ASSERT(!err);
       }
   }
-  delete pIter;
+  DEL(pIter);
 
   return bRes;
 }
@@ -440,15 +440,15 @@ bool Set(CVarObj *dst, CStrAny const *src)
         sRest = sNum;
         Parse::ReadUntilChar(sRest, '.');
         if (!!sRest)
-          pVar = new CVar<float>();
+          pVar = NEW(CVar<float>, ());
         else
-          pVar = new CVar<int>();
+          pVar = NEW(CVar<int>, ());
       } else
         if (sBlock[0] == '{')
-          pVar = new CVar<CVarHash>();
+          pVar = NEW(CVar<CVarHash>, ());
     }
     if (!pVar)
-      pVar = new CVar<CStrAny>();
+      pVar = NEW(CVar<CStrAny>, ());
     bRes &= pVar->SetStr(sVal);
     dst->ReplaceVar(sVarName, pVar);
   }
@@ -462,7 +462,7 @@ bool Set(CVarObj *dst, CVarObj const *src)
   CVarObj::CIter *pIt;
   for (pIt = src->GetIter(); *pIt; pIt->Next())
     bRes &= dst->SetVar(pIt->GetName(), *pIt->GetValue());
-  delete pIt;
+  DEL(pIt);
   return bRes;
 }
 
@@ -478,7 +478,7 @@ bool SetValue(CVarObj *val, CBaseVar const *vSrc)
     CVarObj::CIter *pIt;
     for (pIt = pVO->GetIter(); *pIt; pIt->Next())
       bRes &= val->SetVar(pIt->GetName(), *pIt->GetValue());
-    delete pIt;
+    DEL(pIt);
   } else
     bRes = false;
   return bRes;

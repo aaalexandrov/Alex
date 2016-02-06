@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -20,12 +20,12 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -63,7 +63,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <UseFullPaths>false</UseFullPaths>
-      <AdditionalIncludeDirectories>../../Framework/Base;../../Framework/OS</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../Framework/Base;../../Framework/OS;../src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -83,7 +83,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <UseFullPaths>false</UseFullPaths>
-      <AdditionalIncludeDirectories>../../Base</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../Framework/Base;../../Framework/OS;../src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -104,6 +104,7 @@
     <ClCompile Include="..\..\Framework\Base\Hash.cpp" />
     <ClCompile Include="..\..\Framework\Base\HashInner.cpp" />
     <ClCompile Include="..\..\Framework\Base\List.cpp" />
+    <ClCompile Include="..\..\Framework\Base\Mem.cpp" />
     <ClCompile Include="..\..\Framework\Base\Parse.cpp" />
     <ClCompile Include="..\..\Framework\Base\Random.cpp" />
     <ClCompile Include="..\..\Framework\Base\RTTI.cpp" />
@@ -143,6 +144,7 @@
     <ClInclude Include="..\..\Framework\Base\Hash.h" />
     <ClInclude Include="..\..\Framework\Base\HashInner.h" />
     <ClInclude Include="..\..\Framework\Base\List.h" />
+    <ClInclude Include="..\..\Framework\Base\Mem.h" />
     <ClInclude Include="..\..\Framework\Base\Parse.h" />
     <ClInclude Include="..\..\Framework\Base\Random.h" />
     <ClInclude Include="..\..\Framework\Base\RTTI.h" />
@@ -170,7 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />
-    <None Include="C:\Alex\SOS\Src\test.sos" />
+    <None Include="..\test.sos" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

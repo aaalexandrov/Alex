@@ -79,6 +79,9 @@
     <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp">
       <Filter>OS\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Framework\Base\Mem.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />
@@ -158,10 +161,13 @@
     <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h">
       <Filter>OS\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Framework\Base\Mem.h">
+      <Filter>Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />
-    <None Include="C:\Alex\SOS\Src\test.sos" />
+    <None Include="..\test.sos" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Base">

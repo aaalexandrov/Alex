@@ -2,6 +2,7 @@
 #define __AVLTREE_H
 
 #include "Util.h"
+#include "Mem.h"
 
 template <class T, class K = T, class P = Util::Less<T> >
 class CAVLTree {
@@ -41,14 +42,15 @@ public:
   };
 
 public:
+  TAllocator *m_pAllocator;
   TNode *m_pRoot;
   int m_iCount;
 
-  CAVLTree()  { m_pRoot = 0; m_iCount = 0; }
+  CAVLTree(TAllocator &kAllocator = DEF_ALLOC)  { m_pAllocator = &kAllocator; m_pRoot = 0; m_iCount = 0; }
   ~CAVLTree() { Clear(); }
 
-  void DeleteAll() { DeleteAll(m_pRoot); m_pRoot = 0; m_iCount = 0; }
-  void Clear()     { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
+  void DeleteAll(TAllocator &kAllocator = DEF_ALLOC) { DeleteAll(m_pRoot, kAllocator); m_pRoot = 0; m_iCount = 0; }
+  void Clear()                                                       { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
 
   void Add(T t);
   void AddUnique(T t);
@@ -61,16 +63,17 @@ public:
   bool Balance(TNode *pNode);
   bool CheckIntegrity();
 
+  inline void DeleteAll(TNode *pNode, TAllocator &kElemAlloc);
+	inline void Clear(TNode *pNode);
+
   static inline int GetNodeLevel(TNode *pNode) { if (!pNode) return -1; return pNode->btLevel; }
-  static inline void DeleteAll(TNode *pNode);
-	static inline void Clear(TNode *pNode);
   static bool CheckIntegrity(TNode *pNode, int &iCount, TNode *pParent = 0);
 };
 
 template <class K, class V, class L = Less<K> >
 class CAVLTreeKV: public CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> > {
 public:
-  CAVLTreeKV(): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >() {}
+  CAVLTreeKV(TAllocator &kAllocator = DEF_ALLOC): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >(kAllocator) {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -135,7 +138,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::Add(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = new TNode(t);
+    m_pRoot = NEW_A(*m_pAllocator, TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -149,7 +152,7 @@ void CAVLTree<T, K, P>::Add(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, new TNode(t));
+      pNode->SetChild(iChild, NEW_A(*m_pAllocator, TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -163,7 +166,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::AddUnique(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = new TNode(t);
+    m_pRoot = NEW_A(*m_pAllocator, TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -185,7 +188,7 @@ void CAVLTree<T, K, P>::AddUnique(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, new TNode(t));
+      pNode->SetChild(iChild, NEW_A(*m_pAllocator, TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -234,7 +237,7 @@ void CAVLTree<T, K, P>::Remove(TIter it)
     pParent->SetChild(pParent->GetChildDir(it.m_pNode), pNode);
   else
     m_pRoot = pNode;
-  delete it.m_pNode;
+  DEL_A(*m_pAllocator, it.m_pNode);
   while (pPar) {
     Balance(pPar);
     pPar = pPar->pParent;
@@ -280,14 +283,14 @@ bool CAVLTree<T, K, P>::CheckIntegrity()
 }
 
 template <class T, class K, class P>
-void CAVLTree<T, K, P>::DeleteAll(TNode *pNode)
+void CAVLTree<T, K, P>::DeleteAll(TNode *pNode, TAllocator &kElemAlloc)
 {
   if (!pNode)
     return;
-  DeleteAll(pNode->pChild[0]);
-  DeleteAll(pNode->pChild[1]);
-  delete pNode->Data;
-  delete pNode;
+  DeleteAll(pNode->pChild[0], kElemAlloc);
+  DeleteAll(pNode->pChild[1], kElemAlloc);
+  DEL_A(kElemAlloc, pNode->Data);
+  DEL_A(*m_pAllocator, pNode);
 }
 
 template <class T, class K, class P>
@@ -297,7 +300,7 @@ void CAVLTree<T, K, P>::Clear(TNode *pNode)
     return;
   Clear(pNode->pChild[0]);
   Clear(pNode->pChild[1]);
-  delete pNode;
+  DEL_A(*m_pAllocator, pNode);
 }
 
 template <class T, class K, class P>

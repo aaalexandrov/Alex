@@ -2,15 +2,18 @@
 #define __BITS_H
 
 #include "Debug.h"
+#include "Mem.h"
 #include <memory.h>
 
-template <int BITS = 256>
+template <int BITS>
 class CBitsStatic {
 public:
   static const int BIT_COUNT = BITS;
   static const int ARRAY_SIZE = BIT_COUNT / (sizeof(UINT) * 8) + !!(BIT_COUNT % (sizeof(UINT) * 8));
 
   UINT m_uiBits[ARRAY_SIZE];
+
+  CBitsStatic(TAllocator &kAllocator)         {}
 
   inline UINT *GetBits()                      { return m_uiBits; }
   inline UINT const *GetBits() const          { return m_uiBits; }
@@ -22,11 +25,12 @@ public:
 
 class CBitsDynamic {
 public:
-  UINT *m_pBits;
-  int   m_iBitCount;
+  TAllocator *m_pAllocator;
+  UINT       *m_pBits;
+  int         m_iBitCount;
 
-  CBitsDynamic(): m_pBits(0), m_iBitCount(0)  {}
-  ~CBitsDynamic()                             { delete m_pBits; }
+  CBitsDynamic(TAllocator &kAllocator): m_pAllocator(&kAllocator), m_pBits(0), m_iBitCount(0)  {}
+  ~CBitsDynamic()                             { DELARR_A(*m_pAllocator, GetArraySize(), m_pBits); }
 
   inline UINT *GetBits()                      { return m_pBits; }
   inline UINT const *GetBits() const          { return m_pBits; }
@@ -43,14 +47,16 @@ class CBitArrayTpl {
 public:
   B m_Bits;
 
+  CBitArrayTpl(TAllocator &kAllocator): m_Bits(kAllocator)   {}
+
   inline int  BitElementIndex(int iBit) const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return iBit / (sizeof(UINT) * 8); }
   inline UINT BitElementMask(int iBit)  const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return 1 << (iBit % (sizeof(UINT) * 8)); }
-                                                   
+
   inline void SetAll()                              { memset(m_Bits.GetBits(), -1, m_Bits.GetArraySize() * sizeof(UINT)); }
   inline void ClearAll()                            { memset(m_Bits.GetBits(), 0, m_Bits.GetArraySize() * sizeof(UINT)); }
-                                                   
+
   inline uint8_t GetBit(int iBit) const             { return !!(m_Bits.GetBits()[BitElementIndex(iBit)] & BitElementMask(iBit)); }
-                                                   
+
   inline void SetBit(int iBit)                      { m_Bits.GetBits()[BitElementIndex(iBit)] |= BitElementMask(iBit); }
   inline void ClearBit(int iBit)                    { m_Bits.GetBits()[BitElementIndex(iBit)] &= ~BitElementMask(iBit); }
   inline uint8_t SetBit(int iBit, uint8_t btValue)  { if (btValue) SetBit(iBit); else ClearBit(iBit); return !!btValue; }
@@ -64,7 +70,7 @@ class CBitArray: public CBitArrayTpl<CBitsStatic<BITS> > {};
 
 class CBitDynArray: public CBitArrayTpl<CBitsDynamic> {
 public:
-  CBitDynArray(int iBitCount = 256) { m_Bits.SetBitCount(iBitCount); }
+  CBitDynArray(int iBitCount = 256, TAllocator &kAllocator = DEF_ALLOC): CBitArrayTpl<CBitsDynamic>(kAllocator) { this->m_Bits.SetBitCount(iBitCount); }
 };
 
 // Implementation -------------------------------------------------------------
@@ -77,13 +83,13 @@ void CBitsDynamic::SetBitCount(int iBitCount)
   if (iCurSize != iNewSize) {
     UINT *pCurBits = m_pBits;
     if (iBitCount) {
-      m_pBits = new UINT[iNewSize];
+      m_pBits = NEWARR_A(*m_pAllocator, UINT, iNewSize);
       if (pCurBits)
         memcpy(m_pBits, pCurBits, Util::Min(iNewSize, iCurSize) * sizeof(UINT));
     } else
 			m_pBits = 0;
     if (pCurBits)
-      delete pCurBits;
+      DELARR_A(*m_pAllocator, iCurSize, pCurBits);
   }
   m_iBitCount = iBitCount;
 }

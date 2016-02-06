@@ -92,7 +92,7 @@ CWinInput::CEvent *CWinInput::MakeMouseEvent(EEventType eEvent, int iKey, WPARAM
     uiModifiers |= IM_SHIFT;
   if (m_bKeyPressed[KC_LALT] || m_bKeyPressed[KC_RALT])
     uiModifiers |= IM_ALT;
-  pEvent = new CEvent(eEvent, iKey, uiModifiers, m_kTimer.GetCurrent());
+  pEvent = NEW(CEvent, (eEvent, iKey, uiModifiers, m_kTimer.GetCurrent()));
   pEvent->m_vPos = CVector<2, int>::Get(LOWORD(lParam), HIWORD(lParam));
   return pEvent;
 }
@@ -116,7 +116,7 @@ bool CWinInput::InputWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         wParam = MapVirtualKey((lParam >> 16) & 0xff, MAPVK_VSC_TO_VK_EX);
       iKey = VK2Key(wParam, !!(lParam & (1 << 24)));
       m_bKeyPressed[iKey] = false;
-      pEvent = new CEvent(ET_KEYDOWN, iKey, GetModifiersPressed(), m_kTimer.GetCurrent());
+      pEvent = NEW(CEvent, (ET_KEYDOWN, iKey, GetModifiersPressed(), m_kTimer.GetCurrent()));
       break;
     case WM_SYSKEYUP:
       if (wParam != VK_MENU && wParam != VK_F10)
@@ -125,10 +125,10 @@ bool CWinInput::InputWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
       if (wParam == VK_SHIFT) // Map shift to left / right shift using the scancode contained in lParam
         wParam = MapVirtualKey((lParam >> 16) & 0xff, MAPVK_VSC_TO_VK_EX);
       iKey = VK2Key(wParam, !!(lParam & (1 << 24)));
-      pEvent = new CEvent(ET_KEYUP, iKey, GetModifiersPressed(), m_kTimer.GetCurrent());
+      pEvent = NEW(CEvent, (ET_KEYUP, iKey, GetModifiersPressed(), m_kTimer.GetCurrent()));
       break;
     case WM_CHAR:
-      pEvent = new CEvent(ET_KEYCHAR, (int) wParam, GetModifiersPressed(), m_kTimer.GetCurrent());
+      pEvent = NEW(CEvent, (ET_KEYCHAR, (int) wParam, GetModifiersPressed(), m_kTimer.GetCurrent()));
       break;
     case WM_MOUSEMOVE:
       pEvent = MakeMouseEvent(ET_MOUSEMOVE, KC_INVALID, wParam, lParam);

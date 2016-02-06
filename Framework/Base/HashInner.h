@@ -26,7 +26,7 @@ public:
 		void Clear() { if (!IsFree()) { TConDestructor<T>::Destroy(&GetData()); m_pNext = GetFreePtr(); } }
 
 		void SetData(T *pData, CTableElem *pNext);
-		void DeleteData() { if (!IsFree()) { delete GetData(); TConDestructor<T>::Destroy(&GetData()); m_pNext = GetFreePtr(); } }
+		void DeleteData(TAllocator &kElemAlloc) { if (!IsFree()) { DEL_A(kElemAlloc, GetData()); TConDestructor<T>::Destroy(&GetData()); m_pNext = GetFreePtr(); } }
 
 		static CTableElem *GetFreePtr() { return 0; } // Pointer to mark a free element node
 		static CTableElem *GetEndPtr()  { static CTableElem kEndElem; return &kEndElem; } // Pointer to mark an end of a hash bucket chain
@@ -53,14 +53,15 @@ public:
 	};
 
 public:
+  TAllocator *m_pAllocator;
 	CTableElem *m_pElements;
 	int m_iCount, m_iMaxCount;
 	int m_iLastFree;
 
-	CHashInner(int iSize = 0);
+	CHashInner(int iSize = 0, TAllocator &kAllocator = DEF_ALLOC);
 	~CHashInner();
 
-  void DeleteAll(int iSize = 0);
+  void DeleteAll(int iSize = 0, TAllocator &kElemAlloc = DEF_ALLOC);
   void Clear(int iSize = 0);
 
   void Add(T t);
@@ -83,7 +84,7 @@ public:
 template <class K, class V, class H = Util::HashSize_T, class P = Util::Equal<K> >
 class CHashInnerKV: public CHashInner<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> > {
 public:
-  CHashInnerKV(int iSize = 0): CHashInner<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize) {}
+  CHashInnerKV(int iSize = 0, TAllocator &kAllocator = DEF_ALLOC): CHashInner<Util::TKeyValue<K, V, H, P>, K, Util::TKeyValue<K, V, H, P>, Util::TKeyValue<K, V, H, P> >(iSize, kAllocator) {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -197,7 +198,7 @@ T const &CHashInner<T, K, H, P>::TIter::operator ->() const
 // CHashInner ----------------------------------------------------------------------
 
 template <class T, class K, class H, class P>
-CHashInner<T, K, H, P>::CHashInner(int iSize)
+CHashInner<T, K, H, P>::CHashInner(int iSize, TAllocator &kAllocator): m_pAllocator(&kAllocator)
 {
 	if (!iSize)
 		iSize = INITIAL_SIZE;
@@ -207,7 +208,7 @@ CHashInner<T, K, H, P>::CHashInner(int iSize)
 template <class T, class K, class H, class P>
 CHashInner<T, K, H, P>::~CHashInner()
 {
-	delete [] m_pElements;
+  DELARR_A(*m_pAllocator, m_iMaxCount, m_pElements);
 }
 
 template <class T, class K, class H, class P>
@@ -217,23 +218,22 @@ void CHashInner<T, K, H, P>::Init(int iSize)
 	m_iCount = 0;
 	m_iMaxCount = iSize;
 	m_iLastFree = m_iMaxCount - 1;
-	m_pElements = new CTableElem[m_iMaxCount];
+	m_pElements = NEWARR_A(*m_pAllocator, CTableElem, m_iMaxCount);
 }
 
 template <class T, class K, class H, class P>
-void CHashInner<T, K, H, P>::DeleteAll(int iSize)
+void CHashInner<T, K, H, P>::DeleteAll(int iSize, TAllocator &kElemAlloc)
 {
   if (!iSize)
 		iSize = m_iMaxCount;
 	if (iSize != m_iMaxCount) {
 		for (int i = 0; i < m_iMaxCount; i++)
-			m_pElements[i].DeleteData();
-		delete [] m_pElements;
+			m_pElements[i].DeleteData(kElemAlloc);
+    DELARR_A(*m_pAllocator, m_iMaxCount, m_pElements);
 		Init(iSize);
 	} else {
-		for (int i = 0; i < m_iMaxCount; i++) {
-			m_pElements[i].DeleteData();
-		}
+		for (int i = 0; i < m_iMaxCount; i++)
+			m_pElements[i].DeleteData(kElemAlloc);
 		m_iCount = 0;
 		m_iLastFree = m_iMaxCount - 1;
 	}
@@ -245,7 +245,7 @@ void CHashInner<T, K, H, P>::Clear(int iSize)
   if (!iSize)
 		iSize = m_iMaxCount;
 	if (iSize != m_iMaxCount) {
-		delete [] m_pElements;
+		DELARR_A(*m_pAllocator, m_iMaxCount, m_pElements);
 		Init(iSize);
 	} else {
 		for (int i = 0; i < m_iMaxCount; i++) {

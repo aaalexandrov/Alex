@@ -28,7 +28,7 @@ static void UtilTest()
   iInd = BinSearch<int *, int, LessV<int> >((int *) g_iHashSizes, ARRSIZE(g_iHashSizes), 31);
   iInd = BinSearch<int *, int, LessV<int> >((int *) g_iHashSizes, ARRSIZE(g_iHashSizes), g_iHashSizes[ARRSIZE(g_iHashSizes) - 1] + 1);
 
-	CSmartPtr<CRefCounted> ptr(new CRefCounted());
+	CSmartPtr<CRefCounted> ptr(NEW(CRefCounted, ()));
   CRefCounted *p;
 
 	p = ptr;
@@ -40,7 +40,7 @@ static void UtilTest()
   ptr = ptr;
 
 	ptr->m_RefCount.m_dwCount++;
-	(*ptr).Release();
+	(*ptr).Release(DEF_ALLOC);
 
   int iBitTest[] = { 1, 5, 0, -5, 1024, 9857576, 468 };
   int i, j, iMSB, iLSB;

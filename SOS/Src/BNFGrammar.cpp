@@ -169,7 +169,7 @@ void CBNFGrammar::InitRules()
     AddChild(NewOptional(NewNT()->
 		  AddChild(NewT(CToken::TT_POWER))->
 			AddChild(pPower)));
-  
+
 	pMult->
 		AddChild(pPower)->
 		AddChild(NewZeroPlus(NewNT()->
@@ -294,7 +294,11 @@ void CBNFGrammar::InitRules()
 
 void CBNFGrammar::Clear()
 {
-	SAFE_DELETE(m_pParsed);
+  if (m_pParsed)
+  {
+    DEL(m_pParsed);
+    m_pParsed = 0;
+  }
 }
 
 bool CBNFGrammar::Parse(CList<CToken *> &lstTokens)

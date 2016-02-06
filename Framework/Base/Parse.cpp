@@ -379,7 +379,7 @@ char *Parse::Float2Str(float f, char *pBuf, int iBufLen, int iRadix)
   }
   pStart = pBuf + iLen;
   do {
-    float mod = fmodf(fWhole, iRadix);
+    float mod = fmodf(fWhole, (float) iRadix);
     pBuf[iLen++] = Value2Numeral((int) mod);
     modff(fWhole / iRadix, &fWhole);
   } while (fWhole && iLen < iBufLen - 1);

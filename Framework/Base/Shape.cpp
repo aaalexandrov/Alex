@@ -80,7 +80,7 @@ CShape3D *CPoint3D::GetTransformed(CXForm const &kXForm, CShape3D *pDstShape) co
     if (!pPoint)
       return 0;
   } else
-    pPoint = new CPoint3D();
+    pPoint = NEW(CPoint3D, ());
   Transform(m_vPoint, kXForm, pPoint->m_vPoint);
   return pPoint;
 }
@@ -576,7 +576,7 @@ CShape3D *CSphere::GetTransformed(CXForm const &kXForm, CShape3D *pDstShape) con
     if (!pSphere)
       return 0;
   } else
-    pSphere = new CSphere();
+    pSphere = NEW(CSphere, ());
   Transform(m_vCenter, m_nRadius, kXForm, pSphere->m_vCenter, pSphere->m_nRadius);
   return pSphere;
 }
@@ -777,7 +777,7 @@ CShape3D *CAABB::GetTransformed(CXForm const &kXForm, CShape3D *pDstShape) const
       return pAABB;
     }
   } else
-    pOBB = new COBB();
+    pOBB = NEW(COBB, ());
   Transform(m_vMin, m_vMax, kXForm, pOBB->m_vCenter, pOBB->m_vExtent);
   return pOBB;
 }
@@ -1130,7 +1130,7 @@ CShape3D *COBB::GetTransformed(CXForm const &kXForm, CShape3D *pDstShape) const
     if (!pOBB)
       return 0;
   } else
-    pOBB = new COBB();
+    pOBB = NEW(COBB, ());
   Transform(m_vCenter, m_vExtent, kXForm, pOBB->m_vCenter, pOBB->m_vExtent);
   return pOBB;
 }

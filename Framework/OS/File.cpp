@@ -27,7 +27,7 @@ CFile::ERRCODE CFile::ReadBuf(void *&pBuf, int &iBytes)
   if (!iSize)
     return 0;
   if (!pBuf)
-    pBuf = new uint8_t[iSize];
+    pBuf = NEWARR(uint8_t, iSize);
   err = Read(pBuf, iSize);
   return err;
 }
@@ -53,7 +53,7 @@ void CFileSystem::Create()
 
 void CFileSystem::Destroy()
 {
-  delete CFileSystem::Get();
+  DEL(CFileSystem::Get());
 }
 
 CFileSystem::CFileSystem()
@@ -77,7 +77,7 @@ CFile *CFileSystem::OpenFile(CStrAny const &sFile, unsigned int uiFlags)
   CFile *pFile = (CFile *) GetFileRTTI()->CreateInstance();
   pFile->Init(sPath, uiFlags);
   if (!pFile->IsValid()) {
-    delete pFile;
+    DEL(pFile);
     pFile = 0;
   }
   return pFile;

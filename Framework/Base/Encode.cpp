@@ -50,7 +50,7 @@ float CRangeEncoder::CalcEntropy()
   for (i = 0; i < MAXCHARS; ++i) {
     float fProbability = m_uiCharCounts[i] / (float) uiTotalCount;
     if (fProbability > 0.0f)
-      fEntropy -= fProbability * log(fProbability) / log(2.0f);
+      fEntropy -= fProbability * logf(fProbability) / logf(2.0f);
   }
   return fEntropy;
 }

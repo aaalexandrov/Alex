@@ -10,7 +10,7 @@ public:
   CValueTable *m_pGlobalEnvironment;
   CExecution m_kExecution;
 
-  CInterpreter() : m_kExecution(this), m_pGlobalEnvironment(new CValueTable(&m_kValueRegistry)) { CFunctionLibrary::Init(*this); }
+  CInterpreter() : m_kExecution(this), m_pGlobalEnvironment(NEW(CValueTable, (&m_kValueRegistry))) { CFunctionLibrary::Init(*this); }
   ~CInterpreter() {}
 
   void GetTableValue(CValueTable const &kTable, CValue const &kKey, CValue &kValue) { CInstruction::GetTableValue(kTable, kKey, kValue); }

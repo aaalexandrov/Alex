@@ -177,7 +177,7 @@ EInterpretError CInstruction::ExecCreateTable(CExecution *pExecution) const
 	if (!pDst)
 		return IERR_INVALID_OPERAND;
 	pDst->ReleaseValue();
-  pDst->Set(new CValueTable(&pExecution->m_pInterpreter->m_kValueRegistry));
+  pDst->Set(NEW(CValueTable, (&pExecution->m_pInterpreter->m_kValueRegistry)));
 	return IERR_OK;
 }
 

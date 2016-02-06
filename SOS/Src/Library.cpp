@@ -151,9 +151,9 @@ EInterpretError CFunctionLibrary::EvalFile(CExecution &kExecution, CArray<CValue
     CFile *pFile = CFileSystem::Get()->OpenFile(sFile, CFile::FOF_READ);
     if (pFile) {
       int iSize = (int) pFile->GetSize();
-      char *pBuf = new char[iSize];
+      char *pBuf = NEWARR(char, iSize);
       CFile::ERRCODE errFile = pFile->Read(pBuf, iSize);
-      delete pFile;
+      DEL(pFile);
       if (!errFile) {
         CStrAny sCode(ST_PART, pBuf, iSize);
         CCompileChain kChain;
@@ -163,7 +163,7 @@ EInterpretError CFunctionLibrary::EvalFile(CExecution &kExecution, CArray<CValue
           err = kExecution.m_pInterpreter->Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
         }
       }
-      delete pBuf;
+      DELARR(iSize, pBuf);
     }
   }
 

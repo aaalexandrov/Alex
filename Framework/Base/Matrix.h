@@ -584,7 +584,7 @@ public:
   UINT m_uiFlags;
 
   CMatrixVar(int iRows, int iCols, UINT uiFlags = MVF_OWNVALUES, Num *pVal = 0);
-  virtual ~CMatrixVar() { if (m_uiFlags & MVF_OWNVALUES) delete [] m_pVal; }
+  virtual ~CMatrixVar() { if (m_uiFlags & MVF_OWNVALUES) DELARR(m_iRows * m_iCols, m_pVal); }
 
   virtual void *GetPtr()  const { return m_pVal; }
   virtual int   GetSize() const { return m_iRows * m_iCols * sizeof(Num); }
@@ -613,7 +613,7 @@ public:
 
   virtual bool ValueHasRTTI() const { return false; }
 
-  virtual CBaseVar *Clone() const { return new CMatrixVar(m_iRows, m_iCols, m_uiFlags, m_pVal); }
+  virtual CBaseVar *Clone() const { return NEW(CMatrixVar, (m_iRows, m_iCols, m_uiFlags, m_pVal)); }
 };
 
 template <int R, int C>

@@ -1,0 +1,23 @@
+fact = function(n)
+  if n<=1 then
+    return 1
+  end
+  return n*fact(n-1)
+end
+
+fib = function(n)
+  local first, second = 0, 1
+  while n>0 do
+    first, second = second, first+second
+    n = n-1
+  end
+  return first
+end
+
+print_table = function(t)
+  local k,v = next(t)
+  while k do
+    print(k,v)
+    k,v = next(t,k)
+  end
+end

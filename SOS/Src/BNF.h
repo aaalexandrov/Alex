@@ -40,7 +40,7 @@ public:
 
     virtual bool Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const;
   };
-  
+
   class CTerminal: public CRule {
 	public:
 		CToken::ETokenType m_eToken;
@@ -89,13 +89,13 @@ public:
 
 	void DeleteRules();
 
-	void SetRule(CRule const &kRootRule) { delete m_pRootRule; m_pRootRule = &kRootRule; }
+	void SetRule(CRule const &kRootRule) { DEL(m_pRootRule); m_pRootRule = &kRootRule; }
 
 	bool Parse(CList<CToken *> &lstTokens, CNode *&pParsed);
 
-	static CRule *NewNT()                         { return new CNonTerminal(); }
-	static CRule *NewT(CToken::ETokenType eToken) { return new CTerminal(eToken); }
-  static CRule *NewEmpty()                      { return new CNothing(); }
+	static CRule *NewNT()                         { return NEW(CNonTerminal, ()); }
+	static CRule *NewT(CToken::ETokenType eToken) { return NEW(CTerminal, (eToken)); }
+  static CRule *NewEmpty()                      { return NEW(CNothing, ()); }
   static CRule *NewOptional(CRule *pContent);
   static CRule *NewZeroPlus(CRule *pContent);
   static CRule *NewOnePlus(CRule *pContent);

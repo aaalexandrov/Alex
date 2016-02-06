@@ -276,7 +276,7 @@ EInterpretError CCompiler::Compile(CInterpreter *pInterpreter, CBNFGrammar::CNod
   Clear();
 
   m_pInterpreter = pInterpreter;
-  m_pCode = new CFragment(&m_pInterpreter->m_kValueRegistry);
+  m_pCode = NEW(CFragment, (&m_pInterpreter->m_kValueRegistry));
 	short nDest = CInstruction::INVALID_OPERAND;
   EInterpretError res = CompileNode(pNode, nDest);
 	UpdateLocalNumber();
@@ -448,7 +448,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 	int i;
 	EInterpretError err;
 	CCompiler kCompiler;
-	kCompiler.m_pCode = new CFragment(&m_pInterpreter->m_kValueRegistry);
+	kCompiler.m_pCode = NEW(CFragment, (&m_pInterpreter->m_kValueRegistry));
 	
 	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; ++i) {
 		ASSERT(pNode->m_arrChildren[0]->m_arrChildren[i]->m_pToken->m_eType == CToken::TT_VARIABLE);

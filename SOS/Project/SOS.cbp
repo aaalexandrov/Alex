@@ -22,6 +22,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=c++11" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -57,6 +58,8 @@
 		<Unit filename="../../Framework/Base/List.h" />
 		<Unit filename="../../Framework/Base/Matrix.cpp" />
 		<Unit filename="../../Framework/Base/Matrix.h" />
+		<Unit filename="../../Framework/Base/Mem.cpp" />
+		<Unit filename="../../Framework/Base/Mem.h" />
 		<Unit filename="../../Framework/Base/Parse.cpp" />
 		<Unit filename="../../Framework/Base/Parse.h" />
 		<Unit filename="../../Framework/Base/RTTI.cpp" />
@@ -127,6 +130,7 @@
 		<Unit filename="../Src/Variable.h" />
 		<Unit filename="../Src/stdafx.cpp" />
 		<Unit filename="../Src/stdafx.h" />
+		<Unit filename="../test.sos" />
 		<Extensions>
 			<code_completion />
 			<envvars />

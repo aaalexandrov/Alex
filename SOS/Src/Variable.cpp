@@ -20,7 +20,7 @@ CValue2String CValue::s_VT2Str(s_arrVT2Str, ARRSIZE(s_arrVT2Str));
 
 // CValueRegistry -------------------------------------------------------------
 
-CValueRegistry::CValueRegistry(): m_pUnprocessed(new THashValues()), m_pProcessed(new THashValues())
+CValueRegistry::CValueRegistry(): m_pUnprocessed(NEW(THashValues, ())), m_pProcessed(NEW(THashValues, ()))
 {
 }
 
@@ -28,8 +28,8 @@ CValueRegistry::~CValueRegistry()
 {
   DeleteValues(*m_pUnprocessed);
   ASSERT(!m_pUnprocessed->m_iCount && !m_pProcessed->m_iCount && !m_lstProcessing.m_iCount);
-  delete m_pProcessed;
-  delete m_pUnprocessed;
+  DEL(m_pProcessed);
+  DEL(m_pUnprocessed);
 }
 
 void CValueRegistry::Add(CValue const &kValue)    

@@ -14,7 +14,7 @@ public:
     CVarObj::CIter  *m_pIt;
 
     CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, int iDirection = 1);
-    virtual ~CIter() { delete m_pIt; }
+    virtual ~CIter() { DEL(m_pIt); }
 
     virtual CIter &Next();
     virtual CIter &Prev();
@@ -58,7 +58,7 @@ public:
   virtual ~CVarTemplate()    {}
 
   virtual bool Init()        { return true; }
-  virtual void Done()        { SAFE_DELETE(m_pVars); }
+  virtual void Done()        { if (m_pVars) { DEL(m_pVars); m_pVars = 0; } }
 
   virtual void Remap(uint8_t *pNewBufBase, uint8_t *pOldBufBase, CVarObj *pDstVars = 0);
   virtual void MakeVarCopy(CVarObj *pDstVars, uint8_t *pDstBufBase, uint8_t *pSrcBufBase, bool bAddVars);

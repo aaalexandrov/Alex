@@ -148,9 +148,9 @@ EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
     if (!!sToken) { // Identifier
       pTemplate = GetTemplateToken(sToken);
       if (pTemplate)
-        pToken = new CToken(sToken, pTemplate->m_eClass, pTemplate->m_eType); // Keyword
+        pToken = NEW(CToken, (sToken, pTemplate->m_eClass, pTemplate->m_eType)); // Keyword
       else
-        pToken = new CToken(sToken, CToken::TC_IDENTIFIER, CToken::TT_VARIABLE);
+        pToken = NEW(CToken, (sToken, CToken::TC_IDENTIFIER, CToken::TT_VARIABLE));
       m_lstTokens.PushTail(pToken);
       continue;
     }
@@ -159,14 +159,14 @@ EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
       sToken.m_pBuf = sInp.m_pBuf;
 			sToken.m_iLen = pTemplate->m_sToken.m_iLen;
       sInp >>= sToken.m_iLen;
-      pToken = new CToken(sToken, pTemplate->m_eClass, pTemplate->m_eType);
+      pToken = NEW(CToken,(sToken, pTemplate->m_eClass, pTemplate->m_eType));
       m_lstTokens.PushTail(pToken);
       continue;
     }
     if (g_sNumber.Find(sInp[0]) >= 0) { // Number literal
       sToken = ReadFloat(sInp);
       ASSERT(!!sToken);
-      pToken = new CToken(sToken, CToken::TC_LITERAL, CToken::TT_NUMBER);
+      pToken = NEW(CToken, (sToken, CToken::TC_LITERAL, CToken::TT_NUMBER));
       m_lstTokens.PushTail(pToken);
       continue;
     }
@@ -176,14 +176,14 @@ EInterpretError CTokenizer::Tokenize(CStrAny const &sInput)
       sToken = ReadUntilChar(sInp, chDelimiter);
       ASSERT(!!sInp && sInp[0] == chDelimiter);
       sInp >>= 1;
-      pToken = new CToken(sToken, CToken::TC_LITERAL, CToken::TT_STRING);
+      pToken = NEW(CToken, (sToken, CToken::TC_LITERAL, CToken::TT_STRING));
       m_lstTokens.PushTail(pToken);
       continue;
     }
     sToken.m_pBuf = sInp.m_pBuf;
     sToken.m_iLen = 1;
     sInp >>= 1;
-    pToken = new CToken(sToken, CToken::TC_UNKNOWN, CToken::TT_UNKNOWN);
+    pToken = NEW(CToken, (sToken, CToken::TC_UNKNOWN, CToken::TT_UNKNOWN));
 		err = IERR_UNKNOWN_TOKEN;
   }
 

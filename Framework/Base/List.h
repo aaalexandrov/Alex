@@ -1,6 +1,7 @@
 #ifndef __LIST_H
 #define __LIST_H
 
+#include "mem.h"
 
 template <class T, class K = T, class P = Util::Equal<T> >
 class CList {
@@ -16,11 +17,12 @@ public:
 
   TNode *m_pHead, *m_pTail;
   int m_iCount;
+  TAllocator *m_pAllocator;
 
-  CList();
+  CList(TAllocator &kAllocator = DEF_ALLOC);
   ~CList();
 
-  void DeleteAll();
+  void DeleteAll(TAllocator &kAllocator = DEF_ALLOC);
 	void Clear();
 
   void Push(T t);
@@ -63,8 +65,9 @@ public:
 
 // CList ---------------------------------------------------------------------------
 template <class T, class K, class P>
-CList<T, K, P>::CList()
+CList<T, K, P>::CList(TAllocator &kAllocator)
 {
+  m_pAllocator = &kAllocator;
   m_pHead = 0;
   m_pTail = 0;
   m_iCount = 0;
@@ -76,18 +79,18 @@ CList<T, K, P>::~CList()
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    delete p;
+    DEL_A(*m_pAllocator, p);
   }
 }
 
 template <class T, class K, class P>
-void CList<T, K, P>::DeleteAll()
+void CList<T, K, P>::DeleteAll(TAllocator &kAllocator)
 {
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    delete p->Data;
-    delete p;
+    DEL_A(kAllocator, p->Data);
+    DEL_A(*m_pAllocator, p);
   }
   m_pTail = 0;
 	m_iCount = 0;
@@ -99,7 +102,7 @@ void CList<T, K, P>::Clear()
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    delete p;
+    DEL_A(*m_pAllocator, p);
   }
   m_pTail = 0;
 	m_iCount = 0;
@@ -108,13 +111,13 @@ void CList<T, K, P>::Clear()
 template <class T, class K, class P>
 void CList<T, K, P>::Push(T t)
 {
-  PushNode(new TNode(t));
+  PushNode(NEW_A(*m_pAllocator, TNode, (t)));
 }
 
 template <class T, class K, class P>
 void CList<T, K, P>::PushTail(T t)
 {
-  PushNodeTail(new TNode(t));
+  PushNodeTail(NEW_A(*m_pAllocator, TNode, (t)));
 }
 
 template <class T, class K, class P>
@@ -123,7 +126,7 @@ T &CList<T, K, P>::Pop(T &t)
   TNode *pNode = PopNode();
   if (pNode) {
     t = pNode->Data;
-    delete pNode;
+    DEL_A(*m_pAllocator, pNode);
   }
   return t;
 }
@@ -134,7 +137,7 @@ T &CList<T, K, P>::PopTail(T &t)
   TNode *pNode = PopNodeTail();
   if (pNode) {
     t = pNode->Data;
-    delete pNode;
+    DEL_A(*m_pAllocator, pNode);
   }
   return t;
 }
@@ -190,13 +193,13 @@ T CList<T, K, P>::Tail() const
 template <class T, class K, class P>
 void CList<T, K, P>::PushAfter(TNode *pAfter, T t)
 {
-  PushNodeAfter(pAfter, new TNode(t));
+  PushNodeAfter(pAfter, NEW_A(*m_pAllocator, TNode, (t)));
 }
 
 template <class T, class K, class P>
 void CList<T, K, P>::PushBefore(TNode *pBefore, T t)
 {
-  PushNodeBefore(pBefore, new TNode(t));
+  PushNodeBefore(pBefore, NEW_A(*m_pAllocator, TNode, (t)));
 }
 
 template <class T, class K, class P>
@@ -212,7 +215,7 @@ void CList<T, K, P>::Remove(TNode *pNode)
     pNode->pPrev->pNext = pNode->pNext;
   else
     m_pHead = pNode->pNext;
-  delete pNode;
+  DEL_A(*m_pAllocator, pNode);
   m_iCount--;
 }
 
@@ -262,7 +265,7 @@ void CList<T, K, P>::PushNodeTail(TNode *pNode)
 template <class T, class K, class P>
 typename CList<T, K, P>::TNode *CList<T, K, P>::PopNode()
 {
-  TNode *pNode = m_pHead; 
+  TNode *pNode = m_pHead;
   if (m_pHead) {
     if (!m_pHead->pNext)
       m_pTail = 0;

@@ -14,7 +14,7 @@ CMatrixVar::CMatrixVar(int iRows, int iCols, UINT uiFlags, Num *pVal)
   m_iCols = iCols;
   m_uiFlags = uiFlags;
   if (m_uiFlags & MVF_OWNVALUES) {
-    m_pVal = new Num[iRows * iCols];
+    m_pVal = NEWARR(Num, iRows * iCols);
     if (pVal)
       memcpy(m_pVal, pVal, iRows * iCols * sizeof(Num));
   } else

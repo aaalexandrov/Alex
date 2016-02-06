@@ -38,7 +38,7 @@ public:
 
 // Dummy var - just a method sink
 class CDummyVar: public CBaseVar {
-	DEFRTTI(CDummyVar, CBaseVar, true)
+  DEFRTTI(CDummyVar, CBaseVar, true)
 public:
   virtual void *GetPtr()  const             { return 0;                          }
   virtual int   GetSize() const             { return 0;                          }
@@ -59,7 +59,7 @@ public:
 
   virtual bool ValueHasRTTI() const         { return false;                      }
 
-  virtual CBaseVar *Clone() const           { return new CDummyVar();            }
+  virtual CBaseVar *Clone() const           { return NEW(CDummyVar, ());         }
 };
 
 
@@ -210,7 +210,7 @@ public:
   void *GetRef() const     { return m_Val.GetRef();     }
   bool  SetRef(void *pPtr) { return m_Val.SetRef(pPtr); }
 
-  CBaseVar *Clone() const { CVarTpl<V> *pVar = new CVarTpl<V>(); Set(&pVar->Val(), &Val()); return pVar; }
+  CBaseVar *Clone() const { CVarTpl<V> *pVar = NEW(CVarTpl<V>, ()); Set(&pVar->Val(), &Val()); return pVar; }
 };
 
 // Variable with value and variable with reference to a value
@@ -232,7 +232,7 @@ public:
   CVarRef(): CVarTpl<CRef<T> >()      {}
   CVarRef(T &t): CVarTpl<CRef<T> >(t) {}
 
-  CBaseVar *Clone() const { CVarRef<T> *pVar = new CVarRef<T>(*(T*) GetRef()); return pVar; }
+  CBaseVar *Clone() const { CVarRef<T> *pVar = NEW(CVarRef<T>, (*(T*) GetRef())); return pVar; }
 };
 
 // Var Objects - collections of named values ----------------------------------
@@ -305,7 +305,7 @@ public:
 };
 
 class CVarHash: public CVarValueObj {
-	DEFRTTI(CVarHash, CVarValueObj, true)
+  DEFRTTI(CVarHash, CVarValueObj, true)
 public:
   struct TVarName {
     CSmartPtr<CStrHeader const> pName;

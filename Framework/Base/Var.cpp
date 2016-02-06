@@ -90,7 +90,7 @@ bool CVarObj::GetVar(CStrAny const &sVar, CBaseVar &vDst) const
   if (!pIt)
     return false;
   bool bRes = pIt->GetVar(vDst);
-  delete pIt;
+  DEL(pIt);
   return bRes;
 }
 
@@ -100,7 +100,7 @@ bool CVarObj::SetVar(CStrAny const &sVar, const CBaseVar &vSrc)
   if (!pIt)
     return false;
   bool bRes = pIt->SetVar(vSrc);
-  delete pIt;
+  DEL(pIt);
   return bRes;
 }
 
@@ -120,7 +120,7 @@ bool CVarValueObj::SetStr(CStrAny const &sVar, const CStrAny &s)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
-    pVar = new CVar<CStrAny>();
+    pVar = NEW(CVar<CStrAny>, ());
     ReplaceVar(sVar, pVar, true);
   }
   pVar->SetStr(s);
@@ -140,7 +140,7 @@ bool CVarValueObj::SetInt(CStrAny const &sVar, int i)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
-    pVar = new CVar<int>();
+    pVar = NEW(CVar<int>, ());
     ReplaceVar(sVar, pVar, true);
   }
   pVar->SetInt(i);
@@ -160,7 +160,7 @@ bool CVarValueObj::SetFloat(CStrAny const &sVar, float f)
 {
   CBaseVar *pVar = FindVar(sVar);
   if (!pVar) {
-    pVar = new CVar<float>();
+    pVar = NEW(CVar<float>, ());
     ReplaceVar(sVar, pVar, true);
   }
   pVar->SetFloat(f);
@@ -252,7 +252,7 @@ CVarObj::CIter *CVarHash::GetIter(CStrAny const &sVar) const
     }
   } else
     it = *(THash *) &m_Vars;
-  return new CIter(it);
+  return NEW(CIter, (it));
 }
 
 CBaseVar *CVarHash::FindVar(CStrAny const &sVar) const
@@ -272,7 +272,7 @@ bool CVarHash::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
   if (!pSrc) { // removing the var
     it = m_Vars.Find(sVar);
     if (!!it) {
-      delete *it;
+      DEL(*it);
       m_Vars.Remove(it);
     }
     return true;
@@ -283,7 +283,7 @@ bool CVarHash::ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding)
     bAdding = !it;
   }
   if (bAdding) {
-    pVarName = new TVarName(sVar, pSrc);
+    pVarName = NEW(TVarName, (sVar, pSrc));
     m_Vars.Add(pVarName);
   } else
     it->pVar = pSrc;
