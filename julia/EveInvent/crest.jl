@@ -1,10 +1,8 @@
 # const urlCrest = "https://public-crest.eveonline.com/"
 const urlCrest = "https://crest-tq.eveonline.com/"
 
-const urlReplaceKeys   = ['/', '?']
-const urlReplaceValues = ['-', '.']
-const urlReplace = Dict{Char, Char}(urlReplaceKeys, urlReplaceValues)
-url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), urlReplaceKeys, c->urlReplace[c[1]]) * ".json"
+const urlReplace = Dict{Char, Char}('/'=>'-', '?'=>'.')
+url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), keys(urlReplace), c->urlReplace[c[1]]) * ".json"
 
 int_keys(assoc::Associative) = [int(k)=>v for (k,v) in assoc]
 
