@@ -159,7 +159,7 @@ end
 
 function render(mesh::Mesh)
     apply(mesh)
-    glDrawElements(primitivemode(mesh), indexcount(mesh), indextype(mesh), 0)
+    glDrawElements(primitivemode(mesh), indexcount(mesh), indextype(mesh), C_NULL)
 end
 
 indextype(mesh::Mesh) = jl2gltype(eltype(mesh.indices))
