@@ -46,11 +46,11 @@ public:
   TNode *m_pRoot;
   int m_iCount;
 
-  CAVLTree(TAllocator &kAllocator = DEF_ALLOC)  { m_pAllocator = &kAllocator; m_pRoot = 0; m_iCount = 0; }
+  CAVLTree(TAllocator *pAllocator = CUR_ALLOC)  { m_pAllocator = pAllocator; m_pRoot = 0; m_iCount = 0; }
   ~CAVLTree() { Clear(); }
 
-  void DeleteAll(TAllocator &kAllocator = DEF_ALLOC) { DeleteAll(m_pRoot, kAllocator); m_pRoot = 0; m_iCount = 0; }
-  void Clear()                                                       { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
+  void DeleteAll(TAllocator *pAllocator = 0)    { DeleteAll(m_pRoot, pAllocator); m_pRoot = 0; m_iCount = 0; }
+  void Clear()                                  { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
 
   void Add(T t);
   void AddUnique(T t);
@@ -73,7 +73,7 @@ public:
 template <class K, class V, class L = Less<K> >
 class CAVLTreeKV: public CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> > {
 public:
-  CAVLTreeKV(TAllocator &kAllocator = DEF_ALLOC): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >(kAllocator) {}
+  CAVLTreeKV(TAllocator *pAllocator = CUR_ALLOC): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >(pAllocator) {}
 };
 
 // Implementation ------------------------------------------------------------------

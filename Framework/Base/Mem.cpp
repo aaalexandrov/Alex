@@ -28,8 +28,5 @@ struct TMemTest {
 
     CMemTest *pp = NEW(CMemTest, (44));
     DEL(pp);
-
-//    auto bb = __NEW(DEF_ALLOC, CMemTest, ());
-//    __DELETE(bb);
   }
 } /*g_Test*/;

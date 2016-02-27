@@ -21,7 +21,7 @@ public:
 
   inline uint32_t GetRef() const  { return m_RefCount.Get(); }
   inline void     Acquire() const { m_RefCount.Inc(); }
-  inline void     Release(TAllocator &kAlloc = DEF_ALLOC) const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
+  inline void     Release(TAllocator *pAlloc = CUR_ALLOC) const { m_RefCount.Dec(); if (!m_RefCount.Get()) Delete(this);  }
 
   static CStrHeader *Get(const char *pSrc, int iLen, bool bInRepository);
 

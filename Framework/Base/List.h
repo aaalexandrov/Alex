@@ -19,10 +19,10 @@ public:
   int m_iCount;
   TAllocator *m_pAllocator;
 
-  CList(TAllocator &kAllocator = DEF_ALLOC);
+  CList(TAllocator *pAllocator = CUR_ALLOC);
   ~CList();
 
-  void DeleteAll(TAllocator &kAllocator = DEF_ALLOC);
+  void DeleteAll(TAllocator *pAllocator = 0);
 	void Clear();
 
   void Push(T t);
@@ -65,9 +65,9 @@ public:
 
 // CList ---------------------------------------------------------------------------
 template <class T, class K, class P>
-CList<T, K, P>::CList(TAllocator &kAllocator)
+CList<T, K, P>::CList(TAllocator *pAllocator)
 {
-  m_pAllocator = &kAllocator;
+  m_pAllocator = pAllocator;
   m_pHead = 0;
   m_pTail = 0;
   m_iCount = 0;
@@ -84,12 +84,14 @@ CList<T, K, P>::~CList()
 }
 
 template <class T, class K, class P>
-void CList<T, K, P>::DeleteAll(TAllocator &kAllocator)
+void CList<T, K, P>::DeleteAll(TAllocator *pAllocator)
 {
+  if (!pAllocator)
+    pAllocator = &m_pAllocator->GetNested();
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    DEL_A(kAllocator, p->Data);
+    DEL_A(*pAllocator, p->Data);
     DEL_A(*m_pAllocator, p);
   }
   m_pTail = 0;

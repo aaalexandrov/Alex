@@ -112,9 +112,9 @@ CVarObj::CIter *CVarMerge::GetIter(CStrAny const &sVar) const
 {
   int i;
   if (!sVar)
-    return NEW(CIter, (this, 0, 0));
+    return NEW(CIter, (this, 0, (CIter *) 0));
   if (sVar == GetLastIterConst())
-    return NEW(CIter, (this, m_Vars.m_iCount - 1, 0, -1));
+    return NEW(CIter, (this, m_Vars.m_iCount - 1, (CIter *) 0, -1));
   CVarObj::CIter *pIt;
   for (i = 0; i < m_Vars.m_iCount; i++) {
     pIt = m_Vars[i].m_pVar->GetIter(sVar);

@@ -15,7 +15,7 @@
 
 #if defined(_WIN32) || defined(_WIN64)
   #define WINDOWS
-#elif __linux__
+#elif defined(__linux__)
   #define LINUX
 #endif
 
@@ -42,13 +42,13 @@ public:
     mutable CRefCount m_RefCount;                                                  \
     inline uint32_t GetRefCount() const               { return m_RefCount.Get(); } \
     inline void     Acquire() const                   { m_RefCount.Inc(); }        \
-    inline void     Release(TAllocator &kAlloc) const { m_RefCount.Dec(); if (!m_RefCount.Get()) DEL_A(kAlloc, this);  }
+    inline void     Release(TAllocator *pAlloc) const { m_RefCount.Dec(); if (!m_RefCount.Get()) DEL_A(*pAlloc, this);  }
 
 #define DEFREFCOUNT_DUMMY                             \
   public:                                             \
     inline uint32_t GetRefCount() const { return 0; } \
     inline void     Acquire() const {}                \
-    inline void     Release(TAllocator &kAlloc) const { DEL_A(kAlloc, this); }
+    inline void     Release(TAllocator *pAlloc) const { DEL_A(*pAlloc, this); }
 
 template <class T>
 class CSmartPtr {
@@ -58,13 +58,13 @@ public:
 	T *m_pPtr;
 	TAllocator *m_pAllocator;
 
-	explicit CSmartPtr(T *pPtr = 0, TAllocator &kAlloc = DEF_ALLOC):
-	  m_pPtr(pPtr), m_pAllocator(&kAlloc)                   { Acquire(m_pPtr); }
+	explicit CSmartPtr(T *pPtr = 0, TAllocator *pAlloc = CUR_ALLOC):
+	  m_pPtr(pPtr), m_pAllocator(pAlloc)                    { Acquire(m_pPtr); }
   explicit CSmartPtr(const CSmartPtr &pPtr)               { m_pPtr = pPtr.m_pPtr; Acquire(m_pPtr); }
-	~CSmartPtr()                                            { Release(m_pPtr, *m_pAllocator); }
+	~CSmartPtr()                                            { Release(m_pPtr, m_pAllocator); }
 
 	static inline void Acquire(T *pPtr)                     { if (pPtr) pPtr->Acquire(); }
-	static inline void Release(T *pPtr, TAllocator &kAlloc) { if (pPtr) pPtr->Release(kAlloc); }
+	static inline void Release(T *pPtr, TAllocator *pAlloc) { if (pPtr) pPtr->Release(pAlloc); }
 
 	inline operator T*()                                    { return m_pPtr; }
 	inline T &operator *()                                  { return *m_pPtr; }
@@ -73,20 +73,20 @@ public:
 	inline const T &operator *() const                      { return *m_pPtr; }
 	inline const T *operator ->() const                     { return m_pPtr; }
 
-  inline CSmartPtr<T> &operator =(T *pPtr)                { Acquire(pPtr); Release(m_pPtr, *m_pAllocator); m_pPtr = pPtr; return *this; }
+  inline CSmartPtr<T> &operator =(T *pPtr)                { Acquire(pPtr); Release(m_pPtr, m_pAllocator); m_pPtr = pPtr; return *this; }
   inline CSmartPtr<T> &operator =(const CSmartPtr &pPtr)  { return operator =(pPtr.m_pPtr); }
 };
 
 template <class T>
 class CPtrDeleter {
 public:
-  static void FreePtr(T *pPtr, TAllocator &kAlloc) { DEL_A(kAlloc, pPtr); }
+  static void FreePtr(T *pPtr, TAllocator *pAlloc) { DEL_A(*pAlloc, pPtr); }
 };
 
 template <class T>
 class CPtrReleaser {
 public:
-  static void FreePtr(T *pPtr, TAllocator &kAlloc) { if (pPtr) pPtr->Release(kAlloc); }
+  static void FreePtr(T *pPtr, TAllocator *pAlloc) { if (pPtr) pPtr->Release(pAlloc); }
 };
 
 template <class T, class D>
@@ -97,26 +97,26 @@ public:
 	T *m_pPtr;
 	TAllocator *m_pAllocator;
 
-	explicit CAutoFreePtr(T *pPtr, TAllocator &kAlloc): m_pPtr(pPtr), m_pAllocator(&kAlloc) {}
+	explicit CAutoFreePtr(T *pPtr, TAllocator *pAlloc): m_pPtr(pPtr), m_pAllocator(pAlloc) {}
 	~CAutoFreePtr()                                  { ReleasePtr(); }
 
 	inline operator T*()                             { return m_pPtr; }
 	inline T &operator *()                           { return *m_pPtr; }
 	inline T *operator ->()                          { return m_pPtr; }
 
-  inline void ReleasePtr()                         { D::FreePtr(m_pPtr, *m_pAllocator); m_pPtr = 0; }
+  inline void ReleasePtr()                         { D::FreePtr(m_pPtr, m_pAllocator); m_pPtr = 0; }
 };
 
 template <class T>
 class CAutoDeletePtr: public CAutoFreePtr<T, CPtrDeleter<T> > {
 public:
-  explicit CAutoDeletePtr(T *pPtr = 0, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrDeleter<T> >(pPtr, kAlloc) {}
+  explicit CAutoDeletePtr(T *pPtr = 0, TAllocator *pAlloc = CUR_ALLOC): CAutoFreePtr<T, CPtrDeleter<T> >(pPtr, pAlloc) {}
 };
 
 template <class T>
 class CAutoReleasePtr: public CAutoFreePtr<T, CPtrReleaser<T> > {
 public:
-  explicit CAutoReleasePtr(T *pPtr = 0, TAllocator &kAlloc = DEF_ALLOC): CAutoFreePtr<T, CPtrReleaser<T> >(pPtr, kAlloc) {}
+  explicit CAutoReleasePtr(T *pPtr = 0, TAllocator *pAlloc = CUR_ALLOC): CAutoFreePtr<T, CPtrReleaser<T> >(pPtr, pAlloc) {}
 };
 
 // Plain Old Data (POD) detection

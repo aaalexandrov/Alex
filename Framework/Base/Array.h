@@ -30,10 +30,10 @@ public:
   int m_iCount, m_iMaxCount;
   TAllocator *m_pAllocator;
 
-  CArray(int iMaxCount = 16, TAllocator &kAllocator = DEF_ALLOC);
+  CArray(int iMaxCount = 16, TAllocator *pAllocator = CUR_ALLOC);
   ~CArray();
 
-  void DeleteAll(int iMaxCount = 16, TAllocator &kAllocator = DEF_ALLOC);
+  void DeleteAll(int iMaxCount = 16, TAllocator *pAllocator = 0);
   void Clear(int iMaxCount = 16);
 	bool IsEmpty() const { return !m_iCount; }
 
@@ -106,9 +106,9 @@ public:
 // CArray --------------------------------------------------------------------------
 
 template <class T, int G>
-CArray<T, G>::CArray(int iMaxCount, TAllocator &kAllocator)
+CArray<T, G>::CArray(int iMaxCount, TAllocator *pAllocator)
 {
-  m_pAllocator = &kAllocator;
+  m_pAllocator = pAllocator;
   m_iCount = 0;
   m_iMaxCount = iMaxCount;
   m_pArray = (T *) NEWARR_A(*m_pAllocator, uint8_t, m_iMaxCount * sizeof(T));
@@ -122,10 +122,12 @@ CArray<T, G>::~CArray()
 }
 
 template <class T, int G>
-void CArray<T, G>::DeleteAll(int iMaxCount, TAllocator &kAllocator)
+void CArray<T, G>::DeleteAll(int iMaxCount, TAllocator *pAllocator)
 {
+  if (!pAllocator)
+    pAllocator = &m_pAllocator->GetNested();
   for (int i = 0; i < m_iCount; i++) {
-    DELARR_A(kAllocator, 1, m_pArray[i]);
+    DELARR_A(*pAllocator, 1, m_pArray[i]);
 		TConDestructor<T>::Destroy(m_pArray + i);
 	}
   m_iCount = 0;

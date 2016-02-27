@@ -22,8 +22,8 @@ class CRTTI {
 public:
   typedef CObject Type;
 
-  static  CObject *CreateInstance_s(TAllocator &kAllocator)                 { return NEW_A(kAllocator, Type, ()); }
-  virtual CObject *CreateInstance(TAllocator &kAllocator = DEF_ALLOC) const { return CreateInstance_s(kAllocator); }
+  static  CObject *CreateInstance_s(TAllocator *pAllocator)                 { return NEW_A(*pAllocator, Type, ()); }
+  virtual CObject *CreateInstance(TAllocator *pAllocator = CUR_ALLOC) const { return CreateInstance_s(pAllocator); }
 
   static  char const *GetName_s()                 { return Type::GetClassName_s(); }
   virtual char const *GetName() const             { return GetName_s(); }
@@ -44,8 +44,8 @@ public:
   typedef T Type;
   typedef B Base;
 
-  static  CObject *CreateInstance_s(TAllocator &kAllocator)                 { ASSERT(!"Trying to instantiate class whose RTTI has creation turned off!"); return 0; }
-  virtual CObject *CreateInstance(TAllocator &kAllocator = DEF_ALLOC) const { return CreateInstance_s(kAllocator); }
+  static  CObject *CreateInstance_s(TAllocator *pAllocator)                 { ASSERT(!"Trying to instantiate class whose RTTI has creation turned off!"); return 0; }
+  virtual CObject *CreateInstance(TAllocator *pAllocator = CUR_ALLOC) const { return CreateInstance_s(pAllocator); }
 
   static  char const *GetName_s()                 { return Type::GetClassName_s(); }
   virtual char const *GetName() const             { return GetName_s(); }
@@ -63,8 +63,8 @@ public:
 template <class T, class B>
 class CRTTITpl<T, B, true>: public CRTTITpl<T, B, false> {
 public:
-  static  CObject *CreateInstance_s(TAllocator &kAllocator)                 { return NEW_A(kAllocator, ID_TYPE(typename CRTTITpl<T, B, true>::Type), ()); }
-  virtual CObject *CreateInstance(TAllocator &kAllocator = DEF_ALLOC) const { return CreateInstance_s(kAllocator); }
+  static  CObject *CreateInstance_s(TAllocator *pAllocator)                 { return NEW_A(*pAllocator, ID_TYPE(typename CRTTITpl<T, B, true>::Type), ()); }
+  virtual CObject *CreateInstance(TAllocator *pAllocator = CUR_ALLOC) const { return CreateInstance_s(pAllocator); }
 };
 
 inline CRTTI const *CObject::GetRTTI_s()     { static TRTTI kRTTI; return &kRTTI; }

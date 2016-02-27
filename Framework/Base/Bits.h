@@ -29,7 +29,7 @@ public:
   UINT       *m_pBits;
   int         m_iBitCount;
 
-  CBitsDynamic(TAllocator &kAllocator): m_pAllocator(&kAllocator), m_pBits(0), m_iBitCount(0)  {}
+  CBitsDynamic(TAllocator *pAllocator): m_pAllocator(pAllocator), m_pBits(0), m_iBitCount(0)  {}
   ~CBitsDynamic()                             { DELARR_A(*m_pAllocator, GetArraySize(), m_pBits); }
 
   inline UINT *GetBits()                      { return m_pBits; }
@@ -47,7 +47,7 @@ class CBitArrayTpl {
 public:
   B m_Bits;
 
-  CBitArrayTpl(TAllocator &kAllocator): m_Bits(kAllocator)   {}
+  CBitArrayTpl(TAllocator *pAllocator): m_Bits(pAllocator)   {}
 
   inline int  BitElementIndex(int iBit) const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return iBit / (sizeof(UINT) * 8); }
   inline UINT BitElementMask(int iBit)  const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return 1 << (iBit % (sizeof(UINT) * 8)); }
@@ -68,12 +68,12 @@ public:
 template <int BITS = 256>
 class CBitArray: public CBitArrayTpl<CBitsStatic<BITS> > {
 public:
-  CBitArray() : CBitArrayTpl<CBitsStatic<BITS> >(DEF_ALLOC) {}
+  CBitArray() : CBitArrayTpl<CBitsStatic<BITS> >(CUR_ALLOC) {}
 };
 
 class CBitDynArray: public CBitArrayTpl<CBitsDynamic> {
 public:
-  CBitDynArray(int iBitCount = 256, TAllocator &kAllocator = DEF_ALLOC): CBitArrayTpl<CBitsDynamic>(kAllocator) { this->m_Bits.SetBitCount(iBitCount); }
+  CBitDynArray(int iBitCount = 256, TAllocator *pAllocator = CUR_ALLOC): CBitArrayTpl<CBitsDynamic>(pAllocator) { this->m_Bits.SetBitCount(iBitCount); }
 };
 
 // Implementation -------------------------------------------------------------
