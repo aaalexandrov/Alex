@@ -30,7 +30,7 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-fexceptions" />
+			<Add option="-std=c++11" />
 			<Add option="-DWINVER=0x0500" />
 			<Add directory="../Src" />
 			<Add directory="../../Framework/Base" />
