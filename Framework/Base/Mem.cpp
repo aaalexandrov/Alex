@@ -9,6 +9,23 @@ public:
   ~CMemTest() { m_iData = -11; }
 };
 
+struct TTestAlloc {
+  void *Alloc(size_t uiSize, const char *pFile, int iLine) { return new uint8_t[uiSize]; }
+  void Free(void *p, const char *pFile, int iLine)         { delete[] (uint8_t *) p; }
+};
+
+template <>
+struct TGetAllocator<CMemTest> {
+  typedef TTestAlloc Type;
+};
+
+template <>
+TTestAlloc &GetAllocatorInstance(CMemTest *)
+{
+  static TTestAlloc alloc;
+  return alloc;
+}
+
 template <class T, int I>
 struct Tst {
   T arr[I];

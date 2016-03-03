@@ -13,7 +13,7 @@ public:
 
   UINT m_uiBits[ARRAY_SIZE];
 
-  CBitsStatic(TAllocator &kAllocator)         {}
+  CBitsStatic()                               {}
 
   inline UINT *GetBits()                      { return m_uiBits; }
   inline UINT const *GetBits() const          { return m_uiBits; }
@@ -25,12 +25,11 @@ public:
 
 class CBitsDynamic {
 public:
-  TAllocator *m_pAllocator;
   UINT       *m_pBits;
   int         m_iBitCount;
 
-  CBitsDynamic(TAllocator *pAllocator): m_pAllocator(pAllocator), m_pBits(0), m_iBitCount(0)  {}
-  ~CBitsDynamic()                             { DELARR_A(*m_pAllocator, GetArraySize(), m_pBits); }
+  CBitsDynamic(): m_pBits(0), m_iBitCount(0)  {}
+  ~CBitsDynamic()                             { DELARR(GetArraySize(), m_pBits); }
 
   inline UINT *GetBits()                      { return m_pBits; }
   inline UINT const *GetBits() const          { return m_pBits; }
@@ -47,7 +46,7 @@ class CBitArrayTpl {
 public:
   B m_Bits;
 
-  CBitArrayTpl(TAllocator *pAllocator): m_Bits(pAllocator)   {}
+  CBitArrayTpl(): m_Bits()                          {}
 
   inline int  BitElementIndex(int iBit) const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return iBit / (sizeof(UINT) * 8); }
   inline UINT BitElementMask(int iBit)  const       { ASSERT(iBit >= 0 && iBit < m_Bits.GetBitCount()); return 1 << (iBit % (sizeof(UINT) * 8)); }
@@ -68,12 +67,12 @@ public:
 template <int BITS = 256>
 class CBitArray: public CBitArrayTpl<CBitsStatic<BITS> > {
 public:
-  CBitArray() : CBitArrayTpl<CBitsStatic<BITS> >(CUR_ALLOC) {}
+  CBitArray() : CBitArrayTpl<CBitsStatic<BITS> >() {}
 };
 
 class CBitDynArray: public CBitArrayTpl<CBitsDynamic> {
 public:
-  CBitDynArray(int iBitCount = 256, TAllocator *pAllocator = CUR_ALLOC): CBitArrayTpl<CBitsDynamic>(pAllocator) { this->m_Bits.SetBitCount(iBitCount); }
+  CBitDynArray(int iBitCount = 256): CBitArrayTpl<CBitsDynamic>() { this->m_Bits.SetBitCount(iBitCount); }
 };
 
 // Implementation -------------------------------------------------------------
@@ -86,13 +85,13 @@ void CBitsDynamic::SetBitCount(int iBitCount)
   if (iCurSize != iNewSize) {
     UINT *pCurBits = m_pBits;
     if (iBitCount) {
-      m_pBits = NEWARR_A(*m_pAllocator, UINT, iNewSize);
+      m_pBits = NEWARR(UINT, iNewSize);
       if (pCurBits)
         memcpy(m_pBits, pCurBits, Util::Min(iNewSize, iCurSize) * sizeof(UINT));
     } else
 			m_pBits = 0;
     if (pCurBits)
-      DELARR_A(*m_pAllocator, iCurSize, pCurBits);
+      DELARR(iCurSize, pCurBits);
   }
   m_iBitCount = iBitCount;
 }

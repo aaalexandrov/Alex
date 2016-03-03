@@ -154,7 +154,7 @@ void CStrAny::Init(CStrHeader const *pHeader)
 void CStrAny::Done()
 {
   if (m_bHasHeader)
-    GetHeader()->Release(*CUR_ALLOC);
+    GetHeader()->Release();
 }
 
 void CStrAny::MakeUnique()
@@ -164,7 +164,7 @@ void CStrAny::MakeUnique()
     pHeader = GetHeader();
     pNewHeader = pHeader->GetUnique();
     pNewHeader->Acquire();
-    pHeader->Release(*CUR_ALLOC);
+    pHeader->Release();
     m_pBuf = (char const *) (pNewHeader + 1);
   } else
     Init(ST_STR, m_pBuf, m_iLen);
@@ -188,7 +188,7 @@ void CStrAny::AssureInRepository()
     CStrHeader *pHeader = (CStrHeader*) GetHeader();
     CStrHeader *pRepoHeader = pHeader->AssureInRepository();
     pRepoHeader->Acquire();
-    pHeader->Release(*CUR_ALLOC);
+    pHeader->Release();
     m_pBuf = (char const *) (pRepoHeader + 1);
   } else
     Init(ST_CONST, m_pBuf, m_iLen);
@@ -199,7 +199,7 @@ CStrAny &CStrAny::operator =(CStrAny const &s)
   CStrHeader const *pHeader = GetHeader();
   Init(ST_SAME, s);
   if (pHeader)
-    pHeader->Release(*CUR_ALLOC);
+    pHeader->Release();
   return *this;
 }
 
@@ -251,7 +251,7 @@ CStrAny &CStrAny::operator +=(CStrAny const &s)
   if (pHeader != pOrgHeader) {
     Init(pHeader);
     if (pOrgHeader)
-      pOrgHeader->Release(*CUR_ALLOC);
+      pOrgHeader->Release();
   } else {
     m_iLen = pHeader->m_iLen;
   }

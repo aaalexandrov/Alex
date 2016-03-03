@@ -42,15 +42,14 @@ public:
   };
 
 public:
-  TAllocator *m_pAllocator;
   TNode *m_pRoot;
   int m_iCount;
 
-  CAVLTree(TAllocator *pAllocator = CUR_ALLOC)  { m_pAllocator = pAllocator; m_pRoot = 0; m_iCount = 0; }
+  CAVLTree()  { m_pRoot = 0; m_iCount = 0; }
   ~CAVLTree() { Clear(); }
 
-  void DeleteAll(TAllocator *pAllocator = 0)    { DeleteAll(m_pRoot, pAllocator); m_pRoot = 0; m_iCount = 0; }
-  void Clear()                                  { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
+  void DeleteAll() { DeleteAll(m_pRoot); m_pRoot = 0; m_iCount = 0; }
+  void Clear()     { Clear(m_pRoot); m_pRoot = 0; m_iCount = 0; }
 
   void Add(T t);
   void AddUnique(T t);
@@ -63,7 +62,7 @@ public:
   bool Balance(TNode *pNode);
   bool CheckIntegrity();
 
-  inline void DeleteAll(TNode *pNode, TAllocator &kElemAlloc);
+  inline void DeleteAll(TNode *pNode);
 	inline void Clear(TNode *pNode);
 
   static inline int GetNodeLevel(TNode *pNode) { if (!pNode) return -1; return pNode->btLevel; }
@@ -73,7 +72,7 @@ public:
 template <class K, class V, class L = Less<K> >
 class CAVLTreeKV: public CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> > {
 public:
-  CAVLTreeKV(TAllocator *pAllocator = CUR_ALLOC): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >(pAllocator) {}
+  CAVLTreeKV(): CAVLTree<Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L>, K, Util::TKeyValue<K, V, Util::HashSize_T, Util::Equal<K>, L> >() {}
 };
 
 // Implementation ------------------------------------------------------------------
@@ -138,7 +137,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::Add(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = NEW_A(*m_pAllocator, TNode, (t));
+    m_pRoot = NEW(TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -152,7 +151,7 @@ void CAVLTree<T, K, P>::Add(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, NEW_A(*m_pAllocator, TNode, (t)));
+      pNode->SetChild(iChild, NEW(TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -166,7 +165,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::AddUnique(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = NEW_A(*m_pAllocator, TNode, (t));
+    m_pRoot = NEW(TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -188,7 +187,7 @@ void CAVLTree<T, K, P>::AddUnique(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, NEW_A(*m_pAllocator, TNode, (t)));
+      pNode->SetChild(iChild, NEW(TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -237,7 +236,7 @@ void CAVLTree<T, K, P>::Remove(TIter it)
     pParent->SetChild(pParent->GetChildDir(it.m_pNode), pNode);
   else
     m_pRoot = pNode;
-  DEL_A(*m_pAllocator, it.m_pNode);
+  DEL(it.m_pNode);
   while (pPar) {
     Balance(pPar);
     pPar = pPar->pParent;
@@ -283,14 +282,14 @@ bool CAVLTree<T, K, P>::CheckIntegrity()
 }
 
 template <class T, class K, class P>
-void CAVLTree<T, K, P>::DeleteAll(TNode *pNode, TAllocator &kElemAlloc)
+void CAVLTree<T, K, P>::DeleteAll(TNode *pNode)
 {
   if (!pNode)
     return;
-  DeleteAll(pNode->pChild[0], kElemAlloc);
-  DeleteAll(pNode->pChild[1], kElemAlloc);
-  DEL_A(kElemAlloc, pNode->Data);
-  DEL_A(*m_pAllocator, pNode);
+  DeleteAll(pNode->pChild[0]);
+  DeleteAll(pNode->pChild[1]);
+  DEL(pNode->Data);
+  DEL(pNode);
 }
 
 template <class T, class K, class P>
@@ -300,7 +299,7 @@ void CAVLTree<T, K, P>::Clear(TNode *pNode)
     return;
   Clear(pNode->pChild[0]);
   Clear(pNode->pChild[1]);
-  DEL_A(*m_pAllocator, pNode);
+  DEL(pNode);
 }
 
 template <class T, class K, class P>

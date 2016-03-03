@@ -40,7 +40,7 @@ static void UtilTest()
   ptr = ptr;
 
 	ptr->m_RefCount.m_dwCount++;
-	(*ptr).Release(*CUR_ALLOC);
+	(*ptr).Release();
 
   int iBitTest[] = { 1, 5, 0, -5, 1024, 9857576, 468 };
   int i, j, iMSB, iLSB;

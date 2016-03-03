@@ -28,12 +28,11 @@ public:
 
   T *m_pArray;
   int m_iCount, m_iMaxCount;
-  TAllocator *m_pAllocator;
 
-  CArray(int iMaxCount = 16, TAllocator *pAllocator = CUR_ALLOC);
+  CArray(int iMaxCount = 16);
   ~CArray();
 
-  void DeleteAll(int iMaxCount = 16, TAllocator *pAllocator = 0);
+  void DeleteAll(int iMaxCount = 16);
   void Clear(int iMaxCount = 16);
 	bool IsEmpty() const { return !m_iCount; }
 
@@ -106,28 +105,25 @@ public:
 // CArray --------------------------------------------------------------------------
 
 template <class T, int G>
-CArray<T, G>::CArray(int iMaxCount, TAllocator *pAllocator)
+CArray<T, G>::CArray(int iMaxCount)
 {
-  m_pAllocator = pAllocator;
   m_iCount = 0;
   m_iMaxCount = iMaxCount;
-  m_pArray = (T *) NEWARR_A(*m_pAllocator, uint8_t, m_iMaxCount * sizeof(T));
+  m_pArray = (T *) NEWARR(uint8_t, m_iMaxCount * sizeof(T));
 }
 
 template <class T, int G>
 CArray<T, G>::~CArray()
 {
 	TConDestructor<T>::Destroy(m_pArray, m_iCount);
-	DELARR_A(*m_pAllocator, m_iMaxCount * sizeof(T), (uint8_t *) m_pArray);
+	DELARR(m_iMaxCount * sizeof(T), (uint8_t *) m_pArray);
 }
 
 template <class T, int G>
-void CArray<T, G>::DeleteAll(int iMaxCount, TAllocator *pAllocator)
+void CArray<T, G>::DeleteAll(int iMaxCount)
 {
-  if (!pAllocator)
-    pAllocator = &m_pAllocator->GetNested();
   for (int i = 0; i < m_iCount; i++) {
-    DELARR_A(*pAllocator, 1, m_pArray[i]);
+    DELARR(1, m_pArray[i]);
 		TConDestructor<T>::Destroy(m_pArray + i);
 	}
   m_iCount = 0;
@@ -214,12 +210,12 @@ void CArray<T, G>::SetMaxCount(int iMaxCount)
   if (iMaxCount == m_iMaxCount)
     return;
   ASSERT(iMaxCount > 0);
-  T *p = (T *) NEWARR_A(*m_pAllocator, uint8_t, iMaxCount * sizeof(T));
+  T *p = (T *) NEWARR(uint8_t, iMaxCount * sizeof(T));
   int iSize = Util::Min(iMaxCount, m_iCount);
   for (int i = 0; i < iSize; i++)
 		TConDestructor<T>::ConstructCopy(p + i, m_pArray[i]);
 	TConDestructor<T>::Destroy(m_pArray, m_iCount);
-	DELARR_A(*m_pAllocator, m_iMaxCount * sizeof(T), (uint8_t *) m_pArray);
+	DELARR(m_iMaxCount * sizeof(T), (uint8_t *) m_pArray);
   m_pArray = p;
 	m_iCount = iSize;
   m_iMaxCount = iMaxCount;
