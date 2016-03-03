@@ -150,7 +150,7 @@ void CValue::ReleaseValue()
 {
 	switch (m_btType) {
 		case VT_STRING:
-			m_pStrValue->Release();
+			m_pStrValue->Release(*CUR_ALLOC);
 			break;
 	}
 }
