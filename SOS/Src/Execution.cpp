@@ -35,7 +35,7 @@ CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
 CValue *CInstruction::GetOperand(CExecution *pExecution, short nOperand) const
 {
 	ASSERT(nOperand != INVALID_OPERAND);
-	if (nOperand == INVALID_OPERAND) 
+	if (nOperand == INVALID_OPERAND)
 		return 0;
 	CArray<CValue> *pSrc;
 	if (nOperand < 0) {
@@ -44,7 +44,7 @@ CValue *CInstruction::GetOperand(CExecution *pExecution, short nOperand) const
 	} else
 		pSrc = &pExecution->m_arrLocal;
 	ASSERT(nOperand >= 0 && nOperand < pSrc->m_iCount);
-	if (nOperand >= pSrc->m_iCount) 
+	if (nOperand >= pSrc->m_iCount)
 		return 0;
 	return &pSrc->At(nOperand);
 }
@@ -52,51 +52,51 @@ CValue *CInstruction::GetOperand(CExecution *pExecution, short nOperand) const
 EInterpretError CInstruction::Execute(CExecution *pExecution) const
 {
   switch (m_eType) {
-		case IT_NOP: 
+		case IT_NOP:
 			return ExecNop(pExecution);
-    case IT_MOVE_VALUE: 
+    case IT_MOVE_VALUE:
 			return ExecMoveValue(pExecution);
-		case IT_GET_GLOBAL: 
+		case IT_GET_GLOBAL:
 			return ExecGetGlobal(pExecution);
-		case IT_SET_GLOBAL: 
+		case IT_SET_GLOBAL:
 			return ExecSetGlobal(pExecution);
-		case IT_CREATE_TABLE: 
+		case IT_CREATE_TABLE:
 			return ExecCreateTable(pExecution);
-		case IT_GET_TABLE_VALUE: 
+		case IT_GET_TABLE_VALUE:
 			return ExecGetTableValue(pExecution);
-		case IT_SET_TABLE_VALUE: 
+		case IT_SET_TABLE_VALUE:
 			return ExecSetTableValue(pExecution);
-    case IT_CONCAT: 
+    case IT_CONCAT:
 			return ExecConcat(pExecution);
-    case IT_NEGATE: 
+    case IT_NEGATE:
 			return ExecNegate(pExecution);
-		case IT_ADD: 
+		case IT_ADD:
 			return ExecAdd(pExecution);
-    case IT_SUBTRACT: 
+    case IT_SUBTRACT:
 			return ExecSubtract(pExecution);
-    case IT_MULTIPLY: 
+    case IT_MULTIPLY:
 			return ExecMultiply(pExecution);
-    case IT_DIVIDE: 
+    case IT_DIVIDE:
 			return ExecDivide(pExecution);
-		case IT_POWER: 
+		case IT_POWER:
 			return ExecPower(pExecution);
-		case IT_COMPARE_EQ: 
+		case IT_COMPARE_EQ:
 			return ExecCompareEq(pExecution);
-		case IT_COMPARE_NOT_EQ: 
+		case IT_COMPARE_NOT_EQ:
 			return ExecCompareNotEq(pExecution);
-		case IT_COMPARE_LESS: 
+		case IT_COMPARE_LESS:
 			return ExecCompareLess(pExecution);
-		case IT_COMPARE_LESS_EQ: 
+		case IT_COMPARE_LESS_EQ:
 			return ExecCompareLessEq(pExecution);
-		case IT_NOT: 
+		case IT_NOT:
 			return ExecNot(pExecution);
-		case IT_MOVE_AND_JUMP_IF_FALSE: 
+		case IT_MOVE_AND_JUMP_IF_FALSE:
 			return ExecMoveAndJumpIfFalse(pExecution);
-		case IT_MOVE_AND_JUMP_IF_TRUE: 
+		case IT_MOVE_AND_JUMP_IF_TRUE:
 			return ExecMoveAndJumpIfTrue(pExecution);
-		case IT_CALL: 
+		case IT_CALL:
 			return ExecCall(pExecution);
-		case IT_RETURN: 
+		case IT_RETURN:
 			return ExecReturn(pExecution);
   	default:
       ASSERT(!"Invalid instruction");
@@ -416,7 +416,7 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
 		return IERR_OPERAND_TYPE;
 
 	short i;
-  CExecution kExecution(pExecution->m_pInterpreter);
+  CExecution kExecution(pExecution->m_pInterpreter, pExecution);
 	CArray<CValue> arrParams(m_nSrc0 - 1);
 	for (i = 1; i < m_nSrc0; ++i)
 		arrParams.Append(pExecution->m_arrLocal[m_nDest + i]);
@@ -486,13 +486,21 @@ CStrAny CInstruction::ToStr(CFragment *pFragment) const
 
 // CExecution -----------------------------------------------------------------
 
-CExecution::CExecution(CInterpreter *pInterpreter) : 
-  m_pInterpreter(pInterpreter)
+CExecution::CExecution(CInterpreter *pInterpreter, CExecution *pCallerExecution) :
+  m_pInterpreter(pInterpreter), m_pCallerExecution(pCallerExecution), m_pCalleeExecution(0)
 {
+  if (m_pCallerExecution) {
+    ASSERT(!m_pCallerExecution->m_pCalleeExecution);
+    m_pCallerExecution->m_pCalleeExecution = this;
+  }
 }
 
 CExecution::~CExecution()
 {
+  if (m_pCallerExecution) {
+    ASSERT(m_pCallerExecution->m_pCalleeExecution == this);
+    m_pCallerExecution->m_pCalleeExecution = 0;
+  }
 }
 
 CValueTable *CExecution::GetGlobalEnvironment()

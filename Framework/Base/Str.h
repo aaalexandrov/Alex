@@ -27,7 +27,7 @@ public:
 
   static inline int GetMaxLen(int iLen);
   static inline size_t GetAllocSize(int iLen) { return sizeof(CStrHeader) + GetMaxLen(iLen) + 1; }
-  static inline CStrHeader *Alloc(int iLen)    { return (CStrHeader *) NEWARR(char, GetAllocSize(iLen)); }
+  static inline CStrHeader *Alloc(int iLen)   { return (CStrHeader *) NEWARR_T(CStrHeader, char, GetAllocSize(iLen)); }
   static inline void Delete(const CStrHeader *pHeader);
 
   CStrHeader const *GetUnique() const;
@@ -167,7 +167,7 @@ inline void CStrHeader::Delete(const CStrHeader *pHeader)
 {
   if (pHeader->m_bInRepository)
     GetRepository().RemoveValue(const_cast<CStrHeader *>(pHeader));
-  DELARR(GetAllocSize(pHeader->m_iLen), (char *) pHeader);
+  DELARR_T(CStrHeader, GetAllocSize(pHeader->m_iLen), (char *) pHeader);
 }
 
 inline CStrHeader *CStrHeader::AssureInRepository()

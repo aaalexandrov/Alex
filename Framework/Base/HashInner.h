@@ -207,7 +207,7 @@ CHashInner<T, K, H, P>::CHashInner(int iSize)
 template <class T, class K, class H, class P>
 CHashInner<T, K, H, P>::~CHashInner()
 {
-  DELARR(m_iMaxCount, m_pElements);
+  DELARR_T(T, m_iMaxCount, m_pElements);
 }
 
 template <class T, class K, class H, class P>
@@ -217,7 +217,7 @@ void CHashInner<T, K, H, P>::Init(int iSize)
 	m_iCount = 0;
 	m_iMaxCount = iSize;
 	m_iLastFree = m_iMaxCount - 1;
-	m_pElements = NEWARR(CTableElem, m_iMaxCount);
+	m_pElements = NEWARR_T(T, CTableElem, m_iMaxCount);
 }
 
 template <class T, class K, class H, class P>
@@ -228,7 +228,7 @@ void CHashInner<T, K, H, P>::DeleteAll(int iSize)
 	if (iSize != m_iMaxCount) {
 		for (int i = 0; i < m_iMaxCount; i++)
 			m_pElements[i].DeleteData();
-    DELARR(m_iMaxCount, m_pElements);
+    DELARR_T(T, m_iMaxCount, m_pElements);
 		Init(iSize);
 	} else {
 		for (int i = 0; i < m_iMaxCount; i++)
@@ -244,7 +244,7 @@ void CHashInner<T, K, H, P>::Clear(int iSize)
   if (!iSize)
 		iSize = m_iMaxCount;
 	if (iSize != m_iMaxCount) {
-		DELARR(m_iMaxCount, m_pElements);
+		DELARR_T(T, m_iMaxCount, m_pElements);
 		Init(iSize);
 	} else {
 		for (int i = 0; i < m_iMaxCount; i++) {

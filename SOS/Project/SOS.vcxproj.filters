@@ -82,6 +82,7 @@
     <ClCompile Include="..\..\Framework\Base\Mem.cpp">
       <Filter>Base</Filter>
     </ClCompile>
+    <ClCompile Include="..\Src\Allocation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Src\Frontend.h" />
@@ -164,6 +165,7 @@
     <ClInclude Include="..\..\Framework\Base\Mem.h">
       <Filter>Base</Filter>
     </ClInclude>
+    <ClInclude Include="..\Src\Allocation.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Src\SOS.txt" />

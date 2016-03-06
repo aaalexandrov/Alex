@@ -137,7 +137,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::Add(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = NEW(TNode, (t));
+    m_pRoot = NEW_T(T, TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -151,7 +151,7 @@ void CAVLTree<T, K, P>::Add(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, NEW(TNode, (t)));
+      pNode->SetChild(iChild, NEW_T(T, TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -165,7 +165,7 @@ template <class T, class K, class P>
 void CAVLTree<T, K, P>::AddUnique(T t)
 {
   if (!m_pRoot) {
-    m_pRoot = NEW(TNode, (t));
+    m_pRoot = NEW_T(T, TNode, (t));
     m_pRoot->pParent = 0;
     m_iCount = 1;
     return;
@@ -187,7 +187,7 @@ void CAVLTree<T, K, P>::AddUnique(T t)
       pNode = pNode->pChild[iChild];
     else {
       uint8_t btLevel = pNode->btLevel;
-      pNode->SetChild(iChild, NEW(TNode, (t)));
+      pNode->SetChild(iChild, NEW_T(T, TNode, (t)));
       if (btLevel != pNode->btLevel)
         while (pNode->pParent && !Balance(pNode->pParent))
           pNode = pNode->pParent;
@@ -236,7 +236,7 @@ void CAVLTree<T, K, P>::Remove(TIter it)
     pParent->SetChild(pParent->GetChildDir(it.m_pNode), pNode);
   else
     m_pRoot = pNode;
-  DEL(it.m_pNode);
+  DEL_T(T, it.m_pNode);
   while (pPar) {
     Balance(pPar);
     pPar = pPar->pParent;
@@ -289,7 +289,7 @@ void CAVLTree<T, K, P>::DeleteAll(TNode *pNode)
   DeleteAll(pNode->pChild[0]);
   DeleteAll(pNode->pChild[1]);
   DEL(pNode->Data);
-  DEL(pNode);
+  DEL_T(T, pNode);
 }
 
 template <class T, class K, class P>
@@ -299,7 +299,7 @@ void CAVLTree<T, K, P>::Clear(TNode *pNode)
     return;
   Clear(pNode->pChild[0]);
   Clear(pNode->pChild[1]);
-  DEL(pNode);
+  DEL_T(T, pNode);
 }
 
 template <class T, class K, class P>

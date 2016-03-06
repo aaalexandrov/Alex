@@ -70,7 +70,7 @@ public:
 	void SetCompareLess(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS, nDest, nSrc0, nSrc1); }
 	void SetCompareLessEq(short nDest, short nSrc0, short nSrc1) { Set(IT_COMPARE_LESS_EQ, nDest, nSrc0, nSrc1); }
 	void SetNot(short nDest, short nSrc0) { Set(IT_NOT, nDest, nSrc0); }
-	void SetMoveAndJumpIfFalse(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_FALSE, nDest, nSrc0, nSrc1); } 
+	void SetMoveAndJumpIfFalse(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_FALSE, nDest, nSrc0, nSrc1); }
 	void SetMoveAndJumpIfTrue(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_TRUE, nDest, nSrc0, nSrc1); }
 	void SetCall(short nDest, short nSrc0, short nSrc1) { Set(IT_CALL, nDest, nSrc0, nSrc1); }
 	void SetReturn(short nDest, short nSrc0) { Set(IT_RETURN, nDest, nSrc0); }
@@ -127,8 +127,9 @@ public:
 	short                   m_nReturnBase, m_nReturnCount;
   CFragment              *m_pCode;
   CInstruction           *m_pNextInstruction;
+  CExecution             *m_pCallerExecution, *m_pCalleeExecution;
 
-	CExecution(CInterpreter *pInterpreter);
+	CExecution(CInterpreter *pInterpreter, CExecution *pCallerExecution);
 	~CExecution();
 
   CValueTable *GetGlobalEnvironment();
@@ -146,7 +147,7 @@ inline void CInstruction::GetTableValue(CValueTable const &kTable, CValue const 
   CValue::THash::TIter it = kTable.m_Hash.Find(kKey);
 	if (it)
 		kValue = (*it).m_Val;
-	else 
+	else
 		kValue.ClearValue();
 }
 
@@ -158,8 +159,8 @@ inline void CInstruction::SetTableValue(CValueTable &kTable, CValue const &kKey,
 			kTable.m_Hash.Remove(it);
 		else
 		  (*it).m_Val = kValue;
-	} else 
-    if (kValue.m_btType != CValue::VT_NONE) 
+	} else
+    if (kValue.m_btType != CValue::VT_NONE)
       kTable.m_Hash.Add(CValue::THash::Elem(kKey, kValue));
 }
 

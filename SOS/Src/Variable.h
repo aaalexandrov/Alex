@@ -26,13 +26,13 @@ public:
 
 public:
   union {
-		bool                     m_bValue;
-    float                    m_fValue;
-    CStrHeader const        *m_pStrValue;
-    CValueTable             *m_pTableValue;
-		CFragment               *m_pFragment;
-    FnNative                *m_pNativeFunc;
-    void                    *m_Value;
+		bool              m_bValue;
+    float             m_fValue;
+    CStrHeader const *m_pStrValue;
+    CValueTable      *m_pTableValue;
+		CFragment        *m_pFragment;
+    FnNative         *m_pNativeFunc;
+    void             *m_Value;
   };
   uint8_t m_btType;
 

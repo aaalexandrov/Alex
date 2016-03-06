@@ -1,10 +1,6 @@
-- Track allocated memory
-- Trigger garbage collection when memory grows
-
 - Lexical closures
 - Non-constant upvalues
 - Co-routines
-- Number of elements in table
 - Object-type function calls (t:m(p))
 - Compiled fragment saving / loading
 - Compiled code optimizer
@@ -17,6 +13,7 @@
 - Function result forwarding for multiple returns
 - Variable number of arguments
 
+- Track allocated memory through adding / subtracting value sizes as values are added / removed from the interpreter's CValueRegistry, and not through allocator?
 - Make the garbage collection incremental
 - Error reporting & recovery
 - Grammar post-parsing transform pass
@@ -36,6 +33,10 @@
 + Iteration
 + Garbage collection
 + Struct-type table element accessors (.field)
++ Track allocated memory through allocator
++ Make garbage collector also traverse the values in the current execution's call stack as they are reachable
++ Trigger garbage collection when used memory doubles
++ Number of elements in table - length() function
 
 
 

@@ -37,6 +37,10 @@ public:
 };
 
 // Dummy var - just a method sink
+class CDummyVar;
+template <>
+struct TGetAllocator<CDummyVar> { typedef TGetAllocator<CBaseVar>::Type Type; };
+
 class CDummyVar: public CBaseVar {
   DEFRTTI(CDummyVar, CBaseVar, true)
 public:
@@ -61,7 +65,6 @@ public:
 
   virtual CBaseVar *Clone() const           { return NEW(CDummyVar, ());         }
 };
-
 
 // Value wrappers
 template <class T>
@@ -224,6 +227,9 @@ public:
 };
 
 template <class T>
+struct TGetAllocator<CVar<T> > { typedef TGetAllocator<CBaseVar>::Type Type; };
+
+template <class T>
 class CVarRef: public CVarTpl<CRef<T> > {
 	DEFRTTI(CVarRef<T>, CVarTpl<CRef<T> >, true)
 public:
@@ -234,6 +240,9 @@ public:
 
   CBaseVar *Clone() const { CVarRef<T> *pVar = NEW(CVarRef<T>, (*(T*) GetRef())); return pVar; }
 };
+
+template <class T>
+struct TGetAllocator<CVarRef<T> > { typedef TGetAllocator<CBaseVar>::Type Type; };
 
 // Var Objects - collections of named values ----------------------------------
 
@@ -282,6 +291,9 @@ public:
   static const CStrAny &GetLastIterConst() { static const CStrAny sLast(ST_WHOLE, "@last"); return sLast; }
 };
 
+template <>
+struct TGetAllocator<CVarObj> { typedef TGetAllocator<CBaseVar>::Type Type; };
+
 // Collection of CVar objects -------------------------------------------------
 
 class CVarValueObj: public CVarObj {
@@ -303,6 +315,9 @@ public:
   virtual bool GetVar(const CStrAny &sVar, CBaseVar &vDst) const;
   virtual bool SetVar(const CStrAny &sVar, const CBaseVar &vSrc);
 };
+
+template <>
+struct TGetAllocator<CVarValueObj> { typedef TGetAllocator<CVarObj>::Type Type; };
 
 class CVarHash: public CVarValueObj {
   DEFRTTI(CVarHash, CVarValueObj, true)
@@ -360,6 +375,12 @@ public:
 	virtual CBaseVar *FindVar(const CStrAny &sVar) const;
   virtual bool ReplaceVar(const CStrAny &sVar, CBaseVar *pSrc, bool bAdding = false);
 };
+
+template <>
+struct TGetAllocator<CVarHash::TVarName> { typedef TGetAllocator<CBaseVar>::Type Type; };
+
+template <>
+struct TGetAllocator<CVarHash> { typedef TGetAllocator<CVarObj>::Type Type; };
 
 // SetValue implementation - initialization of a value from a var ----------------------------
 

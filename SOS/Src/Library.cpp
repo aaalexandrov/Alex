@@ -9,6 +9,7 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "print").GetHeader()), CValue(Print));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "dump").GetHeader()), CValue(Dump));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "next").GetHeader()), CValue(Next));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "length").GetHeader()), CValue(Length));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "type").GetHeader()), CValue(Type));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tostring").GetHeader()), CValue(ToString));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
@@ -16,6 +17,8 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
 	kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "compile").GetHeader()), CValue(Compile));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "eval").GetHeader()), CValue(Eval));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "evalfile").GetHeader()), CValue(EvalFile));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "memused").GetHeader()), CValue(MemUsed));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "memcollect").GetHeader()), CValue(MemCollect));
 
   return IERR_OK;
 }
@@ -67,6 +70,20 @@ EInterpretError CFunctionLibrary::Next(CExecution &kExecution, CArray<CValue> &a
     arrParams[1] = (*it).m_Val;
   } else
     arrParams.SetCount(0);
+
+  return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::Length(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  for (int i = 0; i < arrParams.m_iCount; ++i) {
+    if (arrParams[i].m_btType == CValue::VT_TABLE)
+      arrParams[i] = CValue((float) arrParams[i].m_pTableValue->m_Hash.m_iCount);
+    else if (arrParams[i].m_btType == CValue::VT_STRING)
+      arrParams[i] = CValue((float) CStrAny(arrParams[i].m_pStrValue).Length());
+    else
+      return IERR_INVALID_OPERAND;
+  }
 
   return IERR_OK;
 }
@@ -168,4 +185,18 @@ EInterpretError CFunctionLibrary::EvalFile(CExecution &kExecution, CArray<CValue
   }
 
 	return err;
+}
+
+EInterpretError CFunctionLibrary::MemUsed(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  arrParams.SetCount(1);
+  arrParams[0] = CValue((float) kExecution.m_pInterpreter->GetMemoryUsed());
+  return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::MemCollect(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  arrParams.SetCount(0);
+  EInterpretError err = kExecution.m_pInterpreter->CollectGarbage();
+  return err;
 }

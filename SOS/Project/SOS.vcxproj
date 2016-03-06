@@ -118,6 +118,7 @@
     <ClCompile Include="..\..\Framework\OS\Windows\WinFile.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinThreads.cpp" />
     <ClCompile Include="..\..\Framework\OS\Windows\WinTiming.cpp" />
+    <ClCompile Include="..\Src\Allocation.cpp" />
     <ClCompile Include="..\Src\BNF.cpp" />
     <ClCompile Include="..\Src\BNFGrammar.cpp" />
     <ClCompile Include="..\Src\Compiler.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="..\..\Framework\OS\Windows\WinFile.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinThreads.h" />
     <ClInclude Include="..\..\Framework\OS\Windows\WinTiming.h" />
+    <ClInclude Include="..\Src\Allocation.h" />
     <ClInclude Include="..\Src\BNF.h" />
     <ClInclude Include="..\Src\BNFGrammar.h" />
     <ClInclude Include="..\Src\Compiler.h" />

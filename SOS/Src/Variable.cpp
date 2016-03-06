@@ -32,19 +32,19 @@ CValueRegistry::~CValueRegistry()
   DEL(m_pUnprocessed);
 }
 
-void CValueRegistry::Add(CValue const &kValue)    
-{ 
-  m_pUnprocessed->Add(kValue); 
+void CValueRegistry::Add(CValue const &kValue)
+{
+  m_pUnprocessed->Add(kValue);
 }
 
-void CValueRegistry::Remove(CValue const &kValue) 
-{ 
-  m_pUnprocessed->RemoveValue(kValue); 
+void CValueRegistry::Remove(CValue const &kValue)
+{
+  m_pUnprocessed->RemoveValue(kValue);
 }
 
 void CValueRegistry::DeleteValues(THashValues &hashValues)
 {
-  for (THashValues::TIter it(&hashValues); it; ++it) 
+  for (THashValues::TIter it(&hashValues); it; ++it)
     (*it).DeleteValue();
   hashValues.Clear();
 }
@@ -71,7 +71,7 @@ void CValueRegistry::Process(CList<CValue>::TNode *pNode)
       MoveToProcessing((*itVal).m_Key);
       MoveToProcessing((*itVal).m_Val);
     }
-  } else 
+  } else
     if (kValue.m_btType == CValue::VT_FRAGMENT) {
       for (int i = 0; i < kValue.m_pFragment->m_arrConst.m_iCount; ++i)
         MoveToProcessing(kValue.m_pFragment->m_arrConst[i]);
@@ -80,12 +80,21 @@ void CValueRegistry::Process(CList<CValue>::TNode *pNode)
 
 void CValueRegistry::CollectGarbage(CInterpreter *pInterpreter)
 {
+  // Move root values to processing - global environment and data that's used by active executions
   ASSERT(!m_pProcessed->m_iCount && !m_lstProcessing.m_iCount);
   MoveToProcessing(CValue(pInterpreter->m_pGlobalEnvironment));
+  for (CExecution *pExecution = &pInterpreter->m_kExecution; pExecution; pExecution = pExecution->m_pCalleeExecution) {
+    MoveToProcessing(CValue(pExecution->m_pCode));
+    for (int i = 0; i < pExecution->m_arrLocal.m_iCount; ++i)
+      MoveToProcessing(pExecution->m_arrLocal[i]);
+  }
+
+  // Process currently queued data
   ASSERT(m_lstProcessing.m_iCount);
-  while (m_lstProcessing.m_iCount) 
+  while (m_lstProcessing.m_iCount)
     Process(m_lstProcessing.m_pHead);
 
+  // Delete what's left after processing
   DeleteValues(*m_pUnprocessed);
   Util::Swap(m_pUnprocessed, m_pProcessed);
 }
@@ -94,19 +103,21 @@ void CValueRegistry::CollectGarbage(CInterpreter *pInterpreter)
 
 EInterpretError CFragment::Execute(CExecution *pExecution)
 {
+  EInterpretError res = IERR_OK;
   while (pExecution->m_pNextInstruction) {
     CInstruction *pInstruction = pExecution->m_pNextInstruction;
     pExecution->m_pNextInstruction = GetNextInstruction(pInstruction);
-    EInterpretError res = pInstruction->Execute(pExecution);
+    res = pInstruction->Execute(pExecution);
     if (res != IERR_OK)
       return res;
+    res = pExecution->m_pInterpreter->CheckForCollection();
   }
-  return IERR_OK;
+  return res;
 }
 
-CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const 
-{ 
-  ASSERT(pInstruction >= m_arrCode.m_pArray && pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount); 
+CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const
+{
+  ASSERT(pInstruction >= m_arrCode.m_pArray && pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount);
   if (pInstruction < m_arrCode.m_pArray + m_arrCode.m_iCount - 1)
     return pInstruction + 1;
   return 0;

@@ -49,6 +49,9 @@ public:
   virtual bool ReplaceVar(CStrAny const &sVar, CBaseVar *pSrc, bool bAdding = false);
 };
 
+template <>
+struct TGetAllocator<CVarMerge> { typedef TGetAllocator<CVarObj>::Type Type; };
+
 class CVarTemplate: public CObject {
   DEFRTTI(CVarTemplate, CObject, true)
 public:
@@ -66,6 +69,9 @@ public:
 
   virtual void CopyValues(CVarObj *pSrcVars);
 };
+
+template <>
+struct TGetAllocator<CVarTemplate> { typedef TGetAllocator<CVarObj>::Type Type; };
 
 class CFile;
 

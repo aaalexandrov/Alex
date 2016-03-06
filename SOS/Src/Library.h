@@ -12,6 +12,7 @@ public:
   static EInterpretError Print(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Dump(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Next(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError Length(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Type(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError ToString(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError ToNumber(CExecution &kExecution, CArray<CValue> &arrParams);
@@ -19,6 +20,8 @@ public:
 	static EInterpretError Compile(CExecution &kExecution, CArray<CValue> &arrParams);
 	static EInterpretError Eval(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError EvalFile(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError MemUsed(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError MemCollect(CExecution &kExecution, CArray<CValue> &arrParams);
 };
 
 #endif

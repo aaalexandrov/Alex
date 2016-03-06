@@ -1,17 +1,25 @@
 #include "StdAfx.h"
 #include "Mem.h"
+#include "Hash.h"
 
-class CMemTest {
+class CMemBase {};
+
+class CMemTest: public CMemBase {
 public:
   int m_iData;
 
   CMemTest(int i = 55): m_iData(i) {}
   ~CMemTest() { m_iData = -11; }
+
+  operator size_t() const { return m_iData; }
 };
 
 struct TTestAlloc {
-  void *Alloc(size_t uiSize, const char *pFile, int iLine) { return new uint8_t[uiSize]; }
-  void Free(void *p, const char *pFile, int iLine)         { delete[] (uint8_t *) p; }
+  inline void *Alloc(size_t uiSize, const char *pFile, int iLine) { return malloc(uiSize); }
+  inline void Free(void *p, const char *pFile, int iLine)         { free(p); }
+  inline size_t GetBlockSize(void *p)                             { return malloc_usable_size(p); }
+
+  TTestAlloc() {}
 };
 
 template <>
@@ -34,6 +42,8 @@ struct Tst {
 struct TMemTest {
   TMemTest()
   {
+    auto a = GetAllocatorInstance((CHash<CMemTest>::CHashList *) 0);
+
     int *n = NEW(int, ());
     DEL(n);
 
@@ -45,5 +55,8 @@ struct TMemTest {
 
     CMemTest *pp = NEW(CMemTest, (44));
     DEL(pp);
+
+    CHash<CMemTest> h;
+    h.Add(CMemTest());
   }
 } /*g_Test*/;

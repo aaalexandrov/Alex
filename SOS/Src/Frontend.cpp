@@ -34,7 +34,7 @@ int ProcessInput()
 				} else {
 					fprintf(stdout, "<< %s\n", g_IERR2Str.GetStr(err).m_pBuf);
 				}
-        g_kInterpreter.CollectGarbage();
+//        g_kInterpreter.CollectGarbage();
       } else
 				fprintf(stdout, "<< %s\n", g_IERR2Str.GetStr(err).m_pBuf);
 				if (err == IERR_COMPILE_FAILED) {

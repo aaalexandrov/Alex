@@ -106,6 +106,8 @@
 		<Unit filename="../../Framework/OS/Windows/WinThreads.h" />
 		<Unit filename="../../Framework/OS/Windows/WinTiming.cpp" />
 		<Unit filename="../../Framework/OS/Windows/WinTiming.h" />
+		<Unit filename="../Src/Allocation.cpp" />
+		<Unit filename="../Src/Allocation.h" />
 		<Unit filename="../Src/BNF.cpp" />
 		<Unit filename="../Src/BNF.h" />
 		<Unit filename="../Src/BNFGrammar.cpp" />

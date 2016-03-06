@@ -77,7 +77,7 @@ CList<T, K, P>::~CList()
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    DEL(p);
+    DEL_T(T, p);
   }
 }
 
@@ -88,7 +88,7 @@ void CList<T, K, P>::DeleteAll()
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
     DEL(p->Data);
-    DEL(p);
+    DEL_T(T, p);
   }
   m_pTail = 0;
 	m_iCount = 0;
@@ -100,7 +100,7 @@ void CList<T, K, P>::Clear()
   while (m_pHead) {
     TNode *p = m_pHead;
     m_pHead = m_pHead->pNext;
-    DEL(p);
+    DEL_T(T, p);
   }
   m_pTail = 0;
 	m_iCount = 0;
@@ -109,13 +109,13 @@ void CList<T, K, P>::Clear()
 template <class T, class K, class P>
 void CList<T, K, P>::Push(T t)
 {
-  PushNode(NEW(TNode, (t)));
+  PushNode(NEW_T(T, TNode, (t)));
 }
 
 template <class T, class K, class P>
 void CList<T, K, P>::PushTail(T t)
 {
-  PushNodeTail(NEW(TNode, (t)));
+  PushNodeTail(NEW_T(T, TNode, (t)));
 }
 
 template <class T, class K, class P>
@@ -124,7 +124,7 @@ T &CList<T, K, P>::Pop(T &t)
   TNode *pNode = PopNode();
   if (pNode) {
     t = pNode->Data;
-    DEL(pNode);
+    DEL_T(T, pNode);
   }
   return t;
 }
@@ -135,7 +135,7 @@ T &CList<T, K, P>::PopTail(T &t)
   TNode *pNode = PopNodeTail();
   if (pNode) {
     t = pNode->Data;
-    DEL(pNode);
+    DEL_T(T, pNode);
   }
   return t;
 }
@@ -191,13 +191,13 @@ T CList<T, K, P>::Tail() const
 template <class T, class K, class P>
 void CList<T, K, P>::PushAfter(TNode *pAfter, T t)
 {
-  PushNodeAfter(pAfter, NEW(TNode, (t)));
+  PushNodeAfter(pAfter, NEW_T(T, TNode, (t)));
 }
 
 template <class T, class K, class P>
 void CList<T, K, P>::PushBefore(TNode *pBefore, T t)
 {
-  PushNodeBefore(pBefore, NEW(TNode, (t)));
+  PushNodeBefore(pBefore, NEW_T(T, TNode, (t)));
 }
 
 template <class T, class K, class P>
@@ -213,7 +213,7 @@ void CList<T, K, P>::Remove(TNode *pNode)
     pNode->pPrev->pNext = pNode->pNext;
   else
     m_pHead = pNode->pNext;
-  DEL(pNode);
+  DEL_T(T, pNode);
   m_iCount--;
 }
 
