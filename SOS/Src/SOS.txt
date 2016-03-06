@@ -5,13 +5,14 @@
 - Compiled fragment saving / loading
 - Compiled code optimizer
 
-- String length/element access operations
 - For loops
 - Do blocks
-- Core function library
 - Tail function calls
 - Function result forwarding for multiple returns
 - Variable number of arguments
+
+- Make the frontend dump the return values from top level executed fragments
+- Core function library
 
 - Track allocated memory through adding / subtracting value sizes as values are added / removed from the interpreter's CValueRegistry, and not through allocator?
 - Make the garbage collection incremental
@@ -37,6 +38,7 @@
 + Make garbage collector also traverse the values in the current execution's call stack as they are reachable
 + Trigger garbage collection when used memory doubles
 + Number of elements in table - length() function
++ String length/element access operations - length() and substr(str, start, len)
 
 
 

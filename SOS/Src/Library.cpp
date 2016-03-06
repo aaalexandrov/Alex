@@ -11,6 +11,7 @@ EInterpretError CFunctionLibrary::Init(CInterpreter &kInterpreter)
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "next").GetHeader()), CValue(Next));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "length").GetHeader()), CValue(Length));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "type").GetHeader()), CValue(Type));
+  kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "substr").GetHeader()), CValue(SubStr));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tostring").GetHeader()), CValue(ToString));
   kInterpreter.SetGlobal(CValue(CStrAny(ST_CONST, "tonumber").GetHeader()), CValue(ToNumber));
 
@@ -92,6 +93,21 @@ EInterpretError CFunctionLibrary::Type(CExecution &kExecution, CArray<CValue> &a
 {
   for (int i = 0; i < arrParams.m_iCount; ++i)
     arrParams[i] = CValue(CValue::s_VT2Str.GetStr(arrParams[i].m_btType).GetHeader());
+  return IERR_OK;
+}
+
+EInterpretError CFunctionLibrary::SubStr(CExecution &kExecution, CArray<CValue> &arrParams)
+{
+  if (arrParams.m_iCount < 2 || arrParams.m_iCount > 3 ||
+      arrParams[0].m_btType != CValue::VT_STRING ||
+      arrParams[1].m_btType != CValue::VT_FLOAT ||
+      arrParams.m_iCount > 2 && arrParams[2].m_btType != CValue::VT_FLOAT)
+    return IERR_INVALID_OPERAND;
+  int iStart = (int) arrParams[1].GetFloat() - 1;
+  int iLen = arrParams.m_iCount > 2 ? (int) arrParams[2].GetFloat() : 1;
+  CStrAny s(arrParams[0].m_pStrValue);
+  arrParams.SetCount(1);
+  arrParams[0] = CValue(s.SubStr(iStart, iStart + iLen, ST_CONST).GetHeader());
   return IERR_OK;
 }
 

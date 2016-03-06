@@ -14,6 +14,7 @@ public:
   static EInterpretError Next(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Length(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError Type(CExecution &kExecution, CArray<CValue> &arrParams);
+  static EInterpretError SubStr(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError ToString(CExecution &kExecution, CArray<CValue> &arrParams);
   static EInterpretError ToNumber(CExecution &kExecution, CArray<CValue> &arrParams);
 
