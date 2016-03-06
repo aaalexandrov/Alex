@@ -7,7 +7,7 @@
 
 CRTTIRegisterer<CTimerLin> g_RegTimerLin;
 
-CTimerLin(): CTimerBase()
+CTimerLin::CTimerLin(): CTimerBase()
 {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
