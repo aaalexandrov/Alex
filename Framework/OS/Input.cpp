@@ -23,12 +23,14 @@ void CInput::Create(COSWindow *pWindow)
 {
 #if defined(WINDOWS)
   char const *chInputClass = "CWinInput";
+#elif defined(LINUX)
+  char const *chInputClass = "CLinInput";
 #endif
   CRTTIHolder::Get()->Find(chInputClass)->CreateInstance();
   CInput::Get()->SetOSWindow(pWindow);
 }
 
-void CInput::Destroy() 
+void CInput::Destroy()
 {
   delete CInput::Get();
 }
@@ -55,7 +57,7 @@ const CRect<int> *CInput::GetMouseClip()
 
 void CInput::SetMouseClip(const CRect<int> *pClipRect)
 {
-  if  (pClipRect) 
+  if  (pClipRect)
     m_rcClip = *pClipRect;
   else
     m_rcClip.SetEmpty();

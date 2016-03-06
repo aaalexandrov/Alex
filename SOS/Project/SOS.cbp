@@ -84,12 +84,8 @@
 		<Unit filename="../../Framework/Base/Vector.h" />
 		<Unit filename="../../Framework/OS/File.cpp" />
 		<Unit filename="../../Framework/OS/File.h" />
-		<Unit filename="../../Framework/OS/Input.cpp" />
-		<Unit filename="../../Framework/OS/Input.h" />
 		<Unit filename="../../Framework/OS/Linux/LinFile.cpp" />
 		<Unit filename="../../Framework/OS/Linux/LinFile.h" />
-		<Unit filename="../../Framework/OS/Linux/LinInput.cpp" />
-		<Unit filename="../../Framework/OS/Linux/LinInput.h" />
 		<Unit filename="../../Framework/OS/Linux/LinThreads.cpp" />
 		<Unit filename="../../Framework/OS/Linux/LinThreads.h" />
 		<Unit filename="../../Framework/OS/Linux/LinTiming.cpp" />
@@ -100,8 +96,6 @@
 		<Unit filename="../../Framework/OS/Timing.h" />
 		<Unit filename="../../Framework/OS/Windows/WinFile.cpp" />
 		<Unit filename="../../Framework/OS/Windows/WinFile.h" />
-		<Unit filename="../../Framework/OS/Windows/WinInput.cpp" />
-		<Unit filename="../../Framework/OS/Windows/WinInput.h" />
 		<Unit filename="../../Framework/OS/Windows/WinThreads.cpp" />
 		<Unit filename="../../Framework/OS/Windows/WinThreads.h" />
 		<Unit filename="../../Framework/OS/Windows/WinTiming.cpp" />
