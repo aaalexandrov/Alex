@@ -118,6 +118,8 @@
 		<Unit filename="../Src/Interpreter.h" />
 		<Unit filename="../Src/Library.cpp" />
 		<Unit filename="../Src/Library.h" />
+		<Unit filename="../Src/PostGrammar.cpp" />
+		<Unit filename="../Src/PostGrammar.h" />
 		<Unit filename="../Src/SOS.cpp" />
 		<Unit filename="../Src/SOS.txt" />
 		<Unit filename="../Src/Token.cpp" />
