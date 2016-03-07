@@ -2,6 +2,7 @@
 #define __COMPILER_H
 
 #include "BNFGrammar.h"
+#include "PostGrammar.h"
 #include "Execution.h"
 
 class CCompiler {
@@ -78,6 +79,7 @@ public:
 	EInterpretError CompileAssignment(CBNFGrammar::CNode *pNode, short &nDest);
 	EInterpretError CompileIf(CBNFGrammar::CNode *pNode, short &nDest);
   EInterpretError CompileWhile(CBNFGrammar::CNode *pNode, short &nDest);
+  EInterpretError CompileDo(CBNFGrammar::CNode *pNode, short &nDest);
 
 	EInterpretError CompileNode(CBNFGrammar::CNode *pNode, short &nDest);
 
@@ -86,9 +88,10 @@ public:
 
 class CCompileChain {
 public:
-  CTokenizer     m_kTokenizer;
-  CBNFGrammar    m_kGrammar;
-  CCompiler      m_kCompiler;
+  CTokenizer        m_kTokenizer;
+  CBNFGrammar       m_kGrammar;
+  CGrammarTransform m_kGrammarTransform;
+  CCompiler         m_kCompiler;
 
 	void Clear();
 

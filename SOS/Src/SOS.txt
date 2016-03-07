@@ -6,7 +6,7 @@
 - Compiled code optimizer
 
 - For loops
-- Do blocks
+- Break keyword to abort loop execution
 - Tail function calls
 - Function result forwarding for multiple returns
 - Variable number of arguments
@@ -16,7 +16,7 @@
 
 - Track allocated memory through adding / subtracting value sizes as values are added / removed from the interpreter's CValueRegistry, and not through allocator?
 - Make the garbage collection incremental
-- Error reporting & recovery
+- Error reporting & recovery - output diagnostic messages on parsing / execution error, and try to recover parsing after first error
 - Grammar post-parsing transform pass
 - Grammar optimizer
 
@@ -39,7 +39,7 @@
 + Trigger garbage collection when used memory doubles
 + Number of elements in table - length() function
 + String length/element access operations - length() and substr(str, start, len)
-
++ Do blocks
 
 
 -------------------------------------------------------------------------------
@@ -78,7 +78,9 @@ Assignment ::= LValue { "," LValue } "=" ExpressionList
 Return ::= "return" [ ExpressionList ]
 If ::= "if" Expression "then" { Operator } [ "else" { Operator } ] "end"
 While ::= "while" Expression "do" { Operator } "end"
+Do ::= "do" { Operator } "end"
+For ::= "for" ( ( IDENTIFIER "," IDENTIFIER "=" Expression ) | ( IDENTIFIER "=" Expression "," Expression [ "," Expression ] ) ) "do" { Operator } "end"
 
-Operator ::= While | If | Return | Locals | Assignment | Call
+Operator ::= Do | While | If | Return | Locals | Assignment | Call
 
 Program ::= { Operator }

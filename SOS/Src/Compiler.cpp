@@ -10,28 +10,28 @@ public:
 	CInstructionStream(CCompiler &kCompiler): m_kCompiler(kCompiler), m_nFirst(CInstruction::INVALID_OPERAND), m_nAccum(CInstruction::INVALID_OPERAND), m_nPrevious(CInstruction::INVALID_OPERAND) {}
 	~CInstructionStream() { ReleaseLocals(); }
 
-	void ReleaseLocals() 
+	void ReleaseLocals()
 	{
-		ReleaseLocal(m_nFirst); 
-		if (m_nAccum != m_nFirst) 
-			ReleaseLocal(m_nAccum); 
+		ReleaseLocal(m_nFirst);
+		if (m_nAccum != m_nFirst)
+			ReleaseLocal(m_nAccum);
 		m_nFirst = m_nAccum = m_nPrevious = CInstruction::INVALID_OPERAND;
 	}
 
-	void ReleaseLocal(short nLocal) 
-	{ 
-		if (nLocal >= 0) 
-			m_kCompiler.m_kLocals.ReleaseTemporary(nLocal); 
-	} 
+	void ReleaseLocal(short nLocal)
+	{
+		if (nLocal >= 0)
+			m_kCompiler.m_kLocals.ReleaseTemporary(nLocal);
+	}
 
-	short GetAccumulator() 
-	{ 
+	short GetAccumulator()
+	{
 		if (m_nAccum < 0 || m_kCompiler.m_kLocals.m_arrLocals[m_nAccum] > 1)
 			m_nAccum = m_kCompiler.m_kLocals.AllocLocal();
 		return m_nAccum;
 	}
 
-	EInterpretError AddOperation(CInstruction::EType eIT, CBNFGrammar::CNode *pNode, short &nDest, bool bFinal) 
+	EInterpretError AddOperation(CInstruction::EType eIT, CBNFGrammar::CNode *pNode, short &nDest, bool bFinal)
 	{
 		CInstruction kInstr;
 		EInterpretError err;
@@ -57,7 +57,7 @@ public:
 			} else
 				nIndex = CInstruction::INVALID_OPERAND;
 			if (bFinal) {
-				if (nDest < 0) 
+				if (nDest < 0)
 					nDest = GetAccumulator();
 				kInstr.Set(eIT, nDest, m_nPrevious, nIndex);
 				m_nPrevious = nDest;
@@ -121,7 +121,7 @@ short CCompiler::CLocalTracker::GetFreeLocal(short nCount)
 short CCompiler::CLocalTracker::AllocLocal(short nCount)
 {
 	short nFree = GetFreeLocal(nCount);
-	for (short i = 0; i < nCount; ++i) 
+	for (short i = 0; i < nCount; ++i)
 		if (!m_arrLocals[nFree + i]++)
 	    ++m_iLocals;
 	return nFree;
@@ -204,7 +204,7 @@ short CCompiler::CLocalTracker::GetVar(CStrAny sVar)
 	if (itRecent) {
 		nIndex = (*itRecent).m_Val.m_nIndex;
 		ASSERT(m_arrLocals[nIndex] > 0);
-	} else 
+	} else
 		nIndex = CInstruction::INVALID_OPERAND;
 	return nIndex;
 }
@@ -345,7 +345,7 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode, short &nDest)
 			break;
 //		case CBNFGrammar::RID_LValue:
 //			return CompileLValue(pNode, nDest);
-		case CBNFGrammar::RID_Locals: 
+		case CBNFGrammar::RID_Locals:
 			err = CompileLocals(pNode, nDest);
 			break;
 		case CBNFGrammar::RID_Assignment:
@@ -356,6 +356,9 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode, short &nDest)
 			break;
 		case CBNFGrammar::RID_While:
 			err = CompileWhile(pNode, nDest);
+			break;
+		case CBNFGrammar::RID_Do:
+			err = CompileDo(pNode, nDest);
 			break;
 		default:
 			ASSERT(0);
@@ -399,7 +402,7 @@ EInterpretError CCompiler::CompileConstant(CBNFGrammar::CNode *pNode, short &nDe
 		case CToken::TT_FALSE:
 			kVal.Set(false);
 			break;
-		case CToken::TT_NUMBER: 
+		case CToken::TT_NUMBER:
 			bRes = Parse::Str2Float(fVal, pNode->m_pToken->m_sToken);
 			ASSERT(bRes);
 			kVal.Set(fVal);
@@ -433,7 +436,7 @@ EInterpretError CCompiler::CompileVariable(CBNFGrammar::CNode *pNode, short &nDe
 		}
 	} else { // a global
 		short nNameConst = GetConstantIndex(CValue(sVar.GetHeader()));
-		if (nDest < 0) 
+		if (nDest < 0)
 			nDest = m_kLocals.GetFreeLocal();
 		kInstr.SetGetGlobal(nDest, nNameConst);
 		m_pCode->Append(kInstr);
@@ -449,7 +452,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 	EInterpretError err;
 	CCompiler kCompiler;
 	kCompiler.m_pCode = NEW(CFragment, (&m_pInterpreter->m_kValueRegistry));
-	
+
 	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; ++i) {
 		ASSERT(pNode->m_arrChildren[0]->m_arrChildren[i]->m_pToken->m_eType == CToken::TT_VARIABLE);
 		CStrAny sVar(pNode->m_arrChildren[0]->m_arrChildren[i]->m_pToken->m_sToken, ST_CONST);
@@ -630,7 +633,7 @@ EInterpretError CCompiler::CompileReturn(CBNFGrammar::CNode *pNode, short &nDest
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Return);
 	ASSERT(nDest < 0);
 	CInstruction kInstr;
-	EInterpretError err; 
+	EInterpretError err;
 
 	short nIndex, nBase, nCount = (short) pNode->m_arrChildren.m_iCount;
 	switch (nCount) {
@@ -683,7 +686,7 @@ EInterpretError CCompiler::CompilePower(CBNFGrammar::CNode *pNode, short &nDest)
 		return err;
 	m_kLocals.ReleaseTemporary(nX);
 
-	if (nDest < 0) 
+	if (nDest < 0)
 		nDest = m_kLocals.GetFreeLocal();
 	CInstruction kInstr;
 	kInstr.SetPower(nDest, nX, nY);
@@ -753,7 +756,7 @@ EInterpretError CCompiler::CompileSum(CBNFGrammar::CNode *pNode, short &nDest)
 		if (err != IERR_OK)
 			return err;
 	} else {
-		if (pNode->m_arrChildren[0]->m_pToken->m_eType == CToken::TT_PLUS) 
+		if (pNode->m_arrChildren[0]->m_pToken->m_eType == CToken::TT_PLUS)
 			i = 2;
 		err = kStream.AddOperation(CInstruction::IT_NOP, pNode->m_arrChildren[i - 1], nDest, i >= pNode->m_arrChildren.m_iCount);
 		if (err != IERR_OK)
@@ -817,7 +820,7 @@ EInterpretError CCompiler::CompileComparison(CBNFGrammar::CNode *pNode, short &n
 		default:
 			return IERR_COMPILE_FAILED;
 	}
-	if (nDest < 0) 
+	if (nDest < 0)
 		nDest = m_kLocals.GetFreeLocal();
 	kInstr.Set(eIT, nDest, nArg[i], nArg[!i]);
 	m_pCode->Append(kInstr);
@@ -836,7 +839,7 @@ EInterpretError CCompiler::CompileNot(CBNFGrammar::CNode *pNode, short &nDest)
 	err = CompileNode(pNode->m_arrChildren.Last(), nValue);
 	if (err != IERR_OK)
 		return err;
-	if (nDest < 0) 
+	if (nDest < 0)
 		nDest = m_kLocals.GetFreeLocal();
 	for (int i = 0; i < pNode->m_arrChildren.m_iCount - 1; ++i) {
 		ASSERT(pNode->m_arrChildren[i]->m_pToken->m_eType == CToken::TT_NOT);
@@ -976,7 +979,7 @@ EInterpretError CCompiler::CompileLocals(CBNFGrammar::CNode *pNode, short &nDest
   nReturns = 1;
 	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; i += nReturns) {
 		if (i < iExprCount) {
-			if (i == iExprCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall) 
+			if (i == iExprCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall)
 				nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - i;
 			nIndex = -nReturns - 1;
 			err = CompileNode(pNode->m_arrChildren[1]->m_arrChildren[i], nIndex);
@@ -1024,7 +1027,7 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &n
 	iCount = Util::Min(pNode->m_arrChildren[0]->m_arrChildren.m_iCount, pNode->m_arrChildren[1]->m_arrChildren.m_iCount);
 	for (i = 0; i < iCount; ++i) {
 		short nVal, nReturns;
-		if (i == iCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall) 
+		if (i == iCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall)
 			nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - (iCount - 1);
 		else
 			nReturns = 1;
@@ -1054,7 +1057,7 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &n
 		if (bGlobal) { // global
 			kInstr.SetSetGlobal(nValue, nRes);
 			m_pCode->Append(kInstr);
-		} else 
+		} else
 			if (nTable != CInstruction::INVALID_OPERAND) { // table value
 				kInstr.SetSetTableValue(nValue, nTable, nRes);
 				m_pCode->Append(kInstr);
@@ -1145,6 +1148,24 @@ EInterpretError CCompiler::CompileWhile(CBNFGrammar::CNode *pNode, short &nDest)
 	return IERR_OK;
 }
 
+EInterpretError CCompiler::CompileDo(CBNFGrammar::CNode *pNode, short &nDest)
+{
+	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Do);
+	EInterpretError err;
+	CInstruction kInstr;
+
+	m_kLocals.StartContext();
+	for (int i = 0; i < pNode->m_arrChildren.m_iCount; ++i) {
+		short nDst = CInstruction::INVALID_OPERAND;
+		err = CompileNode(pNode->m_arrChildren[i], nDst);
+		if (err != IERR_OK)
+			return err;
+	}
+	m_kLocals.EndContext();
+
+	return IERR_OK;
+}
+
 EInterpretError CCompiler::CompileProgram(CBNFGrammar::CNode *pNode, short &nDest)
 {
 	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Program);
@@ -1164,6 +1185,7 @@ void CCompileChain::Clear()
 {
 	m_kTokenizer.Clear();
 	m_kGrammar.Clear();
+	m_kGrammarTransform.Clear();
 	m_kCompiler.Clear();
 }
 
@@ -1178,7 +1200,11 @@ EInterpretError CCompileChain::Compile(CInterpreter *pInterpreter, CStrAny sCode
 	if (!m_kGrammar.Parse(m_kTokenizer.m_lstTokens))
 		return IERR_PARSING_FAILED;
 
-  err = m_kCompiler.Compile(pInterpreter, m_kGrammar.m_pParsed);
+  err = m_kGrammarTransform.Transform(m_kGrammar.m_pParsed);
+  if (err != IERR_OK)
+    return err;
+
+  err = m_kCompiler.Compile(pInterpreter, m_kGrammarTransform.m_pTransformed);
   if (err != IERR_OK)
     return err;
 

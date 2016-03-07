@@ -89,7 +89,7 @@ public:
 
 	void DeleteRules();
 
-	void SetRule(CRule const &kRootRule) { DEL(m_pRootRule); m_pRootRule = &kRootRule; }
+	void SetRule(CRule const &kRootRule) { DeleteRules(); m_pRootRule = &kRootRule; }
 
 	bool Parse(CList<CToken *> &lstTokens, CNode *&pParsed);
 

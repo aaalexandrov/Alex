@@ -29,6 +29,8 @@ public:
 		RID_Assignment,
 		RID_If,
 		RID_While,
+		RID_For,
+		RID_Do,
 	};
 
 public:

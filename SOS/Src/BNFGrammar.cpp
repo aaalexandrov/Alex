@@ -27,6 +27,7 @@ CValue2String::TValueString CBNFGrammar::s_arrRID2Str[] = {
 	VAL2STR(RID_Assignment),
 	VAL2STR(RID_If),
 	VAL2STR(RID_While),
+	VAL2STR(RID_Do),
 };
 
 CValue2String CBNFGrammar::s_RID2Str(s_arrRID2Str, ARRSIZE(s_arrRID2Str));
@@ -62,6 +63,8 @@ void CBNFGrammar::InitRules()
 	CRule *pAssignment = NewNT()->SetID(RID_Assignment)->SetOutput(true);
 	CRule *pIf = NewNT()->SetID(RID_If)->SetOutput(true);
 	CRule *pWhile = NewNT()->SetID(RID_While)->SetOutput(true);
+	CRule *pFor = NewNT()->SetID(RID_For)->SetOutput(true);
+	CRule *pDo = NewNT()->SetID(RID_Do)->SetOutput(true);
 
 	CRule *pIndexable = NewNT();
 	CRule *pIndex = NewNT();
@@ -278,9 +281,39 @@ void CBNFGrammar::InitRules()
 		  AddChild(NewZeroPlus(pOperator)))->
 		AddChild(NewT(CToken::TT_END));
 
+	pFor->
+		AddChild(NewT(CToken::TT_FOR))->
+		AddChild(NewNT()->Set(S_Alternative)->
+      AddChild(NewNT()->
+        AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_COMMA))->
+        AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_ASSIGN)->SetOutput(true))->
+        AddChild(pExpression))->
+      AddChild(NewNT()->
+        AddChild(NewT(CToken::TT_VARIABLE)->SetOutput(true))->
+        AddChild(NewT(CToken::TT_ASSIGN)->SetOutput(true))->
+        AddChild(pExpression)->
+        AddChild(NewT(CToken::TT_COMMA))->
+        AddChild(pExpression)->
+        AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->
+          AddChild(NewT(CToken::TT_COMMA))->
+          AddChild(pExpression)))))->
+		AddChild(NewT(CToken::TT_DO))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
+		  AddChild(NewZeroPlus(pOperator)))->
+		AddChild(NewT(CToken::TT_END));
+
+  pDo->
+    AddChild(NewT(CToken::TT_DO))->
+		AddChild(NewNT()->SetAllowRenaming(true)->
+		  AddChild(NewZeroPlus(pOperator)))->
+		AddChild(NewT(CToken::TT_END));
+
 	pOperator->Set(S_Alternative)->
 		AddChild(pIf)->
 		AddChild(pWhile)->
+		AddChild(pDo)->
 		AddChild(pReturn)->
 		AddChild(pLocals)->
 		AddChild(pAssignment)->
