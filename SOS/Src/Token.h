@@ -6,18 +6,6 @@
 class CToken {
 public:
 
-  enum ETokenClass {
-    TC_UNKNOWN,
-
-    TC_IDENTIFIER,
-    TC_KEYWORD,
-    TC_LITERAL,
-    TC_OPERATOR,
-    TC_SEPARATOR,
-
-    TC_LAST
-  };
-
   enum ETokenType {
     TT_UNKNOWN,
 
@@ -77,24 +65,24 @@ public:
 
 public:
   CStrAny     m_sToken;
-  ETokenClass m_eClass;
   ETokenType  m_eType;
 
-  CToken(CStrAny const &sToken, ETokenClass eClass, ETokenType eType);
+  CToken(CStrAny const &sToken, ETokenType eType);
   ~CToken();
 
-  CStrAny ToString();
-  static CStrAny ClassToString(ETokenClass eClass);
+  CStrAny ToString() const;
   static CStrAny TypeToString(ETokenType eType);
 
-  static CValue2String::TValueString s_arrTC2Str[TC_LAST], s_arrTT2Str[TT_LAST];
-  static CValue2String s_kTC2Str, s_kTT2Str;
+  static CValue2String::TValueString s_arrTT2Str[TT_LAST];
+  static CValue2String s_kTT2Str;
 };
 
 class CTokenizer {
 public:
   CStrAny         m_sInput;
   CList<CToken *> m_lstTokens;
+  CList<CToken *> m_lstTemp;
+  int             m_iTempIndex;
 
   CTokenizer();
   ~CTokenizer();
@@ -103,14 +91,20 @@ public:
 
   EInterpretError Tokenize(CStrAny const &sInput);
 
+  CToken *ReadToken(CStrAny &sInp);
+
   bool Valid() const;
+
+  CToken *GetTempToken(CStrAny sToken, CToken::ETokenType eTT = CToken::TT_UNKNOWN);
+  CStrAny GetTempName(CStrAny sPrefix);
+  CToken *GetTempVar(CStrAny sPrefix) { return GetTempToken(GetTempName(sPrefix), CToken::TT_VARIABLE); }
 
   void Dump(CList<CToken *> *pList = 0);
 
 public:
   static CToken  s_TemplateTokens[CToken::TT_LAST];
 
-  static CToken const *GetTemplateToken(CStrAny const &sToken);
+  static CToken const *GetTemplateToken(CStrAny const &sToken, bool bMatchKeyword);
   static CToken const *GetTemplateToken(CToken::ETokenType eType);
 };
 

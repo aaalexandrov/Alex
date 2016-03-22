@@ -2,10 +2,10 @@
 - Non-constant upvalues
 - Co-routines
 - Object-type function calls (t:m(p))
+- Table inheritance / metatables
 - Compiled fragment saving / loading
 - Compiled code optimizer
 
-- For loops
 - Break keyword to abort loop execution
 - Tail function calls
 - Function result forwarding for multiple returns
@@ -19,6 +19,8 @@
 - Error reporting & recovery - output diagnostic messages on parsing / execution error, and try to recover parsing after first error
 - Grammar post-parsing transform pass
 - Grammar optimizer
+- Optimize for loop expansion when step is constant
+- Quote style macro specification during post-grammar pass
 
 - Automatic function execution parallelism
 
@@ -40,6 +42,7 @@
 + Number of elements in table - length() function
 + String length/element access operations - length() and substr(str, start, len)
 + Do blocks
++ For loops
 
 
 -------------------------------------------------------------------------------
@@ -81,6 +84,6 @@ While ::= "while" Expression "do" { Operator } "end"
 Do ::= "do" { Operator } "end"
 For ::= "for" ( ( IDENTIFIER "," IDENTIFIER "=" Expression ) | ( IDENTIFIER "=" Expression "," Expression [ "," Expression ] ) ) "do" { Operator } "end"
 
-Operator ::= Do | While | If | Return | Locals | Assignment | Call
+Operator ::= Do | While | For | If | Return | Locals | Assignment | Call
 
 Program ::= { Operator }

@@ -19,7 +19,8 @@ int ProcessInput()
       CCompileChain kChain;
       CArray<CValue> arrParams;
       err = kChain.Compile(&g_kInterpreter, sInput);
-/*      kChain.m_kGrammar.Dump();
+/*
+      kChain.m_kGrammar.Dump();
       if (kChain.m_kCompiler.m_pCode)
         kChain.m_kCompiler.m_pCode->Dump();
 */

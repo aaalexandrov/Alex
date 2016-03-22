@@ -27,6 +27,7 @@ CValue2String::TValueString CBNFGrammar::s_arrRID2Str[] = {
 	VAL2STR(RID_Assignment),
 	VAL2STR(RID_If),
 	VAL2STR(RID_While),
+	VAL2STR(RID_For),
 	VAL2STR(RID_Do),
 };
 
@@ -296,7 +297,7 @@ void CBNFGrammar::InitRules()
         AddChild(pExpression)->
         AddChild(NewT(CToken::TT_COMMA))->
         AddChild(pExpression)->
-        AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->
+        AddChild(NewOptional(NewNT()->SetAllowRenaming(true)->SetOutput(false)->
           AddChild(NewT(CToken::TT_COMMA))->
           AddChild(pExpression)))))->
 		AddChild(NewT(CToken::TT_DO))->
@@ -313,6 +314,7 @@ void CBNFGrammar::InitRules()
 	pOperator->Set(S_Alternative)->
 		AddChild(pIf)->
 		AddChild(pWhile)->
+		AddChild(pFor)->
 		AddChild(pDo)->
 		AddChild(pReturn)->
 		AddChild(pLocals)->
@@ -352,7 +354,7 @@ void CBNFGrammar::Dump(CNode *pParsed, int iIndent)
 		printf("%s, ", sToken.m_pBuf);
 	}
 
-	CStrAny sRule = s_RID2Str.GetStr(pParsed->m_pRule->m_iID);
+	CStrAny sRule = s_RID2Str.GetStr(pParsed->m_iRuleID);
 	printf("Rule: %s\n", sRule.m_pBuf);
 
 	for (int i = 0; i < pParsed->m_arrChildren.m_iCount; ++i)

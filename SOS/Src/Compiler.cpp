@@ -291,7 +291,7 @@ EInterpretError CCompiler::CompileNode(CBNFGrammar::CNode *pNode, short &nDest)
 {
 	EInterpretError err;
 	CLocalChecker kChecker(this);
-	switch (pNode->m_pRule->m_iID) {
+	switch (pNode->m_iRuleID) {
 		case CBNFGrammar::RID_Program:
 			err = CompileProgram(pNode, nDest);
 			break;
@@ -386,7 +386,7 @@ EInterpretError CCompiler::CompileConstResult(CValue const &kValue, short &nDest
 
 EInterpretError CCompiler::CompileConstant(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Constant);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Constant);
 	ASSERT(!pNode->m_arrChildren.m_iCount);
 	float fVal;
 	CStrAny sVal;
@@ -421,7 +421,7 @@ EInterpretError CCompiler::CompileConstant(CBNFGrammar::CNode *pNode, short &nDe
 
 EInterpretError CCompiler::CompileVariable(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Variable);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Variable);
 	ASSERT(!pNode->m_arrChildren.m_iCount && pNode->m_pToken->m_eType == CToken::TT_VARIABLE);
 	CInstruction kInstr;
 	CStrAny sVar(pNode->m_pToken->m_sToken, ST_CONST);
@@ -446,7 +446,7 @@ EInterpretError CCompiler::CompileVariable(CBNFGrammar::CNode *pNode, short &nDe
 
 EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_FunctionDef);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_FunctionDef);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	int i;
 	EInterpretError err;
@@ -478,7 +478,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 
 EInterpretError CCompiler::CompileFunctionCall(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_FunctionCall);
 	ASSERT(pNode->m_arrChildren.m_iCount >= 2);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -494,7 +494,7 @@ EInterpretError CCompiler::CompileFunctionCall(CBNFGrammar::CNode *pNode, short 
 	nTotalCount = nReturnCount;
 	for (i = 1; i < pNode->m_arrChildren.m_iCount; ++i) {
 		short nCount;
-		if (pNode->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_ParamList)
+		if (pNode->m_arrChildren[i]->m_iRuleID == CBNFGrammar::RID_ParamList)
 			nCount = (short) pNode->m_arrChildren[i]->m_arrChildren.m_iCount + 1;
 		else
 			nCount = 1;
@@ -512,7 +512,7 @@ EInterpretError CCompiler::CompileFunctionCall(CBNFGrammar::CNode *pNode, short 
 
 	for (short iCall = 1; iCall < pNode->m_arrChildren.m_iCount; ++iCall) {
 
-		if (pNode->m_arrChildren[iCall]->m_pRule->m_iID != CBNFGrammar::RID_ParamList) { // Indexing
+		if (pNode->m_arrChildren[iCall]->m_iRuleID != CBNFGrammar::RID_ParamList) { // Indexing
 			short nIndexDest = -2;
 			err = CompileNode(pNode->m_arrChildren[iCall], nIndexDest);
 			if (err != IERR_OK)
@@ -550,7 +550,7 @@ EInterpretError CCompiler::CompileFunctionCall(CBNFGrammar::CNode *pNode, short 
 
 EInterpretError CCompiler::CompileOperand(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Operand);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Operand);
 	ASSERT(pNode->m_arrChildren.m_iCount > 1);
 	EInterpretError err;
 	CInstructionStream kStream(*this);
@@ -566,7 +566,7 @@ EInterpretError CCompiler::CompileOperand(CBNFGrammar::CNode *pNode, short &nDes
 
 EInterpretError CCompiler::CompileDotIndex(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_DotIndex);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_DotIndex);
 	ASSERT(!pNode->m_arrChildren.m_iCount);
   ASSERT(pNode->m_pToken->m_eType == CToken::TT_VARIABLE);
 
@@ -578,7 +578,7 @@ EInterpretError CCompiler::CompileDotIndex(CBNFGrammar::CNode *pNode, short &nDe
 
 EInterpretError CCompiler::CompileTable(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Table);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Table);
 	EInterpretError err;
 	CInstruction kInstr;
 	int i, iNextKey = 1;
@@ -603,7 +603,7 @@ EInterpretError CCompiler::CompileTable(CBNFGrammar::CNode *pNode, short &nDest)
 			if (err != IERR_OK)
 				return err;
 			CBNFGrammar::CNode *pKeyNode = pNode->m_arrChildren[i]->m_arrChildren[0];
-			if (pKeyNode->m_pRule->m_iID == CBNFGrammar::RID_Table && pKeyNode->m_pToken->m_eType == CToken::TT_VARIABLE) {
+			if (pKeyNode->m_iRuleID == CBNFGrammar::RID_Table && pKeyNode->m_pToken->m_eType == CToken::TT_VARIABLE) {
 				CStrAny sKey(pKeyNode->m_pToken->m_sToken, ST_CONST);
 				nKey = GetConstantIndex(CValue(sKey.GetHeader()));
 			} else {
@@ -630,7 +630,7 @@ EInterpretError CCompiler::CompileTable(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileReturn(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Return);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Return);
 	ASSERT(nDest < 0);
 	CInstruction kInstr;
 	EInterpretError err;
@@ -672,7 +672,7 @@ EInterpretError CCompiler::CompileReturn(CBNFGrammar::CNode *pNode, short &nDest
 
 EInterpretError CCompiler::CompilePower(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Power);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Power);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	EInterpretError err;
 
@@ -697,7 +697,7 @@ EInterpretError CCompiler::CompilePower(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileMult(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Mult);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Mult);
 	ASSERT(pNode->m_arrChildren.m_iCount >= 3 && pNode->m_arrChildren.m_iCount % 2 == 1);
 	EInterpretError err;
 	CInstructionStream kStream(*this);
@@ -722,7 +722,7 @@ EInterpretError CCompiler::CompileMult(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileConcat(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Concat);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Concat);
 	ASSERT(pNode->m_arrChildren.m_iCount >= 2);
 	EInterpretError err;
 	CInstructionStream kStream(*this);
@@ -741,7 +741,7 @@ EInterpretError CCompiler::CompileConcat(CBNFGrammar::CNode *pNode, short &nDest
 
 EInterpretError CCompiler::CompileSum(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Sum);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Sum);
 	ASSERT(pNode->m_arrChildren.m_iCount >= 2);
 	EInterpretError err;
 	CInstructionStream kStream(*this);
@@ -780,7 +780,7 @@ EInterpretError CCompiler::CompileSum(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileComparison(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Comparison);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Comparison);
 	ASSERT(pNode->m_arrChildren.m_iCount == 3);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -830,7 +830,7 @@ EInterpretError CCompiler::CompileComparison(CBNFGrammar::CNode *pNode, short &n
 
 EInterpretError CCompiler::CompileNot(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Not);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Not);
 	ASSERT(pNode->m_arrChildren.m_iCount > 1);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -852,7 +852,7 @@ EInterpretError CCompiler::CompileNot(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileAnd(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_And);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_And);
 	ASSERT(pNode->m_arrChildren.m_iCount > 1);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -891,7 +891,7 @@ EInterpretError CCompiler::CompileAnd(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileOr(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Or);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Or);
 	ASSERT(pNode->m_arrChildren.m_iCount > 1);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -930,7 +930,7 @@ EInterpretError CCompiler::CompileOr(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileLValue(CBNFGrammar::CNode *pNode, short &nValue, short &nTable, bool &bGlobal)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_LValue);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_LValue);
 	EInterpretError err;
 
 	if (pNode->m_arrChildren.m_iCount) { // table with indices
@@ -966,7 +966,7 @@ EInterpretError CCompiler::CompileLValue(CBNFGrammar::CNode *pNode, short &nValu
 
 EInterpretError CCompiler::CompileLocals(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Locals);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Locals);
 	ASSERT(nDest == CInstruction::INVALID_OPERAND);
 	ASSERT(pNode->m_arrChildren.m_iCount == 1 || pNode->m_arrChildren.m_iCount == 2);
 	int i, iExprCount;
@@ -979,7 +979,7 @@ EInterpretError CCompiler::CompileLocals(CBNFGrammar::CNode *pNode, short &nDest
   nReturns = 1;
 	for (i = 0; i < pNode->m_arrChildren[0]->m_arrChildren.m_iCount; i += nReturns) {
 		if (i < iExprCount) {
-			if (i == iExprCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall)
+			if (i == iExprCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_iRuleID == CBNFGrammar::RID_FunctionCall)
 				nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - i;
 			nIndex = -nReturns - 1;
 			err = CompileNode(pNode->m_arrChildren[1]->m_arrChildren[i], nIndex);
@@ -1016,7 +1016,7 @@ EInterpretError CCompiler::CompileLocals(CBNFGrammar::CNode *pNode, short &nDest
 
 EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Assignment);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Assignment);
 	ASSERT(nDest == CInstruction::INVALID_OPERAND);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	int i, iCount;
@@ -1027,7 +1027,7 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &n
 	iCount = Util::Min(pNode->m_arrChildren[0]->m_arrChildren.m_iCount, pNode->m_arrChildren[1]->m_arrChildren.m_iCount);
 	for (i = 0; i < iCount; ++i) {
 		short nVal, nReturns;
-		if (i == iCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_pRule->m_iID == CBNFGrammar::RID_FunctionCall)
+		if (i == iCount - 1 && pNode->m_arrChildren[1]->m_arrChildren[i]->m_iRuleID == CBNFGrammar::RID_FunctionCall)
 			nReturns = pNode->m_arrChildren[0]->m_arrChildren.m_iCount - (iCount - 1);
 		else
 			nReturns = 1;
@@ -1074,7 +1074,7 @@ EInterpretError CCompiler::CompileAssignment(CBNFGrammar::CNode *pNode, short &n
 
 EInterpretError CCompiler::CompileIf(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_If);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_If);
 	ASSERT(nDest == CInstruction::INVALID_OPERAND);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2 || pNode->m_arrChildren.m_iCount == 3);
 	EInterpretError err;
@@ -1118,7 +1118,7 @@ EInterpretError CCompiler::CompileIf(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileWhile(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_While);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_While);
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	EInterpretError err;
 	CInstruction kInstr;
@@ -1150,7 +1150,7 @@ EInterpretError CCompiler::CompileWhile(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileDo(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Do);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Do);
 	EInterpretError err;
 	CInstruction kInstr;
 
@@ -1168,7 +1168,7 @@ EInterpretError CCompiler::CompileDo(CBNFGrammar::CNode *pNode, short &nDest)
 
 EInterpretError CCompiler::CompileProgram(CBNFGrammar::CNode *pNode, short &nDest)
 {
-	ASSERT(pNode->m_pRule->m_iID == CBNFGrammar::RID_Program);
+	ASSERT(pNode->m_iRuleID == CBNFGrammar::RID_Program);
 	EInterpretError err;
 	for (int i = 0; i < pNode->m_arrChildren.m_iCount; ++i) {
 		short nDst = CInstruction::INVALID_OPERAND;

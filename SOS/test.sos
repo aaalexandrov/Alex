@@ -14,10 +14,18 @@ fib = function(n)
   return first
 end
 
-print_table = function(t)
-  local k,v = next(t)
-  while k do
+do
+  print("table for")
+  t={"a","b","c","d","e","f"}
+  for k,v=t do
     print(k,v)
-    k,v = next(t,k)
+  end
+
+  print("numeric for")
+  for i=length(t),1,-1 do
+    print(t[i])
   end
 end
+
+print("fact(10)", fact(10))
+print("fib(55)", fib(55))

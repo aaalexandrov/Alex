@@ -6,7 +6,7 @@
 bool CBNFParser::CNothing::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
 {
   if (m_bOutput) {
-    CNode *pNode = NEW(CNode, (pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule));
+    CNode *pNode = NEW(CNode, (pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? m_iID : kParent.m_iRuleID));
     kParent.m_arrChildren.Append(pNode);
   }
   return true;
@@ -19,7 +19,7 @@ bool CBNFParser::CTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &k
 	if (!pFirstToken || pFirstToken->Data->m_eType != m_eToken)
 		return false;
 	if (m_bOutput) {
-		CNode *pNode = NEW(CNode, (pFirstToken->Data, m_iID > 0 ? this : kParent.m_pRule));
+		CNode *pNode = NEW(CNode, (pFirstToken->Data, m_iID > 0 ? m_iID : kParent.m_iRuleID));
 		kParent.m_arrChildren.Append(pNode);
 	}
 	pFirstToken = pFirstToken->pNext;
@@ -68,7 +68,7 @@ CBNFParser::CRule *CBNFParser::CNonTerminal::AddChild(CRule const *pChild)
 
 bool CBNFParser::CNonTerminal::Match(CList<CToken *>::TNode *&pFirstToken, CNode &kParent) const
 {
-	CNode kNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? this : kParent.m_pRule);
+	CNode kNode(pFirstToken ? pFirstToken->Data : 0, m_iID > 0 ? m_iID : kParent.m_iRuleID);
 	CList<CToken *>::TNode *pNewFirstToken = pFirstToken;
 
 	bool bMatchFound;
@@ -127,7 +127,7 @@ bool CBNFParser::Parse(CList<CToken *> &lstTokens, CNode *&pParsed)
 	ASSERT(m_pRootRule);
 	pParsed = 0;
 	CList<CToken *>::TNode *pFirst = lstTokens.m_pHead;
-	pParsed = NEW(CNode, (pFirst ? pFirst->Data : 0, m_pRootRule));
+	pParsed = NEW(CNode, (pFirst ? pFirst->Data : 0, m_pRootRule->m_iID));
 	bool bMatch = m_pRootRule->Match(pFirst, *pParsed);
 	if (!bMatch || pFirst) {
 		DEL(pParsed);

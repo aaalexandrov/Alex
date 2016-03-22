@@ -93,6 +93,8 @@ public:
   CGrammarTransform m_kGrammarTransform;
   CCompiler         m_kCompiler;
 
+  CCompileChain(): m_kGrammarTransform(&m_kTokenizer) {}
+
 	void Clear();
 
   EInterpretError Compile(CInterpreter *pInterpreter, CStrAny sCode);

@@ -70,15 +70,17 @@ public:
 
 	class CNode {
 	public:
-		CToken *m_pToken;
-		CRule const *m_pRule;
+		CToken const *m_pToken;
+		int m_iRuleID;
 		CArray<CNode *> m_arrChildren;
 
-		CNode(CToken *pToken, CRule const *pRule): m_pToken(pToken), m_pRule(pRule) {}
-		CNode(CNode const &kNode): m_pToken(kNode.m_pToken), m_pRule(kNode.m_pRule), m_arrChildren(Max(1, kNode.m_arrChildren.m_iCount)) { AppendChildren(kNode.m_arrChildren); }
+		CNode(CToken const *pToken, int iRuleID): m_pToken(pToken), m_iRuleID(iRuleID) {}
+		CNode(CNode const &kNode): m_pToken(kNode.m_pToken), m_iRuleID(kNode.m_iRuleID), m_arrChildren(Max(1, kNode.m_arrChildren.m_iCount)) { AppendChildren(kNode.m_arrChildren); }
 		~CNode() { m_arrChildren.DeleteAll(); }
 
 		void AppendChildren(CArray<CNode *> const &kChildren);
+
+		CNode *AddChild(CNode *pChild) { m_arrChildren.Append(pChild); return this; }
 	};
 
 public:

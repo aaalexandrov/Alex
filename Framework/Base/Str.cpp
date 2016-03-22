@@ -157,7 +157,7 @@ void CStrAny::Done()
     GetHeader()->Release();
 }
 
-void CStrAny::MakeUnique()
+CStrAny &CStrAny::MakeUnique()
 {
   if (m_bHasHeader) {
     CStrHeader const *pHeader, *pNewHeader;
@@ -168,22 +168,24 @@ void CStrAny::MakeUnique()
     m_pBuf = (char const *) (pNewHeader + 1);
   } else
     Init(ST_STR, m_pBuf, m_iLen);
+  return *this;
 }
 
-void CStrAny::AssureHasHeader()
+CStrAny &CStrAny::AssureHasHeader()
 {
   if (m_bHasHeader)
-    return;
+    return *this;
   ASSERT(m_pBuf || !m_iLen);
   if (!m_pBuf)
     m_pBuf = "";
   Init(ST_STR, m_pBuf, m_iLen);
+  return *this;
 }
 
-void CStrAny::AssureInRepository()
+CStrAny &CStrAny::AssureInRepository()
 {
   if (!m_pBuf)
-    return;
+    return *this;
   if (m_bHasHeader) {
     CStrHeader *pHeader = (CStrHeader*) GetHeader();
     CStrHeader *pRepoHeader = pHeader->AssureInRepository();
@@ -192,6 +194,7 @@ void CStrAny::AssureInRepository()
     m_pBuf = (char const *) (pRepoHeader + 1);
   } else
     Init(ST_CONST, m_pBuf, m_iLen);
+  return *this;
 }
 
 CStrAny &CStrAny::operator =(CStrAny const &s)

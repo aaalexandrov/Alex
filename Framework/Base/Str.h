@@ -91,9 +91,9 @@ public:
   void Init(CStrHeader const *pHeader);
   void Done();
 
-  void MakeUnique();
-  void AssureHasHeader();
-  void AssureInRepository();
+  CStrAny &MakeUnique();
+  CStrAny &AssureHasHeader();
+  CStrAny &AssureInRepository();
 
   bool operator !() const                  { return EndsAt(0);   }
   bool operator ==(CStrAny const &s) const { return !Cmp(s);     }
