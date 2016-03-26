@@ -25,7 +25,7 @@ int ProcessInput()
         kChain.m_kCompiler.m_pCode->Dump();
 */
       if (err == IERR_OK) {
-        err = g_kInterpreter.Execute(CValue(kChain.m_kCompiler.m_pCode), arrParams);
+        err = g_kInterpreter.Execute(CValue(kChain.m_kCompiler.m_pClosure), arrParams);
 				if (err == IERR_OK) {
           for (int i = 0; i < arrParams.m_iCount; ++i) {
 						CValue const &kVal = arrParams[i];

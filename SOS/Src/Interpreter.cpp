@@ -14,8 +14,8 @@ CInterpreter::~CInterpreter()
 EInterpretError CInterpreter::Execute(CValue const &kCode, CArray<CValue> &arrParams)
 {
   EInterpretError err;
-  if (kCode.m_btType == CValue::VT_FRAGMENT) {
-    err = m_kExecution.Execute(kCode.m_pFragment, arrParams);
+  if (kCode.m_btType == CValue::VT_CLOSURE) {
+    err = m_kExecution.Execute(kCode.m_pClosure, arrParams);
     if (err != IERR_OK)
       return err;
     m_kExecution.GetReturnValues(arrParams);

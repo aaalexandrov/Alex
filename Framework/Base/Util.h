@@ -177,7 +177,7 @@ namespace Util {
 
 // By default, key value pairs will use the same allocator as the value
 template <class K, class V, class H, class E, class L>
-struct TGetAllocator<Util::TKeyValue<K, V, H, E, L> > { typedef typename TGetAllocator<V>::Type Type; };
+struct TSpecifyAllocator<Util::TKeyValue<K, V, H, E, L> > { typedef typename TGetAlloc<V>::Type Type; };
 
 
 // Implementation ----------------------------------------------------------

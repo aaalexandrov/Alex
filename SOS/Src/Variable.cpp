@@ -11,7 +11,7 @@ CValue2String::TValueString CValue::s_arrVT2Str[VT_LAST] = {
 	VAL2NAME(VT_FLOAT, "float"),
 	VAL2NAME(VT_STRING, "string"),
 	VAL2NAME(VT_TABLE, "table"),
-	VAL2NAME(VT_FRAGMENT, "fragment"),
+	VAL2NAME(VT_CLOSURE, "closure"),
 	VAL2NAME(VT_NATIVE_FUNC, "native_func"),
 };
 
@@ -51,7 +51,7 @@ void CValueRegistry::DeleteValues(THashValues &hashValues)
 
 void CValueRegistry::MoveToProcessing(CValue const &kValue)
 {
-  if (kValue.m_btType != CValue::VT_TABLE && kValue.m_btType != CValue::VT_FRAGMENT)
+  if (kValue.m_btType != CValue::VT_TABLE && kValue.m_btType != CValue::VT_CLOSURE)
     return;
   THashValues::TIter it = m_pUnprocessed->Find(kValue);
   if (it) {
@@ -62,7 +62,7 @@ void CValueRegistry::MoveToProcessing(CValue const &kValue)
 
 void CValueRegistry::Process(CList<CValue>::TNode *pNode)
 {
-  ASSERT(pNode->Data.m_btType == CValue::VT_TABLE || pNode->Data.m_btType == CValue::VT_FRAGMENT);
+  ASSERT(pNode->Data.m_btType == CValue::VT_TABLE || pNode->Data.m_btType == CValue::VT_CLOSURE);
   CValue kValue = pNode->Data;
   m_pProcessed->Add(kValue);
   m_lstProcessing.Remove(pNode);
@@ -72,9 +72,9 @@ void CValueRegistry::Process(CList<CValue>::TNode *pNode)
       MoveToProcessing((*itVal).m_Val);
     }
   } else
-    if (kValue.m_btType == CValue::VT_FRAGMENT) {
-      for (int i = 0; i < kValue.m_pFragment->m_arrConst.m_iCount; ++i)
-        MoveToProcessing(kValue.m_pFragment->m_arrConst[i]);
+    if (kValue.m_btType == CValue::VT_CLOSURE) {
+      for (int i = 0; i < kValue.m_pClosure->m_pFragment->m_arrConst.m_iCount; ++i)
+        MoveToProcessing(kValue.m_pClosure->m_pFragment->m_arrConst[i]);
     }
 }
 
@@ -84,7 +84,7 @@ void CValueRegistry::CollectGarbage(CInterpreter *pInterpreter)
   ASSERT(!m_pProcessed->m_iCount && !m_lstProcessing.m_iCount);
   MoveToProcessing(CValue(pInterpreter->m_pGlobalEnvironment));
   for (CExecution *pExecution = &pInterpreter->m_kExecution; pExecution; pExecution = pExecution->m_pCalleeExecution) {
-    MoveToProcessing(CValue(pExecution->m_pCode));
+    MoveToProcessing(CValue(pExecution->m_pClosure));
     for (int i = 0; i < pExecution->m_arrLocal.m_iCount; ++i)
       MoveToProcessing(pExecution->m_arrLocal[i]);
   }
@@ -125,7 +125,7 @@ CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const
 
 void CFragment::Dump()
 {
-	printf("Instructions: %d, Constants: %d, Locals: %d, Parameters: %d\n", m_arrCode.m_iCount, m_arrConst.m_iCount, m_nLocalCount, m_nParamCount);
+	printf("Instructions: %d, Constants: %d, Locals: %d, Captures: %d, Parameters: %d\n", m_arrCode.m_iCount, m_arrConst.m_iCount, m_nLocalCount, m_nCaptureCount, m_nParamCount);
 	CStrAny s;
 	for (int i = 0; i < m_arrConst.m_iCount; ++i) {
 		s = m_arrConst[i].GetStr(true);
@@ -135,4 +135,18 @@ void CFragment::Dump()
 		s = m_arrCode[i].ToStr(this);
     printf("%04d: %s\n", i, s.m_pBuf);
 	}
+}
+
+// CClosure -------------------------------------------------------------------
+
+void CClosure::Dump()
+{
+  printf("Captures:");
+  CStrAny s;
+  for (int i = 0; i < m_arrCaptured.m_iCount; ++i) {
+    s = m_arrCaptured[i].GetStr(true);
+    printf(" %02d: %s,", i, s.m_pBuf);
+  }
+  printf("\n");
+  m_pFragment->Dump();
 }

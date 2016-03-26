@@ -39,7 +39,7 @@ public:
 // Dummy var - just a method sink
 class CDummyVar;
 template <>
-struct TGetAllocator<CDummyVar> { typedef TGetAllocator<CBaseVar>::Type Type; };
+struct TSpecifyAllocator<CDummyVar> { typedef TGetAlloc<CBaseVar>::Type Type; };
 
 class CDummyVar: public CBaseVar {
   DEFRTTI(CDummyVar, CBaseVar, true)
@@ -227,7 +227,7 @@ public:
 };
 
 template <class T>
-struct TGetAllocator<CVar<T> > { typedef TGetAllocator<CBaseVar>::Type Type; };
+struct TSpecifyAllocator<CVar<T> > { typedef TGetAlloc<CBaseVar>::Type Type; };
 
 template <class T>
 class CVarRef: public CVarTpl<CRef<T> > {
@@ -242,7 +242,7 @@ public:
 };
 
 template <class T>
-struct TGetAllocator<CVarRef<T> > { typedef TGetAllocator<CBaseVar>::Type Type; };
+struct TSpecifyAllocator<CVarRef<T> > { typedef TGetAlloc<CBaseVar>::Type Type; };
 
 // Var Objects - collections of named values ----------------------------------
 
@@ -292,7 +292,7 @@ public:
 };
 
 template <>
-struct TGetAllocator<CVarObj> { typedef TGetAllocator<CBaseVar>::Type Type; };
+struct TSpecifyAllocator<CVarObj> { typedef TGetAlloc<CBaseVar>::Type Type; };
 
 // Collection of CVar objects -------------------------------------------------
 
@@ -317,7 +317,7 @@ public:
 };
 
 template <>
-struct TGetAllocator<CVarValueObj> { typedef TGetAllocator<CVarObj>::Type Type; };
+struct TSpecifyAllocator<CVarValueObj> { typedef TGetAlloc<CVarObj>::Type Type; };
 
 class CVarHash: public CVarValueObj {
   DEFRTTI(CVarHash, CVarValueObj, true)
@@ -377,10 +377,10 @@ public:
 };
 
 template <>
-struct TGetAllocator<CVarHash::TVarName> { typedef TGetAllocator<CBaseVar>::Type Type; };
+struct TSpecifyAllocator<CVarHash::TVarName> { typedef TGetAlloc<CBaseVar>::Type Type; };
 
 template <>
-struct TGetAllocator<CVarHash> { typedef TGetAllocator<CVarObj>::Type Type; };
+struct TSpecifyAllocator<CVarHash> { typedef TGetAlloc<CVarObj>::Type Type; };
 
 // SetValue implementation - initialization of a value from a var ----------------------------
 

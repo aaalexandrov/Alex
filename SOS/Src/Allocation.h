@@ -11,18 +11,22 @@ struct TSosAllocator: public TTrackingAllocator<TDefAllocator> {};
 
 class CStrHeader;
 template <>
-struct TGetAllocator<CStrHeader> { typedef TSosAllocator Type; };
+struct TSpecifyAllocator<CStrHeader> { typedef TSosAllocator Type; };
 
 class CValue;
 template <>
-struct TGetAllocator<CValue> { typedef TSosAllocator Type; };
+struct TSpecifyAllocator<CValue> { typedef TSosAllocator Type; };
 
 class CValueTable;
 template <>
-struct TGetAllocator<CValueTable> { typedef TSosAllocator Type; };
+struct TSpecifyAllocator<CValueTable> { typedef TSosAllocator Type; };
 
 class CFragment;
 template <>
-struct TGetAllocator<CFragment> { typedef TSosAllocator Type; };
+struct TSpecifyAllocator<CFragment> { typedef TSosAllocator Type; };
+
+class CClosure;
+template <>
+struct TSpecifyAllocator<CClosure> { typedef TSosAllocator Type; };
 
 #endif

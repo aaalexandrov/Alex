@@ -44,12 +44,14 @@ public:
 	typedef CHashKV<CValue, short, CValue, CValue>  TConstantHash;
 
   CInterpreter *m_pInterpreter;
-  CFragment *m_pCode;
+  CClosure *m_pClosure;
 	TConstantHash m_hashConst;
 	CLocalTracker m_kLocals;
 
   CCompiler();
   ~CCompiler();
+
+  CFragment *GetCode() { return m_pClosure->m_pFragment; }
 
   void Clear();
 	short GetConstantIndex(CValue const &kValue);

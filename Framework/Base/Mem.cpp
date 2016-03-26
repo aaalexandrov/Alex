@@ -23,7 +23,7 @@ struct TTestAlloc {
 };
 
 template <>
-struct TGetAllocator<CMemTest> {
+struct TSpecifyAllocator<CMemTest> {
   typedef TTestAlloc Type;
 };
 

@@ -12,8 +12,8 @@ class CListForHash: public CList<T, K, P> {};
 
 // We allocate hash lists in the same allocator as we allocate instances of T
 template <class T, class K, class P>
-struct TGetAllocator<CListForHash<T, K, P> > {
-  typedef typename TGetAllocator<T>::Type Type;
+struct TSpecifyAllocator<CListForHash<T, K, P> > {
+  typedef typename TGetAlloc<T>::Type Type;
 };
 
 template <class T, class K = T, class H = Util::HashSize_T, class P = Util::Equal<T> >

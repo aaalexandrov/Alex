@@ -43,8 +43,8 @@ EInterpretError CFunctionLibrary::Dump(CExecution &kExecution, CArray<CValue> &a
 		CValue const &kVal = arrParams[i];
 		CStrAny sRes = kVal.GetStr(true);
 		fprintf(stdout, "<< %s\n", sRes.m_pBuf);
-		if (kVal.m_btType == CValue::VT_FRAGMENT)
-			kVal.GetFragment()->Dump();
+    if (kVal.m_btType == CValue::VT_CLOSURE)
+      kVal.GetClosure()->Dump();
 	}
 
   arrParams.SetCount(0);
@@ -150,7 +150,7 @@ EInterpretError CFunctionLibrary::Compile(CExecution &kExecution, CArray<CValue>
     kChain.m_kGrammar.Dump();
 	if (err == IERR_OK) {
 		arrParams.SetCount(1);
-		arrParams[0] = CValue(kChain.m_kCompiler.m_pCode);
+		arrParams[0] = CValue(kChain.m_kCompiler.m_pClosure);
 	} else {
 		fprintf(stdout, "Compile error: %s\n", g_IERR2Str.GetStr(err).m_pBuf);
 		arrParams.SetCount(0);
@@ -169,7 +169,7 @@ EInterpretError CFunctionLibrary::Eval(CExecution &kExecution, CArray<CValue> &a
 	  if (err == IERR_OK) {
       arrParams.SetCount(0);
       CExecution kEvalExecution(kExecution.m_pInterpreter, &kExecution);
-      err = kEvalExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams);
+      err = kEvalExecution.Execute(kChain.m_kCompiler.m_pClosure, arrParams);
     }
   }
 
@@ -194,7 +194,7 @@ EInterpretError CFunctionLibrary::EvalFile(CExecution &kExecution, CArray<CValue
 	      if (err == IERR_OK) {
           arrParams.SetCount(0);
           CExecution kEvalExecution(kExecution.m_pInterpreter, &kExecution);
-          err = kEvalExecution.Execute(kChain.m_kCompiler.m_pCode, arrParams);
+          err = kEvalExecution.Execute(kChain.m_kCompiler.m_pClosure, arrParams);
         }
       }
       DELARR(iSize, pBuf);

@@ -5,7 +5,7 @@
 #include "Str.h"
 
 class CValueTable;
-class CFragment;
+class CClosure;
 class CExecution;
 class CValue {
 public:
@@ -15,7 +15,7 @@ public:
     VT_FLOAT,
     VT_STRING,
     VT_TABLE,
-		VT_FRAGMENT,
+		VT_CLOSURE,
     VT_NATIVE_FUNC,
 
     VT_LAST
@@ -30,7 +30,7 @@ public:
     float             m_fValue;
     CStrHeader const *m_pStrValue;
     CValueTable      *m_pTableValue;
-		CFragment        *m_pFragment;
+		CClosure         *m_pClosure;
     FnNative         *m_pNativeFunc;
     void             *m_Value;
   };
@@ -41,7 +41,7 @@ public:
   explicit CValue(float fValue)                 { Set(fValue); }
   explicit CValue(CStrHeader const *pStrHeader) { Set(pStrHeader); }
   explicit CValue(CValueTable *pTable)          { Set(pTable); }
-	explicit CValue(CFragment *pFragment)         { Set(pFragment); }
+	explicit CValue(CClosure *pClosure)           { Set(pClosure); }
   explicit CValue(FnNative *pNativeFunc)        { Set(pNativeFunc); }
   CValue(CValue const &kValue)                  { Set(kValue); }
 
@@ -52,7 +52,7 @@ public:
   inline void Set(float fValue);
   inline void Set(CStrHeader const *pStrHeader);
   inline void Set(CValueTable *pTable);
-	inline void Set(CFragment *pFragment);
+	inline void Set(CClosure *pClosure);
   inline void Set(FnNative *pNativeFunc);
 	inline void Set(CValue const &kValue);
 
@@ -70,7 +70,7 @@ public:
 	inline float        GetFloat() const      { return m_btType == VT_FLOAT ? m_fValue : 0; }
   inline CStrAny      GetStr(bool bDecorate) const;
   inline CValueTable *GetTable() const      { return m_btType == VT_TABLE ? m_pTableValue : 0; }
-	inline CFragment   *GetFragment() const   { return m_btType == VT_FRAGMENT ? m_pFragment : 0; }
+	inline CClosure    *GetClosure() const    { return m_btType == VT_CLOSURE ? m_pClosure : 0; }
   inline FnNative    *GetNativeFunc() const { return m_btType == VT_NATIVE_FUNC ? m_pNativeFunc : 0; }
 
 	inline size_t GetHash() const { return (size_t) m_btType ^ (size_t) m_Value; }
@@ -117,12 +117,13 @@ public:
 class CExecution;
 class CInstruction;
 class CFragment {
+  DEFREFCOUNT
 public:
   CArray<CInstruction> m_arrCode;
 	CArray<CValue> m_arrConst;
-	short m_nLocalCount, m_nParamCount;
+	short m_nLocalCount, m_nCaptureCount, m_nParamCount;
 
-	CFragment(CValueRegistry *pRegistry): m_nLocalCount(0), m_nParamCount(0) { pRegistry->Add(CValue(this)); }
+	CFragment(): m_nLocalCount(0), m_nCaptureCount(0), m_nParamCount(0) {}
 	~CFragment() {}
 
   void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
@@ -130,6 +131,16 @@ public:
   EInterpretError Execute(CExecution *pExecution);
 	CInstruction *GetFirstInstruction() const { return m_arrCode.m_iCount ? m_arrCode.m_pArray : 0; }
   CInstruction *GetNextInstruction(CInstruction *pInstruction) const;
+
+  void Dump();
+};
+
+class CClosure {
+public:
+  CSmartPtr<CFragment> m_pFragment;
+  CArray<CValue> m_arrCaptured;
+
+  CClosure(CValueRegistry *pRegistry, CFragment *pFragment): m_pFragment(pFragment) { pRegistry->Add(CValue(this)); }
 
   void Dump();
 };
@@ -158,8 +169,8 @@ void CValue::ReleaseValue()
 void CValue::DeleteValue()
 {
 	switch (m_btType) {
-		case VT_FRAGMENT:
-			DEL(m_pFragment);
+		case VT_CLOSURE:
+			DEL(m_pClosure);
 			break;
 		case VT_TABLE:
 			DEL(m_pTableValue);
@@ -201,10 +212,10 @@ void CValue::Set(CValueTable *pTable)
   m_pTableValue = pTable;
 }
 
-void CValue::Set(CFragment *pFragment)
+void CValue::Set(CClosure *pClosure)
 {
-  m_btType = VT_FRAGMENT;
-  m_pFragment = pFragment;
+  m_btType = VT_CLOSURE;
+  m_pClosure = pClosure;
 }
 
 void CValue::Set(FnNative *pNativeFunc)
@@ -259,8 +270,8 @@ CStrAny CValue::GetStr(bool bDecorate) const
       sprintf(chBuf, "<Table:%p>", m_pTableValue);
       s = CStrAny(ST_CONST, chBuf);
       break;
-		case VT_FRAGMENT:
-			sprintf(chBuf, "<Fragment:%p>", m_pFragment);
+		case VT_CLOSURE:
+			sprintf(chBuf, "<Closure:%p, captures:%d, fragment:%p>", m_pClosure, m_pClosure->m_arrCaptured.m_iCount, m_pClosure->m_pFragment.m_pPtr);
 			s = CStrAny(ST_CONST, chBuf);
 			break;
 		case VT_NATIVE_FUNC:

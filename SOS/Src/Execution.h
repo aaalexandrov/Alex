@@ -125,7 +125,7 @@ public:
 	CInterpreter           *m_pInterpreter;
   CArray<CValue>          m_arrLocal;
 	short                   m_nReturnBase, m_nReturnCount;
-  CFragment              *m_pCode;
+  CClosure               *m_pClosure;
   CInstruction           *m_pNextInstruction;
   CExecution             *m_pCallerExecution, *m_pCalleeExecution;
 
@@ -136,7 +136,7 @@ public:
 
   void GetReturnValues(CArray<CValue> &arrReturns);
 
-  EInterpretError Execute(CFragment *pCode, CArray<CValue> &arrParams);
+  EInterpretError Execute(CClosure *pClosure, CArray<CValue> &arrParams);
   EInterpretError Execute(CValue::FnNative *pNativeFunc, CArray<CValue> &arrParams);
 };
 

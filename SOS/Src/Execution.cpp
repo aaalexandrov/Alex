@@ -39,7 +39,7 @@ CValue *CInstruction::GetOperand(CExecution *pExecution, short nOperand) const
 		return 0;
 	CArray<CValue> *pSrc;
 	if (nOperand < 0) {
-		pSrc = &pExecution->m_pCode->m_arrConst;
+		pSrc = &pExecution->m_pClosure->m_pFragment->m_arrConst;
 		nOperand = -nOperand - 1;
 	} else
 		pSrc = &pExecution->m_arrLocal;
@@ -387,7 +387,7 @@ EInterpretError CInstruction::ExecMoveAndJumpIfFalse(CExecution *pExecution) con
 	if (pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue) {
 		if (pDst)
 			*pDst = *pSrc;
-	  pExecution->m_pNextInstruction = pExecution->m_pCode->m_arrCode.PtrAt(m_nSrc1);
+	  pExecution->m_pNextInstruction = pExecution->m_pClosure->m_pFragment->m_arrCode.PtrAt(m_nSrc1);
 	}
 	return IERR_OK;
 }
@@ -402,7 +402,7 @@ EInterpretError CInstruction::ExecMoveAndJumpIfTrue(CExecution *pExecution) cons
 	if (!(pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue)) {
 		if (pDst)
 			*pDst = *pSrc;
-	  pExecution->m_pNextInstruction = pExecution->m_pCode->m_arrCode.PtrAt(m_nSrc1);
+	  pExecution->m_pNextInstruction = pExecution->m_pClosure->m_pFragment->m_arrCode.PtrAt(m_nSrc1);
 	}
 	return IERR_OK;
 }
@@ -412,7 +412,7 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
 	if (m_nDest < 0 || m_nSrc0 < 1 || m_nSrc1 < 0 || m_nDest + Util::Max(m_nSrc0, m_nSrc1) > pExecution->m_arrLocal.m_iCount)
 		return IERR_INVALID_OPERAND;
   bool bNativeCall = pExecution->m_arrLocal[m_nDest].m_btType == CValue::VT_NATIVE_FUNC;
-	if (pExecution->m_arrLocal[m_nDest].m_btType != CValue::VT_FRAGMENT && !bNativeCall)
+	if (pExecution->m_arrLocal[m_nDest].m_btType != CValue::VT_CLOSURE && !bNativeCall)
 		return IERR_OPERAND_TYPE;
 
 	short i;
@@ -431,7 +431,7 @@ EInterpretError CInstruction::ExecCall(CExecution *pExecution) const
     nReturnBase = 0;
     nReturnCount = (short) arrParams.m_iCount;
   } else {
-	  EInterpretError err = kExecution.Execute(pExecution->m_arrLocal[m_nDest].m_pFragment, arrParams);
+	  EInterpretError err = kExecution.Execute(pExecution->m_arrLocal[m_nDest].m_pClosure, arrParams);
 	  if (err != IERR_OK)
 		  return err;
     pResults = &kExecution.m_arrLocal;
@@ -515,16 +515,16 @@ void CExecution::GetReturnValues(CArray<CValue> &arrReturns)
     arrReturns[i] = m_arrLocal[m_nReturnBase + i];
 }
 
-EInterpretError CExecution::Execute(CFragment *pCode, CArray<CValue> &arrParams)
+EInterpretError CExecution::Execute(CClosure *pClosure, CArray<CValue> &arrParams)
 {
 	m_nReturnCount = 0;
-	m_pCode = pCode;
-  m_pNextInstruction = m_pCode->GetFirstInstruction();
-	m_arrLocal.SetCount(pCode->m_nLocalCount);
-	ASSERT(pCode->m_nLocalCount >= pCode->m_nParamCount);
-  for (int i = 0; i < Util::Min<int>(m_pCode->m_nParamCount, arrParams.m_iCount); ++i)
+	m_pClosure = pClosure;
+  m_pNextInstruction = m_pClosure->m_pFragment->GetFirstInstruction();
+	m_arrLocal.SetCount(m_pClosure->m_pFragment->m_nLocalCount);
+	ASSERT(m_pClosure->m_pFragment->m_nLocalCount >= m_pClosure->m_pFragment->m_nParamCount);
+  for (int i = 0; i < Util::Min<int>(m_pClosure->m_pFragment->m_nParamCount, arrParams.m_iCount); ++i)
 		m_arrLocal[i] = arrParams[i];
-  return m_pCode->Execute(this);
+  return m_pClosure->m_pFragment->Execute(this);
 }
 
 EInterpretError CExecution::Execute(CValue::FnNative *pNativeFunc, CArray<CValue> &arrParams)

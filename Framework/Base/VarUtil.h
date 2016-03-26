@@ -50,7 +50,7 @@ public:
 };
 
 template <>
-struct TGetAllocator<CVarMerge> { typedef TGetAllocator<CVarObj>::Type Type; };
+struct TSpecifyAllocator<CVarMerge> { typedef TGetAlloc<CVarObj>::Type Type; };
 
 class CVarTemplate: public CObject {
   DEFRTTI(CVarTemplate, CObject, true)
@@ -71,7 +71,7 @@ public:
 };
 
 template <>
-struct TGetAllocator<CVarTemplate> { typedef TGetAllocator<CVarObj>::Type Type; };
+struct TSpecifyAllocator<CVarTemplate> { typedef TGetAlloc<CVarObj>::Type Type; };
 
 class CFile;
 
