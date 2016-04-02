@@ -35,6 +35,7 @@ public:
 		IT_MOVE_AND_JUMP_IF_TRUE,
 		IT_CALL,
 		IT_RETURN,
+		IT_CAPTURE_VARIABLES,
 
     IT_LAST
   };
@@ -74,6 +75,7 @@ public:
 	void SetMoveAndJumpIfTrue(short nDest, short nSrc0, short nSrc1) { Set(IT_MOVE_AND_JUMP_IF_TRUE, nDest, nSrc0, nSrc1); }
 	void SetCall(short nDest, short nSrc0, short nSrc1) { Set(IT_CALL, nDest, nSrc0, nSrc1); }
 	void SetReturn(short nDest, short nSrc0) { Set(IT_RETURN, nDest, nSrc0); }
+	void SetCaptureVariables(short nDest, short nSrc0) { Set(IT_CAPTURE_VARIABLES, nDest, nSrc0); }
 
 	CValue *GetOperand(CExecution *pExecution, short nOperand) const;
 	CValue *GetDest(CExecution *pExecution) const { ASSERT(m_nDest >= 0); return GetOperand(pExecution, m_nDest); }
@@ -105,6 +107,7 @@ public:
 	EInterpretError ExecMoveAndJumpIfTrue(CExecution *pExecution) const;
 	EInterpretError ExecCall(CExecution *pExecution) const;
 	EInterpretError ExecReturn(CExecution *pExecution) const;
+	EInterpretError ExecCaptureVariables(CExecution *pExecution) const;
 
   CStrAny GetOperandStr(short nOperand) const;
 	CStrAny GetOperandConstStr(CFragment *pFragment, short nOperand) const;

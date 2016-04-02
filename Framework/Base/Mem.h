@@ -64,23 +64,14 @@ struct TDebugAllocator: public A {
     std::lock_guard<std::mutex> lock(m_kMutex);
     TBlockInfo *pBlock = (TBlockInfo *) p - 1;
     ASSERT(pBlock->m_pAllocator == this);
-    ASSERT(pBlock->m_pNext != pBlock);
     m_uiTotalSize -= pBlock->m_uiSize;
-    TBlockInfo *pOldBlocks = m_pBlocks;
-    TBlockInfo *pPrevNext = 0;
-    TBlockInfo *pNextPrev = 0;
-    if (pBlock->m_pPrev) {
-      pPrevNext = pBlock->m_pPrev->m_pNext;
+    if (pBlock->m_pPrev)
       pBlock->m_pPrev->m_pNext = pBlock->m_pNext;
-    } else {
-      ASSERT(m_pBlocks == pBlock);
+    else
       m_pBlocks = pBlock->m_pNext;
-    }
-    if (pBlock->m_pNext) {
-      pNextPrev = pBlock->m_pNext->m_pPrev;
+    if (pBlock->m_pNext)
       pBlock->m_pNext->m_pPrev = pBlock->m_pPrev;
-    }
-    pBlock->m_pNext = pBlock;
+    pBlock->m_pAllocator = 0;
     A::Free(pBlock, pFile, iLine);
   }
 

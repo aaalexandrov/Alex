@@ -17,9 +17,17 @@ class CValue;
 template <>
 struct TSpecifyAllocator<CValue> { typedef TSosAllocator Type; };
 
+class CInstruction;
+template <>
+struct TSpecifyAllocator<CInstruction> { typedef TSosAllocator Type; };
+
 class CValueTable;
 template <>
 struct TSpecifyAllocator<CValueTable> { typedef TSosAllocator Type; };
+
+struct TCaptureVar;
+template <>
+struct TSpecifyAllocator<TCaptureVar> { typedef TSosAllocator Type; };
 
 class CFragment;
 template <>

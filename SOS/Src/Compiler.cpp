@@ -234,10 +234,11 @@ void CCompiler::CLocalTracker::EndContext()
 
 // CCompiler ------------------------------------------------------------------
 
-CCompiler::CCompiler()
+CCompiler::CCompiler(CCompiler *pParent)
 {
   m_pInterpreter = 0;
   m_pClosure = 0;
+  m_pParent = pParent;
 }
 
 CCompiler::~CCompiler()
@@ -266,9 +267,40 @@ short CCompiler::GetConstantIndex(CValue const &kValue)
 	return nIndex;
 }
 
+short CCompiler::GetOrCaptureVar(CStrAny sVar)
+{
+  short nExecution = 0, nVar;
+  for (CCompiler *pCompiler = this; pCompiler; pCompiler = pCompiler->m_pParent) {
+    nVar = pCompiler->m_kLocals.GetVar(sVar);
+    if (nVar != CInstruction::INVALID_OPERAND)
+      break;
+    ++nExecution;
+  }
+  if (nVar != CInstruction::INVALID_OPERAND && nExecution > 0) { // Need to add the variable to the captured variables of the closure
+    TCaptureVar kCaptureVar;
+    kCaptureVar.m_nSrcExecution = nExecution;
+    kCaptureVar.m_nSrcLocal = nVar;
+    kCaptureVar.m_nDstLocal = m_kLocals.AllocVar(sVar);
+    GetCode()->m_arrCaptured.Append(kCaptureVar);
+    nVar = kCaptureVar.m_nDstLocal;
+  }
+  return nVar;
+}
+
+void CCompiler::SortCaptures()
+{
+	Util::QSort<CArray<TCaptureVar>, TCaptureVar, TCaptureVar>(GetCode()->m_arrCaptured, GetCode()->m_arrCaptured.m_iCount);
+}
+
 void CCompiler::UpdateLocalNumber()
 {
   GetCode()->m_nLocalCount = m_kLocals.m_arrLocals.m_iCount;
+}
+
+void CCompiler::CompilationFinished()
+{
+  SortCaptures();
+  UpdateLocalNumber();
 }
 
 EInterpretError CCompiler::Compile(CInterpreter *pInterpreter, CBNFGrammar::CNode *pNode)
@@ -279,7 +311,8 @@ EInterpretError CCompiler::Compile(CInterpreter *pInterpreter, CBNFGrammar::CNod
   m_pClosure = NEW(CClosure, (&m_pInterpreter->m_kValueRegistry, NEW(CFragment, ())));
 	short nDest = CInstruction::INVALID_OPERAND;
   EInterpretError res = CompileNode(pNode, nDest);
-	UpdateLocalNumber();
+
+	CompilationFinished();
 
   if (res != IERR_OK)
     m_pClosure = 0;
@@ -425,7 +458,7 @@ EInterpretError CCompiler::CompileVariable(CBNFGrammar::CNode *pNode, short &nDe
 	ASSERT(!pNode->m_arrChildren.m_iCount && pNode->m_pToken->m_eType == CToken::TT_VARIABLE);
 	CInstruction kInstr;
 	CStrAny sVar(pNode->m_pToken->m_sToken, ST_CONST);
-	short nIndex = m_kLocals.GetVar(sVar);
+	short nIndex = GetOrCaptureVar(sVar);
 	if (nIndex != CInstruction::INVALID_OPERAND) { // a local
 		ASSERT(nIndex >= 0);
 		if (nDest < 0 || nDest == nIndex)
@@ -450,7 +483,7 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 	ASSERT(pNode->m_arrChildren.m_iCount == 2);
 	int i;
 	EInterpretError err;
-	CCompiler kCompiler;
+	CCompiler kCompiler(this);
 	kCompiler.m_pInterpreter = m_pInterpreter;
 	kCompiler.m_pClosure = NEW(CClosure, (&m_pInterpreter->m_kValueRegistry, NEW(CFragment, ())));
 
@@ -471,8 +504,16 @@ EInterpretError CCompiler::CompileFunctionDef(CBNFGrammar::CNode *pNode, short &
 			return err;
 	}
 
-	err = CompileConstResult(CValue(kCompiler.m_pClosure), nDest);
-	kCompiler.UpdateLocalNumber();
+  kCompiler.CompilationFinished();
+  if (kCompiler.GetCode()->m_arrCaptured.m_iCount > 0) {
+    CInstruction kInstr;
+    short nIndex = GetConstantIndex(CValue(kCompiler.m_pClosure));
+ 		if (nDest < 0)
+			nDest = m_kLocals.GetFreeLocal();
+    kInstr.SetCaptureVariables(nDest, nIndex);
+    GetCode()->Append(kInstr);
+  } else
+    err = CompileConstResult(CValue(kCompiler.m_pClosure), nDest);
 
 	return err;
 }
@@ -952,7 +993,7 @@ EInterpretError CCompiler::CompileLValue(CBNFGrammar::CNode *pNode, short &nValu
 		m_kLocals.ReleaseTemporary(nTable);
 	} else { // variable
 		CStrAny sVar(pNode->m_pToken->m_sToken, ST_CONST);
-		short nResult = m_kLocals.GetVar(sVar);
+		short nResult = GetOrCaptureVar(sVar);
 		nTable = CInstruction::INVALID_OPERAND;
 		if (nResult != CInstruction::INVALID_OPERAND) { // local
 			nValue = nResult;

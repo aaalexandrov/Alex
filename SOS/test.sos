@@ -27,5 +27,13 @@ do
   end
 end
 
+cl = function()
+  local l=42
+  return function()
+    return l
+  end
+end
+
+print("cl()()", cl()())
 print("fact(10)", fact(10))
 print("fib(55)", fib(55))

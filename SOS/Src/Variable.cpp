@@ -75,6 +75,8 @@ void CValueRegistry::Process(CList<CValue>::TNode *pNode)
     if (kValue.m_btType == CValue::VT_CLOSURE) {
       for (int i = 0; i < kValue.m_pClosure->m_pFragment->m_arrConst.m_iCount; ++i)
         MoveToProcessing(kValue.m_pClosure->m_pFragment->m_arrConst[i]);
+      for (int i = 0; i < kValue.m_pClosure->m_arrCaptured.m_iCount; ++i)
+        MoveToProcessing(kValue.m_pClosure->m_arrCaptured[i]);
     }
 }
 
@@ -125,7 +127,7 @@ CInstruction *CFragment::GetNextInstruction(CInstruction *pInstruction) const
 
 void CFragment::Dump()
 {
-	printf("Instructions: %d, Constants: %d, Locals: %d, Captures: %d, Parameters: %d\n", m_arrCode.m_iCount, m_arrConst.m_iCount, m_nLocalCount, m_nCaptureCount, m_nParamCount);
+	printf("Instructions: %d, Constants: %d, Locals: %d, Captures: %d, Parameters: %d\n", m_arrCode.m_iCount, m_arrConst.m_iCount, m_nLocalCount, m_arrCaptured.m_iCount, m_nParamCount);
 	CStrAny s;
 	for (int i = 0; i < m_arrConst.m_iCount; ++i) {
 		s = m_arrConst[i].GetStr(true);
@@ -138,6 +140,26 @@ void CFragment::Dump()
 }
 
 // CClosure -------------------------------------------------------------------
+
+void CClosure::CaptureVariables(CExecution *pExecution)
+{
+  ASSERT(m_arrCaptured.IsEmpty());
+  int iExecutionIndex = 1;
+  for (int i = 0; i < m_pFragment->m_arrCaptured.m_iCount; ++i) {
+    ASSERT(m_pFragment->m_arrCaptured[i].m_nSrcExecution >= iExecutionIndex);
+    while (iExecutionIndex < m_pFragment->m_arrCaptured[i].m_nSrcExecution) {
+      pExecution = pExecution->m_pCallerExecution;
+      ++iExecutionIndex;
+    }
+    m_arrCaptured.Append(pExecution->m_arrLocal[m_pFragment->m_arrCaptured[i].m_nSrcLocal]);
+  }
+}
+
+void CClosure::SetCapturedVariables(CExecution *pExecution)
+{
+  for (int i = 0; i < m_pFragment->m_arrCaptured.m_iCount; ++i)
+    pExecution->m_arrLocal[m_pFragment->m_arrCaptured[i].m_nDstLocal] = m_arrCaptured[i];
+}
 
 void CClosure::Dump()
 {

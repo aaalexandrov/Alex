@@ -47,15 +47,21 @@ public:
   CClosure *m_pClosure;
 	TConstantHash m_hashConst;
 	CLocalTracker m_kLocals;
+	CCompiler *m_pParent;
 
-  CCompiler();
+  CCompiler(CCompiler *pParent);
   ~CCompiler();
 
   CFragment *GetCode() { return m_pClosure->m_pFragment; }
 
   void Clear();
+
 	short GetConstantIndex(CValue const &kValue);
+	short GetOrCaptureVar(CStrAny sVar);
+	void SortCaptures();
 	void UpdateLocalNumber();
+
+	void CompilationFinished();
 
   EInterpretError Compile(CInterpreter *pInterpreter, CBNFGrammar::CNode *pNode);
 
@@ -95,7 +101,7 @@ public:
   CGrammarTransform m_kGrammarTransform;
   CCompiler         m_kCompiler;
 
-  CCompileChain(): m_kGrammarTransform(&m_kTokenizer) {}
+  CCompileChain(): m_kGrammarTransform(&m_kTokenizer), m_kCompiler(0) {}
 
 	void Clear();
 

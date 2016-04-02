@@ -28,6 +28,7 @@ CValue2String::TValueString CInstruction::s_arrIT2Str[IT_LAST] = {
 	VAL2STR(IT_MOVE_AND_JUMP_IF_TRUE),
 	VAL2STR(IT_CALL),
 	VAL2STR(IT_RETURN),
+	VAL2STR(IT_CAPTURE_VARIABLES),
 };
 
 CValue2String CInstruction::s_IT2Str(s_arrIT2Str, ARRSIZE(s_arrIT2Str));
@@ -98,6 +99,8 @@ EInterpretError CInstruction::Execute(CExecution *pExecution) const
 			return ExecCall(pExecution);
 		case IT_RETURN:
 			return ExecReturn(pExecution);
+    case IT_CAPTURE_VARIABLES:
+      return ExecCaptureVariables(pExecution);
   	default:
       ASSERT(!"Invalid instruction");
       return IERR_INVALID_INSTRUCTION;
@@ -460,6 +463,21 @@ EInterpretError CInstruction::ExecReturn(CExecution *pExecution) const
 	return IERR_OK;
 }
 
+EInterpretError CInstruction::ExecCaptureVariables(CExecution *pExecution) const
+{
+  CValue *pDst, *pSrc0;
+  pDst = GetDest(pExecution);
+  pSrc0 = GetSrc0(pExecution);
+ 	if (!pDst || !pSrc0)
+		return IERR_INVALID_OPERAND;
+  if (pSrc0->m_btType != CValue::VT_CLOSURE)
+    return IERR_OPERAND_TYPE;
+  CClosure *pDstClosure = NEW(CClosure, (&pExecution->m_pInterpreter->m_kValueRegistry, pSrc0->m_pClosure->m_pFragment));
+  pDstClosure->CaptureVariables(pExecution);
+  pDst->Set(pDstClosure);
+  return IERR_OK;
+}
+
 CStrAny CInstruction::GetOperandStr(short nOperand) const
 {
 	if (nOperand == INVALID_OPERAND)
@@ -524,6 +542,7 @@ EInterpretError CExecution::Execute(CClosure *pClosure, CArray<CValue> &arrParam
 	ASSERT(m_pClosure->m_pFragment->m_nLocalCount >= m_pClosure->m_pFragment->m_nParamCount);
   for (int i = 0; i < Util::Min<int>(m_pClosure->m_pFragment->m_nParamCount, arrParams.m_iCount); ++i)
 		m_arrLocal[i] = arrParams[i];
+  m_pClosure->SetCapturedVariables(this);
   return m_pClosure->m_pFragment->Execute(this);
 }
 

@@ -114,16 +114,27 @@ public:
   ~CValueTable() {}
 };
 
+struct TCaptureVar {
+  short m_nSrcExecution, m_nSrcLocal, m_nDstLocal;
+
+  static inline bool Lt(TCaptureVar const &kVal0, TCaptureVar const &kVal1) {
+    if (kVal0.m_nSrcExecution == kVal1.m_nSrcExecution)
+      return kVal0.m_nSrcLocal < kVal1.m_nSrcLocal;
+    return kVal0.m_nSrcExecution < kVal1.m_nSrcExecution;
+  }
+};
+
 class CExecution;
 class CInstruction;
 class CFragment {
   DEFREFCOUNT
 public:
+  CArray<TCaptureVar> m_arrCaptured;
   CArray<CInstruction> m_arrCode;
 	CArray<CValue> m_arrConst;
-	short m_nLocalCount, m_nCaptureCount, m_nParamCount;
+	short m_nLocalCount, m_nParamCount;
 
-	CFragment(): m_nLocalCount(0), m_nCaptureCount(0), m_nParamCount(0) {}
+	CFragment(): m_nLocalCount(0), m_nParamCount(0) {}
 	~CFragment() {}
 
   void Append(CInstruction const &kInstr) { m_arrCode.Append(kInstr); }
@@ -141,6 +152,9 @@ public:
   CArray<CValue> m_arrCaptured;
 
   CClosure(CValueRegistry *pRegistry, CFragment *pFragment): m_pFragment(pFragment) { pRegistry->Add(CValue(this)); }
+
+  void CaptureVariables(CExecution *pExecution);
+  void SetCapturedVariables(CExecution *pExecution);
 
   void Dump();
 };
