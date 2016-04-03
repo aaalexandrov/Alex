@@ -182,15 +182,17 @@ CCompiler::CLocalTracker::THash::TIter CCompiler::CLocalTracker::FindVar(CStrAny
 	return itRecent;
 }
 
-short CCompiler::CLocalTracker::AllocVar(CStrAny sVar)
+short CCompiler::CLocalTracker::AllocVar(CStrAny sVar, short nContext)
 {
+  if (nContext == CONTEXT_DEFAULT)
+    nContext = m_nCurContext;
 	THash::TIter itRecent = FindVar(sVar);
 	short nIndex;
-	if (itRecent && (*itRecent).m_Val.m_nContext == m_nCurContext) { // local redefinition in the same context
+	if (itRecent && (*itRecent).m_Val.m_nContext == nContext) { // local redefinition in the same context
 		nIndex = CInstruction::INVALID_OPERAND;
 	} else {
 		nIndex = AllocLocal();
-		m_hashLocals.Add(THash::Elem(sVar, TLocalInfo(nIndex, m_nCurContext)));
+		m_hashLocals.Add(THash::Elem(sVar, TLocalInfo(nIndex, nContext)));
 		ASSERT(m_arrLocals[nIndex] == 1);
 		++m_iVars;
 	}
@@ -280,7 +282,7 @@ short CCompiler::GetOrCaptureVar(CStrAny sVar)
     TCaptureVar kCaptureVar;
     kCaptureVar.m_nSrcExecution = nExecution;
     kCaptureVar.m_nSrcLocal = nVar;
-    kCaptureVar.m_nDstLocal = m_kLocals.AllocVar(sVar);
+    kCaptureVar.m_nDstLocal = m_kLocals.AllocVar(sVar, CLocalTracker::CONTEXT_CAPTURE);
     GetCode()->m_arrCaptured.Append(kCaptureVar);
     nVar = kCaptureVar.m_nDstLocal;
   }

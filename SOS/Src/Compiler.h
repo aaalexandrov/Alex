@@ -15,6 +15,9 @@ public:
 
 	class CLocalTracker {
 	public:
+	  static const short CONTEXT_DEFAULT = 0x8000;
+	  static const short CONTEXT_CAPTURE = (short) -1;
+
 		typedef CHashKV<CStrAny, TLocalInfo, CStrAny, CStrAny> THash;
 
 		CArray<int> m_arrLocals;
@@ -34,7 +37,7 @@ public:
 
 		bool RegisterVar(CStrAny sVar, short nIndex);
     THash::TIter FindVar(CStrAny sVar);
-		short AllocVar(CStrAny sVar);
+		short AllocVar(CStrAny sVar, short nContext = CONTEXT_DEFAULT);
 		short GetVar(CStrAny sVar);
 
 		void StartContext();

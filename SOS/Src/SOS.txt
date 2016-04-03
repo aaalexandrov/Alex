@@ -13,7 +13,6 @@
 - Make the frontend dump the return values from top level executed fragments
 - Core function library
 
-- Fix locals declared with the same name as an already used upvalue
 - Track allocated memory through adding / subtracting value sizes as values are added / removed from the interpreter's CValueRegistry, and not through allocator?
 - Make the garbage collection incremental
 - Error reporting & recovery - output diagnostic messages on parsing / execution error, and try to recover parsing after first error
@@ -44,6 +43,7 @@
 + Do blocks
 + For loops
 + Lexical closures
++ Fix locals declared with the same name as an already used upvalue - captured variables now act as locals, declared one level above the function body's scope
 
 
 -------------------------------------------------------------------------------
