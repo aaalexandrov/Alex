@@ -18,6 +18,8 @@ CWinStartUp::~CWinStartUp()
 {
 }
 
+#ifdef USE_STARTUP
+
  int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
  {
    CWinStartUp kStartUp(hInstance, hPrevInstance, lpCmdLine, iCmdShow);
@@ -25,4 +27,6 @@ CWinStartUp::~CWinStartUp()
    return iRet;
  }
 
+#endif
+ 
 #endif // WINDOWS
