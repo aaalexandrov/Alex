@@ -3,13 +3,13 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="SOS" />
-		<Option compiler="gcc" />
+		<Option compiler="clang" />
 		<Build>
 			<Target title="Debug">
 				<Option output="../Output/bin/Debug/SOS" prefix_auto="1" extension_auto="1" />
 				<Option object_output="../Output/obj/Debug/" />
 				<Option type="1" />
-				<Option compiler="gcc" />
+				<Option compiler="clang" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-D_DEBUG" />
@@ -19,7 +19,7 @@
 				<Option output="../Output/bin/Release/SOS" prefix_auto="1" extension_auto="1" />
 				<Option object_output="../Output/obj/Release/" />
 				<Option type="1" />
-				<Option compiler="gcc" />
+				<Option compiler="clang" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c++11" />
@@ -36,6 +36,9 @@
 			<Add directory="../../Framework/Base" />
 			<Add directory="../../Framework/OS" />
 		</Compiler>
+		<Linker>
+			<Add library="pthread" />
+		</Linker>
 		<Unit filename="../../Framework/Base/AVLTree.cpp" />
 		<Unit filename="../../Framework/Base/AVLTree.h" />
 		<Unit filename="../../Framework/Base/Array.cpp" />
@@ -133,7 +136,9 @@
 			<code_completion />
 			<envvars />
 			<debugger />
-			<lib_finder disable_auto="1" />
+			<lib_finder disable_auto="1">
+				<lib name="pthread" />
+			</lib_finder>
 			<DoxyBlocks>
 				<comment_style block="0" line="0" />
 				<doxyfile_project />

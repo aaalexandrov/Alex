@@ -10,7 +10,7 @@ ifeq ($(OS),Windows_NT)
 	CFLAGS += -DWINVER=0x0500
 	OSDIR = Windows
 	ifeq ($(CC), clang++)
-		CFLAGS += -target x86_64-w64-mingw32
+		LIBS += -lpthread
 	endif
 else
 	OSDIR = Linux
@@ -21,7 +21,7 @@ CONFIG ?= Debug
 ifeq ($(CONFIG), Debug)
 	CFLAGS += -g -D_DEBUG
 else
-	CONFIG = Release
+	override CONFIG = Release
 	CFLAGS += -O2
 	LFLAGS += -s
 endif

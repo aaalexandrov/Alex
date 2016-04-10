@@ -15,11 +15,12 @@ CVarMerge::CIter::CIter(CVarMerge const *pMerge, int iVar, CVarObj::CIter *pIt, 
     m_pIt = pIt;
   else {
     m_pIt = pMerge->m_Vars[m_iVar].m_pVar->GetIter(iDirection > 0 ? CStrAny() : GetLastIterConst());
-    if (!*m_pIt)
+    if (!*m_pIt) {
       if (iDirection > 0)
         Next();
       else
         Prev();
+    }
   }
 }
 
@@ -29,13 +30,14 @@ CVarMerge::CIter &CVarMerge::CIter::Next()
     return *this;
   do {
     m_pIt->Next();
-    if (!*m_pIt)
+    if (!*m_pIt) {
       if (m_iVar < m_pMerge->m_Vars.m_iCount - 1) {
         m_iVar++;
         DEL(m_pIt);
         m_pIt = m_pMerge->m_Vars[m_iVar].m_pVar->GetIter();
       } else
         break;
+    }
   } while (!IsValidPos());
   return *this;
 }
@@ -46,13 +48,14 @@ CVarMerge::CIter &CVarMerge::CIter::Prev()
     return *this;
   do {
     m_pIt->Prev();
-    if (!*m_pIt)
+    if (!*m_pIt) {
       if (m_iVar > 0) {
         m_iVar--;
         DEL(m_pIt);
         m_pIt = m_pMerge->m_Vars[m_iVar].m_pVar->GetIter(GetLastIterConst());
       } else
         break;
+    }
   } while (!IsValidPos());
   return *this;
 }

@@ -152,7 +152,8 @@ template <class T, class K, class H, class P>
 typename CHashInner<T, K, H, P>::TIter &CHashInner<T, K, H, P>::TIter::operator ++()
 {
 	ASSERT(m_pHash && m_iIndex >= -1 && m_iIndex < m_pHash->m_iMaxCount);
-	for (m_iIndex++; m_iIndex < m_pHash->m_iMaxCount && m_pHash->m_pElements[m_iIndex].IsFree();	m_iIndex++);
+	for (m_iIndex++; m_iIndex < m_pHash->m_iMaxCount && m_pHash->m_pElements[m_iIndex].IsFree();	m_iIndex++)
+    ;
   return *this;
 }
 

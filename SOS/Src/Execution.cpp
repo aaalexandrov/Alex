@@ -376,7 +376,7 @@ EInterpretError CInstruction::ExecNot(CExecution *pExecution) const
 	if (!pDst || !pSrc)
 		return IERR_INVALID_OPERAND;
 	pDst->ReleaseValue();
-  pDst->Set(pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue);
+  pDst->Set(pSrc->m_btType == CValue::VT_NONE || (pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue));
 	return IERR_OK;
 }
 
@@ -387,7 +387,7 @@ EInterpretError CInstruction::ExecMoveAndJumpIfFalse(CExecution *pExecution) con
 	pSrc = GetSrc0(pExecution);
 	if (!pSrc)
 		return IERR_INVALID_OPERAND;
-	if (pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue) {
+	if (pSrc->m_btType == CValue::VT_NONE || (pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue)) {
 		if (pDst)
 			*pDst = *pSrc;
 	  pExecution->m_pNextInstruction = pExecution->m_pClosure->m_pFragment->m_arrCode.PtrAt(m_nSrc1);
@@ -402,7 +402,7 @@ EInterpretError CInstruction::ExecMoveAndJumpIfTrue(CExecution *pExecution) cons
 	pSrc = GetSrc0(pExecution);
 	if (!pSrc)
 		return IERR_INVALID_OPERAND;
-	if (!(pSrc->m_btType == CValue::VT_NONE || pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue)) {
+	if (!(pSrc->m_btType == CValue::VT_NONE || (pSrc->m_btType == CValue::VT_BOOL && !pSrc->m_bValue))) {
 		if (pDst)
 			*pDst = *pSrc;
 	  pExecution->m_pNextInstruction = pExecution->m_pClosure->m_pFragment->m_arrCode.PtrAt(m_nSrc1);

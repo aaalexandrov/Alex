@@ -276,7 +276,7 @@ void CStrAny::GetUnionBeginEnd(CStrAny const &s, char const *&pStart, char const
       pStart = Util::Min(m_pBuf, s.m_pBuf);
       if (m_pBuf + m_iLen >= s.m_pBuf + s.m_iLen) {
         pEnd = m_pBuf + m_iLen;
-        bZeroTerminated = m_bZeroTerminated || m_pBuf + m_iLen == s.m_pBuf + s.m_iLen && s.m_bZeroTerminated;
+        bZeroTerminated = m_bZeroTerminated || (m_pBuf + m_iLen == s.m_pBuf + s.m_iLen && s.m_bZeroTerminated);
       } else {
         pEnd = s.m_pBuf + s.m_iLen;
         bZeroTerminated = !!s.m_bZeroTerminated;
@@ -394,11 +394,12 @@ int CStrAny::Cmp(CStrAny const &s) const
   int i = 0;
   while (!EndsAt(i) && !s.EndsAt(i) && m_pBuf[i] == s.m_pBuf[i])
     i++;
-  if (EndsAt(i))
+  if (EndsAt(i)) {
     if (s.EndsAt(i))
       return 0;
     else
       return -1;
+  }
   if (s.EndsAt(i))
     return 1;
   return (int) m_pBuf[i] - (int) s.m_pBuf[i];
@@ -413,11 +414,12 @@ int CStrAny::ICmp(CStrAny const &s) const
   char ch1, ch2;
   while (!EndsAt(i) && !s.EndsAt(i) && (ch1 = tolower(m_pBuf[i])) == (ch2 = tolower(s.m_pBuf[i])))
     i++;
-  if (EndsAt(i))
+  if (EndsAt(i)) {
     if (s.EndsAt(i))
       return 0;
     else
       return -1;
+  }
   if (s.EndsAt(i))
     return 1;
   return (int) ch1 - (int) ch2;

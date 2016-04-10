@@ -43,7 +43,7 @@ public:
   static inline size_t Hash(CStrAny const &s);//           { return s.GetHash(); }
 	// Equality predicate
   static inline bool Eq(const char *pKey, CStrHeader const *pHeader)            { return !strcmp(pKey, (const char *) (pHeader + 1)); }
-  static inline bool Eq(CStrHeader const *pHeader1, CStrHeader const *pHeader2) { if (pHeader1 == pHeader2) return true; if (pHeader1->m_bInRepository && pHeader2->m_bInRepository || pHeader1->m_iLen != pHeader2->m_iLen) return false; return !memcmp(pHeader1 + 1, pHeader2 + 1, pHeader1->m_iLen * sizeof(char)); }
+  static inline bool Eq(CStrHeader const *pHeader1, CStrHeader const *pHeader2) { if (pHeader1 == pHeader2) return true; if ((pHeader1->m_bInRepository && pHeader2->m_bInRepository) || pHeader1->m_iLen != pHeader2->m_iLen) return false; return !memcmp(pHeader1 + 1, pHeader2 + 1, pHeader1->m_iLen * sizeof(char)); }
   static inline bool Eq(CStrAny const &s, CStrHeader const *pHeader);//            { CStrHeader *pHeaderS = const_cast<CStrHeader*>(s.GetHeader()); if (pHeaderS) return Eq(pHeaderS, pHeader); if (s.Length() != pHeader->m_iLen) return false; return !memcmp(s.m_pBuf, (pHeader + 1), pHeader->m_iLen * sizeof(char)); }
 
 public:

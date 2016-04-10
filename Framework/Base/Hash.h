@@ -248,7 +248,7 @@ void CHash<T, K, H, P>::Resize(int iSize)
     if (!pLstOld)
       continue;
     typename CHashList::TNode *pNode;
-    while (pNode = pLstOld->PopNode()) {
+    while ((pNode = pLstOld->PopNode())) {
       size_t uiHash = H::Hash(pNode->Data);
       uiHash %= m_arrLists.m_iCount;
       CHashList *&pLstNew = m_arrLists[(int) uiHash];

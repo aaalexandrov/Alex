@@ -15,7 +15,7 @@ public:
 
 	class CLocalTracker {
 	public:
-	  static const short CONTEXT_DEFAULT = 0x8000;
+	  static const short CONTEXT_DEFAULT = (short) 0x8000;
 	  static const short CONTEXT_CAPTURE = (short) -1;
 
 		typedef CHashKV<CStrAny, TLocalInfo, CStrAny, CStrAny> THash;

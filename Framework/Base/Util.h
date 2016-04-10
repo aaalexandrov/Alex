@@ -186,11 +186,12 @@ template <class T>
 int Util::SolveQuadratic(T a, T b, T c, T &x1, T &x2)
 {
   if (Util::IsEqual(a, 0)) {
-    if (Util::IsEqual(b, 0))
+    if (Util::IsEqual(b, 0)) {
       if (Util::IsEqual(c, 0))
         return -1;
       else
         return 0;
+    }
     x1 = x2 = -c / b;
     return 1;
   }

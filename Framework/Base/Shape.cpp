@@ -172,11 +172,12 @@ CShape3D::Num CLine3D::Dist2Line(const CVector<3, Num> &vLine0Point0, const CVec
   CVector<3, Num> vDelta1 = vLine1Point1 - vLine1Point0;
   Num nDelta1DotDelta1 = vDelta1 % vDelta1;
 
-  if (IsEqual(nDeltaDotDelta, 0))
+  if (IsEqual(nDeltaDotDelta, 0)) {
     if (IsEqual(nDelta1DotDelta1, 0)) // Both lines are actually points
       return (vLine0Point0 - vLine1Point0).Length();
     else // Other line's a line and this one is a point
       return Dist2Point(vLine1Point0, vLine1Point1, nLine1Min, nLine1Max, vLine0Point0);
+  }
 
   Num a, b, c, d, e, t, u;
   c = vDelta % vDelta1;

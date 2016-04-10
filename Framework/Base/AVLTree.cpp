@@ -30,7 +30,8 @@ static void AVLTreeTest()
   bool bRemoveByVal = false;
   while (kTree.m_iCount) {
     iInd = rand() % kTree.m_iCount;
-    for (i = 0, it = kTree; i < iInd; i++, ++it);
+    for (i = 0, it = kTree; i < iInd; i++, ++it)
+      ;
     ASSERT(it);
     if (bRemoveByVal)
       kTree.RemoveValue(*it);

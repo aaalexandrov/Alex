@@ -66,7 +66,7 @@ public:
 
   inline CValue &operator =(CValue const &kValue);
 
-	inline bool         GetBool() const       { return !(m_btType == VT_NONE || m_btType == VT_BOOL && !m_bValue); }
+	inline bool         GetBool() const       { return !(m_btType == VT_NONE || (m_btType == VT_BOOL && !m_bValue)); }
 	inline float        GetFloat() const      { return m_btType == VT_FLOAT ? m_fValue : 0; }
   inline CStrAny      GetStr(bool bDecorate) const;
   inline CValueTable *GetTable() const      { return m_btType == VT_TABLE ? m_pTableValue : 0; }

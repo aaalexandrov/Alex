@@ -87,11 +87,11 @@ struct TDebugAllocator: public A {
     std::lock_guard<std::mutex> lock(m_kMutex);
     size_t uiSize = 0;
     for (TBlockInfo *pBlock = m_pBlocks; pBlock; pBlock = pBlock->m_pNext) {
-      fprintf(stderr, "Block start: %p, size: %d, file: %s, line: %d\n", (pBlock + 1), pBlock->m_uiSize, pBlock->m_pFile, pBlock->m_iLine);
+      fprintf(stderr, "Block start: %p, size: %zu, file: %s, line: %d\n", (pBlock + 1), pBlock->m_uiSize, pBlock->m_pFile, pBlock->m_iLine);
       uiSize += pBlock->m_uiSize;
     }
     ASSERT(uiSize == m_uiTotalSize);
-    fprintf(stderr, "Total size: %d\n", uiSize);
+    fprintf(stderr, "Total size: %zu\n", uiSize);
   }
 };
 

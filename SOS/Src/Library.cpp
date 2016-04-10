@@ -101,7 +101,7 @@ EInterpretError CFunctionLibrary::SubStr(CExecution &kExecution, CArray<CValue> 
   if (arrParams.m_iCount < 2 || arrParams.m_iCount > 3 ||
       arrParams[0].m_btType != CValue::VT_STRING ||
       arrParams[1].m_btType != CValue::VT_FLOAT ||
-      arrParams.m_iCount > 2 && arrParams[2].m_btType != CValue::VT_FLOAT)
+      (arrParams.m_iCount > 2 && arrParams[2].m_btType != CValue::VT_FLOAT))
     return IERR_INVALID_OPERAND;
   int iStart = (int) arrParams[1].GetFloat() - 1;
   int iLen = arrParams.m_iCount > 2 ? (int) arrParams[2].GetFloat() : 1;

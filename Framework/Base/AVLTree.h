@@ -355,13 +355,14 @@ bool CAVLTree<T, K, P>::CheckIntegrity(TNode *pNode, int &iCount, TNode *pParent
   iCount++;
   if (pNode->pParent != pParent)
     bRes = false;
-  if (pParent)
+  if (pParent) {
     if (pParent->GetChildDir(pNode)) {
       if (P::Lt(pNode->Data, pParent->Data))
         bRes = false;
     } else
       if (P::Lt(pParent->Data, pNode->Data))
         bRes = false;
+  }
   int iLevel0, iLevel1;
   iLevel0 = GetNodeLevel(pNode->pChild[0]);
   iLevel1 = GetNodeLevel(pNode->pChild[1]);
