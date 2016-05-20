@@ -1,6 +1,10 @@
 #ifndef __THREADS_H
 #define __THREADS_H
 
+#include "Base.h"
+#include "RTTI.h"
+#include "Util.h"
+
 #ifdef Yield
 #undef Yield
 #endif
@@ -24,7 +28,7 @@ public:
 
   virtual UINT Wait(UINT uiMilliseconds)  = 0;
 
-  virtual void Exit(UINT uiExitcode)      = 0; // Exit should only be called from the excuting thread context
+  virtual void Exit(UINT uiExitcode)      = 0; // Exit should only be called from the executing thread context
   virtual void Yield(UINT uiMilliseconds) = 0;
   virtual UINT Run(void *pParam)          = 0;
 };
@@ -50,5 +54,26 @@ public:
 
 #include "Windows/WinThreads.h"
 #include "Linux/LinThreads.h"
+
+template <class T>
+class CAtomic {
+public:
+  CLock m_kLock;
+  T     m_Val;
+
+  CAtomic() {}
+  CAtomic(T val): m_Val(val) {}
+
+  operator T() { CScopeLock kAutoLock(&m_kLock); return m_Val; }
+  CAtomic &operator =(T val) { CScopeLock kAutoLock(&m_kLock); m_Val = val; return *this; }
+
+  template <class A>
+  CAtomic &operator +=(A diff) { CScopeLock kAutoLock(&m_kLock); m_Val += diff; return *this; }
+  template <class A>
+  CAtomic &operator -=(A diff) { CScopeLock kAutoLock(&m_kLock); m_Val -= diff; return *this; }
+
+  T Exchange (T val) { CScopeLock kAutoLock(&m_kLock); Util::Swap(m_Val, val); return val; }
+};
+
 
 #endif

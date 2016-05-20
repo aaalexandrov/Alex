@@ -3,7 +3,6 @@
 
 #ifdef WINDOWS
 
-#include "Threads.h"
 #include <Windows.h>
 
 #ifdef Yield
@@ -57,6 +56,7 @@ public:
 };
 
 typedef CLockWin CLock;
+
 
 #endif // WINDOWS
 

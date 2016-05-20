@@ -1,12 +1,6 @@
 #ifndef __MEM_H
 #define __MEM_H
 
-#include <stdint.h>
-#include <atomic>
-#include <mutex>
-#include <malloc.h>
-#include "Debug.h"
-
 template <class A>
 A &Instance()
 {
@@ -14,117 +8,8 @@ A &Instance()
   return kInstance;
 }
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-inline size_t malloc_usable_size(void *p) { return _msize(p); }
-#endif
-
-struct TMallocAllocator {
-  inline void *Alloc(size_t uiSize, const char *pFile, int iLine) { return malloc(uiSize); }
-  inline void Free(void *p, const char *pFile, int iLine)         { free(p); }
-  inline size_t GetBlockSize(void *p)                             { return malloc_usable_size(p); }
-  void Dump()                                                     {}
-};
-
-template <class A>
-struct TDebugAllocator: public A {
-  struct TBlockInfo {
-    size_t           m_uiSize;
-    const char      *m_pFile;
-    int              m_iLine;
-    TBlockInfo      *m_pPrev, *m_pNext;
-    TDebugAllocator *m_pAllocator;
-  };
-
-  std::mutex            m_kMutex;
-  TBlockInfo           *m_pBlocks;
-  size_t                m_uiTotalSize;
-
-  TDebugAllocator(): m_pBlocks(0), m_uiTotalSize(0) {}
-  ~TDebugAllocator() { if (m_uiTotalSize) Dump(); ASSERT(m_uiTotalSize == 0); }
-
-  inline void *Alloc(size_t uiSize, const char *pFile, int iLine)
-  {
-    std::lock_guard<std::mutex> lock(m_kMutex);
-    TBlockInfo *pBlock = (TBlockInfo *) A::Alloc(uiSize + sizeof(TBlockInfo), pFile, iLine);
-    pBlock->m_uiSize = uiSize;
-    pBlock->m_pFile = pFile;
-    pBlock->m_iLine = iLine;
-    pBlock->m_pPrev = 0;
-    if (m_pBlocks)
-      m_pBlocks->m_pPrev = pBlock;
-    pBlock->m_pNext = m_pBlocks;
-    pBlock->m_pAllocator = this;
-    m_pBlocks = pBlock;
-    m_uiTotalSize += uiSize;
-    return pBlock + 1;
-  }
-
-  inline void Free(void *p, const char *pFile, int iLine)
-  {
-    std::lock_guard<std::mutex> lock(m_kMutex);
-    TBlockInfo *pBlock = (TBlockInfo *) p - 1;
-    ASSERT(pBlock->m_pAllocator == this);
-    m_uiTotalSize -= pBlock->m_uiSize;
-    if (pBlock->m_pPrev)
-      pBlock->m_pPrev->m_pNext = pBlock->m_pNext;
-    else
-      m_pBlocks = pBlock->m_pNext;
-    if (pBlock->m_pNext)
-      pBlock->m_pNext->m_pPrev = pBlock->m_pPrev;
-    pBlock->m_pAllocator = 0;
-    A::Free(pBlock, pFile, iLine);
-  }
-
-  inline size_t GetBlockSize(void *p)
-  {
-    std::lock_guard<std::mutex> lock(m_kMutex);
-    TBlockInfo *pBlock = (TBlockInfo *) p - 1;
-    return pBlock->m_uiSize;
-  }
-
-  void Dump()
-  {
-    std::lock_guard<std::mutex> lock(m_kMutex);
-    size_t uiSize = 0;
-    for (TBlockInfo *pBlock = m_pBlocks; pBlock; pBlock = pBlock->m_pNext) {
-      fprintf(stderr, "Block start: %p, size: %zu, file: %s, line: %d\n", (pBlock + 1), pBlock->m_uiSize, pBlock->m_pFile, pBlock->m_iLine);
-      uiSize += pBlock->m_uiSize;
-    }
-    ASSERT(uiSize == m_uiTotalSize);
-    fprintf(stderr, "Total size: %zu\n", uiSize);
-  }
-};
-
-template <class A>
-struct TTrackingAllocator: public A {
-  std::atomic<size_t> m_uiSize;
-
-  TTrackingAllocator(): m_uiSize(0) {}
-  ~TTrackingAllocator() {}
-
-  inline void *Alloc(size_t uiSize, const char *pFile, int iLine)
-  {
-    void *p = A::Alloc(uiSize, pFile, iLine);
-    m_uiSize += GetBlockSize(p);
-    return p;
-  }
-
-  inline void Free(void *p, const char *pFile, int iLine)
-  {
-    m_uiSize -= GetBlockSize(p);
-    A::Free(p, pFile, iLine);
-  }
-
-  void Dump() { fprintf(stderr, "Allocated memory: %d\n", (size_t) m_uiSize); A::Dump(); }
-
-  using A::GetBlockSize;
-};
-
-#ifdef _DEBUG
-typedef TTrackingAllocator<TDebugAllocator<TMallocAllocator> > TDefAllocator;
-#else
-typedef TMallocAllocator TDefAllocator;
-#endif
+template <class T>
+struct TSpecifyAllocator;
 
 template <class T>
 struct TRemoveConst {
@@ -137,18 +22,13 @@ struct TRemoveConst<const T> {
 };
 
 template <class T>
-struct TSpecifyAllocator {
-  typedef TDefAllocator Type;
-};
-
-template <class T>
 struct TGetAlloc {
   typedef typename TSpecifyAllocator<typename TRemoveConst<T>::Type>::Type Type;
 };
 
-
 template <class T>
 typename TGetAlloc<T>::Type& GetAllocatorInstance(T*) { return Instance<typename TGetAlloc<T>::Type>(); }
+
 
 // Template to get around the problem of passing a coma inside a single macro argument, as in Type<Param1, Param2>.
 // Such a type must be enclosed in ID_TYPE inside the macro invocation, e.g. NEW(ID_TYPE(Type<Param1, Param2>), Alloc, 5)

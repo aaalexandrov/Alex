@@ -41,6 +41,8 @@
 		</Linker>
 		<Unit filename="../../Framework/Base/AVLTree.cpp" />
 		<Unit filename="../../Framework/Base/AVLTree.h" />
+		<Unit filename="../../Framework/Base/Allocator.cpp" />
+		<Unit filename="../../Framework/Base/Allocator.h" />
 		<Unit filename="../../Framework/Base/Array.cpp" />
 		<Unit filename="../../Framework/Base/Array.h" />
 		<Unit filename="../../Framework/Base/Base.cpp" />

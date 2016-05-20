@@ -15,11 +15,11 @@
 
 #include "Debug.h"
 #include "Mem.h"
+#include "Base.h"
+#include "RTTI.h"
 
 #include "Allocation.h"
 
-#include "Base.h"
-#include "RTTI.h"
 #include "Util.h"
 using namespace Util;
 
@@ -33,6 +33,9 @@ using namespace Util;
 #include "Var.h"
 
 #include "Error.h"
+
+#include "Allocator.h"
+
 
 // TODO: reference additional headers your program requires here
 

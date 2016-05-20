@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "WinThreads.h"
+#include "Threads.h"
 
 #ifdef WINDOWS
 

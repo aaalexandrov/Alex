@@ -12,7 +12,7 @@ public:
   virtual ~CObject() {}
 
   typedef CRTTI TRTTI;
-  static CObject      *CreateInstance_s() { return NEW(CObject, ()); }
+  static CObject      *CreateInstance_s();
   static char const    *GetClassName_s()   { return "CObject"; }
   static inline CRTTI const  *GetRTTI_s();
   virtual CRTTI const *GetRTTI() const    { return GetRTTI_s(); }
@@ -22,7 +22,7 @@ class CRTTI {
 public:
   typedef CObject Type;
 
-  static  CObject *CreateInstance_s()             { return NEW(Type, ()); }
+  static  CObject *CreateInstance_s();
   virtual CObject *CreateInstance() const         { return CreateInstance_s(); }
 
   static  char const *GetName_s()                 { return Type::GetClassName_s(); }

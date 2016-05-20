@@ -2,6 +2,7 @@
 #define __ALLOCATION_H
 
 #include "Mem.h"
+#include "Allocator.h"
 
 #ifdef _DEBUG
 struct TSosAllocator: public TDefAllocator {};

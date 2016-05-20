@@ -6,6 +6,16 @@
 
 // RTTI -----------------------------------------------------------------------
 
+CObject *CObject::CreateInstance_s()
+{
+  return NEW(CObject, ());
+}
+
+CObject *CRTTI::CreateInstance_s()
+{
+  return NEW(Type, ());
+}
+
 CRTTIRegisterer<CObject> g_RegObject;
 
 void CRTTIHolder::Add(CRTTI const *pRTTI)
