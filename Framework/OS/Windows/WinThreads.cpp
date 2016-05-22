@@ -33,7 +33,7 @@ bool CThreadWin::Init(void *pParam, bool bCreateSuspended, UINT uiStackSize)
   return true;
 }
 
-UINT CThreadWin::GetID()
+uintptr_t CThreadWin::GetID()
 {
   return m_dwThreadID;
 }
@@ -48,13 +48,13 @@ int CThreadWin::Resume()
   return ResumeThread(m_hThread);
 }
 
-bool CThreadWin::Terminate(UINT uiExitcode)
+bool CThreadWin::Terminate(uintptr_t uiExitcode)
 {
   m_dwThreadID = 0;
   return !!TerminateThread(m_hThread, uiExitcode);
 }
 
-UINT CThreadWin::GetExitCode()
+uintptr_t CThreadWin::GetExitCode()
 {
   DWORD dwExitcode;
   if (!GetExitCodeThread(m_hThread, &dwExitcode) || dwExitcode == STILL_ACTIVE)
@@ -82,10 +82,10 @@ UINT CThreadWin::Wait(UINT uiMilliseconds)
   return dwRes;
 }
 
-void CThreadWin::Exit(UINT uiExitcode)
+void CThreadWin::Exit(uintptr_t uiExitcode)
 {
   m_dwThreadID = 0;
-  ExitThread(uiExitcode);
+  ExitThread((DWORD) uiExitcode);
 }
 
 void CThreadWin::Yield(UINT uiMilliseconds)
@@ -93,7 +93,7 @@ void CThreadWin::Yield(UINT uiMilliseconds)
   SleepEx(uiMilliseconds, false);
 }
 
-UINT CThreadWin::Run(void *pParam)
+uintptr_t CThreadWin::Run(void *pParam)
 {
   return 0;
 }
@@ -101,7 +101,7 @@ UINT CThreadWin::Run(void *pParam)
 DWORD WINAPI CThreadWin::ThreadFunc(LPVOID lpParam)
 {
   CThreadWin *pThread = (CThreadWin *) lpParam;
-  UINT uiRes = pThread->Run(pThread->m_pParam);
+  uintptr_t uiRes = pThread->Run(pThread->m_pParam);
   pThread->m_dwThreadID = 0;
   return uiRes;
 }

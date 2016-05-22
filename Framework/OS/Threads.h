@@ -18,25 +18,27 @@ public:
 
   virtual bool Init(void *pParam, bool bCreateSuspended = false, UINT uiStackSize = 0) = 0;
 
-  virtual UINT GetID()                    = 0;
+  virtual uintptr_t GetID()                    = 0;
 
-  virtual int Suspend()                   = 0; // Return suspend count after operation
-  virtual int Resume()                    = 0;
+  virtual int Suspend()                        = 0; // Return suspend count after operation
+  virtual int Resume()                         = 0;
 
-  virtual bool Terminate(UINT uiExitcode) = 0; // Terminate should be called from outside the thread
-  virtual UINT GetExitCode()              = 0;
+  virtual bool Terminate(uintptr_t uiExitcode) = 0; // Terminate should be called from outside the thread
+  virtual uintptr_t GetExitCode()              = 0;
 
-  virtual UINT Wait(UINT uiMilliseconds)  = 0;
+  virtual UINT Wait(UINT uiMilliseconds)       = 0;
 
-  virtual void Exit(UINT uiExitcode)      = 0; // Exit should only be called from the executing thread context
-  virtual void Yield(UINT uiMilliseconds) = 0;
-  virtual UINT Run(void *pParam)          = 0;
+  virtual void Exit(uintptr_t uiExitcode)      = 0; // Exit should only be called from the executing thread context
+  virtual void Yield(UINT uiMilliseconds)      = 0;
+  virtual uintptr_t Run(void *pParam)          = 0;
 };
 
 // Locks
 class CLockBase: public CObject {
   DEFRTTI(CLockBase, CObject, false)
 public:
+  virtual ~CLockBase() {}
+
   virtual void Lock() = 0;
   virtual bool TryLock() = 0;
   virtual void Unlock() = 0;

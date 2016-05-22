@@ -21,19 +21,19 @@ public:
 
   virtual bool Init(void *pParam, bool bCreateSuspended = false, UINT uiStackSize = 0);
 
-  virtual UINT GetID();
+  virtual uintptr_t GetID();
 
   virtual int Suspend();
   virtual int Resume();
 
-  virtual bool Terminate(UINT uiExitcode);
-  virtual UINT GetExitCode();
+  virtual bool Terminate(uintptr_t uiExitcode);
+  virtual uintptr_t GetExitCode();
 
   virtual UINT Wait(UINT uiMilliseconds);
 
-  virtual void Exit(UINT uiExitcode);
+  virtual void Exit(uintptr_t uiExitcode);
   virtual void Yield(UINT uiMilliseconds);
-  virtual UINT Run(void *pParam);
+  virtual uintptr_t Run(void *pParam);
 
   static DWORD WINAPI ThreadFunc(LPVOID lpParam);
 };

@@ -18,6 +18,14 @@
   #define LINUX
 #endif
 
+#ifndef __cdecl
+  #if !defined(_MSC_VER) && defined(WINDOWS)
+    #define __cdecl __attribute__((__cdecl__))
+  #else
+    #define __cdecl
+  #endif
+#endif
+
 #include <stdint.h>
 
 typedef unsigned int     UINT;
