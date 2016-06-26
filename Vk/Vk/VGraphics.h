@@ -19,6 +19,14 @@ void DoneResource(T *&resource)
   }
 }
 
+template <class T>
+struct AutoDone {
+  T* m_ptr;
+  bool m_own;
+  AutoDone(T *ptr, bool own = true) : m_ptr(ptr), m_own(own) {}
+  ~AutoDone() { if (m_ptr) { m_ptr->Done(); if (m_own) delete m_ptr; } }
+};
+
 class ConditionalLock {
 public:
   std::recursive_mutex *m_mutex;
@@ -89,16 +97,15 @@ public:
 class VImage {
 public:
   VDevice *m_device;
-  VkImageCreateInfo m_imgInfo;
   VkImage m_image = VK_NULL_HANDLE;
+  VkImageView m_view = VK_NULL_HANDLE;
   VMemory m_memory;
   VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
   VkFormat m_format = VK_FORMAT_UNDEFINED;
   VkExtent3D m_size = { 0, 0, 0 };
-  VkImageView m_view = VK_NULL_HANDLE;
   bool m_ownImage = true;
 
-  VImage(VDevice &device);
+  VImage(VDevice &device, bool synchronize = true);
   ~VImage();
 
   bool Init(VkFormat format, uint32_t width, uint32_t height, uint32_t depth = 1, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, bool linear = false);
@@ -125,6 +132,24 @@ public:
 
   bool Init(VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 16.0f);
   void Done();
+};
+
+class VBuffer {
+public:
+  VDevice *m_device;
+  VkBuffer m_buffer = VK_NULL_HANDLE;
+  VMemory m_memory;
+  VkBufferUsageFlags m_usage = 0;
+  uint64_t m_size = 0;
+
+  VBuffer(VDevice &device, bool synchronize = true);
+  ~VBuffer();
+
+  bool Init(uint64_t size, VkBufferUsageFlags usage, bool hostVisible);
+  void Done();
+
+  void *Map();
+  void Unmap();
 };
 
 class VSwapchain {
@@ -187,6 +212,7 @@ public:
 
   bool SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess);
   bool CopyImage(VImage &src, VImage &dst);
+  bool CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset = 0, uint64_t dstOffset = 0, uint64_t size = VK_WHOLE_SIZE);
 };
 
 class VDevice {
@@ -231,6 +257,7 @@ public:
   virtual bool SubmitInitCommands();
 
   virtual VImage *LoadVImage(std::string const &filename);
+  virtual VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
 
   virtual bool UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components);
   virtual void FreeStagingImage();

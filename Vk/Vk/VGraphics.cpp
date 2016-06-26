@@ -566,6 +566,23 @@ bool VCmdBuffer::CopyImage(VImage &src, VImage &dst)
   return true;
 }
 
+bool VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint64_t dstOffset, uint64_t size)
+{
+  if (!AutoBegin())
+    return false;
+
+  VkBufferCopy copy;
+  copy.size = std::min(size, std::min(src.m_size - srcOffset, dst.m_size - dstOffset));
+  copy.srcOffset = srcOffset;
+  copy.dstOffset = dstOffset;
+
+  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+
+  vkCmdCopyBuffer(m_buffer, src.m_buffer, dst.m_buffer, 1, &copy);
+
+  return true;
+}
+
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
 {
 }
@@ -633,6 +650,10 @@ bool VDevice::Init()
 
   VImage *img = LoadVImage("../../Terrain/Data/Textures/Earth.bmp");
   DoneResource(img);
+
+  std::vector<char> trash(1024);
+  VBuffer *buf = LoadVBuffer(trash.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, trash.data());
+  DoneResource(buf);
 
   if (!SubmitInitCommands())
     return false;
@@ -855,7 +876,9 @@ VImage *VDevice::LoadVImage(std::string const &filename)
     return nullptr;
   }
 
-  if (!m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT))
+  AutoDone<VImage> doneVimg(vimg);
+
+  if (m_staging->m_layout != VK_IMAGE_LAYOUT_GENERAL && !m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT))
     return false;
 
   if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT))
@@ -867,15 +890,49 @@ VImage *VDevice::LoadVImage(std::string const &filename)
   if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT))
     return false;
 
-  SubmitInitCommands();
+  if (!m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT))
+    return false;
 
+  if (!SubmitInitCommands())
+    return nullptr;
+
+  doneVimg.m_ptr = nullptr;
   return vimg;
+}
+
+VBuffer *VDevice::LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data)
+{
+  VBuffer staging(*this, false), *buffer = nullptr;
+
+  if (!staging.Init(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true))
+    return nullptr;
+
+  AutoDone<VBuffer> doneStaging(&staging, false);
+
+  void *stagingMem = staging.Map();
+  memcpy(stagingMem, data, size);
+  staging.Unmap();
+
+  buffer = new VBuffer(*this, false);
+  AutoDone<VBuffer> bufferDone(buffer);
+
+  if (!buffer->Init(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false))
+    return nullptr;
+
+  if (!m_cmdBuffer->CopyBuffer(staging, *buffer))
+    return nullptr;
+
+  if (!SubmitInitCommands())
+    return nullptr;
+
+  bufferDone.m_ptr = nullptr;
+  return buffer;
 }
 
 bool VDevice::UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components)
 {
   if (m_staging)
-    if (m_staging->m_imgInfo.extent.width < width || m_staging->m_imgInfo.extent.height < height || m_staging->m_imgInfo.extent.depth < depth)
+    if (m_staging->m_size.width < width || m_staging->m_size.height < height || m_staging->m_size.depth < depth)
       DoneResource(m_staging);
     else
       return true;
@@ -1005,7 +1062,7 @@ void VSwapchain::DoneImages()
   m_images.clear();
 }
 
-VImage::VImage(VDevice &device) : m_device(&device), m_memory(true)
+VImage::VImage(VDevice &device, bool synchronize) : m_device(&device), m_memory(synchronize)
 {
 }
 
@@ -1076,25 +1133,27 @@ bool VImage::Init(VkFormat format, uint32_t width, uint32_t height, uint32_t dep
 {
   m_format = format;
   m_layout = linear ? VK_IMAGE_LAYOUT_PREINITIALIZED : VK_IMAGE_LAYOUT_UNDEFINED;
+  m_size = { width, height, depth };
 
-  m_imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  m_imgInfo.pNext = nullptr;
-  m_imgInfo.flags = 0;
-  m_imgInfo.imageType = depth == 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
-  m_imgInfo.extent = { width, height, depth };
-  m_imgInfo.format = format;
-  m_imgInfo.mipLevels = mipLevels;
-  m_imgInfo.arrayLayers = arrayLayers;
-  m_imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  m_imgInfo.usage = linear ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT :  UsageFromFormat(format);
-  m_imgInfo.tiling = linear ? VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
-  m_imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  m_imgInfo.initialLayout = m_layout;
-  m_imgInfo.queueFamilyIndexCount = 0;
-  m_imgInfo.pQueueFamilyIndices = nullptr;
+  VkImageCreateInfo imgInfo;
+  imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imgInfo.pNext = nullptr;
+  imgInfo.flags = 0;
+  imgInfo.imageType = depth == 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
+  imgInfo.extent = m_size;
+  imgInfo.format = format;
+  imgInfo.mipLevels = mipLevels;
+  imgInfo.arrayLayers = arrayLayers;
+  imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imgInfo.usage = linear ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT :  UsageFromFormat(format);
+  imgInfo.tiling = linear ? VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
+  imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imgInfo.initialLayout = m_layout;
+  imgInfo.queueFamilyIndexCount = 0;
+  imgInfo.pQueueFamilyIndices = nullptr;
 
   VkImage image;
-  VkResult err = vkCreateImage(m_device->m_device, &m_imgInfo, nullptr, &image);
+  VkResult err = vkCreateImage(m_device->m_device, &imgInfo, nullptr, &image);
   if (err < 0)
     return false;
 
@@ -1298,4 +1357,63 @@ void VMemory::Unmap(VDevice &device)
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
   vkUnmapMemory(device.m_device, m_memory);
+}
+
+VBuffer::VBuffer(VDevice &device, bool synchronize) : m_device(&device), m_memory(synchronize)
+{
+}
+
+VBuffer::~VBuffer()
+{
+}
+
+bool VBuffer::Init(uint64_t size, VkBufferUsageFlags usage, bool hostVisible)
+{
+  m_usage = usage;
+  m_size = size;
+
+  VkBufferCreateInfo bufInfo;
+  bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufInfo.pNext = nullptr;
+  bufInfo.flags = 0;
+  bufInfo.size = m_size;
+  bufInfo.usage = m_usage;
+  bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  bufInfo.queueFamilyIndexCount = 0;
+  bufInfo.pQueueFamilyIndices = nullptr;
+
+  VkResult err = vkCreateBuffer(m_device->m_device, &bufInfo, nullptr, &m_buffer);
+  if (err < 0)
+    return false;
+
+  VkMemoryRequirements memReqs;
+  vkGetBufferMemoryRequirements(m_device->m_device, m_buffer, &memReqs);
+
+  if (!m_memory.Init(*m_device, memReqs.size, memReqs.memoryTypeBits, hostVisible ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0))
+    return false;
+
+  err = vkBindBufferMemory(m_device->m_device, m_buffer, m_memory.m_memory, 0);
+  if (err < 0)
+    return false;
+
+  // The following usages require a buffer view, we don't care for them now
+  assert(!(m_usage & (VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)));
+
+  return true;
+}
+
+void VBuffer::Done()
+{
+  m_memory.Done(*m_device);
+  vkDestroyBuffer(m_device->m_device, m_buffer, nullptr);
+}
+
+void *VBuffer::Map()
+{
+  return m_memory.Map(*m_device);
+}
+
+void VBuffer::Unmap()
+{
+  m_memory.Unmap(*m_device);
 }
