@@ -9,6 +9,16 @@
 #include "vulkan/vulkan.h"
 #include <mutex>
 
+template <class T>
+void DoneResource(T *&resource)
+{
+  if (resource) {
+    resource->Done();
+    delete resource;
+    resource = nullptr;
+  }
+}
+
 class ConditionalLock {
 public:
   std::recursive_mutex *m_mutex;
@@ -24,6 +34,22 @@ public:
 class VGraphics;
 class VDevice;
 class VCmdBuffer;
+
+class VMemory {
+public:
+  VkDeviceMemory m_memory = VK_NULL_HANDLE;
+  ConditionalLock m_lock;
+  uint64_t m_size = 0;
+
+  VMemory(bool synchronize);
+  ~VMemory();
+
+  bool Init(VDevice &device, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags = 0);
+  void Done(VDevice &device);
+
+  void *Map(VDevice &device, uint64_t offset = 0, uint64_t size = VK_WHOLE_SIZE);
+  void Unmap(VDevice &device);
+};
 
 class VSemaphore {
 public:
@@ -63,15 +89,41 @@ public:
 class VImage {
 public:
   VDevice *m_device;
+  VkImageCreateInfo m_imgInfo;
   VkImage m_image = VK_NULL_HANDLE;
+  VMemory m_memory;
   VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+  VkFormat m_format = VK_FORMAT_UNDEFINED;
+  VkExtent3D m_size = { 0, 0, 0 };
   VkImageView m_view = VK_NULL_HANDLE;
   bool m_ownImage = true;
 
   VImage(VDevice &device);
   ~VImage();
 
-  bool Init(VkImage image, VkFormat format, bool ownImage = true);
+  bool Init(VkFormat format, uint32_t width, uint32_t height, uint32_t depth = 1, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, bool linear = false);
+  
+  bool Init(VkImage image, VkFormat format, bool ownImage = true, VkImageViewType imgType = VK_IMAGE_VIEW_TYPE_2D);
+  void Done();
+
+  void *Map();
+  void Unmap();
+
+  static VkImageUsageFlags UsageFromFormat(VkFormat format);
+  static VkImageAspectFlags AspectFromFormat(VkFormat format);
+  static VkFormat FormatFromComponents(unsigned components);
+  static VkImageViewType ViewTypeFromDimensions(uint32_t width, uint32_t height, uint32_t depth, uint32_t arrayLayers);
+};
+
+class VSampler {
+public:
+  VDevice *m_device;
+  VkSampler m_sampler = VK_NULL_HANDLE;
+
+  VSampler(VDevice &device);
+  ~VSampler();
+
+  bool Init(VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 16.0f);
   void Done();
 };
 
@@ -115,6 +167,9 @@ public:
   VkCommandBuffer m_buffer;
   VSemaphore *m_semaphore = nullptr;
   VFence *m_fence = nullptr;
+  bool m_autoBegin = true;
+  bool m_simultaneousBegin = false;
+  bool m_begun = false;
 
   VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer);
   ~VCmdBuffer();
@@ -122,10 +177,16 @@ public:
   void SetUseSemaphore(bool use, VkPipelineStageFlags stages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
   void SetUseFence(bool use);
 
+  bool AutoBegin();
+  bool AutoEnd();
+
   bool Begin(bool simultaneous = false);
   bool End();
 
-  bool SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess, VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);
+  bool Reset(bool releaseResources = false);
+
+  bool SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess);
+  bool CopyImage(VImage &src, VImage &dst);
 };
 
 class VDevice {
@@ -134,9 +195,11 @@ public:
   std::vector<std::string> m_layerNames, m_extensionNames;
   VkDevice m_device = VK_NULL_HANDLE;
   VSwapchain *m_swapchain = nullptr;
+  VImage *m_depth = nullptr;
   VQueue *m_queue = nullptr;
   VCmdPool *m_cmdPool = VK_NULL_HANDLE;
-  VCmdBuffer* m_cmdBuffer = nullptr;
+  VCmdBuffer *m_cmdBuffer = nullptr;
+  VImage *m_staging = nullptr;
 
   PFN_vkCreateSwapchainKHR    m_CreateSwapchainKHR = nullptr;
   PFN_vkDestroySwapchainKHR   m_DestroySwapchainKHR = nullptr;
@@ -159,10 +222,18 @@ public:
   virtual bool InitSwapchain();
   virtual void DoneSwapchain();
 
+  virtual bool InitDepth();
+  virtual void DoneDepth();
+
   virtual bool InitCmdBuffers(bool synchronize, uint32_t count);
   virtual void DoneCmdBuffers();
 
   virtual bool SubmitInitCommands();
+
+  virtual VImage *LoadVImage(std::string const &filename);
+
+  virtual bool UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components);
+  virtual void FreeStagingImage();
 };
 
 class VGraphics
@@ -211,6 +282,8 @@ public:
 
   virtual bool InitDevice();
   virtual void DoneDevice();
+
+  virtual uint32_t GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags);
 
   static bool AddLayerName(std::vector<VkLayerProperties> const &layers, std::string const &name, std::vector<std::string> &layerNames);
   static bool AddExtensionName(std::vector<VkExtensionProperties> const &extensions, std::string const &name, std::vector<std::string> &extNames);

@@ -7,6 +7,19 @@
 #include <functional>
 #include <algorithm>
 
+#pragma warning(push)
+#pragma warning(disable: 4477)
+#include "CImg.h"
+#pragma warning(pop)
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 VGraphics::VGraphics(bool validate) :
   m_validate(validate)
 {
@@ -157,9 +170,9 @@ bool VGraphics::InitInstance()
   instInfo.flags = 0;
   instInfo.pApplicationInfo = &appInfo;
   instInfo.enabledLayerCount = static_cast<uint32_t>(layerNames.size());
-  instInfo.ppEnabledLayerNames = &layerNames.front();
+  instInfo.ppEnabledLayerNames = layerNames.data();
   instInfo.enabledExtensionCount = static_cast<uint32_t>(extNames.size());
-  instInfo.ppEnabledExtensionNames = &extNames.front();
+  instInfo.ppEnabledExtensionNames = extNames.data();
 
   VkDebugReportCallbackCreateInfoEXT dbgCreateInfo;
   if (m_validate) {
@@ -213,7 +226,7 @@ bool VGraphics::InitPhysicalDevice()
   if (err < 0 || gpuCount == 0)
     return false;
   std::vector<VkPhysicalDevice> gpus(gpuCount);
-  err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, &gpus.front());
+  err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, gpus.data());
   if (err < 0)
     return false;
 
@@ -341,6 +354,14 @@ void VGraphics::DoneDevice()
   }
 }
 
+uint32_t VGraphics::GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags)
+{
+  for (uint32_t i = 0; i < m_physicalDeviceMemoryProps.memoryTypeCount; ++i)
+    if ((validTypeMask & (1 << i)) && (m_physicalDeviceMemoryProps.memoryTypes[i].propertyFlags & flags) == flags)
+      return i;
+  return -1;
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL VGraphics::DbgReportFunc(VkFlags msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
   std::string flag = (msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT) ? "error" : "warning";
@@ -390,7 +411,7 @@ void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffe
   VkCommandBufferAllocateInfo bufInfo;
   InitBufferInfo(bufInfo, primary, count);
   std::vector<VkCommandBuffer> vkBuffers(count);
-  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, &vkBuffers.front());
+  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, vkBuffers.data());
   assert(err >= 0);
   for (auto b : vkBuffers)
     buffers.push_back(new VCmdBuffer(*this, b));
@@ -432,6 +453,20 @@ void VCmdBuffer::SetUseFence(bool use)
   }
 }
 
+bool VCmdBuffer::AutoBegin()
+{
+  if (m_autoBegin && !m_begun)
+    return Begin(m_simultaneousBegin);
+  return true;
+}
+
+bool VCmdBuffer::AutoEnd()
+{
+  if (m_autoBegin && m_begun)
+    return End();
+  return true;
+}
+
 bool VCmdBuffer::Begin(bool simultaneous)
 {
   VkCommandBufferInheritanceInfo inheritInfo;
@@ -456,21 +491,41 @@ bool VCmdBuffer::Begin(bool simultaneous)
   if (err < 0)
     return false;
 
+  m_begun = true;
+
   return true;
 }
 
 bool VCmdBuffer::End()
 {
+  assert(m_begun);
   std::lock_guard<ConditionalLock>(m_pool->m_lock);
   VkResult err = vkEndCommandBuffer(m_buffer);
+  if (err < 0)
+    return false;
+
+  m_begun = false;
+
+  return true;
+}
+
+bool VCmdBuffer::Reset(bool releaseResources)
+{
+  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  VkResult err = vkResetCommandBuffer(m_buffer, releaseResources ? VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT : 0);
   if (err < 0)
     return false;
 
   return true;
 }
 
-bool VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess, VkImageAspectFlags aspectFlags)
+bool VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess)
 {
+  if (!AutoBegin())
+    return false;
+
+  VkImageAspectFlags aspectFlags = VImage::AspectFromFormat(image.m_format);
+
   VkImageMemoryBarrier imgBarrier;
   imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   imgBarrier.pNext = nullptr;
@@ -492,6 +547,25 @@ bool VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFla
   return true;
 }
 
+bool VCmdBuffer::CopyImage(VImage &src, VImage &dst)
+{
+  if (!AutoBegin())
+    return false;
+  
+  VkImageCopy copy;
+  copy.srcSubresource = { VImage::AspectFromFormat(src.m_format), 0, 0, 1 };
+  copy.srcOffset = { 0, 0, 0 };
+  copy.dstSubresource = { VImage::AspectFromFormat(dst.m_format), 0, 0, 1 };
+  copy.dstOffset = { 0, 0, 0 };
+  copy.extent = { std::min(src.m_size.width, dst.m_size.width), std::min(src.m_size.height, dst.m_size.height), std::min(src.m_size.depth, dst.m_size.depth) };
+
+  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+
+  vkCmdCopyImage(m_buffer, src.m_image, src.m_layout, dst.m_image, dst.m_layout, 1, &copy);
+
+  return true;
+}
+
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
 {
 }
@@ -502,6 +576,9 @@ VQueue::~VQueue()
 
 bool VQueue::Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*>* waitSemaphores)
 {
+  if (!cmdBuffer.AutoEnd())
+    return false;
+
   std::vector<VkSemaphore> semaphores;
   std::vector<VkPipelineStageFlags> stages;
   if (waitSemaphores) {
@@ -516,9 +593,9 @@ bool VQueue::Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*>* waitSemapho
   subInfo.pNext = nullptr;
   subInfo.commandBufferCount = 1;
   subInfo.pCommandBuffers = &cmdBuffer.m_buffer;
-  subInfo.pWaitDstStageMask = stages.empty() ? nullptr : &stages.front();
+  subInfo.pWaitDstStageMask = stages.empty() ? nullptr : stages.data();
   subInfo.waitSemaphoreCount = (uint32_t) semaphores.size();
-  subInfo.pWaitSemaphores = semaphores.empty() ? nullptr : &semaphores.front();
+  subInfo.pWaitSemaphores = semaphores.empty() ? nullptr : semaphores.data();
   subInfo.signalSemaphoreCount = !!cmdBuffer.m_semaphore;
   subInfo.pSignalSemaphores = cmdBuffer.m_semaphore ? &cmdBuffer.m_semaphore->m_semaphore : nullptr;
 
@@ -548,14 +625,14 @@ bool VDevice::Init()
   if (!InitCmdBuffers(true, 1))
     return false;
 
-  if (!m_cmdBuffer->Begin())
-    return false;
-
   if (!InitSwapchain())
     return false;
 
-  if (!m_cmdBuffer->End())
+  if (!InitDepth())
     return false;
+
+  VImage *img = LoadVImage("../../Terrain/Data/Textures/Earth.bmp");
+  DoneResource(img);
 
   if (!SubmitInitCommands())
     return false;
@@ -565,6 +642,8 @@ bool VDevice::Init()
 
 void VDevice::Done()
 {
+  DoneResource(m_staging);
+  DoneDepth();
   DoneSwapchain();
   DoneCmdBuffers();
   DoneDevice();
@@ -624,9 +703,9 @@ bool VDevice::InitDevice()
   deviceInfo.queueCreateInfoCount = 1;
   deviceInfo.pQueueCreateInfos = &queueInfo;
   deviceInfo.enabledLayerCount = static_cast<uint32_t>(layerNames.size());
-  deviceInfo.ppEnabledLayerNames = &layerNames.front();
+  deviceInfo.ppEnabledLayerNames = layerNames.data();
   deviceInfo.enabledExtensionCount = static_cast<uint32_t>(extNames.size());
-  deviceInfo.ppEnabledExtensionNames = &extNames.front();
+  deviceInfo.ppEnabledExtensionNames = extNames.data();
   deviceInfo.pEnabledFeatures = nullptr;
 
   err = vkCreateDevice(m_graphics->m_physicalDevice, &deviceInfo, nullptr, &m_device);
@@ -674,6 +753,32 @@ void VDevice::DoneSwapchain()
   }
 }
 
+bool VDevice::InitDepth()
+{
+  VkSurfaceCapabilitiesKHR surfaceCaps;
+  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
+  if (err < 0)
+    return false;
+
+  m_depth = new VImage(*this);
+  if (!m_depth->Init(VK_FORMAT_D24_UNORM_S8_UINT, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height))
+    return false;
+
+  if (!m_cmdBuffer->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
+    return false;
+
+  return true;
+}
+
+void VDevice::DoneDepth()
+{
+  if (m_depth) {
+    m_depth->Done();
+    delete m_depth;
+    m_depth = nullptr;
+  }
+}
+
 bool VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
 {
   m_cmdPool = new VCmdPool(*this, synchronize, false, true);
@@ -703,7 +808,87 @@ bool VDevice::SubmitInitCommands()
   if (err < 0)
     return false;
 
+  if (!m_cmdBuffer->Reset())
+    return false;
+
+  if (!m_cmdBuffer->Begin())
+    return false;
+
   return true;
+}
+
+VImage *VDevice::LoadVImage(std::string const &filename)
+{
+  VImage *vimg = nullptr;
+  try {
+    cimg_library::cimg::exception_mode(1);
+    cimg_library::CImg<unsigned char> image(filename.c_str());
+    uint32_t width = image.width(), height = image.height(), depth = image.depth(), components = image.spectrum();
+
+    if (!UpdateStagingImage(width, height, depth, components))
+      return nullptr;
+
+    cimg_library::CImg<unsigned char> imgRGBA;
+    
+    if (components < 4) {
+      imgRGBA = image.get_channels(0, 3);
+      if (components < 2)
+        imgRGBA.get_shared_channels(components + 1, 2) = static_cast<unsigned char>(0);
+      imgRGBA.get_shared_channel(3) = 255;
+    } else
+      imgRGBA = image.get_shared_channels(0, 3);
+
+    imgRGBA.permute_axes("cxyz");
+
+    void *mem = m_staging->Map();
+    memcpy(mem, imgRGBA.data(), imgRGBA.size());
+    m_staging->Unmap();
+
+    vimg = new VImage(*this);
+    VkFormat format = VImage::FormatFromComponents(components);
+    if (!vimg->Init(format, width, height, depth)) {
+      delete vimg;
+      return nullptr;
+    }
+
+  } catch (...) {
+    return nullptr;
+  }
+
+  if (!m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT))
+    return false;
+
+  if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT))
+    return false;
+
+  if (!m_cmdBuffer->CopyImage(*m_staging, *vimg))
+    return false;
+
+  if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT))
+    return false;
+
+  SubmitInitCommands();
+
+  return vimg;
+}
+
+bool VDevice::UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components)
+{
+  if (m_staging)
+    if (m_staging->m_imgInfo.extent.width < width || m_staging->m_imgInfo.extent.height < height || m_staging->m_imgInfo.extent.depth < depth)
+      DoneResource(m_staging);
+    else
+      return true;
+  m_staging = new VImage(*this);
+  if (!m_staging->Init(VK_FORMAT_R8G8B8A8_UNORM, width, height, depth, 1, 1, true))
+    return false;
+
+  return true;
+}
+
+void VDevice::FreeStagingImage()
+{
+  DoneResource(m_staging);
 }
 
 VSwapchain::VSwapchain(VDevice &device) : m_device(&device)
@@ -820,7 +1005,7 @@ void VSwapchain::DoneImages()
   m_images.clear();
 }
 
-VImage::VImage(VDevice &device) : m_device(&device)
+VImage::VImage(VDevice &device) : m_device(&device), m_memory(true)
 {
 }
 
@@ -828,8 +1013,113 @@ VImage::~VImage()
 {
 }
 
-bool VImage::Init(VkImage image, VkFormat format, bool ownImage)
+VkImageUsageFlags VImage::UsageFromFormat(VkFormat format)
 {
+  switch (format) {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_X8_D24_UNORM_PACK32:
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_S8_UINT:
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+      return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    default:
+      return VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+  }
+}
+
+VkImageAspectFlags VImage::AspectFromFormat(VkFormat format)
+{
+  switch (format) {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_X8_D24_UNORM_PACK32:
+    case VK_FORMAT_D32_SFLOAT:
+      return VK_IMAGE_ASPECT_DEPTH_BIT;
+    case VK_FORMAT_S8_UINT:
+      return VK_IMAGE_ASPECT_STENCIL_BIT;
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+      return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    default:
+      return VK_IMAGE_ASPECT_COLOR_BIT;
+  }
+}
+
+VkFormat VImage::FormatFromComponents(unsigned components)
+{
+  switch (components) {
+    case 1:
+      return VK_FORMAT_R8_UNORM;
+    case 2:
+      return VK_FORMAT_R8G8_UNORM;
+    case 3:
+    case 4:
+      return VK_FORMAT_R8G8B8A8_UNORM;
+  }
+  return VkFormat();
+}
+
+VkImageViewType VImage::ViewTypeFromDimensions(uint32_t width, uint32_t height, uint32_t depth, uint32_t arrayLayers)
+{
+  if (depth == 1)
+    if (arrayLayers == 1)
+      return VK_IMAGE_VIEW_TYPE_2D;
+    else
+      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+  else
+    return VK_IMAGE_VIEW_TYPE_3D;
+}
+
+bool VImage::Init(VkFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, uint32_t arrayLayers, bool linear)
+{
+  m_format = format;
+  m_layout = linear ? VK_IMAGE_LAYOUT_PREINITIALIZED : VK_IMAGE_LAYOUT_UNDEFINED;
+
+  m_imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  m_imgInfo.pNext = nullptr;
+  m_imgInfo.flags = 0;
+  m_imgInfo.imageType = depth == 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
+  m_imgInfo.extent = { width, height, depth };
+  m_imgInfo.format = format;
+  m_imgInfo.mipLevels = mipLevels;
+  m_imgInfo.arrayLayers = arrayLayers;
+  m_imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  m_imgInfo.usage = linear ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT :  UsageFromFormat(format);
+  m_imgInfo.tiling = linear ? VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
+  m_imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  m_imgInfo.initialLayout = m_layout;
+  m_imgInfo.queueFamilyIndexCount = 0;
+  m_imgInfo.pQueueFamilyIndices = nullptr;
+
+  VkImage image;
+  VkResult err = vkCreateImage(m_device->m_device, &m_imgInfo, nullptr, &image);
+  if (err < 0)
+    return false;
+
+  m_image = image;
+  m_ownImage = true;
+
+  VkMemoryRequirements imgMem;
+  vkGetImageMemoryRequirements(m_device->m_device, image, &imgMem);
+
+  if (!m_memory.Init(*m_device, imgMem.size, imgMem.memoryTypeBits, linear ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0))
+    return false;
+
+  err = vkBindImageMemory(m_device->m_device, image, m_memory.m_memory, 0);
+  if (err < 0)
+    return false;
+
+  if (!linear && !Init(image, format, true, ViewTypeFromDimensions(width, height, depth, arrayLayers)))
+    return false;
+
+  return true;
+}
+
+bool VImage::Init(VkImage image, VkFormat format, bool ownImage, VkImageViewType imgType)
+{
+  m_format = format;
   m_image = image;
   m_ownImage = ownImage;
 
@@ -840,8 +1130,8 @@ bool VImage::Init(VkImage image, VkFormat format, bool ownImage)
   viewInfo.image = m_image;
   viewInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
   viewInfo.format = format;
-  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+  viewInfo.viewType = imgType;
+  viewInfo.subresourceRange = { AspectFromFormat(format), 0, 1, 0, 1 };
 
   VkResult err = vkCreateImageView(m_device->m_device, &viewInfo, nullptr, &m_view);
   if (err < 0)
@@ -852,11 +1142,25 @@ bool VImage::Init(VkImage image, VkFormat format, bool ownImage)
 
 void VImage::Done()
 {
-  vkDestroyImageView(m_device->m_device, m_view, nullptr);
-  m_view = nullptr;
-  if (m_ownImage)
+  if (m_view) {
+    vkDestroyImageView(m_device->m_device, m_view, nullptr);
+    m_view = nullptr;
+  }
+  if (m_ownImage) {
+    m_memory.Done(*m_device);
     vkDestroyImage(m_device->m_device, m_image, nullptr);
+  }
   m_image = nullptr;
+}
+
+void *VImage::Map()
+{
+  return m_memory.Map(*m_device);
+}
+
+void VImage::Unmap()
+{
+  m_memory.Unmap(*m_device);
 }
 
 VSemaphore::VSemaphore(VDevice &device, VkPipelineStageFlags stages) : m_device(&device), m_stages(stages)
@@ -906,4 +1210,92 @@ bool VFence::Wait(uint64_t nsTimeout)
 {
   VkResult err = vkWaitForFences(m_device->m_device, 1, &m_fence, true, nsTimeout);
   return err == VK_SUCCESS;
+}
+
+VSampler::VSampler(VDevice & device): m_device(&device)
+{
+}
+
+VSampler::~VSampler()
+{
+}
+
+bool VSampler::Init(VkSamplerAddressMode addressMode, VkFilter magFilter, VkFilter minFilter, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
+{
+  VkSamplerCreateInfo samplerInfo;
+  samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerInfo.pNext = nullptr;
+  samplerInfo.flags = 0;
+  samplerInfo.addressModeU = addressMode;
+  samplerInfo.addressModeV = addressMode;
+  samplerInfo.addressModeW = addressMode;
+  samplerInfo.magFilter = magFilter;
+  samplerInfo.minFilter = minFilter;
+  samplerInfo.mipmapMode = mipmapMode;
+  samplerInfo.anisotropyEnable = maxAnisotropy > 0.0f;
+  samplerInfo.maxAnisotropy = maxAnisotropy;
+  samplerInfo.mipLodBias = 0.0f;
+  samplerInfo.compareEnable = false;
+  samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+  samplerInfo.unnormalizedCoordinates = false;
+  samplerInfo.minLod = 0.0f;
+  samplerInfo.maxLod = 0.0f;
+
+  VkResult err = vkCreateSampler(m_device->m_device, &samplerInfo, nullptr, &m_sampler);
+  if (err < 0)
+    return false;
+
+  return true;
+}
+
+void VSampler::Done()
+{
+  vkDestroySampler(m_device->m_device, m_sampler, nullptr);
+}
+
+VMemory::VMemory(bool synchronize) : m_lock(synchronize)
+{
+}
+
+VMemory::~VMemory()
+{
+  assert(!m_memory);
+}
+
+bool VMemory::Init(VDevice &device, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags)
+{
+  VkMemoryAllocateInfo memInfo;
+  memInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  memInfo.pNext = nullptr;
+  memInfo.allocationSize = size;
+  memInfo.memoryTypeIndex = device.m_graphics->GetMemoryTypeIndex(validMemoryTypes, memFlags);
+  VkResult err = vkAllocateMemory(device.m_device, &memInfo, nullptr, &m_memory);
+  if (err < 0)
+    return nullptr;
+  m_size = size;
+  return true;
+}
+
+void VMemory::Done(VDevice &device)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  vkFreeMemory(device.m_device, m_memory, nullptr);
+  m_memory = VK_NULL_HANDLE;
+}
+
+void *VMemory::Map(VDevice &device, uint64_t offset, uint64_t size)
+{
+  void *mapped;
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  VkResult err = vkMapMemory(device.m_device, m_memory, offset, size, 0, &mapped);
+  if (err < 0)
+    return nullptr;
+  return mapped;
+}
+
+void VMemory::Unmap(VDevice &device)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  vkUnmapMemory(device.m_device, m_memory);
 }
