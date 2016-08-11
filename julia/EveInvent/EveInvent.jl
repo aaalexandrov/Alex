@@ -5,7 +5,7 @@ import HttpServer
 import URIParser
 import JSON
 import LightXML
-import Dates
+#import Dates
 import DataFrames
 
 include("crest.jl")
@@ -27,7 +27,7 @@ global crestAuth = nothing
 
 const priceTimeout = 6.0
 
-id_from_url(url::AbstractString) = int(rsplit(url, '/', 2, false)[end])
+id_from_url(url::AbstractString) = parse(Int, rsplit(url, '/'; limit = 2, keep = false)[end])
 
 function access_path(o, p::Array)
 	for i in p
@@ -44,8 +44,8 @@ function server_version(serv)
 	map(int, split(strVer.match, '.'))
 end
 
-function get_services() 
-	oldServ = read_from_cache(urlCrest, inf(Float64))
+function get_services()
+	oldServ = read_from_cache(urlCrest, convert(Float64, Inf))
 	newServ = get_crest(urlCrest, crestAuth, 0.0)
 	@assert newServ != nothing
 	if oldServ == nothing || server_version(oldServ)[1:2] != server_version(newServ)[1:2]
@@ -105,7 +105,7 @@ function resolve_item_prices(types)
 		sellPrice = reduce(min, inf(Float64), map(o->o["price"], sell))
 		# buy = get_item_orders(typeID, false)
 		# buyPrice = reduce(max, 0.0, map(o->o["price"], buy))
-		itemPrices[typeID] = [#="buy"=>buyPrice,=# "sell"=>sellPrice]
+		itemPrices[typeID] = Dict(#="buy"=>buyPrice,=# "sell"=>sellPrice)
 	end
 end
 
@@ -123,11 +123,11 @@ function resolve_item_prices_evec(types)
 		return
 	end
 	timeStamp = timeNow + priceTimeout * 60 * 60
-	res = get_evec("marketstat", query={"typeid"=>join(missing, ','), "regionlimit"=>config["marketRegionID"]}; timeoutHours=0.0)
+	res = get_evec("marketstat", query=Dict{Any, Any}("typeid"=>join(missing, ','), "regionlimit"=>config["marketRegionID"]); timeoutHours=0.0)
 	for typeID in missing
 		buy = xml_find(res, "marketstat/id:$typeID/buy/max")[1, 1]
 		sell = xml_find(res, "marketstat/id:$typeID/sell/min")[1, 1]
-		itemPrices[typeID] = ["buy"=>buy, "sell"=>sell, "timeStamp"=>timeStamp]
+		itemPrices[typeID] = Dict("buy"=>buy, "sell"=>sell, "timeStamp"=>timeStamp)
 	end
 	json_write("cache/itemPrices.json", itemPrices)
 end
@@ -167,7 +167,7 @@ function get_group_types(group::AbstractString)
 	end
 end
 
-function get_market_prices() 
+function get_market_prices()
 	priceArray = get_crest(get_service(["marketPrices"]), crestAuth, priceTimeout)
 	make_index(priceArray, Dict{Int, Any}()) do p
 		p["type"]["id"], p
@@ -198,9 +198,9 @@ function get_or_import(fileName::AbstractString, importFunc::Function)
 	return data
 end
 
-function get_decryptors() 
+function get_decryptors()
 	decr = get_or_import("data/decryptors.json", import_decryptors)
-	noDecr = ["name"=>"No Decryptor", "attributes"=>["inventionMEModifier"=>0.0, "inventionMaxRunModifier"=>0.0, "inventionTEModifier"=>0.0, "inventionPropabilityMultiplier"=>1.0]]
+	noDecr = Dict("name"=>"No Decryptor", "attributes"=>Dict("inventionMEModifier"=>0.0, "inventionMaxRunModifier"=>0.0, "inventionTEModifier"=>0.0, "inventionPropabilityMultiplier"=>1.0))
 	push!(decr, noDecr)
 	return decr
 end
@@ -216,7 +216,7 @@ function get_config()
 	set_api_user_agent(config["appInfo"]["userAgent"])
 	characters = get_characters(config)
 	characterInd = indexin([config["charName"]], characters[:name])[1]
-	config["charID"] = ["characterID"=>string(characters[characterInd, :characterID])]
+	config["charID"] = Dict("characterID"=>string(characters[characterInd, :characterID]))
 	return config
 end
 
@@ -273,7 +273,7 @@ function process_blueprints()
 		end
 	end
 	global shipInventable = get_inventable_blueprints(shipTypes)
-	
+
 	global charBPOTypes = Dict{Int, Array}()
 	for (itemID, item) in charBlueprints
 		if item["runs"] >= 0
@@ -296,7 +296,7 @@ function process_industry()
 	config["inventionSystemID"] = system_id(config["inventionSystem"])
 	config["marketRegionID"] = first(filter(f->f["solarSystem"]["id"]==config["productionSystemID"], values(industryFacilities)))["region"]["id"]
 	global marketRegion = get_region(config["marketRegionID"])
-	
+
 end
 
 function production_amount(runs::Float64, baseQuantity::Float64, ME::Int, facilityMultiplier::Float64 = 1.0)
@@ -486,7 +486,7 @@ function optimal_invention(targetID::Int)
 end
 
 function optimal_invention(checkBPOs::Bool = true)
-	result = {}
+	result = Dict{Any, Any}()
 	for ship in shipInventable
 		t2BP = productionProducts[ship]
 		if checkBPOs
@@ -501,7 +501,7 @@ function optimal_invention(checkBPOs::Bool = true)
 					end
 		if profit > 0.0
 			number = isFrigate? 10 : 1
-			push!(result, ["typeID"=>ship, "decryptor"=>decr, "profit"=>profit*number, "number"=>number])
+			push!(result, Dict("typeID"=>ship, "decryptor"=>decr, "profit"=>profit*number, "number"=>number))
 		end
 	end
 	sort!(result; lt=(x,y)->x["profit"] < y["profit"], rev=true)
@@ -522,7 +522,7 @@ function print_materials(materials, intermediates, installCost::Float64, inventC
 	end
 	installCost *= number
 	println("Materials $(fmt_float(totalPrice)) + Install $(fmt_float(installCost)) + Invent $(fmt_float(inventCost)) = $(fmt_float(totalPrice+installCost+inventCost)) isk")
-	
+
 	if !isempty(intermediates)
 		println("\nIntermediate products:")
 		for (matID, matAmount) in intermediates
@@ -539,7 +539,7 @@ function print_opt_row(i::Int, o)
 		profit = "=> " * fmt_float(o["profit"])
 	else
 		profit = ""
-	end	
+	end
 	decryptor = o["decryptor"]["name"]
 	println("$i. $name x $number $profit using $decryptor")
 end
@@ -594,7 +594,7 @@ function add_to_plan(product, decryptor, number, plan = Array(Any, 0))
 	if isa(decryptor, AbstractString)
 		decryptor = filter(d->contains(d["name"], decryptor), decryptors)[1]
 	end
-	push!(plan, {"typeID"=>product, "decryptor"=>decryptor, "number"=>number})
+	push!(plan, Dict{Any, Any}("typeID"=>product, "decryptor"=>decryptor, "number"=>number))
 end
 
 function init()
@@ -602,7 +602,7 @@ function init()
 	global charSkills = make_index(:typeID, get_char_skills())
 	global charBlueprints = make_index(:itemID, get_char_blueprints())
 	global skills = make_index(:typeID, get_skills())
-	
+
 	global services = get_services()
 	global crestAuth = get_authorization()
 	global regions = get_regions()

@@ -9,10 +9,10 @@ function import_decryptors(fileName::AbstractString)
 		"""
 		select ta.typeID, typeName, attributeName, valueFloat
 		from dbo.dgmTypeAttributes ta, dbo.dgmAttributeTypes at, dbo.invTypes it
-		where ta.typeID in (select typeID 
+		where ta.typeID in (select typeID
 						    from dbo.invTypes it, dbo.invMarketGroups mg
-						    where it.marketGroupID=mg.marketGroupID 
-							      and mg.marketGroupName='Decryptors') 
+						    where it.marketGroupID=mg.marketGroupID
+							      and mg.marketGroupName='Decryptors')
 			  and ta.attributeID=at.attributeID
 			  and ta.typeID = it.typeID
 		order by typeID, ta.attributeID
@@ -21,7 +21,7 @@ function import_decryptors(fileName::AbstractString)
 	ODBC.disconnect()
 	# ODBC.DataFrames.writetable("data/Decryptors.csv", res)
 	decID = -1
-	decryptors = {}
+	decryptors = Dict{Any, Any}()
 	for row = 1:size(res, 1)
 		if decID != res[row, :typeID]
 			decID = res[row, :typeID]
@@ -46,9 +46,9 @@ function import_station_assembly_lines(fileName::AbstractString)
 	ODBC.connect(dbName)
 	res = ODBC.query(
 		"""
-		select als.stationID, stationName, s.solarSystemID, constellationID, s.regionID, baseTimeMultiplier, baseMaterialMultiplier, baseCostMultiplier, minCostPerHour, ast.activityID, activityName 
+		select als.stationID, stationName, s.solarSystemID, constellationID, s.regionID, baseTimeMultiplier, baseMaterialMultiplier, baseCostMultiplier, minCostPerHour, ast.activityID, activityName
 		from dbo.ramAssemblyLineStations als, dbo.ramAssemblyLineTypes ast, dbo.staStations s, dbo.ramActivities a
-		where als.assemblyLineTypeID = ast.assemblyLineTypeID and als.stationID = s.stationID and ast.activityID = a.activityID	
+		where als.assemblyLineTypeID = ast.assemblyLineTypeID and als.stationID = s.stationID and ast.activityID = a.activityID
 		"""
 	)
 	#ODBC.DataFrames.writetable("data/AssemblyLines.csv", res)

@@ -7,7 +7,7 @@ function get_evec(endpoint::AbstractString; query=Dict{AbstractString, Any}(), t
 	fileName = evec_filename(url)
 	data = mtime(fileName) + timeoutHours * 60 * 60 > time()? xml_read(fileName) : nothing
 	if data == nothing
-		headers = ["User-Agent"=>userAgent]
+		headers = Dict("User-Agent"=>userAgent)
 		info("GET from $url")
 		resp = Requests.get(url; headers=headers)
 		if resp.status != 200

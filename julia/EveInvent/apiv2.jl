@@ -1,13 +1,13 @@
 const urlApi = "https://api.eveonline.com/"
 
-api_to_filename(url::AbstractString) = replace(rsplit(url, '/', 2, false)[2], ".aspx", "")
+api_to_filename(url::AbstractString) = replace(rsplit(url, '/'; limit = 2, keep = false)[2], ".aspx", "")
 api_cache_name(url::AbstractString) = "cache/" * api_to_filename(url)
 
 const timeFormat = "y-m-d H:M:S"
 
 function xml_read(fileName::AbstractString)
 	local xmlStr, xdoc
-	try 
+	try
 		xmlStr = readall(fileName)
 	catch e
 		if isa(e, SystemError)
@@ -16,7 +16,7 @@ function xml_read(fileName::AbstractString)
 			rethrow()
 		end
 	end
-	try 
+	try
 		xdoc = LightXML.parse_string(xmlStr)
 	catch e
 		if isa(e, LightXML.XMLParseError)
@@ -54,7 +54,7 @@ end
 
 xml_read_timed(fileName::AbstractString) = check_time(fileName, xml_read_timed(fileName))
 
-function xml_join_attribute_values(xElem::LightXML.XMLElement, keyAttribs::Array) 
+function xml_join_attribute_values(xElem::LightXML.XMLElement, keyAttribs::Array)
 	values = map(k->LightXML.attribute(xElem, k), keyAttribs)
 	if any(v->v==nothing, values)
 		return nothing
@@ -89,7 +89,7 @@ end
 
 function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, results::DataFrames.DataFrame)
 	keyAttr = LightXML.attribute(xElem, "key")
-	keyAttribs = keyAttr != nothing? split(keyAttr, ",", false) : ["name"]
+	keyAttribs = keyAttr != nothing? split(keyAttr, ","; keep = false) : ["name"]
 	key = keyArr[keyIndex]
 	attrKey = split(key, ":")
 	matchAttribs = length(attrKey) > 1
@@ -159,22 +159,22 @@ end
 
 # Matched paths are slash-delimited. Elements are of the kind [attribNames][:][attribValuesOrTag]
 # attribNames and attribValuesOrTag are comma-delimited lists of attribute names and values to match in the parent's children.
-# If attribNames is omitted, then the value of the parent's key attribute is used for the names, or if the parent has no key attribute, 
+# If attribNames is omitted, then the value of the parent's key attribute is used for the names, or if the parent has no key attribute,
 # attribNames defaults to "name".
 # attribValuesOrTag can be empty only for the last element, in which case a comma-separated list of the values of attributes in attribNames is returned.
-# If there isn't a colon in the element, then attribValuesOrTag is a tag name to match. 
+# If there isn't a colon in the element, then attribValuesOrTag is a tag name to match.
 # If the last element is a tag, then the contents of the tagged node are returned.
-# If attribValuesOrTag="*", then all child nodes are processed for matches. If attribNames="*", then all current node's attributes are selected 
+# If attribValuesOrTag="*", then all child nodes are processed for matches. If attribNames="*", then all current node's attributes are selected
 # (in the order they appear in the node).
 
 function xml_find(xElem::LightXML.XMLElement, path::AbstractString)
 	results = DataFrames.DataFrame()
-	xml_find(xElem, split(path, "/", false), 1, results)
+	xml_find(xElem, split(path, "/"; keep = false), 1, results)
 	for colName in names(results)
 		results[colName] = convert_column_type(results[colName])
 	end
 	return results
-end	
+end
 
 global userAgent = "EveInvent Julia APIv2 library, greyalex2003@yahoo.com"
 set_api_user_agent(agent::AbstractString) = (global userAgent = agent)
@@ -185,9 +185,9 @@ function get_api_url(url::AbstractString; params::Dict = Dict(), auth::Dict = Di
 	if data == nothing
 		params = merge(params, auth)
 		dataStr = Requests.format_query_str(params)
-		headers = ["Content-Type"=>"application/x-www-form-urlencoded", 
+		headers = Dict("Content-Type"=>"application/x-www-form-urlencoded",
 				   "Content-Length"=>string(length(dataStr)),
-				   "User-Agent"=>userAgent]
+				   "User-Agent"=>userAgent)
 		info("POST to $url with data: $dataStr")
 		resp = Requests.post(url; data=dataStr, headers=headers)
 		if resp.status != 200
@@ -202,4 +202,3 @@ function get_api_url(url::AbstractString; params::Dict = Dict(), auth::Dict = Di
 end
 
 get_api(endpoint::AbstractString; params::Dict = Dict(), auth::Dict = Dict(), ignoreCache::Bool = false) = get_api_url(urlApi * endpoint * ".xml.aspx"; params=params, auth=auth, ignoreCache=ignoreCache)
-

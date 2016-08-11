@@ -2,9 +2,9 @@
 const urlCrest = "https://crest-tq.eveonline.com/"
 
 const urlReplace = Dict{Char, Char}('/'=>'-', '?'=>'.')
-url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), keys(urlReplace), c->urlReplace[c[1]]) * ".json"
+url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), collect(keys(urlReplace)), c->urlReplace[c[1]]) * ".json"
 
-int_keys(assoc::Associative) = [int(k)=>v for (k,v) in assoc]
+int_keys(assoc::Associative) = [parse(Int, k)=>v for (k,v) in assoc]
 
 function json_read(fileName::AbstractString)
 	data = nothing
@@ -57,13 +57,13 @@ function write_to_cache(url::AbstractString, data)
 	nothing
 end
 
-function clear_cache(ext::AbstractString) 
+function clear_cache(ext::AbstractString)
 	if isdir("cache")
 		map(f->endswith(f, ext) && rm("cache/" * f), readdir("cache"))
 	end
 end
 
-function get_crest(url::AbstractString, auth, timeoutHours::Float64 = inf(Float64))
+function get_crest(url::AbstractString, auth, timeoutHours::Float64 = convert(Float64, Inf))
 	res = read_from_cache(url, timeoutHours * 60 * 60)
 	if res != nothing
 		return res

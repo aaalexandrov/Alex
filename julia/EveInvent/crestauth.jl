@@ -5,13 +5,13 @@ type CrestAuthData
 	serverTask::Task
 	server::HttpServer.Server
 	authorizationCode::AbstractString
-	
+
 	CrestAuthData(requestState::AbstractString) = new(requestState, false, Array(HttpServer.Client, 0))
 end
 
 function server_task(authData::CrestAuthData, req::HttpServer.Request, res::HttpServer.Response)
 	resp = nothing
-	try 
+	try
 		query = HttpServer.parsequerystring(req.resource[3:end])
 		if isa(query, Associative) && query["state"] == authData.requestState
 			authData.authorizationCode = query["code"]
@@ -48,11 +48,11 @@ function stop_server(authData::CrestAuthData)
 end
 
 function request_access_url(authData::CrestAuthData, appInfo::Dict)
-	params = ["response_type" => "code", 
-			  "redirect_uri" => appInfo["callbackURL"], 
+	params = Dict("response_type" => "code",
+			  "redirect_uri" => appInfo["callbackURL"],
 			  "client_id" => appInfo["clientID"],
 			  "scope" => appInfo["scope"],
-			  "state" => authData.requestState]
+			  "state" => authData.requestState)
 	queryStr = Requests.format_query_str(params)
 	return "https://login.eveonline.com/oauth/authorize/?$queryStr"
 end
@@ -67,26 +67,26 @@ function open_browser(url::AbstractString)
 end
 
 function request_authorization_token(endpoint::AbstractString, appInfo::Dict, code::AbstractString, refresh::Bool)
-	authStr = base64(appInfo["clientID"] * ":" * appInfo["secretKey"])
+	authStr = base64encode(appInfo["clientID"] * ":" * appInfo["secretKey"])
 	if refresh
-		params = ["grant_type" => "refresh_token",
-				  "refresh_token" => code]
+		params = Dict("grant_type" => "refresh_token",
+				  "refresh_token" => code)
 	else
-		params = ["grant_type" => "authorization_code",
-				  "code" => code]
+		params = Dict("grant_type" => "authorization_code",
+				  "code" => code)
 	end
 	dataStr = Requests.format_query_str(params)
-	resp = Requests.post(endpoint; 
-	                     data=dataStr, 
-						 headers={"Authorization" => "Basic $authStr",
-						          "Content-Type" => "application/x-www-form-urlencoded"})
+	resp = Requests.post(endpoint;
+	                     data=dataStr,
+						 headers=Dict{Any, Any}("Authorization" => "Basic $authStr",
+						          "Content-Type" => "application/x-www-form-urlencoded"))
 	return JSON.parse(bytestring(resp.data))
 end
 
-function request_access(endpoint::AbstractString, appInfo::Dict) 
+function request_access(endpoint::AbstractString, appInfo::Dict)
 	auth = json_read("authorization.json")
 	if auth == nothing
-		authData = CrestAuthData("EveInvent$(rand(Uint))")
+		authData = CrestAuthData("EveInvent$(rand(UInt))")
 		uri = URIParser.URI(appInfo["callbackURL"])
 		port = uri.port
 		if port == 0
@@ -104,4 +104,4 @@ function request_access(endpoint::AbstractString, appInfo::Dict)
 		auth = request_authorization_token(endpoint, appInfo, auth["refresh_token"], true)
 	end
 	return auth
-end	
+end
