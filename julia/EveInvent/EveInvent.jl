@@ -5,7 +5,6 @@ import HttpServer
 import URIParser
 import JSON
 import LightXML
-#import Dates
 import DataFrames
 
 include("crest.jl")
@@ -17,13 +16,14 @@ include("dataimp.jl")
 global config
 global services, regions, itemCategories, itemTypes, itemNames
 global itemPrices = nothing
-global marketRegion, marketGroups, marketPrices, industrySystems, industryFacilities, assemblyLines
+global marketRegion, marketGroups, marketPrices, industrySystems, industryFacilities, systemFacilities
 global shipTypes, blueprintTypes, blueprints, inventableProducts, productionProducts, shipInventable
 global decryptors, skills
 
 global charSkills, charBlueprints, charBPOTypes
 
 global crestAuth = nothing
+global apiAuth
 
 const priceTimeout = 6.0
 
@@ -188,6 +188,15 @@ function get_industry_systems()
 	end
 end
 
+function get_system_facilities()
+	facilities = Dict{Int, Array{Any}}()
+	for (facId, fac) in industryFacilities
+		facs = get!(facilities, fac["solarSystem"]["id"], Array(Any, 0))
+		push!(facs, fac)
+	end
+	return facilities
+end
+
 function get_or_import(fileName::AbstractString, importFunc::Function)
 	data = json_read(fileName)
 	if data == nothing
@@ -198,32 +207,41 @@ function get_or_import(fileName::AbstractString, importFunc::Function)
 	return data
 end
 
+function get_decryptors_crest()
+	typeGroup = get_market_group("Decryptors")
+	jTypes = get_crest(typeGroup["types"]["href"], crestAuth)
+	decr = []
+	for t in jTypes
+		jd = get_crest(t["type"]["href"], crestAuth)
+		attr = Dict([a["attribute"]["name"]=>a["value"] for a in jd["dogma"]["attributes"]])
+		d = Dict("name"=>jd["name"], "id"=>jd["id"], "attributes"=>attr)
+		push!(decr, d)
+	end
+  return decr
+end
+
 function get_decryptors()
-	decr = get_or_import("data/decryptors.json", import_decryptors)
+#	decr = get_or_import("data/decryptors.json", import_decryptors)
+  decr = get_decryptors_crest()
 	noDecr = Dict("name"=>"No Decryptor", "attributes"=>Dict("inventionMEModifier"=>0.0, "inventionMaxRunModifier"=>0.0, "inventionTEModifier"=>0.0, "inventionPropabilityMultiplier"=>1.0))
 	push!(decr, noDecr)
 	return decr
 end
 
-get_assembly_lines() = get_or_import("data/assemblylines.json", import_station_assembly_lines)
 get_blueprints() = get_or_import("data/blueprints.json", import_blueprints)
 
-get_authorization() = request_access(get_service(["authEndpoint"]), config["appInfo"])
+get_crest_authorization() = request_access(get_service(["authEndpoint"]), config["appInfo"])
+get_api_authorization() = Dict("accessToken"=>crestAuth["access_token"])
 
 function get_config()
 	config = json_read("config.json")
 	config["appInfo"] = json_read("appinfo.json")
 	set_api_user_agent(config["appInfo"]["userAgent"])
-	characters = get_characters(config)
-	characterInd = indexin([config["charName"]], characters[:name])[1]
-	config["charID"] = Dict("characterID"=>string(characters[characterInd, :characterID]))
 	return config
 end
 
-get_characters(config) = xml_find(get_api("Account/Characters"; auth=config["api"]), "result/:characters/*/*:")
-get_char_skills() = xml_find(get_api("Char/CharacterSheet"; params=config["charID"], auth=config["api"]), "result/:skills/*/*:")
-get_char_assets() = xml_find(get_api("Char/AssetList"; params=config["charID"], auth=config["api"]), "result/:assets/*/*:")
-get_char_blueprints() = xml_find(get_api("Char/Blueprints"; params=config["charID"], auth=config["api"]), "result/:blueprints/*/*:")
+get_char_skills() = xml_find(get_api("Char/Skills"; auth=apiAuth), "result/:skills/*/*:")
+get_char_blueprints() = xml_find(get_api("Char/Blueprints"; auth=apiAuth), "result/:blueprints/*/*:")
 get_skills() = xml_find(get_api("Eve/SkillTree"), "result/:skillGroups/*/:skills/*/*:")
 
 function process_market_groups()
@@ -288,11 +306,6 @@ end
 system_id(systemName::AbstractString) = first(filter((id,s)->s["solarSystem"]["name"]==systemName, industrySystems))[1]
 
 function process_industry()
-	for line in assemblyLines
-		system = industrySystems[line["solarSystemID"]]
-		lines = get!(system, "assemblyLines", Array(Dict, 0))
-		push!(lines, line)
-	end
 	config["productionSystemID"] = system_id(config["productionSystem"])
 	config["inventionSystemID"] = system_id(config["inventionSystem"])
 	config["marketRegionID"] = first(filter(f->f["solarSystem"]["id"]==config["productionSystemID"], values(industryFacilities)))["region"]["id"]
@@ -359,10 +372,7 @@ function get_cost_index(system, activityName::AbstractString)
 	filter(c->c["activityName"]==activityName, system["systemCostIndices"])[1]["costIndex"]
 end
 
-function get_tax_rate(system, activityName::AbstractString)
-	stationID = filter(l->l["activityName"]==activityName, system["assemblyLines"])[1]["stationID"]
-	return industryFacilities[stationID]["tax"]
-end
+get_tax_rate(system) = systemFacilities[system["solarSystem"]["id"]][1]["tax"]
 
 function blueprint_materials(runs::Float64, blueprintItem, systemID::Int)
 	blueprint = blueprints[blueprintItem["typeID"]]
@@ -371,7 +381,7 @@ function blueprint_materials(runs::Float64, blueprintItem, systemID::Int)
 	baseMaterials = blueprint["activities"]["manufacturing"]["materials"]
 	materials = [m["typeID"]::Int => production_amount(runs, Float64(m["quantity"]), ME) for m in baseMaterials]
 	system = industrySystems[systemID]
-	installCost = production_install_cost(productID, get_cost_index(system, "Manufacturing"), get_tax_rate(system, "Manufacturing"))
+	installCost = production_install_cost(productID, get_cost_index(system, "Manufacturing"), get_tax_rate(system))
 	return materials, installCost
 end
 
@@ -413,8 +423,9 @@ function invention_result(targetID::Int, decryptor, systemID::Int=config["invent
 		materials[decryptor["id"]] = 1
 	end
 	system = industrySystems[systemID]
-	copyCost = invention_copy_install_cost(1.0, t1BP["blueprintTypeID"], get_cost_index(system, "Copying"), get_tax_rate(system, "Copying"))
-	installCost = invention_copy_install_cost(1.0, targetID, get_cost_index(system, "Invention"), get_tax_rate(system, "Invention"))
+	taxRate = get_tax_rate(system)
+	copyCost = invention_copy_install_cost(1.0, t1BP["blueprintTypeID"], get_cost_index(system, "Copying"), taxRate)
+	installCost = invention_copy_install_cost(1.0, targetID, get_cost_index(system, "Invention"), taxRate)
 	materialCost = material_cost(materials)
 	attemptsPerCopy = baseRuns * product["quantity"] / baseProbability
 	return resultItem, (materialCost + installCost + copyCost) * attemptsPerCopy
@@ -582,7 +593,7 @@ function find_optimal(checkBPOs::Bool = true)
 	opt = optimal_invention(checkBPOs)
 	print_optimal(opt)
 	print("\nEnter rows to invent & manufacture: ")
-	rows = map(int, split(strip(readline()), [' ', ',']; keep = false))
+	rows = map(n->parse(Int, n), split(strip(readline()), [' ', ',']; keep = false))
 	plan = [opt[rows[i]] for i = 1:length(rows)]
 	print_plan(plan)
 end
@@ -599,12 +610,14 @@ end
 
 function init()
 	global config = get_config()
+	global services = get_services()
+	global crestAuth = get_crest_authorization()
+	global apiAuth = get_api_authorization()
+
 	global charSkills = make_index(:typeID, get_char_skills())
 	global charBlueprints = make_index(:itemID, get_char_blueprints())
 	global skills = make_index(:typeID, get_skills())
 
-	global services = get_services()
-	global crestAuth = get_authorization()
 	global regions = get_regions()
 	global itemTypes = get_item_types()
 	global itemNames = get_item_names()
@@ -613,7 +626,7 @@ function init()
 	global marketPrices = get_market_prices()
 	global industryFacilities = get_industry_facilities()
 	global industrySystems = get_industry_systems()
-	global assemblyLines = get_assembly_lines()
+	global systemFacilities = get_system_facilities()
 	global blueprints = get_blueprints()
 	global decryptors = get_decryptors()
 
