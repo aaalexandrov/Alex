@@ -127,7 +127,6 @@ function xml_find(xElem::LightXML.XMLElement, keyArr::Array, keyIndex::Int, resu
 end
 
 function convert_column_type(arr::DataFrames.DataArray)
-	typeConvert = [int, float64]
 	types       = [Int, Float64]
 	minInd = 1
 	for e in arr
@@ -135,13 +134,13 @@ function convert_column_type(arr::DataFrames.DataArray)
 			continue
 		end
 		i = minInd
-		while i <= length(typeConvert)
+		while i <= length(types)
 			try
-				typeConvert[i](e)
+				parse(types[i], e)
 				break
 			catch
 				minInd = i+1
-				if minInd > length(typeConvert)
+				if minInd > length(types)
 					return arr
 				end
 			end
@@ -151,7 +150,7 @@ function convert_column_type(arr::DataFrames.DataArray)
 	newArr = DataFrames.DataArray(types[minInd], length(arr))
 	for i = 1:length(arr)
 		if !DataFrames.isna(arr[i])
-			newArr[i] = typeConvert[minInd](arr[i])
+			newArr[i] = parse(types[minInd], arr[i])
 		end
 	end
 	return newArr
@@ -195,7 +194,7 @@ function get_api_url(url::AbstractString; params::Dict = Dict(), auth::Dict = Di
 			return nothing
 		end
 		xml_write(fileName, resp.data)
-		xdoc = LightXML.parse_string(resp.data)
+		xdoc = LightXML.parse_string(bytestring(resp.data))
 		data = LightXML.root(xdoc)
 	end
 	return data

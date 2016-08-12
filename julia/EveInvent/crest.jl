@@ -20,7 +20,7 @@ function json_read(fileName::AbstractString)
 	if isa(data, Associative)
 		intKeys = all(keys(data)) do k
 			try
-				int(k)
+				parse(Int, k)
 				return true
 			catch
 				return false

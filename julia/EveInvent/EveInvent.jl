@@ -41,7 +41,7 @@ end
 
 function server_version(serv)
 	strVer = match(r"[0-9|.?]+", serv["serverVersion"])
-	map(int, split(strVer.match, '.'))
+	map(v->parse(Int, v), split(strVer.match, '.'))
 end
 
 function get_services()
@@ -102,7 +102,7 @@ function resolve_item_prices(types)
 	missing = filter(t->!haskey(itemPrices, t), types)
 	for typeID in missing
 		sell = get_item_orders(typeID, true)
-		sellPrice = reduce(min, inf(Float64), map(o->o["price"], sell))
+		sellPrice = reduce(min, convert(Float64, Inf), map(o->o["price"], sell))
 		# buy = get_item_orders(typeID, false)
 		# buyPrice = reduce(max, 0.0, map(o->o["price"], buy))
 		itemPrices[typeID] = Dict(#="buy"=>buyPrice,=# "sell"=>sellPrice)
@@ -243,6 +243,7 @@ function get_inventable_blueprints(groupTypes::Dict{Int})
 		for prod in invProducts
 			t2BlueprintID = prod["typeID"]
 			t2Blueprint = get(blueprints, t2BlueprintID, nothing)
+			t2Blueprint == nothing && continue
 			t2Product = get_products(t2Blueprint, "manufacturing")[1]["typeID"]
 			if haskey(groupTypes, t2Product) && haskey(blueprintTypes, b) # need to check if we're looking at a blueprint because of the t3 inventable research items
 				push!(groupPrints, t2Product)
@@ -296,7 +297,6 @@ function process_industry()
 	config["inventionSystemID"] = system_id(config["inventionSystem"])
 	config["marketRegionID"] = first(filter(f->f["solarSystem"]["id"]==config["productionSystemID"], values(industryFacilities)))["region"]["id"]
 	global marketRegion = get_region(config["marketRegionID"])
-
 end
 
 function production_amount(runs::Float64, baseQuantity::Float64, ME::Int, facilityMultiplier::Float64 = 1.0)
@@ -369,7 +369,7 @@ function blueprint_materials(runs::Float64, blueprintItem, systemID::Int)
 	ME = blueprintItem["materialEfficiency"]
 	productID = blueprint["activities"]["manufacturing"]["products"][1]["typeID"]
 	baseMaterials = blueprint["activities"]["manufacturing"]["materials"]
-	materials = [m["typeID"]::Int => production_amount(runs, float64(m["quantity"]), ME) for m in baseMaterials]
+	materials = [m["typeID"]::Int => production_amount(runs, Float64(m["quantity"]), ME) for m in baseMaterials]
 	system = industrySystems[systemID]
 	installCost = production_install_cost(productID, get_cost_index(system, "Manufacturing"), get_tax_rate(system, "Manufacturing"))
 	return materials, installCost
@@ -400,8 +400,8 @@ function invention_result(targetID::Int, decryptor, systemID::Int=config["invent
 	baseRuns += decryptor["attributes"]["inventionMaxRunModifier"]
 	resultItem = Dict{AbstractString, Any}()
 	resultItem["typeID"] = t2BPID
-	resultItem["materialEfficiency"] = int(baseME)
-	resultItem["timeEfficiency"] = int(basePE)
+	resultItem["materialEfficiency"] = round(Int, baseME)
+	resultItem["timeEfficiency"] = round(Int, basePE)
 	resultItem["probability"] = baseProbability
 	resultItem["runs"] = baseRuns
 	resultItem["quantity"] = product["quantity"]
@@ -472,7 +472,7 @@ end
 function optimal_invention(targetID::Int)
 	resolve_item_prices([targetID])
 	price = itemPrices[targetID]["sell"]
-	optimal = (-inf(Float64), nothing)
+	optimal = (-convert(Float64, Inf), nothing)
 	for decr in decryptors
 		resultItem, inventCost = invention_result(targetID, decr)
 		materials, intermediates, produceInstall = break_materials(1.0, resultItem)
@@ -486,7 +486,7 @@ function optimal_invention(targetID::Int)
 end
 
 function optimal_invention(checkBPOs::Bool = true)
-	result = Dict{Any, Any}()
+	result = []
 	for ship in shipInventable
 		t2BP = productionProducts[ship]
 		if checkBPOs
@@ -582,7 +582,7 @@ function find_optimal(checkBPOs::Bool = true)
 	opt = optimal_invention(checkBPOs)
 	print_optimal(opt)
 	print("\nEnter rows to invent & manufacture: ")
-	rows = map(int, split(strip(readline()), [' ', ','], false))
+	rows = map(int, split(strip(readline()), [' ', ',']; keep = false))
 	plan = [opt[rows[i]] for i = 1:length(rows)]
 	print_plan(plan)
 end
