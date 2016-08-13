@@ -520,6 +520,7 @@ function optimal_invention(checkBPOs::Bool = true)
 end
 
 fmt_float(f::Float64) = @sprintf("%.2f", f)
+fmt_amount(f::Float64) = @sprintf("%.1f", f)
 
 function print_materials(materials, intermediates, installCost::Float64, inventCost::Float64, number::Int=1)
 	resolve_item_prices(keys(materials))
@@ -528,7 +529,7 @@ function print_materials(materials, intermediates, installCost::Float64, inventC
 	for (matID, matAmount) in materials
 		matAmount *= number
 		price = itemPrices[matID]["sell"] * matAmount
-		println(itemTypes[matID]["name"] * " => $matAmount ($(fmt_float(price)) isk)")
+		println(itemTypes[matID]["name"] * " => $(fmt_amount(matAmount)) ($(fmt_float(price)) isk)")
 		totalPrice += price
 	end
 	installCost *= number
@@ -538,7 +539,7 @@ function print_materials(materials, intermediates, installCost::Float64, inventC
 		println("\nIntermediate products:")
 		for (matID, matAmount) in intermediates
 			matAmount *= number
-			println(itemTypes[matID]["name"] * " => $matAmount")
+			println(itemTypes[matID]["name"] * " => $(fmt_amount(matAmount))")
 		end
 	end
 end
