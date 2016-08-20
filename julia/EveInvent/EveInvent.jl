@@ -92,7 +92,23 @@ get_region(id::Int) = get_crest(regions[id]["href"], crestAuth)
 get_item_types() = make_index(t->(id_from_url(t["href"]), t), get_crest(get_service(["itemTypes"]), crestAuth), Dict{Int, Any}())
 get_item_names() = [t["name"]=>id for (id, t) in itemTypes]
 
-get_item_orders(typeID::Int, sellOrders::Bool) = get_crest(marketRegion[sellOrders? "marketSellOrders" : "marketBuyOrders"]["href"] * "?type=" * itemTypes[typeID]["href"], crestAuth, priceTimeout)
+global nextFakeId = 9999000
+function add_fake_item(name::AbstractString)
+	global nextFakeId
+	assert(!haskey(itemTypes, nextFakeId))
+	itemTypes[nextFakeId] = Dict("name"=>name, "id"=>nextFakeId)
+	nextFakeId += 1
+	return nextFakeId - 1
+end
+
+fake_item(id::Int) = !haskey(itemTypes[id], "href")
+
+function get_item_orders(typeID::Int, sellOrders::Bool)
+	if fake_item(typeID)
+		return [Dict("price"=>0.0, "id"=>typeID, "buy"=>!sellOrders, "volume"=>0)]
+	end
+	get_crest(marketRegion[sellOrders? "marketSellOrders" : "marketBuyOrders"]["href"] * "?type=" * itemTypes[typeID]["href"], crestAuth, priceTimeout)
+end
 
 function resolve_item_prices(types)
 	global itemPrices
@@ -223,7 +239,10 @@ end
 function get_decryptors()
 #	decr = get_or_import("data/decryptors.json", import_decryptors)
   decr = get_decryptors_crest()
-	noDecr = Dict("name"=>"No Decryptor", "attributes"=>Dict("inventionMEModifier"=>0.0, "inventionMaxRunModifier"=>0.0, "inventionTEModifier"=>0.0, "inventionPropabilityMultiplier"=>1.0))
+	noDecrName = "No Decryptor"
+	noDecrId = add_fake_item(noDecrName)
+	itemTypes[noDecrId] = Dict("name"=>noDecrName, "id"=>noDecrId)
+	noDecr = Dict("name"=>noDecrName, "id"=>noDecrId, "attributes"=>Dict("inventionMEModifier"=>0.0, "inventionMaxRunModifier"=>0.0, "inventionTEModifier"=>0.0, "inventionPropabilityMultiplier"=>1.0))
 	push!(decr, noDecr)
 	return decr
 end
@@ -419,9 +438,7 @@ function invention_result(targetID::Int, decryptor, systemID::Int=config["invent
 	for m in invention["materials"]
 		materials[m["typeID"]] = m["quantity"]
 	end
-	if haskey(decryptor, "id")
-		materials[decryptor["id"]] = 1
-	end
+  materials[decryptor["id"]] = 1
 	system = industrySystems[systemID]
 	taxRate = get_tax_rate(system)
 	copyCost = invention_copy_install_cost(1.0, t1BP["blueprintTypeID"], get_cost_index(system, "Copying"), taxRate)
@@ -522,48 +539,61 @@ end
 fmt_float(f::Float64) = @sprintf("%.2f", f)
 fmt_amount(f::Float64) = @sprintf("%.1f", f)
 
-function print_materials(materials, intermediates, installCost::Float64, inventCost::Float64, number::Int=1)
+function fmt_item(typeID::Int; markup::Bool = false)
+	name = itemTypes[typeID]["name"]
+	if markup
+		name = "<loc><url=showinfo:$typeID>$name</url>"
+	end
+	return name
+end
+
+function print_materials(materials, intermediates, installCost::Float64, inventCost::Float64, number::Int=1; io::IO = STDOUT, markup::Bool = false)
 	resolve_item_prices(keys(materials))
-	println("Materials needed:")
+	println(io, "Materials needed:")
 	totalPrice = 0
 	for (matID, matAmount) in materials
 		matAmount *= number
 		price = itemPrices[matID]["sell"] * matAmount
-		println(itemTypes[matID]["name"] * " => $(fmt_amount(matAmount)) ($(fmt_float(price)) isk)")
+		println(io, fmt_item(matID; markup=markup) * " => $(fmt_amount(matAmount)) ($(fmt_float(price)) isk)")
 		totalPrice += price
 	end
 	installCost *= number
-	println("Materials $(fmt_float(totalPrice)) + Install $(fmt_float(installCost)) + Invent $(fmt_float(inventCost)) = $(fmt_float(totalPrice+installCost+inventCost)) isk")
+	println(io, "Materials $(fmt_float(totalPrice)) + Install $(fmt_float(installCost)) + Invent $(fmt_float(inventCost)) = $(fmt_float(totalPrice+installCost+inventCost)) isk")
 
 	if !isempty(intermediates)
-		println("\nIntermediate products:")
+		println(io, "\nIntermediate products:")
 		for (matID, matAmount) in intermediates
 			matAmount *= number
-			println(itemTypes[matID]["name"] * " => $(fmt_amount(matAmount))")
+			println(io, fmt_item(matID; markup=markup) * " => $(fmt_amount(matAmount))")
 		end
 	end
 end
 
-function print_opt_row(i::Int, o)
-	name = itemTypes[o["typeID"]]["name"]
+function print_opt_row(i::Int, o; io::IO = STDOUT, markup::Bool = false)
+	name = fmt_item(o["typeID"], markup=markup)
 	number = o["number"]
 	if haskey(o, "profit")
 		profit = "=> " * fmt_float(o["profit"])
 	else
 		profit = ""
 	end
-	decryptor = o["decryptor"]["name"]
-	println("$i. $name x $number $profit using $decryptor")
+	decryptor = fmt_item(o["decryptor"]["id"], markup=markup)
+	println(io, "$i. $name x $number $profit using $decryptor")
 end
 
-function print_optimal(opt::Array)
+function print_optimal(opt::Array; io::IO = STDOUT, markup::Bool = false)
 	for i = 1:length(opt)
-		print_opt_row(i, opt[i])
+		print_opt_row(i, opt[i]; io=io, markup=markup)
 	end
 end
 
-function print_plan(plan)
-	println("\nMaterials to manufacture")
+function print_plan(plan, filename::AbstractString = "")
+  io = STDOUT
+	if !isempty(filename)
+		io = open(filename, "w+")
+	end
+	markup = io != STDOUT
+	println(io, "\nMaterials to manufacture")
 	materials = Dict{Int, Float64}()
 	intermediates = Dict{Int, Float64}()
 	installCost = 0.0
@@ -572,7 +602,7 @@ function print_plan(plan)
 	resolve_item_prices([entry["typeID"] for entry in plan])
 	for i = 1:length(plan)
 		entry = plan[i]
-		print_opt_row(i, entry)
+		print_opt_row(i, entry; io=io, markup=markup)
 		productID = entry["typeID"]
 		decr = entry["decryptor"]
 		number = entry["number"]
@@ -586,8 +616,13 @@ function print_plan(plan)
 	end
 	materialCost = material_cost(materials)
 	totalProfit = totalSell - (inventionCost + installCost + materialCost)
-	println("Expected profit $(fmt_float(totalProfit))\n")
-	print_materials(materials, intermediates, installCost, inventionCost)
+	println(io, "Expected profit $(fmt_float(totalProfit))\n")
+	print_materials(materials, intermediates, installCost, inventionCost; io=io, markup=markup)
+	if io != STDOUT
+		seekstart(io)
+		clipboard(readall(io)) # send all output to the system clipboard so it can be readily pasted into Eve
+		close(io)
+	end
 end
 
 function find_optimal(checkBPOs::Bool = true)
@@ -597,6 +632,7 @@ function find_optimal(checkBPOs::Bool = true)
 	rows = map(n->parse(Int, n), split(strip(readline()), [' ', ',']; keep = false))
 	plan = [opt[rows[i]] for i = 1:length(rows)]
 	print_plan(plan)
+	print_plan(plan, "result.txt")
 end
 
 function add_to_plan(product, decryptor, number, plan = Array(Any, 0))
