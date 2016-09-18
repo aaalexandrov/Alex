@@ -550,7 +550,7 @@ end
 function print_materials(materials, intermediates, installCost::Float64, inventCost::Float64, number::Int=1; io::IO = STDOUT, markup::Bool = false)
 	resolve_item_prices(keys(materials))
 	println(io, "Materials needed:")
-	totalPrice = 0
+	totalPrice = 0.0
 	for (matID, matAmount) in materials
 		matAmount *= number
 		price = itemPrices[matID]["sell"] * matAmount
