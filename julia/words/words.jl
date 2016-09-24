@@ -5,7 +5,7 @@ import Base: ==, hash
 @enum PartOfSpeech adj adv noun verb
 @enum AdjMarker none predicate prenomial postnomial
 
-enum_names{E <: Enum}(::Type{E}) = map(e->symbol(string(e)), instances(E))
+enum_names{E <: Enum}(::Type{E}) = map(e->Symbol(string(e)), instances(E))
 
 abstract PointerDestination
 

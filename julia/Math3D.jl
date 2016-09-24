@@ -1,21 +1,7 @@
 module Math3D
 
-export normalize, normalize!, orthogonalize, orthogonalize!
+export orthogonalize, orthogonalize!
 export rotx, roty, rotz, rot, trans, perspective, ortho
-
-function normalize(v::Vector)
-	l2 = sumabs2(v)
-	l2 < eps() ? v : v / sqrt(l2)
-end
-
-function normalize!(v::Vector)
-	l2 = sumabs2(v)
-	if l2 < eps()
-		v
-	else
-		v /= sqrt(l2)
-	end
-end
 
 function orthogonalize(v::Vector, n::Vector)
 	nUnit = normalize(n)

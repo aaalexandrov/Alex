@@ -94,21 +94,21 @@ type RenderStateHolder
 end
 
 function resetstate(holder::RenderStateHolder, state::RenderState) 
-	@assert super(T) == RenderState
+	@assert supertype(T) == RenderState
     delete!(holder.states, state)
 end
 
 function setstate(holder::RenderStateHolder, state::RenderState)
-	holder.states[super(typeof(state))] = state
+	holder.states[supertype(typeof(state))] = state
 end
 
 function getstate{T <: RenderState}(holder::RenderStateHolder, ::Type{T}, default)
-	@assert super(T) == RenderState
+	@assert supertype(T) == RenderState
 	get(holder.states, T, default)
 end
 
 function set_and_apply(holder::RenderStateHolder, state::RenderState)
-	key = super(typeof(state))
+	key = supertype(typeof(state))
 	if !haskey(holder.states, key) || holder.states[key] != state
 		holder.states[key] = state
 		setstate(state)

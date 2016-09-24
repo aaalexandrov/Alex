@@ -15,14 +15,14 @@ end
 
 isvalid(shader::Shader) = shader.program != 0
 
-function init(shader::Shader, renderer::Renderer, path::AbstractString, setupMaterial::Function = empty_setup_material; id::Symbol = symbol(path))
+function init(shader::Shader, renderer::Renderer, path::AbstractString, setupMaterial::Function = empty_setup_material; id::Symbol = Symbol(path))
 	local vsSource, psSource
 	open(path * ".vert") do f
-		vsSource = readbytes(f)
+		vsSource = read(f)
 	end
 
 	open(path * ".frag") do f
-		psSource = readbytes(f)
+		psSource = read(f)
 	end
 	init(shader, renderer, pointer(vsSource), length(vsSource), pointer(psSource), length(psSource), setupMaterial, id = id)
 end
@@ -94,7 +94,7 @@ function get_info_log(glObj::GLuint, get::Function, getInfoLog::Function)
 
     message = Array(UInt8, logLength[1])
     getInfoLog(glObj, logLength[1], C_NULL, message)
-    bytestring(message)
+    unsafe_string(message)
 end
 
 get_shader_info_log(shaderObj::GLuint) = get_info_log(shaderObj, glGetShaderiv, glGetShaderInfoLog)
@@ -195,7 +195,7 @@ function inituniforms(shader::Shader)
 		glGetActiveUniformName(shader.program, uniformIndices[i], length(nameBuf), C_NULL, nameBuf)
 		@assert glGetError() == GL_NO_ERROR
 
-		var = UniformVar(symbol(bytestring(pointer(nameBuf))),
+		var = UniformVar(Symbol(unsafe_string(pointer(nameBuf))),
 						 gl2jltype(uniformTypes[i]),
 						 uniformIndices[i],
 						 uniformOffsets[i],
@@ -253,13 +253,13 @@ function initattributes(shader::Shader)
 			error("Vertex attribute arrays aren't supported in shader program $(shader.id), vertex attribute $nameBuf")
 		end
 
-		nameSym = symbol(bytestring(pointer(nameBuf)))
+		nameSym = Symbol(unsafe_string(pointer(nameBuf)))
 		jlType = gl2jltype(typeBuf[1])
 
 		typeFields[location] = :($nameSym::$jlType)
 	end
 
-	typeSym = symbol("Vert#" * join(map(string, typeFields), "#"))
+	typeSym = Symbol("Vert#" * join(map(string, typeFields), "#"))
 	typeExpr = quote
 		immutable $typeSym
 			$(typeFields...)

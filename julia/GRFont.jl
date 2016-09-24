@@ -18,7 +18,7 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader; positionFunc::Fun
 
     fontName = FTFont.fontname(ftFont)
     texture = Texture()
-    init(texture, shader.renderer, ftFont.bitmap; id = symbol("Tex_" * fontName))
+    init(texture, shader.renderer, ftFont.bitmap; id = Symbol("Tex_" * fontName))
 
     material = Material(shader)
     setuniform(material, textureUniform, texture)
@@ -26,7 +26,7 @@ function init(font::Font, ftFont::FTFont.Font, shader::Shader; positionFunc::Fun
     setstate(material, DepthStateDisabled())
 
     mesh = Mesh()
-    init(mesh, shader.renderer, Array(shader.attribType, maxCharacters * 4), zeros(UInt16, maxCharacters * 6); positionFunc = positionFunc, id = symbol("Mesh_" * fontName), usage = :dynamic)
+    init(mesh, shader.renderer, Array(shader.attribType, maxCharacters * 4), zeros(UInt16, maxCharacters * 6); positionFunc = positionFunc, id = Symbol("Mesh_" * fontName), usage = :dynamic)
     mesh.indexLength = 0
 
     font.font = ftFont

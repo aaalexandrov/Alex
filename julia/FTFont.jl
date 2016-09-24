@@ -102,14 +102,14 @@ function setpos(cursor::TextCursor, x, y)
     if x != cursor.pos.x || y != cursor.pos.y
         # we reset the last drawn character when we move the cursor so kerning only takes place when we draw continuous text
         cursor.pos = Vec2{Float32}(x, y)
-        cursor.lastChar = 0
+        cursor.lastChar = Char(0)
     end
 end
 
 function drawtext(drawRect::Function, font::Font, cursor::TextCursor, s::AbstractString)
     for c in s
         glyph = get(font.glyphs, c, font.fallbackGlyph)
-        if cursor.lastChar != 0
+        if cursor.lastChar != Char(0)
             cursor.pos += get(font.kerning, (cursor.lastChar, c), zero(Vec2{Float32}))
         end
         drawRect(cursor.pos - glyph.origin, font.bitmap, glyph.box)
@@ -168,7 +168,7 @@ function glyph_bitmap(bmpRec::FreeType.FT_Bitmap)
     end
 
     for r = 1:bmpRec.rows
-        srcArray = pointer_to_array(row, bmpRec.width)
+        srcArray = unsafe_wrap(Array{UInt8}, row, bmpRec.width) #pointer_to_array(row, bmpRec.width)
         bmp[:, r] = srcArray
         row += bmpRec.pitch
     end
@@ -208,8 +208,8 @@ function loadfont(faceName::AbstractString; sizeXY::Tuple{Real, Real} = (32, 32)
         ascent = round(faceRec.ascender * emScale)
         descent = round(faceRec.descender * emScale)
 
-        font = Font(bytestring(faceRec.family_name),
-                    bytestring(faceRec.style_name),
+        font = Font(unsafe_string(faceRec.family_name),
+                    unsafe_string(faceRec.style_name),
                     sizeXY[1], sizeXY[2],
                     lineDist, ascent, descent,
                     maxCharWidth, maxCharHeight, length(chars))

@@ -26,7 +26,7 @@ immutable Vec4
 end
 
 vec2array{T}(v::T) = [v.x, v.y, v.z]
-position_func(positionField::Symbol) = v->vec2array(v.(positionField))
+position_func(positionField::Symbol) = v->vec2array(getfield(v, positionField))
 
 immutable MatrixColumn3
 	e1::Float32
@@ -126,7 +126,7 @@ end
 function set_array_field{T}(vert::Vector{T}, field::Symbol, values::Array)
 	fieldInd = findfirst(fieldnames(T), field)
 	elType, elCount = typeelements(T.types[fieldInd])
-	offs = fieldoffsets(T)[fieldInd]
+	offs = fieldoffset(T, fieldInd)
 	dst = convert(Ptr{elType}, pointer(vert)) + offs
 	valueStride = div(length(values), length(vert))
 	srcBase = 0

@@ -69,7 +69,7 @@ function make_index(key::Symbol, df::DataFrames.DataFrame)
 	colNames = map(string, names(df))
 	keyIndex = indexin([key], names(df))[1]
 	keyType = eltype(df[key])
-	return [vals[keyIndex]::keyType => make_row_dict(colNames, vals) for vals in zip(DataFrames.columns(df)...)]
+	return Dict(vals[keyIndex]::keyType => make_row_dict(colNames, vals) for vals in zip(DataFrames.columns(df)...))
 end
 
 function make_index(kvFunc::Function, collection, target)
@@ -90,7 +90,7 @@ end
 get_region(id::Int) = get_crest(regions[id]["href"], crestAuth)
 
 get_item_types() = make_index(t->(id_from_url(t["href"]), t), get_crest(get_service(["itemTypes"]), crestAuth), Dict{Int, Any}())
-get_item_names() = [t["name"]=>id for (id, t) in itemTypes]
+get_item_names() = Dict(t["name"]=>id for (id, t) in itemTypes)
 
 global nextFakeId = 9999000
 function add_fake_item(name::AbstractString)
@@ -229,7 +229,7 @@ function get_decryptors_crest()
 	decr = []
 	for t in jTypes
 		jd = get_crest(t["type"]["href"], crestAuth)
-		attr = Dict([a["attribute"]["name"]=>a["value"] for a in jd["dogma"]["attributes"]])
+		attr = Dict(a["attribute"]["name"]=>a["value"] for a in jd["dogma"]["attributes"])
 		d = Dict("name"=>jd["name"], "id"=>jd["id"], "attributes"=>attr)
 		push!(decr, d)
 	end
@@ -398,7 +398,7 @@ function blueprint_materials(runs::Float64, blueprintItem, systemID::Int)
 	ME = blueprintItem["materialEfficiency"]
 	productID = blueprint["activities"]["manufacturing"]["products"][1]["typeID"]
 	baseMaterials = blueprint["activities"]["manufacturing"]["materials"]
-	materials = [m["typeID"]::Int => production_amount(runs, Float64(m["quantity"]), ME) for m in baseMaterials]
+	materials = Dict(m["typeID"]::Int => production_amount(runs, Float64(m["quantity"]), ME) for m in baseMaterials)
 	system = industrySystems[systemID]
 	installCost = production_install_cost(productID, get_cost_index(system, "Manufacturing"), get_tax_rate(system))
 	return materials, installCost
@@ -620,7 +620,7 @@ function print_plan(plan, filename::AbstractString = "")
 	print_materials(materials, intermediates, installCost, inventionCost; io=io, markup=markup)
 	if io != STDOUT
 		seekstart(io)
-		clipboard(readall(io)) # send all output to the system clipboard so it can be readily pasted into Eve
+		clipboard(readstring(io)) # send all output to the system clipboard so it can be readily pasted into Eve
 		close(io)
 	end
 end

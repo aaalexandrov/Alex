@@ -22,14 +22,13 @@ function init(vl::VertexLayout, mesh::AbstractMesh, usage::Symbol)
     initbuffers(mesh, usage)
 
     layoutType = eltype(mesh.vertices)
-    fieldOffsets = fieldoffsets(layoutType)
 
     for i = 1:length(layoutType.types)
         fieldType = layoutType.types[i]
         jlType, elements = typeelements(fieldType)
 
         glEnableVertexAttribArray(i-1)
-        glVertexAttribPointer(i-1, elements, jl2gltype(jlType), GL_FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldOffsets[i]))
+        glVertexAttribPointer(i-1, elements, jl2gltype(jlType), GL_FALSE, sizeof(layoutType), convert(Ptr{Void}, fieldoffset(layoutType, i)))
     end
 
     glBindVertexArray(0)

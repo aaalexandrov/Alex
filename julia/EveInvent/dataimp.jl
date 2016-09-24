@@ -1,5 +1,13 @@
-import ODBC
 import YAML
+
+function import_blueprints(fileName::AbstractString)
+	# because loading a json is so much faster than loading a yaml for some reason
+	blueprints = YAML.load_file("data/blueprints.yaml")
+	json_write(fileName, blueprints; indent=0)
+end
+
+#=
+import ODBC
 
 const dbName = "esb_DATADUMP"
 
@@ -36,12 +44,6 @@ function import_decryptors(fileName::AbstractString)
 	json_write(fileName, decryptors)
 end
 
-function import_blueprints(fileName::AbstractString)
-	# because loading a json is so much faster than loading a yaml for some reason
-	blueprints = YAML.load_file("data/blueprints.yaml")
-	json_write(fileName, blueprints; indent=0)
-end
-
 function import_station_assembly_lines(fileName::AbstractString)
 	ODBC.connect(dbName)
 	res = ODBC.query(
@@ -55,3 +57,5 @@ function import_station_assembly_lines(fileName::AbstractString)
 	ODBC.disconnect()
 	json_write(fileName, make_array(res))
 end
+
+=#

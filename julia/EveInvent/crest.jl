@@ -4,7 +4,7 @@ const urlCrest = "https://crest-tq.eveonline.com/"
 const urlReplace = Dict{Char, Char}('/'=>'-', '?'=>'.')
 url_to_filename(url::AbstractString) = replace(replace(url, urlCrest[1:end-1], ""), collect(keys(urlReplace)), c->urlReplace[c[1]]) * ".json"
 
-int_keys(assoc::Associative) = [parse(Int, k)=>v for (k,v) in assoc]
+int_keys(assoc::Associative) = Dict(parse(Int, k)=>v for (k,v) in assoc)
 
 function json_read(fileName::AbstractString)
 	data = nothing
@@ -81,7 +81,7 @@ function get_crest(url::AbstractString, auth, timeoutHours::Float64 = convert(Fl
 			info("Response status: $(resp.status)")
 			return nothing
 		end
-		queryRes = JSON.parse(bytestring(resp.data))
+		queryRes = JSON.parse(String(resp.data))
 		if res == nothing
 			res = queryRes
 		else

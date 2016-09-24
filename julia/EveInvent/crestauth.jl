@@ -58,7 +58,7 @@ function request_access_url(authData::CrestAuthData, appInfo::Dict)
 end
 
 function open_browser(url::AbstractString)
-    if OS_NAME == :Windows
+    if is_windows()
 	    url = replace(url, "&", "^&") # escape & on windows
 	    run(`cmd /c start $url`)
     else
@@ -80,7 +80,7 @@ function request_authorization_token(endpoint::AbstractString, appInfo::Dict, co
 	                     data=dataStr,
 						 headers=Dict{Any, Any}("Authorization" => "Basic $authStr",
 						          "Content-Type" => "application/x-www-form-urlencoded"))
-	return JSON.parse(bytestring(resp.data))
+	return JSON.parse(String(resp.data))
 end
 
 function request_access(endpoint::AbstractString, appInfo::Dict)

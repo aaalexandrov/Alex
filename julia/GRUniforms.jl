@@ -26,7 +26,7 @@ function init(block::UniformBlock, program::GLuint, blockIndex::GLuint)
 	nameBuf = Array(UInt8, val[1])
 	glGetActiveUniformBlockName(program, block.index, length(nameBuf), C_NULL, nameBuf)
 	@assert glGetError() == GL_NO_ERROR
-	block.name = symbol(nameBuf[1:end-1])
+	block.name = Symbol(nameBuf[1:end-1])
 
 	ubo = GLuint[0]
 	glGenBuffers(1, ubo)

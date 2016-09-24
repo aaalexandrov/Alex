@@ -44,10 +44,10 @@ const il2glFormat =
 		(DevIL.IL_ALPHA, GL_RED)
 	])
 
-function init(tex::Texture, renderer::Renderer, texPath::AbstractString; id::Symbol = symbol(texPath))
+function init(tex::Texture, renderer::Renderer, texPath::AbstractString; id::Symbol = Symbol(texPath))
 	img = DevIL.ilGenImage()
 	DevIL.ilBindImage(img)
-	if DevIL.ilLoadImage(bytestring(texPath)) != DevIL.IL_TRUE
+	if DevIL.ilLoadImage(pointer(texPath)) != DevIL.IL_TRUE
 		error("Failed loading texture $texPath")
 	end
 

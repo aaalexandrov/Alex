@@ -83,9 +83,9 @@ function gl_clear_buffers(color, depth, stencil)
 end
 
 function gl_info()
-	vendor = bytestring(glGetString(GL_VENDOR))
-	version = bytestring(glGetString(GL_VERSION))
-	renderer = bytestring(glGetString(GL_RENDERER))
+	vendor = unsafe_string(glGetString(GL_VENDOR))
+	version = unsafe_string(glGetString(GL_VERSION))
+	renderer = unsafe_string(glGetString(GL_RENDERER))
 	info("OpenGL Vendor: $vendor, Version: $version, Renderer: $renderer")
 end
 

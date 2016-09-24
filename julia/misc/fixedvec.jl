@@ -52,7 +52,7 @@ function field_names(sz::(Integer...); allowShort::Bool = true)
         if !shortNames
             field = "e" * field
         end
-        res[n] = symbol(field)
+        res[n] = Symbol(field)
         n += 1
     end
     return res

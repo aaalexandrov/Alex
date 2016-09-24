@@ -8,7 +8,7 @@ const timeFormat = "y-m-d H:M:S"
 function xml_read(fileName::AbstractString)
 	local xmlStr, xdoc
 	try
-		xmlStr = readall(fileName)
+		xmlStr = readstring(fileName)
 	catch e
 		if isa(e, SystemError)
 			return nothing
@@ -74,7 +74,7 @@ function xml_find_by_attribute(xElem::LightXML.XMLElement, key::Array, keyAttrib
 end
 
 function add_dataframe_row!(df::DataFrames.DataFrame, keyAttribs::Array, values::Array)
-	attrSyms = map(symbol, keyAttribs)
+	attrSyms = map(Symbol, keyAttribs)
 	newCols = setdiff(attrSyms, names(df))
 	for c in newCols
 		df[c] = DataFrames.DataArray(AbstractString, size(df, 1))
@@ -194,7 +194,7 @@ function get_api_url(url::AbstractString; params::Dict = Dict(), auth::Dict = Di
 			return nothing
 		end
 		xml_write(fileName, resp.data)
-		xdoc = LightXML.parse_string(bytestring(resp.data))
+		xdoc = LightXML.parse_string(String(resp.data))
 		data = LightXML.root(xdoc)
 	end
 	return data
