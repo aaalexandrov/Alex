@@ -3,8 +3,8 @@ module Simple
 import GLFW
 import ModernGL
 
-import OGLHelper
 import GR
+import OGLHelper
 import Geom
 import Math3D
 import FTFont
@@ -12,10 +12,7 @@ import SimpleCam
 
 function rld()
 	GLFW.Terminate()
-	include("Math3D.jl")
-	include("Geom.jl")
-    include("Shapes.jl")
-    include("GR.jl")
+	reload("GR.jl")
     include("SimpleCam.jl")
     include("Simple.jl")
 end
