@@ -107,7 +107,7 @@ function initMaterials(renderer::GRU.Renderer)
     GRU.setstate(diskMaterial, GRU.DepthStateLess())
     GRU.setstate(diskMaterial, GRU.AlphaBlendDisabled())
 
-       GRU.setuniform(diskMaterial, :projection, ident)
+    GRU.setuniform(diskMaterial, :projection, ident)
     GRU.setuniform(diskMaterial, :view, ident)
     GRU.setuniform(diskMaterial, :model, ident)
 
