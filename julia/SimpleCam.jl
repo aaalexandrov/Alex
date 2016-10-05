@@ -2,23 +2,23 @@ module SimpleCam
 
 import GLFW
 import Math3D
-import GR
+import GRU
 
 type FreeCamera
-    camera::GR.Camera
+    camera::GRU.Camera
     window::GLFW.Window
     deltaTrans::Vector{Float32}
     deltaAngles::Vector{Float32}
     lastTime::Float64
 
-    FreeCamera(renderer::GR.Renderer, window::GLFW.Window, deltaTrans::Vector{Float32}, deltaAngles::Vector{Float32}) = new(renderer.camera, window, deltaTrans, deltaAngles, time())
+    FreeCamera(renderer::GRU.Renderer, window::GLFW.Window, deltaTrans::Vector{Float32}, deltaAngles::Vector{Float32}) = new(renderer.camera, window, deltaTrans, deltaAngles, time())
 end
 
 function update(cam::FreeCamera, trans::Vector{Float32}, angles::Vector{Float32}, timeNow::Float64)
     m = eye(Float32, 4, 4)
     Math3D.rotxyz(m, angles...)
     Math3D.trans(m, trans)
-    GR.settransform(cam.camera, GR.gettransform(cam.camera)*m)
+    GRU.settransform(cam.camera, GRU.gettransform(cam.camera)*m)
     cam.lastTime = timeNow
 end
 
