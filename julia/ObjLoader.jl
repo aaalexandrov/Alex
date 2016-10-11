@@ -29,7 +29,8 @@ getmatrix(stream::StreamData) = reshape(stream.data, stream.dim, getcolumns(stre
 
 load_obj(file::String) = open(io->load_obj(io), file)
 
-function getstream(streams::Vector{StreamData}, id::Symbol, defaults::Vector)
+const streamDefault = [0.0f0, 0.0f0, 0.0f0, 1.0f0]
+function getstream(streams::Vector{StreamData}, id::Symbol, defaults::Vector = streamDefault)
   ind = findfirst(s->s.id==id, streams)
   if ind == 0
     push!(streams, StreamData(id, eltype(defaults), 1, defaults))
@@ -38,9 +39,30 @@ function getstream(streams::Vector{StreamData}, id::Symbol, defaults::Vector)
   streams[ind]
 end
 
+function facenormal(positions::Matrix, face::Matrix)
+  n = zeros(Float32, 3)
+  for i = 1:size(face, 2)-2
+    v1 = positions[:, face[i]]
+    v2 = positions[:, face[i+1]]
+    v3 = positions[:, face[i+2]]
+    n = cross(v1-v2, v3-v2)
+    len = norm(n)
+    if len > eps(len)
+      n /= len
+      break
+    end
+  end
+  n
+end
+
+averagenormals(normals::Matrix) = mean(normals, 2)
+
+function fixnormals(streams::Vector{StreamData}, smoothGroups::Dict{Int, Vector})
+  faces = get(streams, :faces)
+end
+
 function load_obj(io::IOStream)
-  const faceDefault = [0 0 0]
-  const streamDefault = [0.0f0 0.0f0 0.0f0 1.0f0]
+  const faceDefault = [0, 0, 0]
   const streamIds = Dict("v" => :position, "vt" => :texCoord, "vn" => :normal)
 
   streams = Vector{StreamData}()
@@ -56,11 +78,11 @@ function load_obj(io::IOStream)
     if tokens[1] == "s"
       smoothGroupId = tokens[2] == "off" ? 0 : parse(Int, tokens[2])
     elseif tokens[1] == "v" || tokens[1] == "vt" || tokens[1] == "vn"
-      stream = getstream(streams, streamIds[tokens[1]], streamDefault)
+      stream = getstream(streams, streamIds[tokens[1]])
       vals = map(v->parse(Float32, v), tokens[2:end])
       add(stream, vals)
     elseif tokens[1] == "f"
-      lengths = [getlength(getstream(streams, id, streamDefault)) for id in (:position, :texCoord, :normal)]
+      lengths = [getlength(getstream(streams, id)) for id in (:position, :texCoord, :normal)]
       vals=map(tokens[2:end]) do t
         indices = split(t, '/')
         indVals = Matrix{Int}(length(indices), 1)
@@ -74,8 +96,15 @@ function load_obj(io::IOStream)
         indVals
       end
       face = hcat(vals...)
-      faces = getstream(stream, :faces, faceDefault)
+      faces = getstream(streams, :faces, faceDefault)
       add(faces, face)
+      faceNorm = facenormal(getmatrix(getstream(streams, :positions)), face)
+      faceNormals = getstream(streams, :facenormals)
+      add(faceNormals, faceNorm)
+      if smoothGroupId != 0
+        smoothGroup = get(()->Int[], smoothingGroups, smoothGroupId)
+        push!(smoothGroup, getlength(faces))
+      end
     else
       info("Skipping unsupported .obj line: $l")
     end
