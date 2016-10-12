@@ -9,16 +9,18 @@ import Geom
 import Math3D
 import FTFont
 import SimpleCam
+import ObjLoader
 
 function rld()
     GLFW.Terminate()
     reload("GRU.jl")
+    include("ObjLoader.jl")
     include("SimpleCam.jl")
     include("Simple.jl")
 end
 
 
-global triangleMaterial, triangleModel, diskMaterial, diskModel
+global triangleMaterial, triangleModel, diskMaterial, diskModel, objMaterial, objModel
 global freeCam
 global font
 
@@ -36,6 +38,12 @@ function initMeshes(renderer::GRU.Renderer)
     diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
     GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
+
+    plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
+    objModel = ObjLoader.load_obj("magnolia.obj")
+    objStreams, objInd = ObjLoader.get_indexed(objModel)
+    objInd = map(UInt16, objInd)
+    GRU.init(GRU.Mesh(), plainShader, objStreams, objInd; positionFunc = GRU.position_func(:position), id = :diamond)
 end
 
 function setup_matrices(model::GRU.Model)
@@ -52,6 +60,7 @@ function initShaders(renderer::GRU.Renderer)
     GRU.init(GRU.Shader(), renderer, "data/simple", setup_matrices)
     GRU.init(GRU.Shader(), renderer, "data/font")
     GRU.init(GRU.Shader(), renderer, "data/diffuse", setup_matrices)
+    GRU.init(GRU.Shader(), renderer, "data/plain", setup_matrices)
 end
 
 #global texName = "data/Locator_Grid.png"
@@ -80,6 +89,25 @@ function doneFonts()
     font = nothing
 end
 
+function initMaterial(renderer::GRU.Renderer, material::GRU.Material)
+  GRU.setstate(material, GRU.CullStateCCW())
+  #GRU.setstate(material, GRU.CullStateDisabled())
+  GRU.setstate(material, GRU.DepthStateLess())
+  GRU.setstate(material, GRU.AlphaBlendDisabled())
+
+  ident = eye(Float32, 4) # identity matrix 4x4
+  GRU.setuniform(material, :projection, ident)
+  GRU.setuniform(material, :view, ident)
+  GRU.setuniform(material, :model, ident)
+
+  GRU.setuniform(material, :sunDirection, Math3D.normalize([1f0, 1f0, -1f0]))
+  GRU.setuniform(material, :sunColor, [1f0, 1f0, 0.5f0] * 0.6f0)
+  GRU.setuniform(material, :ambientColor, [0.4f0, 0.4f0, 0.4f0, 1f0])
+
+  GRU.setuniform(material, :ambientMaterial, [1f0, 1f0, 1f0, 1f0])
+  GRU.setuniform(material, :diffuseMaterial, [1f0, 1f0, 1f0])
+end
+
 function initMaterials(renderer::GRU.Renderer)
     simpleShader = GRU.get_resource(renderer, Symbol("data/simple"))
     gridTexture = GRU.get_resource(renderer, Symbol(texName))
@@ -103,27 +131,18 @@ function initMaterials(renderer::GRU.Renderer)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
 
     global diskMaterial = GRU.Material(diffuseShader)
-    GRU.setstate(diskMaterial, GRU.CullStateCCW())
-    GRU.setstate(diskMaterial, GRU.DepthStateLess())
-    GRU.setstate(diskMaterial, GRU.AlphaBlendDisabled())
-
-    GRU.setuniform(diskMaterial, :projection, ident)
-    GRU.setuniform(diskMaterial, :view, ident)
-    GRU.setuniform(diskMaterial, :model, ident)
-
-    GRU.setuniform(diskMaterial, :sunDirection, Math3D.normalize([1f0, 1f0, -1f0]))
-    GRU.setuniform(diskMaterial, :sunColor, [1f0, 1f0, 0.5f0] * 0.6f0)
-    GRU.setuniform(diskMaterial, :ambientColor, [0.4f0, 0.4f0, 0.4f0, 1f0])
-
-    GRU.setuniform(diskMaterial, :ambientMaterial, [1f0, 1f0, 1f0, 1f0])
-    GRU.setuniform(diskMaterial, :diffuseMaterial, [1f0, 1f0, 1f0])
-
+    initMaterial(renderer, diskMaterial)
     GRU.setuniform(diskMaterial, :diffuseTexture, gridTexture)
+
+    plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
+    global objMaterial = GRU.Material(plainShader)
+    initMaterial(renderer, objMaterial)
 end
 
 function doneMaterials()
     global triangleMaterial = nothing
     global diskMaterial = nothing
+    global objMaterial = nothing
 end
 
 function initModels(renderer::GRU.Renderer)
@@ -134,11 +153,16 @@ function initModels(renderer::GRU.Renderer)
     global triangleModel = GRU.Model(triangleMesh, triangleMaterial)
     GRU.settransform(triangleModel, Math3D.trans(Float32[0, 0, 1.5]))
     global diskModel = GRU.Model(diskMesh, diskMaterial)
+
+    objMesh = GRU.get_resource(renderer, :diamond)
+    global objModel = GRU.Model(objMesh, objMaterial)
+    GRU.settransform(objModel, Math3D.trans([0f0, -10f0, 0f0]) * Math3D.scale([0.1f0, 0.1f0, 0.1f0]))
 end
 
 function doneModels()
     global triangleModel = nothing
     global diskModel = nothing
+    global objModel = nothing
 end
 
 function initCamera(renderer::GRU.Renderer)
@@ -179,6 +203,7 @@ end
 function render(renderer::GRU.Renderer)
     GRU.add(renderer, diskModel)
     GRU.add(renderer, triangleModel)
+    GRU.add(renderer, objModel)
     GRU.add(renderer, font)
 
     GRU.render_frame(renderer)
@@ -195,6 +220,8 @@ function update()
     rotMatrix = Math3D.rotz(eye(Float32, 4), Float32(deltaTime * pi / 2))
     newModel = rotMatrix * currentModel
     GRU.settransform(diskModel, newModel)
+    currentModel = GRU.gettransform(objModel)
+    GRU.settransform(objModel, currentModel * rotMatrix)
 
     if deltaTime > 0
         global font, frameCount

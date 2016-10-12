@@ -58,7 +58,7 @@ function facenormal(positions::Matrix, face::Matrix)
     v1 = positions[:, face[1, i]]
     v2 = positions[:, face[1, i+1]]
     v3 = positions[:, face[1, i+2]]
-    n = cross(v1-v2, v3-v2)
+    n = cross(v1-v2, v2-v3)
     len = norm(n)
     if len > eps(len)
       n /= len
@@ -167,8 +167,6 @@ function load_obj(io::IOStream)
         smoothGroup = get!(smoothGroups, smoothGroupId) do; Int[] end
         push!(smoothGroup, length(faces))
       end
-    else
-      # info("Skipping unsupported .obj line: $l")
     end
   end
   fixnormals(streams, smoothGroups, faces)
@@ -221,7 +219,7 @@ function get_indexed(model::ObjModel)
     end
     append_face(indices, faceIndices)
   end
-  vertices = Dict(model.valueIds[s] => getmatrix(streams[s]) for s = 1:length(model.values))
+  vertices = Dict{Symbol, Array}(model.valueIds[s] => getmatrix(streams[s]) for s = 1:length(model.values))
   return vertices, indices
 end
 
