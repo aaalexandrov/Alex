@@ -23,6 +23,7 @@ end
 global triangleMaterial, triangleModel, diskMaterial, diskModel, objMaterial, objModel
 global freeCam
 global font
+global modelScale = 1.0f0
 
 
 function initMeshes(renderer::GRU.Renderer)
@@ -39,8 +40,11 @@ function initMeshes(renderer::GRU.Renderer)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
     GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
 
+    global modelScale = 0.1f0
     plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
-    objModel = ObjLoader.load_obj("magnolia.obj")
+    objModel = ObjLoader.load_obj("cessna.obj")
+    #objModel = ObjLoader.get_regular_poly(3)
+    #ObjLoader.addnormals(objModel)
     objStreams, objInd = ObjLoader.get_indexed(objModel)
     objInd = map(UInt16, objInd)
     GRU.init(GRU.Mesh(), plainShader, objStreams, objInd; positionFunc = GRU.position_func(:position), id = :diamond)
@@ -156,7 +160,7 @@ function initModels(renderer::GRU.Renderer)
 
     objMesh = GRU.get_resource(renderer, :diamond)
     global objModel = GRU.Model(objMesh, objMaterial)
-    GRU.settransform(objModel, Math3D.trans([0f0, -10f0, 0f0]) * Math3D.scale([0.1f0, 0.1f0, 0.1f0]))
+    GRU.settransform(objModel, Math3D.trans([0f0, -10f0, 0f0]) * Math3D.scale(fill(modelScale, 3)))
 end
 
 function doneModels()
