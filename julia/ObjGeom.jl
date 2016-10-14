@@ -1,8 +1,10 @@
-module ObjLoader
+module ObjGeom
 
 import Base: isvalid
 
-export load_obj, get_indexed, isvalid
+export load_obj, get_indexed, isvalid, add_normals, add_values, delete_values_at, delete_unused_values,
+       regularpoly, prism, pyramid, sphere,
+       ObjModel, SMOOTHING
 
 const defaultIds = [:position, :texCoord, :normal]
 
@@ -82,18 +84,22 @@ function load_obj(io::IOStream)
                      value_matrix(values[2], [NaN32, 0f0, 0f0]),
                      value_matrix(values[3], [NaN32, NaN32, NaN32])]
   model = ObjModel(defaultIds, objValues, faces)
-  addnormals(model, Base.values(smoothGroups))
+  add_normals(model, Base.values(smoothGroups))
   delete_unused_values(model)
   return model
 end
 
 # ObjModel
 
-function isvalid(model::ObjModel)
+function isvalid(model::ObjModel, checkIndices::Bool = false)
   dim = length(model.values)
-  return length(model.valueIds) == dim && all(model.faces) do face
-    size(face, 1) == dim
+  if length(model.valueIds) != dim || any(face->size(face, 1) != dim, model.faces)
+    return false
   end
+  return !checkIndices ||
+         all(model.faces) do face
+           all(1 <= face[i, j] <= length(model.values[i]) for j = 1:size(face, 2), i = 1:size(face, 1))
+         end
 end
 
 function facenormal(model::ObjModel, faceInd::Int)
@@ -143,7 +149,7 @@ function build_vertex_faces(model::ObjModel)
   vertexFaces
 end
 
-function addnormals(model::ObjModel, smoothGroups = Vector{Int}[])
+function add_normals(model::ObjModel, smoothGroups = Vector{Int}[])
   posInd = findfirst(model.valueIds, :position)
   normalsInd = findfirst(model.valueIds, :normal)
   if normalsInd == 0
@@ -184,6 +190,38 @@ function addnormals(model::ObjModel, smoothGroups = Vector{Int}[])
     end
   end
   model.values[normalsInd] = asmatrix(normals, 3)
+  nothing
+end
+
+function add_texcoord(model::ObjModel, direction::Vector{Float32} = [0f0, 0f0, 1f0], uniform::Bool = true)
+  posInd = findfirst(model.valueIds, :position)
+  tcInd = findfirst(model.valueIds, :texCoord)
+  if tcInd == 0
+    tcInd = add_values(model, :texCoord, 2)
+  end
+  normalize!(direction)
+  xDir = [1f0, 0f0, 0f0]
+  zDir = [0f0, 0f0, 1f0]
+  other = abs(dot(direction, xDir)) < abs(dot(direction, zDir)) ? xDir : zDir
+  u = cross(direction, other)
+  v = cross(u, direction)
+  proj = vcat(u', v', direction')
+  uvw = proj * model.values[posInd]
+  ext = extrema(uvw, 2)
+  if uniform
+    mini = minimum(map(t->t[1], ext))
+    maxi = maximum(map(t->t[2], ext))
+    ext = fill((mini, maxi), 3)
+  end
+  baseInd = length(model.values[tcInd])
+  newTexCoord = [(uvw[i, j] - ext[i][1]) / (ext[i][2] - ext[i][1]) for i = 1:min(size(uvw, 1), size(model.values[tcInd], 1)), j = 1:size(uvw, 2)]
+  model.values[tcInd] = hcat(model.values[tcInd], newTexCoord)
+  for face in model.faces, i = 1:size(face, 2)
+    if face[tcInd, i] == 0
+      face[tcInd, i] = face[posInd, i] + baseInd
+    end
+  end
+  model
 end
 
 function append_face(indices::Vector{Int}, face::Vector{Int})
@@ -240,6 +278,7 @@ function delete_values_at(model::ObjModel, ind::Int)
   map!(model.faces) do face
     face[[i!=ind for i = 1:size(face, 1)], :]
   end
+  nothing
 end
 
 function delete_unused_values(model::ObjModel)
@@ -251,11 +290,14 @@ function delete_unused_values(model::ObjModel)
       i += 1
     end
   end
+  nothing
 end
 
 # Model generation
 
-function regularpoly(sides::Int, z::Float32 = 0f0)
+@enum SMOOTHING SmoothNone=0 SmoothSides=1 SmoothAll=2
+
+function regularpoly(sides::Int, z::Float32 = 0f0; normals = true)
 	points = Matrix{Float32}(3, sides)
 	for i in 1:sides
 		ang = (i - 1) * 2pi / sides
@@ -264,14 +306,99 @@ function regularpoly(sides::Int, z::Float32 = 0f0)
 		points[:, i] = [cos(ang), sin(ang), z]
 	end
 
-  face = [j for i=1:1, j=1:sides] # Matrix with a single row
+  face = [j for i=1:1, j=sides:-1:1] # Matrix with a single row
 
-	return points, face
+  model = ObjModel([:position], [points], [face])
+  if normals
+    add_normals(model)
+  end
+  model
 end
 
-function get_regular_poly(sides::Int, z::Float32 = 0f0)
-  points, faces = regularpoly(sides, z)
-  ObjModel([:position], [points], [faces])
+clampindex(i::Int, n::Int) = (i-1)%n+1
+
+function prism(sides::Int, zMin::Float32 = -1f0, zMax::Float32 = 1f0; smooth::SMOOTHING = SmoothNone)
+  model = regularpoly(sides, zMin, normals = false)
+  upperPoints = model.values[1].+[0, 0, zMax - zMin]
+  upperFace = model.faces[1][:, end:-1:1].+sides
+  model.values[1] = hcat(model.values[1], upperPoints)
+  push!(model.faces, upperFace)
+  smoothGroup = Int[]
+  if smooth == SmoothAll
+    push!(smoothGroup, 1, 2)
+  end
+  for i = 1:sides
+    iNext = clampindex(i+1, sides)
+    side = [i iNext iNext+sides i+sides]
+    push!(model.faces, side)
+    if smooth != SmoothNone
+      push!(smoothGroup, length(model.faces))
+    end
+  end
+
+  add_normals(model, [smoothGroup])
+  model
+end
+
+function pyramid(sides::Int, zMin::Float32 = -1f0, zMax::Float32 = 1f0; smooth::SMOOTHING = SmoothNone)
+  model = regularpoly(sides, zMin, normals = false)
+  model.values[1] = hcat(model.values[1], [0, 0, zMax])
+  smoothGroup = Int[]
+  if smooth == SmoothAll
+    push!(smoothGroup, 1)
+  end
+  apexInd = size(model.values[1], 2)
+  for i = 1:sides
+    side = [i clampindex(i+1, sides) apexInd]
+    push!(model.faces, side)
+    if smooth != SmoothNone
+      push!(smoothGroup, length(model.faces))
+    end
+  end
+
+  add_normals(model, [smoothGroup])
+  model
+end
+
+function sphere(sides::Int, rh::Float32 = 1f0, rv::Float32 = 1f0; smooth::SMOOTHING = SmoothAll)
+  vsides = div(sides, 2) - 1
+  points = Matrix{Float32}(3, sides*vsides+2)
+  points[:, end] = [0, 0, rv]
+  points[:, end-1] = [0, 0, -rv]
+  faces = Matrix{Int}[]
+  smoothGroup = Int[]
+  ptsCount = size(points, 2)
+  for x = 0:sides-1
+    nextX = (x+1) % sides
+    baseX = vsides*x
+    nextBaseX = vsides*nextX
+    angH = x*2pi/sides
+    sinH = sin(angH)
+    cosH = cos(angH)
+    for y = 1:vsides
+      angV = y*pi/(vsides+1)
+      sinV = sin(angV)
+      cosV = cos(angV)
+      points[:, baseX+y] = Float32[rh*sinV*cosH, rh*sinV*sinH, rv*cosV]
+    end
+
+    for y = 1:vsides-1
+      push!(faces, [nextBaseX+y baseX+y baseX+y+1 nextBaseX+y+1])
+      if smooth != SmoothNone
+        push!(smoothGroup, length(faces))
+      end
+    end
+    push!(faces, [baseX+1 nextBaseX+1 ptsCount])
+    push!(faces, [nextBaseX+vsides baseX+vsides ptsCount-1])
+    if smooth != SmoothNone
+      i = length(faces)
+      push!(smoothGroup, i-1, i)
+    end
+  end
+
+  model = ObjModel([:position], [points], faces)
+  add_normals(model, [smoothGroup])
+  model
 end
 
 end

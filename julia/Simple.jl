@@ -9,12 +9,12 @@ import Geom
 import Math3D
 import FTFont
 import SimpleCam
-import ObjLoader
+import ObjGeom
 
 function rld()
     GLFW.Terminate()
     reload("GRU.jl")
-    include("ObjLoader.jl")
+    include("ObjGeom.jl")
     include("SimpleCam.jl")
     include("Simple.jl")
 end
@@ -34,18 +34,29 @@ function initMeshes(renderer::GRU.Renderer)
     triangleUV = Float32[0 1 0.5;
                          0 0   1]
     triangleInd = UInt16[0, 2, 1]
-    GRU.init(GRU.Mesh(), simpleShader, Dict{Symbol, Array}([(:position, trianglePos), (:texCoord, triangleUV)]), triangleInd; positionFunc = GRU.position_func(:position), id = :triangle)
+    #GRU.init(GRU.Mesh(), simpleShader, Dict{Symbol, Array}([(:position, trianglePos), (:texCoord, triangleUV)]), triangleInd; positionFunc = GRU.position_func(:position), id = :triangle)
+    triModel = ObjGeom.regularpoly(3)
+    ObjGeom.add_texcoord(triModel)
+    triStreams, triInd = ObjGeom.get_indexed(triModel)
+    triInd = map(UInt16, triInd)
+    #delete!(triStreams, :normal)
+    GRU.init(GRU.Mesh(), simpleShader, triStreams, triInd; positionFunc = GRU.position_func(:position), id = :triangle)
 
-    diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
+    #diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
-    GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
+    #GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
+    diskModel = ObjGeom.sphere(10, smooth = ObjGeom.SmoothNone)
+    ObjGeom.add_texcoord(diskModel, [1f0, 1f0, 1f0])
+    diskStreams, diskInd = ObjGeom.get_indexed(diskModel)
+    diskStreams[:norm] = diskStreams[:normal]
+    diskInd = map(UInt16, diskInd)
+    GRU.init(GRU.Mesh(), diffuseShader, diskStreams, diskInd; positionFunc = GRU.position_func(:position), id = :disk)
 
     global modelScale = 0.1f0
     plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
-    objModel = ObjLoader.load_obj("cessna.obj")
-    #objModel = ObjLoader.get_regular_poly(3)
-    #ObjLoader.addnormals(objModel)
-    objStreams, objInd = ObjLoader.get_indexed(objModel)
+    objModel = ObjGeom.load_obj("cessna.obj")
+    #objModel = ObjGeom.sphere(20, smooth=ObjGeom.SmoothAll)
+    objStreams, objInd = ObjGeom.get_indexed(objModel)
     objInd = map(UInt16, objInd)
     GRU.init(GRU.Mesh(), plainShader, objStreams, objInd; positionFunc = GRU.position_func(:position), id = :diamond)
 end
