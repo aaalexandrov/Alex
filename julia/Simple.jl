@@ -5,7 +5,6 @@ import ModernGL
 
 import GRU
 import GLHelper
-import Geom
 import Math3D
 import FTFont
 import SimpleCam
@@ -14,7 +13,7 @@ import ObjGeom
 function rld()
     GLFW.Terminate()
     reload("GRU.jl")
-    include("ObjGeom.jl")
+    reload("ObjGeom.jl")
     include("SimpleCam.jl")
     include("Simple.jl")
 end
