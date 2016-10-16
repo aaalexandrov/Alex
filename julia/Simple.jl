@@ -53,7 +53,7 @@ function initMeshes(renderer::GRU.Renderer)
 
     global modelScale = 0.1f0
     plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
-    objModel = ObjGeom.load_obj("cessna.obj")
+    objModel = ObjGeom.load_obj("data/cessna.obj")
     #objModel = ObjGeom.sphere(20, smooth=ObjGeom.SmoothAll)
     objStreams, objInd = ObjGeom.get_indexed(objModel)
     objInd = map(UInt16, objInd)
