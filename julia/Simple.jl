@@ -39,7 +39,7 @@ function initMeshes(renderer::GRU.Renderer)
     triStreams, triInd = ObjGeom.get_indexed(triModel)
     triInd = map(UInt16, triInd)
     #delete!(triStreams, :normal)
-    GRU.init(GRU.Mesh(), simpleShader, triStreams, triInd; positionFunc = GRU.position_func(:position), id = :triangle)
+    global triangleMesh = GRU.init(GRU.Mesh(), simpleShader, triStreams, triInd; positionFunc = GRU.position_func(:position), id = :triangle)
 
     #diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
@@ -49,7 +49,7 @@ function initMeshes(renderer::GRU.Renderer)
     diskStreams, diskInd = ObjGeom.get_indexed(diskModel)
     diskStreams[:norm] = diskStreams[:normal]
     diskInd = map(UInt16, diskInd)
-    GRU.init(GRU.Mesh(), diffuseShader, diskStreams, diskInd; positionFunc = GRU.position_func(:position), id = :disk)
+    global diskMesh = GRU.init(GRU.Mesh(), diffuseShader, diskStreams, diskInd; positionFunc = GRU.position_func(:position), id = :disk)
 
     global modelScale = 0.1f0
     plainShader = GRU.get_resource(renderer, Symbol("data/plain"))
@@ -57,7 +57,13 @@ function initMeshes(renderer::GRU.Renderer)
     #objModel = ObjGeom.sphere(20, smooth=ObjGeom.SmoothAll)
     objStreams, objInd = ObjGeom.get_indexed(objModel)
     objInd = map(UInt16, objInd)
-    GRU.init(GRU.Mesh(), plainShader, objStreams, objInd; positionFunc = GRU.position_func(:position), id = :diamond)
+    global diamondMesh = GRU.init(GRU.Mesh(), plainShader, objStreams, objInd; positionFunc = GRU.position_func(:position), id = :diamond)
+end
+
+function doneMeshes()
+  global triangleMesh = nothing
+  global diskMesh = nothing
+  global diamondMesh = nothing
 end
 
 function setup_matrices(model::GRU.Model)
@@ -71,17 +77,28 @@ function setup_matrices(model::GRU.Model)
 end
 
 function initShaders(renderer::GRU.Renderer)
-    GRU.init(GRU.Shader(), renderer, "data/simple", setup_matrices)
-    GRU.init(GRU.Shader(), renderer, "data/font")
-    GRU.init(GRU.Shader(), renderer, "data/diffuse", setup_matrices)
-    GRU.init(GRU.Shader(), renderer, "data/plain", setup_matrices)
+    global simpleShader = GRU.init(GRU.Shader(), renderer, "data/simple", setup_matrices)
+    global fontShader = GRU.init(GRU.Shader(), renderer, "data/font")
+    global diffuseShader = GRU.init(GRU.Shader(), renderer, "data/diffuse", setup_matrices)
+    global plainShader = GRU.init(GRU.Shader(), renderer, "data/plain", setup_matrices)
+end
+
+function doneShaders()
+  global simpleShader = nothing
+  global fontShader = nothing
+  global diffuseShader = nothing
+  global plainShader = nothing
 end
 
 #global texName = "data/Locator_Grid.png"
 global texName = "data/grid2.png"
 
 function initTextures(renderer::GRU.Renderer)
-    GRU.init(GRU.Texture(), renderer, texName)
+    global tex = GRU.init(GRU.Texture(), renderer, texName)
+end
+
+function doneTextures()
+  global tex = nothing
 end
 
 function initFonts(renderer::GRU.Renderer)
@@ -100,7 +117,7 @@ function initFonts(renderer::GRU.Renderer)
 end
 
 function doneFonts()
-    font = nothing
+    global font = nothing
 end
 
 function initMaterial(renderer::GRU.Renderer, material::GRU.Material)
@@ -192,6 +209,7 @@ clearColor = (0f0, 0f0, 1f0, 1f0)
 
 function init()
     renderer = GRU.Renderer()
+    global renderer_instance = renderer
     GRU.init(renderer)
     GRU.set_clear_color(renderer, clearColor)
 
@@ -210,8 +228,13 @@ function done(renderer::GRU.Renderer)
     doneCamera()
     doneModels()
     doneMaterials();
+    doneMeshes();
+    doneFonts();
+    doneTextures();
+    doneShaders();
 
     GRU.done(renderer)
+    global renderer_instance = nothing
 end
 
 function render(renderer::GRU.Renderer)
