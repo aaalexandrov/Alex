@@ -1,0 +1,7 @@
+{
+	"type": "GRU.Font",
+	"instance": true, 
+	"facename": "Roboto-Regular.ttf",
+	"sizexy": [16, 16],
+	"shader": "font"
+}

@@ -1,0 +1,7 @@
+{
+	"type": "GRU.Mesh",
+	"shape": "sphere",
+	"sides": 10,
+	"smoothing": "ObjGeom.SmoothNone",
+	"project_texcoord": [1.0, 1.0, 1.0]
+}

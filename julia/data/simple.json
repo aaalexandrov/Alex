@@ -1,0 +1,5 @@
+{
+	"type": "GRU.Shader",
+	"shader": "simple",
+	"setupfn": "Sample.setup_matrices"
+}

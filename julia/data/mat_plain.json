@@ -1,0 +1,16 @@
+{
+	"type": "GRU.Material",
+	"shader": "plain",
+	"states": [
+		"GRU.CullStateCCW()",
+		"GRU.DepthStateLess()",
+		"GRU.AlphaBlendDisabled()"
+	],
+	"uniforms": {
+		"sunDirection": [0.57735, 0.57735, -0.57735],
+		"sunColor": [0.6, 0.6, 0.3],
+		"ambientColor": [0.4, 0.4, 0.4, 1.0],
+		"ambientMaterial": [1.0, 1.0, 1.0, 1.0],
+		"diffuseMaterial": [1.0, 1.0, 1.0],
+	}
+}

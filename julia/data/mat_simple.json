@@ -1,0 +1,13 @@
+{
+	"type": "GRU.Material",
+	"shader": "simple",
+	"states": [
+		"GRU.CullStateCCW()",
+		"GRU.DepthStateLess()",
+		"GRU.AlphaBlendDisabled()"
+	],
+	"uniforms": {
+		"emissiveColor": [1.0, 1.0, 1.0, 1.0],
+		"diffuseTexture": "grid2"
+	}
+}

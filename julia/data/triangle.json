@@ -1,0 +1,6 @@
+{
+	"type": "GRU.Mesh",
+	"shape": "regularpoly",
+	"sides": 3,
+	"project_texcoord": [0.0, 0.0, 1.0]
+}
