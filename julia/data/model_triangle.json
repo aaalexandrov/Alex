@@ -1,0 +1,6 @@
+{
+	"type": "GRU.Model",
+	"mesh": "triangle",
+	"material": "mat_simple",
+	"position": [0.0, 0.0, 1.5]
+}

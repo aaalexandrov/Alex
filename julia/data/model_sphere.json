@@ -1,0 +1,5 @@
+{
+	"type": "GRU.Model",
+	"mesh": "sphere",
+	"material": "mat_diffuse"
+}
