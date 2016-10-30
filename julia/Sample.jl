@@ -1,7 +1,19 @@
 module Sample
 
-import GameEn
+import GamEn
+import GLFW
+import GRU
+import Math3D
+import FTFont
 import SimpleCam
+
+function rld()
+	GLFW.Terminate()
+	reload("GRU.jl")
+	reload("GamEn.jl")
+	reload("SimpleCam")
+	include("Sample.jl")
+end
 
 function onviewport(engine::GamEn.Engine, event::Symbol, width::Integer, height::Integer, font::GRU.Font)
 	m = Math3D.persp_horizontal_fov(pi/2, width / height, 0.1f0, 100, leftHanded = true)
@@ -12,9 +24,11 @@ function onviewport(engine::GamEn.Engine, event::Symbol, width::Integer, height:
 	GRU.setuniform(font.model.material, :projection, m)
 end
 
-function onrender(engine::Engine, event::Symbol, objects::Dict{Symbol, Any})
+function onrender(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
 	for (k, v) in objects
-		GRU.add(engine.renderer, v)
+		if isa(v, GRU.Renderable)
+			GRU.add(engine.renderer, v)
+		end
 	end
 end
 
@@ -62,7 +76,8 @@ function load_defs(engine::GamEn.Engine)
 	loaded[:font] = GamEn.load_def(engine, "roboto")
 	loaded[:triangle] = GamEn.load_def(engine, "model_triangle")
 	loaded[:sphere] = GamEn.load_def(engine, "model_sphere")
-	loaded[:airplane] = GamEn.load_def(engine, "cessna")
+	loaded[:airplane] = GamEn.load_def(engine, "model_cessna")
+	loaded
 end
 
 function run()

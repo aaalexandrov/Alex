@@ -10,12 +10,12 @@ uniform PerInstance
 	mat4 projection;
 	mat4 view;
 	mat4 model;
-    
-    vec4 emissiveColor;
+
+	vec4 emissiveColor;
 };
 
 void main()
 {
 	fragTexCoord = texCoord;
-    gl_Position = projection * view * model * vec4(position, 1);
+	gl_Position = projection * view * model * vec4(position, 1);
 }

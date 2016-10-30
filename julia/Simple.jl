@@ -43,11 +43,10 @@ function initMeshes(renderer::GRU.Renderer)
 
     #diskInd, diskPoints, diskNormals = Geom.sphere(10; smooth = false) # Geom.regularpoly(5)
     diffuseShader = GRU.get_resource(renderer, Symbol("data/diffuse"))
-    #GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:norm, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
+    #GRU.init(GRU.Mesh(), diffuseShader, Dict{Symbol, Array}([(:position, diskPoints), (:normal, diskNormals), (:texCoord, diskPoints[1:2, :])]), diskInd; positionFunc = GRU.position_func(:position), id = :disk)
     diskModel = ObjGeom.sphere(10, smooth = ObjGeom.SmoothNone)
     ObjGeom.add_texcoord(diskModel, [1f0, 1f0, 1f0])
     diskStreams, diskInd = ObjGeom.get_indexed(diskModel)
-    diskStreams[:norm] = diskStreams[:normal]
     diskInd = map(UInt16, diskInd)
     global diskMesh = GRU.init(GRU.Mesh(), diffuseShader, diskStreams, diskInd; positionFunc = GRU.position_func(:position), id = :disk)
 

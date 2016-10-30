@@ -1,4 +1,5 @@
 {
 	"type": "GRU.Mesh",
-	"obj": "cessna.obj"
+	"obj": "cessna.obj",
+	"shader": "plain"
 }
