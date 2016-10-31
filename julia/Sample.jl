@@ -26,10 +26,11 @@ end
 
 function onrender(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
 	for (k, v) in objects
-		if isa(v, GRU.Renderable)
+		if isa(v, GRU.Renderable) && !isa(v, GRU.Font)
 			GRU.add(engine.renderer, v)
 		end
 	end
+	GRU.add(engine.renderer, objects[:font])
 end
 
 function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
@@ -86,8 +87,8 @@ function run()
 
 	freeCam = SimpleCam.FreeCamera(engine.renderer, engine.window, Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2])
 
-	loaded = load_defs(engine)
-	loaded[:frameTimes] = fill(0.0, 10)
+	global loaded = load_defs(engine)
+	loaded[:frameTimes] = fill(0.0, 100)
 	loaded[:frames] = 1
 
 	GamEn.add_event(engine, :viewport) do engine, event, width, height
@@ -103,7 +104,12 @@ function run()
 		oninput(engine, event, freeCam)
 	end
 
+	start = time()
+
 	GamEn.run(engine)
+
+	fps = loaded[:frames] / (time() - start)
+	info("Total FPS: $fps")
 
 	GamEn.done(engine)
 end

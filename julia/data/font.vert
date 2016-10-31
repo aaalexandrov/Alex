@@ -20,5 +20,5 @@ void main()
 {
 	vertColor = color * emissiveColor;
 	vertTexCoord = texCoord;
-    gl_Position = projection * view * model * vec4(position, 1);
+	gl_Position = projection * view * model * vec4(position, 1);
 }
