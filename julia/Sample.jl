@@ -32,7 +32,7 @@ function onrender(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any
 end
 
 function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
-	deltaTime = engine.timeNow - engine.timePrev
+	deltaTime = GamEn.deltatime(engine)
 	sphere = objects[:sphere]
 	currentModel = GRU.gettransform(sphere)
 	rotMatrix = Math3D.rotz(eye(Float32, 4), Float32(deltaTime * pi / 2))
@@ -82,13 +82,12 @@ end
 
 function run()
 	engine = GamEn.Engine("data")
-	GamEn.init(engine)
+	GamEn.init(engine, "engine")
 
-	freeCam = GamEn.FreeCamera(Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2])
-	GamEn.add_asset(engine, :camera, freeCam)
+	GamEn.add_asset(engine, :camera, GamEn.FreeCamera(Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2]))
 
 	global loaded = load_defs(engine)
-	loaded[:frameTimes] = fill(0.0, 3000)
+	loaded[:frameTimes] = fill(time(), 3000)
 	loaded[:frames] = 1
 
 	GamEn.add_event(engine, :viewport) do engine, event, width, height
