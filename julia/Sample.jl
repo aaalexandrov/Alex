@@ -5,13 +5,11 @@ import GLFW
 import GRU
 import Math3D
 import FTFont
-import SimpleCam
 
 function rld()
 	GLFW.Terminate()
 	reload("GRU.jl")
 	reload("GamEn.jl")
-	reload("SimpleCam")
 	include("Sample.jl")
 end
 
@@ -58,8 +56,9 @@ function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any
 	GRU.drawtext(font, cursor, "FPS: " * string(round(fps, 2)), (1f0, 1f0, 0f0, 1f0))
 end
 
-function oninput(engine::GamEn.Engine, event::Symbol, freeCam::SimpleCam.FreeCamera)
-	SimpleCam.process_input(freeCam)
+function oninput(engine::GamEn.Engine, event::Symbol)
+	freeCam = engine.assets[:camera]::GamEn.FreeCamera
+	GamEn.process_input(engine, freeCam)
 end
 
 function setup_matrices(model::GRU.Model)
@@ -85,10 +84,11 @@ function run()
 	engine = GamEn.Engine("data")
 	GamEn.init(engine)
 
-	freeCam = SimpleCam.FreeCamera(engine.renderer, engine.window, Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2])
+	freeCam = GamEn.FreeCamera(Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2])
+	GamEn.add_asset(engine, :camera, freeCam)
 
 	global loaded = load_defs(engine)
-	loaded[:frameTimes] = fill(0.0, 100)
+	loaded[:frameTimes] = fill(0.0, 3000)
 	loaded[:frames] = 1
 
 	GamEn.add_event(engine, :viewport) do engine, event, width, height
@@ -100,9 +100,7 @@ function run()
 	GamEn.add_event(engine, :update) do engine, event
 		onupdate(engine, event, loaded)
 	end
-	GamEn.add_event(engine, :input) do engine, event
-		oninput(engine, event, freeCam)
-	end
+	GamEn.add_event(oninput, engine, :input)
 
 	start = time()
 
