@@ -1,8 +1,9 @@
 module SimpleCam
 
 import GLFW
-import Math3D
 import GRU
+
+const Math3D = GRU.Math3D
 
 type FreeCamera
     camera::GRU.Camera

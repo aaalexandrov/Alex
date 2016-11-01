@@ -3,8 +3,9 @@ module Sample
 import GamEn
 import GLFW
 import GRU
-import Math3D
-import FTFont
+
+const Math3D = GRU.Math3D
+const FTFont = GRU.FTFont
 
 function rld()
 	GLFW.Terminate()

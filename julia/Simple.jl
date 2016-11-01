@@ -4,11 +4,12 @@ import GLFW
 import ModernGL
 
 import GRU
-import GLHelper
-import Math3D
-import FTFont
 import SimpleCam
 import ObjGeom
+
+const GLHelper = GRU.GLHelper
+const Math3D = GRU.Math3D
+const FTFont = GRU.FTFont
 
 function rld()
     GLFW.Terminate()
