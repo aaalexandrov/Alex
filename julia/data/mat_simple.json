@@ -6,10 +6,6 @@
 		"GRU.DepthStateLess()",
 		"GRU.AlphaBlendDisabled()"
 	],
-	"_states": [
-		"GRU.DepthStateDisabled()",
-		"GRU.AlphaBlendSrcAlpha()"
-	],
 	"uniforms": {
 		"emissiveColor": [1.0, 1.0, 1.0, 1.0],
 		"diffuseTexture": "grid2"

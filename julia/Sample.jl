@@ -87,7 +87,7 @@ function run()
 
 	GamEn.add_asset(engine, :camera, GamEn.FreeCamera(Float32[2, 2, 2], Float32[pi/2, pi/2, pi/2]))
 
-	global loaded = load_defs(engine)
+	loaded = load_defs(engine)
 	loaded[:frameTimes] = fill(time(), 3000)
 	loaded[:frames] = 1
 
@@ -102,11 +102,13 @@ function run()
 	end
 	GamEn.add_event(oninput, engine, :input)
 
+	#GamEn.save_def(engine, engine.defs, "defs")
+
 	start = time()
 
 	GamEn.run(engine)
 
-	fps = loaded[:frames] / (time() - start)
+	fps = round(loaded[:frames] / (time() - start), 2)
 	info("Total FPS: $fps")
 
 	GamEn.done(engine)
