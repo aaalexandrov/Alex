@@ -52,7 +52,7 @@ function match{T}(arrays::Arrays{T}, next::Vector{Int} = [1 for i=1:length(array
 				continue
 			end
 			matching[j] = value_index(arrays.values[j], val, next[j])
-			if matching[j] >= 0
+			if matching[j] >= 0 && matching[j] > next[j]
 				mask |= 1<<j
 				@assert arrays.arrays[j][matching[j]] == val
 			end
@@ -62,22 +62,23 @@ function match{T}(arrays::Arrays{T}, next::Vector{Int} = [1 for i=1:length(array
 			matchArr = [
 				if i<startInd
 					-1
-				elseif i==startInd
-					next[startInd]
+				elseif c & (1 << i) != 0 || matching[i] == next[i]
+					matching[i]
 				else
-					c & (1 << i) != 0? matching[i] : -1
+					-1
 				end
 
 			  for i = 1:len]
 			nextInd = [matchArr[i] < 0? next[i] : matchArr[i]+1 for i = 1:len]
 			res1, rows1 = match(arrays, nextInd)
-			rowsAdded = sum(nextInd - next) - count_ones(c)
+			matchCount = count(m -> m>=0, matchArr) - 1
+			rowsAdded = sum(nextInd - next) - matchCount
 			if rowsAdded+rows1 < rows
 				rows = rowsAdded+rows1
-				if c > 0
+				if matchCount > 0
 					res = [(matchArr...)]
 				else
-					res = res = NTuple{len, Int}[]
+					res = NTuple{len, Int}[]
 				end
 				append!(res, res1)
 			end
