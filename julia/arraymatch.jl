@@ -1,11 +1,23 @@
 module Match
 
+typealias NTupleT{T, N} NTuple{N, T}
+
 type Arrays{T}
 	arrays::Vector{Vector{T}}
 	values::Vector{Dict{T, Vector{Int}}}
+	bestRows::Int
+	matches::Vector{NTupleT{Int}}
+	invocations::Int
+
+	Arrays(arrays::Vector{Vector{T}}) = new(
+		arrays,
+		[Dict{T, Vector{Int}}() for i=1:length(arrays)],
+		typemax(Int),
+		Vector{NTuple{length(arrays), Int}}(),
+		0)
 end
 
-Arrays{T}(arrays::Vector{Vector{T}}) = init(Arrays{T}(arrays, [Dict{T, Vector{Int}}() for i=1:length(arrays)]))
+Arrays{T}(arrays::Vector{Vector{T}}) = init(Arrays{T}(arrays))
 
 function init{T}(arrays::Arrays{T})
 	for a in 1:length(arrays.arrays)
@@ -27,71 +39,78 @@ function value_index{T}(values::Dict{T, Vector{Int}}, val::T, first::Int)
 	indices[i]
 end
 
-# return an array of tuples of matching indices, and a number of generated rows
-function match{T}(arrays::Arrays{T}, next::Vector{Int} = [1 for i=1:length(arrays.arrays)])
+function match{T}(arrays::Arrays{T}, next::NTupleT{Int} = ntuple(i->1, length(arrays.arrays))#= next::Vector{Int} = [1 for i=1:length(arrays.arrays)]=#, rowCount::Int = 0)
+	arrays.invocations += 1
 	len = length(arrays.arrays)
-	res = NTuple{len, Int}[]
-	rows = 0
-	for i = 1:len
-		rows += length(arrays.arrays[i])+1-next[i]
+	bestRemaining = mapreduce(max, 1:len) do i
+		length(arrays.arrays[i]) + 1 - next[i]
 	end
-	if rows == 0
-		return res, 0
+	rowCount + bestRemaining >= arrays.bestRows && return false
+	if bestRemaining == 0
+		arrays.bestRows = rowCount
+		empty!(arrays.matches)
+		return true
 	end
-	rows = typemax(Int)
-	for startInd = 1:len
-		if next[startInd] > length(arrays.arrays[startInd])
-			continue
-		end
+	validMask = mapreduce(|, 1:len) do i
+		next[i] <= length(arrays.arrays[i])? (1<<i) : 0
+	end
+	found = false
+	matching = Vector{Int}(len)
+	matchArr = Vector{Int}(len)
+	nextInd = Vector{Int}(len)
+	for startInd = 1:len-1
+		validMask & (1<<startInd) == 0 && continue
 		val = arrays.arrays[startInd][next[startInd]]
-		matching = fill(-1, len)
+		fill!(matching, -1)
 		matching[startInd] = next[startInd]
 		mask = 0
 		for j = startInd+1:len
-			if next[j] > length(arrays.arrays[j])
-				continue
-			end
+			validMask & (1<<j) == 0 && continue
 			matching[j] = value_index(arrays.values[j], val, next[j])
-			if matching[j] >= 0 && matching[j] > next[j]
+			@assert matching[j] < 0 || arrays.arrays[j][matching[j]] == val
+			if matching[j] > next[j] # match will skip elements, we want to try recursively with or without it
 				mask |= 1<<j
-				@assert arrays.arrays[j][matching[j]] == val
+			elseif matching[j] == next[j] # matches an element we'll try later, mark it as invalid
+				validMask &= ~(1<<j)
 			end
 		end
-		c = 0
+		c = mask
 		while true
-			matchArr = [
-				if i<startInd
-					-1
-				elseif c & (1 << i) != 0 || matching[i] == next[i]
-					matching[i]
+			matchCount = -1
+			rowsAdded = 0
+			for i = 1:len
+				if i>=startInd && (c&(1<<i)!=0 || matching[i]==next[i])
+					matchArr[i] = matching[i]
+					nextInd[i] = matchArr[i]+1
+					rowsAdded += nextInd[i] - next[i]
+					matchCount += 1
 				else
-					-1
+					matchArr[i] = -1
+					nextInd[i] = next[i]
 				end
-
-			  for i = 1:len]
-			nextInd = [matchArr[i] < 0? next[i] : matchArr[i]+1 for i = 1:len]
-			res1, rows1 = match(arrays, nextInd)
-			matchCount = count(m -> m>=0, matchArr) - 1
-			rowsAdded = sum(nextInd - next) - matchCount
-			if rowsAdded+rows1 < rows
-				rows = rowsAdded+rows1
+			end
+			rowsAdded -= matchCount
+			nextTup = (nextInd...)
+			if match(arrays, nextTup, rowCount+rowsAdded)
+				found = true
 				if matchCount > 0
-					res = [(matchArr...)]
-				else
-					res = NTuple{len, Int}[]
+					push!(arrays.matches, (matchArr...))
 				end
-				append!(res, res1)
 			end
 
-			if c >= mask
-				break
-			end
-			# next combination of masked bits, leaving the rest 0
-			# adding ~mask carries any 1s outside of the mask to the next masked bit
-			c = (c + 1 + ~mask) & mask
+			c == 0 && break
+			# previous combination of masked bits
+			c = (c - 1) & mask
 		end
 	end
-	return res, rows
+	return found
+end
+
+function match{T}(arrays::Vector{Vector{T}})
+	arrData = Arrays(arrays)
+	match(arrData)
+	info(arrData.invocations)
+	return arrData.matches, arrData.bestRows
 end
 
 end
