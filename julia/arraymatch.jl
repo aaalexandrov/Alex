@@ -7,13 +7,16 @@ type Arrays{T}
 	values::Vector{Dict{T, Vector{Int}}}
 	bestRows::Int
 	matches::Vector{NTupleT{Int}}
+	states::Vector{Task}
 	invocations::Int
+	lastResult::Bool
 
 	Arrays(arrays::Vector{Vector{T}}) = new(
 		arrays,
 		[Dict{T, Vector{Int}}() for i=1:length(arrays)],
-		typemax(Int),
+		mapreduce(a->length(a), +, arrays),
 		Vector{NTuple{length(arrays), Int}}(),
+		Task[],
 		0)
 end
 
@@ -45,14 +48,14 @@ function match{T}(arrays::Arrays{T}, next::NTupleT{Int} = ntuple(i->1, length(ar
 	bestRemaining = mapreduce(max, 1:len) do i
 		length(arrays.arrays[i]) + 1 - next[i]
 	end
-	rowCount + bestRemaining >= arrays.bestRows && return false
-	if bestRemaining == 0
-		arrays.bestRows = rowCount
-		empty!(arrays.matches)
-		return true
-	end
 	validMask = mapreduce(|, 1:len) do i
 		next[i] <= length(arrays.arrays[i])? (1<<i) : 0
+	end
+	rowCount + bestRemaining >= arrays.bestRows && return false
+	if validMask & (validMask - 1) == 0 # one or zero bits set
+		arrays.bestRows = rowCount + bestRemaining
+		empty!(arrays.matches)
+		return true
 	end
 	found = false
 	matching = Vector{Int}(len)
@@ -91,13 +94,13 @@ function match{T}(arrays::Arrays{T}, next::NTupleT{Int} = ntuple(i->1, length(ar
 			end
 			rowsAdded -= matchCount
 			nextTup = (nextInd...)
-			if match(arrays, nextTup, rowCount+rowsAdded)
+			# produce(@task match(arrays, nextTup, rowCount+rowsAdded))
+			if match(arrays, nextTup, rowCount+rowsAdded) # arrays.lastResult
 				found = true
 				if matchCount > 0
 					push!(arrays.matches, (matchArr...))
 				end
 			end
-
 			c == 0 && break
 			# previous combination of masked bits
 			c = (c - 1) & mask
@@ -109,6 +112,20 @@ end
 function match{T}(arrays::Vector{Vector{T}})
 	arrData = Arrays(arrays)
 	match(arrData)
+	#=
+	push!(arrData.states, @task match(arrData))
+	while !isempty(arrData.states)
+		t = arrData.states[end]
+		res = consume(t)
+		if isa(res, Task)
+			push!(arrData.states, res)
+		else
+			@assert isa(res, Bool)
+			arrData.lastResult = res
+			pop!(arrData.states)
+		end
+	end
+	=#
 	info(arrData.invocations)
 	return arrData.matches, arrData.bestRows
 end
