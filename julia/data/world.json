@@ -1,0 +1,17 @@
+{
+	"type": "World",
+	"children": [
+		{
+			"type": "Object",
+			"children": [
+				{
+					"type": "Spatial"
+				},
+				{
+					"type": "Visual",
+					"visual": "model_cessna"
+				}
+			]
+		}
+	]
+}

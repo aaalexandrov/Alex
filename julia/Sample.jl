@@ -24,16 +24,19 @@ function onviewport(engine::GamEn.Engine, event::Symbol, width::Integer, height:
 end
 
 function onrender(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
+	#=
 	for (k, v) in objects
 		if isa(v, GRU.Renderable) && !isa(v, GRU.Font)
 			GRU.add(engine.renderer, v)
 		end
 	end
+	=#
 	GRU.add(engine.renderer, objects[:font])
 end
 
 function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any})
 	deltaTime = GamEn.deltatime(engine)
+	#=
 	sphere = objects[:sphere]
 	currentModel = GRU.gettransform(sphere)
 	rotMatrix = Math3D.rotz(eye(Float32, 4), Float32(deltaTime * pi / 2))
@@ -42,6 +45,7 @@ function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any
 	airplane = objects[:airplane]
 	currentModel = GRU.gettransform(airplane)
 	GRU.settransform(airplane, currentModel * rotMatrix)
+	=#
 
 	font = objects[:font]
 	GRU.cleartext(font)
@@ -75,9 +79,12 @@ end
 function load_defs(engine::GamEn.Engine)
 	loaded = Dict{Symbol, Any}()
 	loaded[:font] = GamEn.load_def(engine, "roboto")
+	#=
 	loaded[:triangle] = GamEn.load_def(engine, "model_triangle")
 	loaded[:sphere] = GamEn.load_def(engine, "model_sphere")
 	loaded[:airplane] = GamEn.load_def(engine, "model_cessna")
+	=#
+	loaded[:world] = GamEn.load_def(engine, "world")
 	loaded
 end
 
