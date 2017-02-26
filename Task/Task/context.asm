@@ -67,9 +67,9 @@ trampoline:
 	;set task argument and call the task entry point
 	mov		RCX, RSI
 	;alloc space for argument registers as required by x64 ABI
-	sub		RSP, 64
+	sub		RSP, 4 * SIZEOF QWORD
 	call	RDI
-	add		RSP, 64
+	add		RSP, 4 * SIZEOF QWORD
 	;set arguments and call swapcontext to return to the parent task
 	mov		RCX, RSI
 	mov		RDX, [RSI].Task.parent
