@@ -1,96 +1,103 @@
 #include "stdafx.h"
+#include "TaskContext.h"
 #include <iostream>
 
-
-struct Task {
-  void   *user;
-  void   *stack_ptr;
-  Task   *parent;
-  void   *stack_base;
-  size_t  stack_size;
-};
-
-typedef void(*taskfn)(Task *task);
-
-extern "C" {
-  void makecontext(Task *task, taskfn fn);
-  void swapcontext(Task *from, Task *to);
-}
-
-void init_task(Task *task, Task *parent, void *stack_base, size_t stack_size, taskfn fn, void *user)
+void task_alloc(TaskContext *task, TaskContext *parent = 0, void *user = 0, taskfn fn = 0, size_t stack_size = 0)
 {
-  task->user = user;
-  task->stack_ptr = 0;
-  task->parent = parent;
-  task->stack_base = stack_base;
-  task->stack_size = stack_size;
-
-  // stack_base == 0 means currently executing stack, so no need to initialize anything there
-  if (task->stack_base)
-    makecontext(task, fn);
+  task_init(task, parent, user, fn, stack_size > 0 ? malloc(stack_size) : 0, stack_size);
 }
 
-bool hasended_task(Task *task)
-{
-  return !task->parent && task->stack_base;
-}
-
-void create_task(Task *task, Task *parent, size_t stack_size, taskfn fn, void *user)
-{
-  init_task(task, parent, stack_size > 0 ? malloc(stack_size) : 0, stack_size, fn, user);
-}
-
-void delete_task(Task *task)
+void task_free(TaskContext *task)
 {
   free(task->stack_base);
 }
 
-void fib(Task *task)
+void fib(TaskContext *task)
 {
   int a = 0, b = 1;
   while (a < 100)
   {
     *(int*)(task->user) = a;
-    swapcontext(task, task->parent);
+    task_swap(task, task->parent);
     int t = a;
     a = b;
     b = t + b;
   }
 }
 
-void task1(Task *task)
+void task1(TaskContext *task)
 {
-  Task fib_task;
+  TaskContext fib_task;
   int param;
   std::cout << "Task 1" << std::endl;
-  create_task(&fib_task, task, 16384, fib, &param);
+  task_alloc(&fib_task, task, &param, fib, 16384);
 
   while (true)
   {
-    swapcontext(task, &fib_task);
-    if (hasended_task(&fib_task))
+    task_swap(task, &fib_task);
+    if (task_finished(&fib_task))
       break;
     std::cout << param << std::endl;
   }
 
-  delete_task(&fib_task);
+  task_free(&fib_task);
   std::cout << "Task 1 signing off" << std::endl;
+}
+
+#include "IntrusiveList.h"
+
+struct ListElem {
+  int m_Data;
+  ListElem *m_Next, *m_Prev;
+
+  ListElem(int data) : m_Data(data), m_Next(nullptr), m_Prev(nullptr) {}
+  ListElem *&next() { return m_Next; }
+  ListElem *&prev() { return m_Prev; }
+};
+
+void testlist()
+{
+  ListElem el1(1), el2(2), el3(3);
+  IntrusiveList<ListElem> list;
+  list.insert(el1);
+  list.insert(el3, list.last());
+  list.insert(el2, list.first());
+
+  for (auto e : list) {
+    std::cout << e.m_Data << std::endl;
+  }
+
+  list.remove(el2);
+  for (auto e : list) {
+    std::cout << e.m_Data << std::endl;
+  }
+  list.remove(el1);
+  for (auto e : list) {
+    std::cout << e.m_Data << std::endl;
+  }
+  list.remove(*list.first());
+  for (auto e : list) {
+    std::cout << e.m_Data << std::endl;
+  }
+  std::cout << list.count() << std::endl;
 }
 
 int main()
 {
-  Task main_task, other1;
-  create_task(&main_task, 0, 0, 0, 0);
-  create_task(&other1, &main_task, 16384, task1, 0);
+  testlist();
+
+  TaskContext main_task, other1;
+  task_alloc(&main_task);
+  task_alloc(&other1, &main_task, 0, task1, 16384);
 
   std::cout << "Starting" << std::endl;
 
-  swapcontext(&main_task, &other1);
+  task_swap(&main_task, &other1);
 
   std::cout << "Ending" << std::endl;
 
-  delete_task(&other1);
-  delete_task(&main_task);
+  task_free(&other1);
+  task_free(&main_task);
 
   std::cin.ignore();
 

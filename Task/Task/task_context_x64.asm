@@ -1,12 +1,12 @@
 .code
 
-Task STRUCT
+TaskContext STRUCT
 	user		QWORD	?
-	stack_ptr	QWORD	?
 	parent		QWORD	?
+	stack_ptr	QWORD	?
 	stack_base	QWORD	?
 	stack_size	QWORD	?
-Task ENDS
+TaskContext ENDS
 
 ; (SIZEOF Saved) % 16 == 8 because of stack alignment
 Saved STRUCT
@@ -32,19 +32,20 @@ Saved STRUCT
 	_rbp	QWORD	?
 Saved ENDS
 
-makecontext PROC FRAME
+task_associate PROC FRAME
 	.endprolog
 
 	;RCX contains the task to initialize
 	;RDX contains the function pointer to execute when the task is switched to
 
 	;align stack
-	mov		RAX, [RCX].Task.stack_base
-	add		RAX, [RCX].Task.stack_size
+	mov		RAX, [RCX].TaskContext.stack_base
+	add		RAX, [RCX].TaskContext.stack_size
 	and		RAX, -16
 
 	;allocate stack for Saved structure + 8 bytes for the trampoline address
-	sub		RAX, 8 + SIZEOF Saved
+	;add 4 QWORDS for the required shadow store space for the called routine to store the register arguments
+	sub		RAX, 8 + SIZEOF Saved + 4 * SIZEOF QWORD
 
 	;initialize the Saved structure at the top of the stack
 	;set MMX/SSE and x87 control word fields the same as the creator
@@ -59,35 +60,33 @@ makecontext PROC FRAME
 	mov		[RAX + SIZEOF Saved], R9
 
 	;save the stack pointer for the new task
-	mov		[RCX].Task.stack_ptr, RAX
+	mov		[RCX].TaskContext.stack_ptr, RAX
 
 	ret
 
 trampoline:
 	;set task argument and call the task entry point
 	mov		RCX, RSI
-	;alloc space for argument registers as required by x64 ABI
-	sub		RSP, 4 * SIZEOF QWORD
 	call	RDI
-	add		RSP, 4 * SIZEOF QWORD
-	;set arguments and call swapcontext to return to the parent task
-	mov		RCX, RSI
-	mov		RDX, [RSI].Task.parent
-	;zero out the task parent to indicate the task's finished
-	xor		RAX, RAX
-	mov		[RSI].Task.parent, RAX
-	call	swapcontext
+	;set arguments and call task_swap to return to the parent task
+	xor		RCX, RCX
+	mov		RDX, [RSI].TaskContext.parent
+	;zero out the task stack_ptr to indicate the task's finished
+	mov		[RSI].TaskContext.stack_ptr, RCX
+	call	task_swap
 	;we should not return to a completed task
 	int		3
 
-makecontext ENDP
+task_associate ENDP
 
-swapcontext PROC FRAME
+task_swap PROC FRAME
 	.endprolog
 
 	;RCX contains the FROM task
 	;RDX contains the TO task
 
+	or		RCX, RCX
+	jz		skip_save
 	sub		RSP, SIZEOF Saved
 	movaps	[RSP].Saved._xmm6, XMM6
 	movaps	[RSP].Saved._xmm7, XMM7
@@ -110,8 +109,9 @@ swapcontext PROC FRAME
 	mov		[RSP].Saved._rbx, RBX
 	mov		[RSP].Saved._rbp, RBP
 
-	mov		[RCX].Task.stack_ptr, RSP
-	mov		RSP, [RDX].Task.stack_ptr
+	mov		[RCX].TaskContext.stack_ptr, RSP
+skip_save:
+	mov		RSP, [RDX].TaskContext.stack_ptr
 
 	movaps	XMM6, [RSP].Saved._xmm6 
 	movaps	XMM7, [RSP].Saved._xmm7 
@@ -137,6 +137,6 @@ swapcontext PROC FRAME
 
 	ret
 
-swapcontext ENDP
+task_swap ENDP
 
 END

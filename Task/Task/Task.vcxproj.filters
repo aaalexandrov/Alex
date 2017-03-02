@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TaskContext.cpp" />
+    <ClCompile Include="TaskScheduler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TaskContext.h" />
+    <ClInclude Include="TaskScheduler.h" />
+    <ClInclude Include="IntrusiveList.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="task_context_x64.asm" />
+  </ItemGroup>
+</Project>
