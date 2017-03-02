@@ -388,10 +388,10 @@ CVector<D, T> CVector<D, T>::Perpendicular() const
   Num nMin, nDot;
 
   vPerp.SetUnit(0);
-  nMin = abs(Dot(vPerp));
+  nMin = Util::abs(Dot(vPerp));
   for (i = 1; i < Dim; i++) {
     v.SetUnit(i);
-    nDot = abs(Dot(v));
+    nDot = Util::abs(Dot(v));
     if (nDot < nMin) {
       vPerp.SetUnit(i);
       nMin = nDot;

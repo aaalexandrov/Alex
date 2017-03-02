@@ -342,7 +342,7 @@ bool CConvex::Intersects(CSphere const *pSphere, CArray<int> const &kActivePlane
   for (i = 0; i < kActivePlanes.m_iCount; i++) {
     CVector<4, Num> const &vPlane = m_arrPlanes[kActivePlanes[i]];
     nDist = CPlane::Dist2Point(vPlane, false, pSphere->m_vCenter);
-    ASSERT(abs(nDist) <= pSphere->m_nRadius);
+    ASSERT(Util::abs(nDist) <= pSphere->m_nRadius);
     vNorm.Set(vPlane);
     vNorm.Normalize();
     vPoint = vNorm * -nDist;

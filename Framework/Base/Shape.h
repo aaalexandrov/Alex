@@ -28,7 +28,7 @@ public:
   virtual Num GetDistance(const CShape3D *pShape) const;
   virtual CShape3D *Clone() const;
 
-  static inline Num IsEqual(Num n, Num m, Num nEpsilon = 0.0005) { return abs(m - n) <= nEpsilon; }
+  static inline Num IsEqual(Num n, Num m, Num nEpsilon = 0.0005) { return Util::abs(m - n) <= nEpsilon; }
   static inline bool IsInvalid(Num n) { return *(uint32_t *) &n == Util::s_dwQNAN; }
 };
 

@@ -3,7 +3,7 @@
 
 #ifdef WINDOWS
 
-#include "StartUp.h"
+#include "../StartUp.h"
 #include <Windows.h>
 
 class CWinStartUp : public CStartUp {

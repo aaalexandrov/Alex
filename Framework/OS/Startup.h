@@ -1,7 +1,8 @@
 #ifndef __STARTUP_H
 #define __STARTUP_H
 
-#include "RTTI.h"
+#include "../Base/RTTI.h"
+#include "../Base/Str.h"
 
 class CStartUp: public CObject {
   DEFRTTI(CStartUp, CObject, false)

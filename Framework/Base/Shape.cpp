@@ -181,7 +181,7 @@ CShape3D::Num CLine3D::Dist2Line(const CVector<3, Num> &vLine0Point0, const CVec
 
   Num a, b, c, d, e, t, u;
   c = vDelta % vDelta1;
-  if (IsEqual(nDelta1DotDelta1, 0) || IsEqual(abs(c), nDeltaDotDelta * nDelta1DotDelta1))
+  if (IsEqual(nDelta1DotDelta1, 0) || IsEqual(Util::abs(c), nDeltaDotDelta * nDelta1DotDelta1))
     return Dist2Point(vLine0Point0, vLine0Point1, nLine0Min, nLine0Max, vLine1Point0);
   a = (vLine0Point0 - vLine1Point0) % vDelta;
   e = (vLine0Point0 - vLine1Point0) % vDelta1;
@@ -390,7 +390,7 @@ bool CPlane::IntersectPlane(CVector<4, Num> const &vPlane0, CVector<4, Num> cons
 
   // Find a direction that is least colinear with the given plane normals
   for (i = 0; i < 3; i++) {
-    fCur = Util::Max(abs(vNorm[0] % vBasis[i]), abs(vNorm[1] % vBasis[i]));
+    fCur = Util::Max(Util::abs(vNorm[0] % vBasis[i]), Util::abs(vNorm[1] % vBasis[i]));
     if (fCur < fMin) {
       iMin = i;
       fMin = fCur;
@@ -804,8 +804,8 @@ void CAABB::Transform(CVector<3, Num> const &vMin, CVector<3, Num> const &vMax, 
 
   Transform(vMin, vMax, kXForm, vXCenter, vXExtent);
   for (i = 0; i < 3; i++) {
-    vXMin[i] = vXCenter[i] - abs(vXExtent[0][i]) - abs(vXExtent[1][i]) - abs(vXExtent[2][i]);
-    vXMax[i] = vXCenter[i] + abs(vXExtent[0][i]) + abs(vXExtent[1][i]) + abs(vXExtent[2][i]);
+    vXMin[i] = vXCenter[i] - Util::abs(vXExtent[0][i]) - Util::abs(vXExtent[1][i]) - Util::abs(vXExtent[2][i]);
+    vXMax[i] = vXCenter[i] + Util::abs(vXExtent[0][i]) + Util::abs(vXExtent[1][i]) + Util::abs(vXExtent[2][i]);
   }
 }
 
@@ -1071,9 +1071,9 @@ void COBB::IncludePoint(CVector<3> const &v)
     else
       vBase = m_vExtent[i] * (1 / nLen);
     nDist = vBase % vDelta;
-    if (abs(nDist) <= nLen)
+    if (Util::abs(nDist) <= nLen)
       continue;
-    nExtra = (abs(nDist) - nLen) / 2;
+    nExtra = (Util::abs(nDist) - nLen) / 2;
     m_vCenter += vBase * (Util::Sign(nDist) * nExtra);
     m_vExtent[i] += vBase * nExtra;
   }

@@ -31,7 +31,7 @@ public:
   inline int GetRows() const               { return Rows; }
   inline int GetCols() const               { return Cols; }
 
-  static inline bool IsEqual(Num m, Num n, Num nEps = 0.0005) { return abs(m - n) <= nEps; }
+  static inline bool IsEqual(Num m, Num n, Num nEps = 0.0005) { return Util::abs(m - n) <= nEps; }
 
   inline bool     operator ==(const CMatrix &m) const;
 

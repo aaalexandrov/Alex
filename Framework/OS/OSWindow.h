@@ -1,8 +1,8 @@
 #ifndef __OSWINDOW_H
 #define __OSWINDOW_H
 
-#include "RTTI.h"
-#include "Rect.h"
+#include "../Base/RTTI.h"
+#include "../Base/Rect.h"
 
 class CStartUp;
 class COSWindow: public CObject {

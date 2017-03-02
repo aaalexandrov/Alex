@@ -3,7 +3,7 @@
 
 #ifdef WINDOWS
 
-#include "Timing.h"
+#include "../Timing.h"
 
 class CTimerWin: public CTimerBase {
   DEFRTTI(CTimerWin, CTimerBase, true)

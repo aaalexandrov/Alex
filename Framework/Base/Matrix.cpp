@@ -169,10 +169,10 @@ struct TMatrixTest {
     m44.Orthonormalize();
 
     for (r = 0; r < 4; r++) {
-      ASSERT(abs(m44.GetRow(r).Length() - 1) < 0.001);
+      ASSERT(Util::abs(m44.GetRow(r).Length() - 1) < 0.001);
       for (r1 = r + 1; r1 < 4; r1++) {
         float fDot = m44.GetRow(r) % m44.GetRow(r1);
-        ASSERT(abs(fDot) < 0.001);
+        ASSERT(Util::abs(fDot) < 0.001);
       }
     }
 

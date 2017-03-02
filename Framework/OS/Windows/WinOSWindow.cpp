@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "WinOSWindow.h"
-#include "Str.h"
+#include "../../Base/Str.h"
 #include "WinInput.h"
 #include "WinStartUp.h"
 

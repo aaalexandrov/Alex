@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Input.h"
-#include "Debug.h"
+#include "../Base/Debug.h"
 
 // CInput::CEvent -------------------------------------------------------------
 

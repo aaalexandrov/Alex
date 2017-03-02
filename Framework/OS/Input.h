@@ -1,10 +1,10 @@
 #ifndef __INPUT_H
 #define __INPUT_H
 
-#include "List.h"
-#include "Vector.h"
+#include "../Base/List.h"
+#include "../Base/Vector.h"
 #include "Timing.h"
-#include "Rect.h"
+#include "../Base/Rect.h"
 
 class COSWindow;
 

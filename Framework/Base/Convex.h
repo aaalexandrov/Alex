@@ -42,7 +42,7 @@ public:
 
   bool PointInside(CVector<3, Num> const &vPoint, int iExcludePlane);
 
-  static inline Num IsEqual(Num n, Num m, Num nEpsilon = 0.0005) { return abs(m - n) <= nEpsilon; }
+  static inline Num IsEqual(Num n, Num m, Num nEpsilon = 0.0005) { return Util::abs(m - n) <= nEpsilon; }
 };
 
 #endif

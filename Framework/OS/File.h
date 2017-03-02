@@ -1,8 +1,8 @@
 #ifndef __FILE_H
 #define __FILE_H
 
-#include "Base.h"
-#include "Str.h"
+#include "../Base/Base.h"
+#include "../Base/Str.h"
 
 class CFile: public CObject {
   DEFRTTI(CFile, CObject, false)

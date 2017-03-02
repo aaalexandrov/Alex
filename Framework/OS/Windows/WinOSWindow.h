@@ -3,7 +3,7 @@
 
 #ifdef WINDOWS
 
-#include "OSWindow.h"
+#include "../OSWindow.h"
 #include <Windows.h>
 
 class CWinOSWindow : public COSWindow {

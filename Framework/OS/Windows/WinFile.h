@@ -3,7 +3,7 @@
 
 #ifdef WINDOWS
 
-#include "File.h"
+#include "../File.h"
 #include <io.h>
 
 class CWinFile: public CFile {

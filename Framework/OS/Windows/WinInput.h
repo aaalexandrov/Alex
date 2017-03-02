@@ -3,7 +3,7 @@
 
 #ifdef WINDOWS
 
-#include "Input.h"
+#include "../Input.h"
 #include <Windows.h>
 #include "WinOSWindow.h"
 

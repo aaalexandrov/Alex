@@ -1,6 +1,8 @@
 #ifndef __ENCODE_H
 #define __ENCODE_H
 
+#include "Array.h"
+
 class CRangeEncoder {
 public:
   static const int MAXCHARS = 257;

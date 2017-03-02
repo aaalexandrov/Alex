@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Str.h"
+#include "Parse.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
