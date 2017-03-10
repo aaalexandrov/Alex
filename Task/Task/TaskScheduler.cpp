@@ -4,7 +4,7 @@
 #include "TaskScheduler.h"
 
 Task::Task(Task *parent, void *user, std::function<void(Task&)> taskFn, size_t stackSize, TaskScheduler *scheduler, bool deleteOnFinish) :
-  m_Scheduler(scheduler), m_Child(nullptr), m_Func(taskFn), m_State(State::Runnable), m_DeleteOnFinish(deleteOnFinish)
+  m_Child(nullptr), m_Scheduler(scheduler), m_Func(taskFn), m_State(State::Runnable), m_DeleteOnFinish(deleteOnFinish)
 {
   assert((void *) this == &m_Context);
   void *stack = stackSize > 0 ? malloc(stackSize) : nullptr;

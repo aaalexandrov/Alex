@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TaskContext.h"
 #include <iostream>
+#include <malloc.h>
 
 void task_alloc(TaskContext *task, TaskContext *parent = 0, void *user = 0, taskfn fn = 0, size_t stack_size = 0)
 {

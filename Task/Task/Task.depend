@@ -1,0 +1,37 @@
+# depslib dependency file v1.0
+1488108776 source:/mnt/OSDisk/Alex/Task/Task/stdafx.cpp
+	"stdafx.h"
+
+1489174432 /mnt/OSDisk/Alex/Task/Task/stdafx.h
+	<stdio.h>
+
+1489174458 source:/mnt/OSDisk/Alex/Task/Task/Task.cpp
+	"stdafx.h"
+	"TaskContext.h"
+	<iostream>
+	<malloc.h>
+	"IntrusiveList.h"
+
+1488398352 /mnt/OSDisk/Alex/Task/Task/TaskContext.h
+
+1488401474 /mnt/OSDisk/Alex/Task/Task/IntrusiveList.h
+
+1489173595 source:/mnt/OSDisk/Alex/Task/Task/task_context_x64.s
+
+1488398132 source:/mnt/OSDisk/Alex/Task/Task/TaskContext.cpp
+	"stdafx.h"
+	<malloc.h>
+	<assert.h>
+	"TaskContext.h"
+
+1489174595 source:/mnt/OSDisk/Alex/Task/Task/TaskScheduler.cpp
+	"stdafx.h"
+	<assert.h>
+	"TaskScheduler.h"
+
+1488475337 /mnt/OSDisk/Alex/Task/Task/TaskScheduler.h
+	"TaskContext.h"
+	<functional>
+	<set>
+	"IntrusiveList.h"
+

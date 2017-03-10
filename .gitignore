@@ -29,3 +29,7 @@ ipch/
 *.suo
 *.sdf
 *.opendb
+
+bin/
+obj/
+*.layout
