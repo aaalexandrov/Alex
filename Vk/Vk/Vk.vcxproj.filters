@@ -24,19 +24,10 @@
     <ClInclude Include="VGraphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="App.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Wnd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AppWin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WndWin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="OutputDebugBuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UniqueResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -48,18 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VGraphics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="App.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Wnd.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AppWin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WndWin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,22 +9,11 @@
 #include "vulkan/vulkan.h"
 #include <mutex>
 
-template <class T>
-void DoneResource(T *&resource)
-{
-  if (resource) {
-    resource->Done();
-    delete resource;
-    resource = nullptr;
-  }
-}
+#include "UniqueResource.h"
 
-template <class T>
-struct AutoDone {
-  T* m_ptr;
-  bool m_own;
-  AutoDone(T *ptr, bool own = true) : m_ptr(ptr), m_own(own) {}
-  ~AutoDone() { if (m_ptr) { m_ptr->Done(); if (m_own) delete m_ptr; } }
+struct VGraphicsException : public std::runtime_error {
+  VkResult m_err;
+  explicit VGraphicsException(const char *msg, VkResult err) : std::runtime_error(msg), m_err(err) {}
 };
 
 class ConditionalLock {
@@ -45,18 +34,16 @@ class VCmdBuffer;
 
 class VMemory {
 public:
+  VDevice *m_device;
   VkDeviceMemory m_memory = VK_NULL_HANDLE;
   ConditionalLock m_lock;
   uint64_t m_size = 0;
 
-  VMemory(bool synchronize);
+  VMemory(VDevice &device, bool synchronize, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags = 0);
   ~VMemory();
 
-  bool Init(VDevice &device, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags = 0);
-  void Done(VDevice &device);
-
-  void *Map(VDevice &device, uint64_t offset = 0, uint64_t size = VK_WHOLE_SIZE);
-  void Unmap(VDevice &device);
+  void *Map(uint64_t offset = 0, uint64_t size = VK_WHOLE_SIZE);
+  void Unmap();
 };
 
 class VSemaphore {
@@ -84,14 +71,15 @@ public:
 
 class VQueue {
 public:
-  VkQueue m_queue;
   VDevice *m_device;
+  VkQueue m_queue;
   ConditionalLock m_lock;
 
   VQueue(VDevice &device, bool synchronize, VkQueue queue);
   ~VQueue();
 
-  bool Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*> *waitSemaphores = nullptr);
+  void Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*> *waitSemaphores = nullptr);
+  void WaitIdle();
 };
 
 class VImage {
@@ -99,19 +87,14 @@ public:
   VDevice *m_device;
   VkImage m_image = VK_NULL_HANDLE;
   VkImageView m_view = VK_NULL_HANDLE;
-  VMemory m_memory;
+  std::shared_ptr<VMemory> m_memory;
   VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
   VkFormat m_format = VK_FORMAT_UNDEFINED;
   VkExtent3D m_size = { 0, 0, 0 };
-  bool m_ownImage = true;
 
-  VImage(VDevice &device, bool synchronize = true);
+  VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t width, uint32_t height, uint32_t depth = 1, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, bool linear = false);
+  VImage(VDevice &device, VkImage image, VkFormat format, VkImageViewType imgType = VK_IMAGE_VIEW_TYPE_2D);
   ~VImage();
-
-  bool Init(VkFormat format, uint32_t width, uint32_t height, uint32_t depth = 1, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, bool linear = false);
-  
-  bool Init(VkImage image, VkFormat format, bool ownImage = true, VkImageViewType imgType = VK_IMAGE_VIEW_TYPE_2D);
-  void Done();
 
   void *Map();
   void Unmap();
@@ -120,6 +103,9 @@ public:
   static VkImageAspectFlags AspectFromFormat(VkFormat format);
   static VkFormat FormatFromComponents(unsigned components);
   static VkImageViewType ViewTypeFromDimensions(uint32_t width, uint32_t height, uint32_t depth, uint32_t arrayLayers);
+
+public:
+  void Init(VkImage image, VkFormat format, VkImageViewType imgType);
 };
 
 class VSampler {
@@ -127,48 +113,46 @@ public:
   VDevice *m_device;
   VkSampler m_sampler = VK_NULL_HANDLE;
 
-  VSampler(VDevice &device);
+  VSampler(VDevice &device, VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 16.0f);
   ~VSampler();
-
-  bool Init(VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR, float maxAnisotropy = 16.0f);
-  void Done();
 };
 
 class VBuffer {
 public:
   VDevice *m_device;
   VkBuffer m_buffer = VK_NULL_HANDLE;
-  VMemory m_memory;
+  std::shared_ptr<VMemory> m_memory;
   VkBufferUsageFlags m_usage = 0;
   uint64_t m_size = 0;
 
-  VBuffer(VDevice &device, bool synchronize = true);
+  VBuffer(VDevice &device, bool synchronize, uint64_t size, VkBufferUsageFlags usage, bool hostVisible);
   ~VBuffer();
-
-  bool Init(uint64_t size, VkBufferUsageFlags usage, bool hostVisible);
-  void Done();
 
   void *Map();
   void Unmap();
 };
 
+class VShader {
+public:
+  VDevice        *m_device;
+  VkShaderModule  m_shader = VK_NULL_HANDLE;
+
+  VShader(VDevice &device, size_t size, uint32_t *code);
+  ~VShader();
+};
+
 class VSwapchain {
 public:
   VDevice *m_device;
-  VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
-  std::vector<VImage *> m_images;
+  UniqueResource<VkSwapchainKHR> m_swapchain;
+  std::vector<std::unique_ptr<VImage>> m_images;
 
   VSwapchain(VDevice &device);
   ~VSwapchain();
 
-  bool Init();
-  void Done();
-
-  bool InitSwapchain();
-  void DoneSwapchain();
-
-  bool InitImages();
-  void DoneImages();
+public:
+  void InitSwapchain();
+  void InitImages();
 };
 
 class VCmdPool {
@@ -180,10 +164,11 @@ public:
   VCmdPool(VDevice &device, bool synchronize, bool transient, bool resetBuffers);
   ~VCmdPool();
 
-  void InitBufferInfo(VkCommandBufferAllocateInfo &bufInfo, bool primary, uint32_t count);
-
   VCmdBuffer *CreateBuffer(bool primary);
   void CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffer*> &buffers);
+
+public:
+  void InitBufferInfo(VkCommandBufferAllocateInfo &bufInfo, bool primary, uint32_t count);
 };
 
 class VCmdBuffer {
@@ -202,30 +187,30 @@ public:
   void SetUseSemaphore(bool use, VkPipelineStageFlags stages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
   void SetUseFence(bool use);
 
-  bool AutoBegin();
-  bool AutoEnd();
+  void AutoBegin();
+  void AutoEnd();
 
-  bool Begin(bool simultaneous = false);
-  bool End();
+  void Begin(bool simultaneous = false);
+  void End();
 
-  bool Reset(bool releaseResources = false);
+  void Reset(bool releaseResources = false);
 
-  bool SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess);
-  bool CopyImage(VImage &src, VImage &dst);
-  bool CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset = 0, uint64_t dstOffset = 0, uint64_t size = VK_WHOLE_SIZE);
+  void SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess);
+  void CopyImage(VImage &src, VImage &dst);
+  void CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset = 0, uint64_t dstOffset = 0, uint64_t size = VK_WHOLE_SIZE);
 };
 
 class VDevice {
 public:
   VGraphics *m_graphics;
   std::vector<std::string> m_layerNames, m_extensionNames;
-  VkDevice m_device = VK_NULL_HANDLE;
-  VSwapchain *m_swapchain = nullptr;
-  VImage *m_depth = nullptr;
-  VQueue *m_queue = nullptr;
-  VCmdPool *m_cmdPool = VK_NULL_HANDLE;
-  VCmdBuffer *m_cmdBuffer = nullptr;
-  VImage *m_staging = nullptr;
+  UniqueResource<VkDevice> m_device;
+  std::unique_ptr<VSwapchain> m_swapchain;
+  std::unique_ptr<VImage> m_depth;
+  std::unique_ptr<VQueue> m_queue;
+  std::unique_ptr<VCmdPool> m_cmdPool;
+  std::unique_ptr<VCmdBuffer> m_cmdBuffer;
+  std::unique_ptr<VImage> m_staging;
 
   PFN_vkCreateSwapchainKHR    m_CreateSwapchainKHR = nullptr;
   PFN_vkDestroySwapchainKHR   m_DestroySwapchainKHR = nullptr;
@@ -234,52 +219,41 @@ public:
   PFN_vkQueuePresentKHR       m_QueuePresentKHR = nullptr;
 
   VDevice(VGraphics &graphics);
-  virtual ~VDevice();
+  ~VDevice();
 
-  virtual bool Init();
-  virtual void Done();
+  VImage *LoadVImage(std::string const &filename);
+  VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
+  VShader *LoadVShader(std::string const &filename);
 
-  virtual bool InitCapabilities();
-  virtual void DoneCapabilities();
+  void UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components);
+  void FreeStagingImage();
 
-  virtual bool InitDevice();
-  virtual void DoneDevice();
+public:
+  void InitCapabilities();
+  void InitDevice();
+  void InitDepth();
+  void InitCmdBuffers(bool synchronize, uint32_t count);
 
-  virtual bool InitSwapchain();
-  virtual void DoneSwapchain();
-
-  virtual bool InitDepth();
-  virtual void DoneDepth();
-
-  virtual bool InitCmdBuffers(bool synchronize, uint32_t count);
-  virtual void DoneCmdBuffers();
-
-  virtual bool SubmitInitCommands();
-
-  virtual VImage *LoadVImage(std::string const &filename);
-  virtual VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
-
-  virtual bool UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components);
-  virtual void FreeStagingImage();
+  void SubmitInitCommands();
 };
 
 class VGraphics
 {
 public:
   bool m_validate;
-  VkInstance m_instance = VK_NULL_HANDLE;
+  UniqueResource<VkInstance> m_instance;
   VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
   VkPhysicalDeviceProperties m_physicalDeviceProps;
   VkPhysicalDeviceFeatures m_physicalDeviceFeatures;
   VkPhysicalDeviceMemoryProperties m_physicalDeviceMemoryProps;
   std::vector<VkQueueFamilyProperties> m_queueFamilies;
   unsigned m_graphicsQueueFamily;
-  VkSurfaceKHR m_surface;
+  UniqueResource<VkSurfaceKHR> m_surface;
   VkSurfaceFormatKHR m_surfaceFormat;
-  VDevice *m_device = nullptr;
+  std::unique_ptr<VDevice> m_device;
 
   std::vector<std::string> m_layerNames, m_extensionNames;
-  VkDebugReportCallbackEXT m_debugReportCallback = nullptr;
+  UniqueResource<VkDebugReportCallbackEXT> m_debugReportCallback;
 
   PFN_vkGetPhysicalDeviceSurfaceSupportKHR      m_GetPhysicalDeviceSurfaceSupportKHR = nullptr;
   PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR m_GetPhysicalDeviceSurfaceCapabilitiesKHR = nullptr;
@@ -291,26 +265,15 @@ public:
   PFN_vkDestroyDebugReportCallbackEXT m_DestroyDebugReportCallbackEXT = nullptr;
   PFN_vkDebugReportMessageEXT         m_DebugReportMessageEXT = nullptr;
 
-  VGraphics(bool validate);
-  virtual ~VGraphics();
-
-  virtual bool Init();
-  virtual void Done();
+  VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID);
+  ~VGraphics();
 
 public:
-  virtual bool InitInstance();
-  virtual void DoneInstance();
+  void InitInstance(std::string const &appName, uint32_t appVersion);
+  void InitPhysicalDevice();
+  void InitSurface(uintptr_t instanceID, uintptr_t windowID);
 
-  virtual bool InitPhysicalDevice();
-  virtual void DonePhysicalDevice();
-
-  virtual bool InitSurface();
-  virtual void DoneSurface();
-
-  virtual bool InitDevice();
-  virtual void DoneDevice();
-
-  virtual uint32_t GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags);
+  uint32_t GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags);
 
   static bool AddLayerName(std::vector<VkLayerProperties> const &layers, std::string const &name, std::vector<std::string> &layerNames);
   static bool AddExtensionName(std::vector<VkExtensionProperties> const &extensions, std::string const &name, std::vector<std::string> &extNames);

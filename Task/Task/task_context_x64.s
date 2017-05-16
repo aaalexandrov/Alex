@@ -42,7 +42,7 @@ sv_size = sv_end - sv_start
 .text
 
 .global task_associate
-.type	task_associate, %function
+#.type	task_associate, %function
 
 task_associate:
 
@@ -89,7 +89,7 @@ trampoline:
 
 
 .global	task_swap
-.type	task_swap, %function
+#.type	task_swap, %function
 
 task_swap:
 

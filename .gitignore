@@ -29,6 +29,7 @@ ipch/
 *.suo
 *.sdf
 *.opendb
+*.db
 
 bin/
 obj/

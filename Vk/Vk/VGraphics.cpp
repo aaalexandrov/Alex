@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "VGraphics.h"
-#include "App.h"
-#include "Wnd.h"
 
 #include <iostream>
+#include <fstream>
+#include <iterator>
 #include <functional>
 #include <algorithm>
 
 #pragma warning(push)
 #pragma warning(disable: 4477)
-#include "CImg.h"
+#include "../cimg/CImg.h"
 #pragma warning(pop)
 
 #ifdef min
@@ -20,35 +20,20 @@
 #undef max
 #endif
 
-VGraphics::VGraphics(bool validate) :
-  m_validate(validate)
+VGraphics::VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID) :
+  m_validate(validate),
+  m_instance(VK_NULL_HANDLE, [](VkInstance &instance) { vkDestroyInstance(instance, nullptr); }, false),
+  m_surface(VK_NULL_HANDLE, [this](VkSurfaceKHR &surface) { vkDestroySurfaceKHR(m_instance.Get(), surface, nullptr); }, false),
+  m_debugReportCallback(VK_NULL_HANDLE, [this](VkDebugReportCallbackEXT &callback) { if (callback) m_DestroyDebugReportCallbackEXT(m_instance.Get(), callback, nullptr); }, false)
 {
+  InitInstance(appName, appVersion);
+  InitPhysicalDevice();
+  InitSurface(instanceID, windowID);
+  m_device.reset(new VDevice(*this));
 }
 
 VGraphics::~VGraphics()
 {
-}
-
-bool VGraphics::Init()
-{
-  if (!InitInstance())
-    return false;
-  if (!InitPhysicalDevice())
-    return false;
-  if (!InitSurface())
-    return false;
-  if (!InitDevice())
-    return false;
-
-  return true;
-}
-
-void VGraphics::Done()
-{
-  DoneDevice();
-  DoneSurface();
-  DonePhysicalDevice();
-  DoneInstance();
 }
 
 bool VGraphics::AddLayerName(std::vector<VkLayerProperties> const &layers, std::string const &name, std::vector<std::string> &layerNames)
@@ -110,54 +95,52 @@ VkResult AppendData(std::vector<T> &data, std::function<VkResult(uint32_t&, T*)>
   return err;
 }
 
-bool VGraphics::InitInstance()
+void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
 {
   VkResult err;
   std::vector<VkLayerProperties> layerProps;
   err = AppendData<VkLayerProperties>(layerProps, [](uint32_t &s, VkLayerProperties *p)->VkResult { return vkEnumerateInstanceLayerProperties(&s, p); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed in vkEnumerateInstanceLayerProperties", err);
 
   m_layerNames.clear();
   if (m_validate) {
     if (!AddLayerName(layerProps, "VK_LAYER_LUNARG_standard_validation", m_layerNames))
-      return false;
+      throw VGraphicsException("VGraphics::InitInstance failed to add validation layer", VK_RESULT_MAX_ENUM);
   }
 
   std::vector<VkExtensionProperties> extProps;
   err = AppendData<VkExtensionProperties>(extProps, [](uint32_t &s, VkExtensionProperties *p)->VkResult { return vkEnumerateInstanceExtensionProperties(nullptr, &s, p); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed in vkEnumerateInstanceExtensionProperties", err);
   for (auto &l : m_layerNames) {
     err = AppendData<VkExtensionProperties>(extProps, [&l](uint32_t &s, VkExtensionProperties *p)->VkResult { return vkEnumerateInstanceExtensionProperties(l.c_str(), &s, p); });
     if (err < 0)
-      return false;
+      throw VGraphicsException("VGraphics::InitInstance failed in vkEnumerateInstanceExtensionProperties", err);
   }
   
   m_extensionNames.clear();
   if (!AddExtensionName(extProps, VK_KHR_SURFACE_EXTENSION_NAME, m_extensionNames))
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed to add extension VK_KHR_SURFACE_EXTENSION_NAME", VK_RESULT_MAX_ENUM);
 
 #if defined(_WIN32)
   if (!AddExtensionName(extProps, VK_KHR_WIN32_SURFACE_EXTENSION_NAME, m_extensionNames))
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed to add extension VK_KHR_WIN32_SURFACE_EXTENSION_NAME", VK_RESULT_MAX_ENUM);
 #elif defined(linux)
   if (!AddExtensionName(extProps, VK_KHR_XCB_SURFACE_EXTENSION_NAME, extNames))
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed to add extension VK_KHR_XCB_SURFACE_EXTENSION_NAME", VK_RESULT_MAX_ENUM);
 #endif
 
   if (m_validate) {
     if (!AddExtensionName(extProps, VK_EXT_DEBUG_REPORT_EXTENSION_NAME, m_extensionNames))
-      return false;
+      throw VGraphicsException("VGraphics::InitInstance failed to add extension VK_EXT_DEBUG_REPORT_EXTENSION_NAME", VK_RESULT_MAX_ENUM);
   }
-
-  App *app = App::Get();
 
   VkApplicationInfo appInfo;
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pNext = nullptr;
-  appInfo.pApplicationName = app->m_name.c_str();
-  appInfo.applicationVersion = app->m_ver;
+  appInfo.pApplicationName = appName.c_str();
+  appInfo.applicationVersion = appVersion;
   appInfo.pEngineName = "VGraphics";
   appInfo.engineVersion = 0;
   appInfo.apiVersion = VK_API_VERSION_1_0;
@@ -185,50 +168,42 @@ bool VGraphics::InitInstance()
     instInfo.pNext = &dbgCreateInfo;
   }
 
-  err = vkCreateInstance(&instInfo, nullptr, &m_instance);
+  VkInstance instance = VK_NULL_HANDLE;
+  err = vkCreateInstance(&instInfo, nullptr, &instance);
   if (err < 0) {
     std::cerr << "vkCreateInstance failed with error " << err << std::endl;
-    return false;
+    throw VGraphicsException("VGraphics::InitInstance failed in vkCreateInstance", err);
   }
-
-  return true;
-}
-
-void VGraphics::DoneInstance()
-{
-  if (m_instance) {
-    vkDestroyInstance(m_instance, nullptr);
-    m_instance = nullptr;
-  }
+  m_instance.Reset(std::move(instance));
 }
 
 #define GET_INSTANCE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance, "vk"#proc)); \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance.Get(), "vk"#proc)); \
     if (!m_##proc) { \
       std::cerr << "GET_INSTANCE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
-      return false; \
+      throw VGraphicsException("GET_INSTANCE_PROC_ADDRESS failed in vkGetInstanceProcAddr", VK_RESULT_MAX_ENUM); \
     } \
   } while (false)
 
 #define GET_DEVICE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device, "vk"#proc)); \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device.Get(), "vk"#proc)); \
     if (!m_##proc) { \
       std::cerr << "GET_DEVICE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
-      return false; \
+      throw VGraphicsException("GET_DEVICE_PROC_ADDRESS failed in vkGetDeviceProcAddr", VK_RESULT_MAX_ENUM); \
     } \
   } while (false)
 
 
-bool VGraphics::InitPhysicalDevice()
+void VGraphics::InitPhysicalDevice()
 {
   uint32_t gpuCount;
-  VkResult err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);
+  VkResult err = vkEnumeratePhysicalDevices(m_instance.Get(), &gpuCount, nullptr);
   if (err < 0 || gpuCount == 0)
-    return false;
+    throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkEnumeratePhysicalDevices", err);
   std::vector<VkPhysicalDevice> gpus(gpuCount);
-  err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, gpus.data());
+  err = vkEnumeratePhysicalDevices(m_instance.Get(), &gpuCount, gpus.data());
   if (err < 0)
-    return false;
+    throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkEnumeratePhysicalDevices", err);
 
   m_physicalDevice = gpus[0];
 
@@ -243,9 +218,11 @@ bool VGraphics::InitPhysicalDevice()
     dbgCreateInfo.pfnCallback = DbgReportFunc;
     dbgCreateInfo.pUserData = this;
     dbgCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-    err = m_CreateDebugReportCallbackEXT(m_instance, &dbgCreateInfo, nullptr, &m_debugReportCallback);
+    VkDebugReportCallbackEXT callback = VK_NULL_HANDLE;
+    err = m_CreateDebugReportCallbackEXT(m_instance.Get(), &dbgCreateInfo, nullptr, &callback);
     if (err < 0)
-      return false;
+      throw VGraphicsException("VGraphics::InitPhysicalDevice failed in CreateDebugReportCallbackEXT", err);
+    m_debugReportCallback.Reset(std::move(callback));
   }
 
   vkGetPhysicalDeviceProperties(m_physicalDevice, &m_physicalDeviceProps);
@@ -254,58 +231,45 @@ bool VGraphics::InitPhysicalDevice()
 
   err = AppendData<VkQueueFamilyProperties>(m_queueFamilies, [this](uint32_t &s, VkQueueFamilyProperties *p)->VkResult { vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &s, p); return VK_SUCCESS; });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkGetPhysicalDeviceQueueFamilyProperties", err);
 
   GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceSupportKHR);
   GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceCapabilitiesKHR);
   GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceFormatsKHR);
   GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfacePresentModesKHR);
   GET_INSTANCE_PROC_ADDRESS(DestroySurfaceKHR);
-
-  return true;
 }
 
-void VGraphics::DonePhysicalDevice()
-{
-  if (m_debugReportCallback) {
-    m_DestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, nullptr);
-    m_debugReportCallback = 0;
-  }
-}
-
-bool VGraphics::InitSurface()
+void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
 {
   VkResult err;
-  App *app = App::Get();
-  if (app->m_windows.empty())
-    return false;
+  VkSurfaceKHR surface = VK_NULL_HANDLE;
 #if defined(_WIN32)
   VkWin32SurfaceCreateInfoKHR surfInfo;
   surfInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
   surfInfo.pNext = nullptr;
   surfInfo.flags = 0;
-  surfInfo.hinstance = reinterpret_cast<HINSTANCE>(app->GetID());
-  surfInfo.hwnd = reinterpret_cast<HWND>(app->m_windows[0]->GetID());
-  err = vkCreateWin32SurfaceKHR(m_instance, &surfInfo, nullptr, &m_surface);
-  if (err < 0)
-    return false;
+  surfInfo.hinstance = reinterpret_cast<HINSTANCE>(instanceID);
+  surfInfo.hwnd = reinterpret_cast<HWND>(windowID);
+  err = vkCreateWin32SurfaceKHR(m_instance.Get(), &surfInfo, nullptr, &surface);
 #elif defined(linux)
   VkXcbSurfaceCreateInfoKHR surfInfo;
   surfInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
   surfInfo.pNext = nullptr;
   surfInfo.flags = 0;
-  surfInfo.connection = reinterpret_cast<xcb_connection_t*>(app->GetID());
-  surfInfo.window = reinterpret_cast<xcb_window_t>(app->m_windows[0]->GetID());
-  err = vkCreateXcbSurfaceKHR(m_instance, &surfInfo, nullptr, &m_surface);
-  if (err < 0)
-    return false;
+  surfInfo.connection = reinterpret_cast<xcb_connection_t*>(instanceID);
+  surfInfo.window = reinterpret_cast<xcb_window_t>(windowID);
+  err = vkCreateXcbSurfaceKHR(m_instance.Get(), &surfInfo, nullptr, &surface);
 #endif
+  if (err < 0)
+    throw VGraphicsException("VGraphics::InitSurface failed in vkCreateXXXXSurfaceKHR", err);
+  m_surface.Reset(std::move(surface));
 
   std::vector<VkBool32> supportsPresent(m_queueFamilies.size());
   for (int i = 0; i < supportsPresent.size(); ++i) {
-    err = m_GetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent[i]);
+    err = m_GetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface.Get(), &supportsPresent[i]);
     if (err < 0)
-      return false;
+      throw VGraphicsException("VGraphics::InitSurface failed in m_GetPhysicalDeviceSurfaceSupportKHR", err);
   }
 
   m_graphicsQueueFamily = -1;
@@ -316,42 +280,16 @@ bool VGraphics::InitSurface()
     }
   }
   if (m_graphicsQueueFamily >= m_queueFamilies.size())
-    return false;
+    throw VGraphicsException("VGraphics::InitSurface failed to find a graphics queue family", err);
 
   std::vector<VkSurfaceFormatKHR> surfFormats;
-  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return m_GetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &s, f); });
+  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return m_GetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface.Get(), &s, f); });
   if (err < 0 || surfFormats.empty())
-    return false;
+    throw VGraphicsException("VGraphics::InitSurface failed in GetPhysicalDeviceSurfaceFormatsKHR", err);
 
   m_surfaceFormat = surfFormats[0];
   if (m_surfaceFormat.format == VK_FORMAT_UNDEFINED) // no preferred format
     m_surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
-
-  return true;
-}
-
-void VGraphics::DoneSurface()
-{
-  vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-}
-
-bool VGraphics::InitDevice()
-{
-  assert(!m_device);
-  m_device = new VDevice(*this);
-
-  if (!m_device->Init())
-    return false;
-
-  return true;
-}
-
-void VGraphics::DoneDevice()
-{
-  if (m_device) {
-    m_device->Done();
-    m_device = nullptr;
-  }
 }
 
 uint32_t VGraphics::GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags)
@@ -376,13 +314,13 @@ VCmdPool::VCmdPool(VDevice &device, bool synchronize, bool transient, bool reset
   poolInfo.pNext = nullptr;
   poolInfo.flags = (transient ? VK_COMMAND_POOL_CREATE_TRANSIENT_BIT : 0) | (resetBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0);
   poolInfo.queueFamilyIndex = m_device->m_graphics->m_graphicsQueueFamily;
-  VkResult err = vkCreateCommandPool(m_device->m_device, &poolInfo, nullptr, &m_pool);
+  VkResult err = vkCreateCommandPool(m_device->m_device.Get(), &poolInfo, nullptr, &m_pool);
   assert(err >= 0);
 }
 
 VCmdPool::~VCmdPool()
 {
-  vkDestroyCommandPool(m_device->m_device, m_pool, nullptr);
+  vkDestroyCommandPool(m_device->m_device.Get(), m_pool, nullptr);
 }
 
 void VCmdPool::InitBufferInfo(VkCommandBufferAllocateInfo &bufInfo, bool primary, uint32_t count)
@@ -400,7 +338,7 @@ VCmdBuffer *VCmdPool::CreateBuffer(bool primary)
   VkCommandBufferAllocateInfo bufInfo;
   InitBufferInfo(bufInfo, primary, 1);
   VkCommandBuffer buffer;
-  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, &buffer);
+  VkResult err = vkAllocateCommandBuffers(m_device->m_device.Get(), &bufInfo, &buffer);
   assert(err >= 0);
   return new VCmdBuffer(*this, buffer);
 }
@@ -411,7 +349,7 @@ void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffe
   VkCommandBufferAllocateInfo bufInfo;
   InitBufferInfo(bufInfo, primary, count);
   std::vector<VkCommandBuffer> vkBuffers(count);
-  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, vkBuffers.data());
+  VkResult err = vkAllocateCommandBuffers(m_device->m_device.Get(), &bufInfo, vkBuffers.data());
   assert(err >= 0);
   for (auto b : vkBuffers)
     buffers.push_back(new VCmdBuffer(*this, b));
@@ -424,7 +362,7 @@ VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer) : m_pool(&pool), 
 VCmdBuffer::~VCmdBuffer()
 {
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
-  vkFreeCommandBuffers(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_buffer);
+  vkFreeCommandBuffers(m_pool->m_device->m_device.Get(), m_pool->m_pool, 1, &m_buffer);
 }
 
 void VCmdBuffer::SetUseSemaphore(bool use, VkPipelineStageFlags stages)
@@ -453,21 +391,19 @@ void VCmdBuffer::SetUseFence(bool use)
   }
 }
 
-bool VCmdBuffer::AutoBegin()
+void VCmdBuffer::AutoBegin()
 {
   if (m_autoBegin && !m_begun)
-    return Begin(m_simultaneousBegin);
-  return true;
+    Begin(m_simultaneousBegin);
 }
 
-bool VCmdBuffer::AutoEnd()
+void VCmdBuffer::AutoEnd()
 {
   if (m_autoBegin && m_begun)
-    return End();
-  return true;
+    End();
 }
 
-bool VCmdBuffer::Begin(bool simultaneous)
+void VCmdBuffer::Begin(bool simultaneous)
 {
   VkCommandBufferInheritanceInfo inheritInfo;
   inheritInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
@@ -489,40 +425,33 @@ bool VCmdBuffer::Begin(bool simultaneous)
 
   VkResult err = vkBeginCommandBuffer(m_buffer, &beginInfo);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VCmdBuffer::Begin failed in vkBeginCommandBuffer", err);
 
   m_begun = true;
-
-  return true;
 }
 
-bool VCmdBuffer::End()
+void VCmdBuffer::End()
 {
   assert(m_begun);
   std::lock_guard<ConditionalLock>(m_pool->m_lock);
   VkResult err = vkEndCommandBuffer(m_buffer);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VCmdBuffer::End failed in vkEndCommandBuffer", err);
 
   m_begun = false;
-
-  return true;
 }
 
-bool VCmdBuffer::Reset(bool releaseResources)
+void VCmdBuffer::Reset(bool releaseResources)
 {
   std::lock_guard<ConditionalLock>(m_pool->m_lock);
   VkResult err = vkResetCommandBuffer(m_buffer, releaseResources ? VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT : 0);
   if (err < 0)
-    return false;
-
-  return true;
+    throw VGraphicsException("VCmdBuffer::Reset failed in vkResetCommandBuffer", err);
 }
 
-bool VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess)
+void VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess)
 {
-  if (!AutoBegin())
-    return false;
+  AutoBegin();
 
   VkImageAspectFlags aspectFlags = VImage::AspectFromFormat(image.m_format);
 
@@ -543,14 +472,11 @@ bool VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFla
   vkCmdPipelineBarrier(m_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgBarrier);
 
   image.m_layout = layout;
-
-  return true;
 }
 
-bool VCmdBuffer::CopyImage(VImage &src, VImage &dst)
+void VCmdBuffer::CopyImage(VImage &src, VImage &dst)
 {
-  if (!AutoBegin())
-    return false;
+  AutoBegin();
   
   VkImageCopy copy;
   copy.srcSubresource = { VImage::AspectFromFormat(src.m_format), 0, 0, 1 };
@@ -562,14 +488,11 @@ bool VCmdBuffer::CopyImage(VImage &src, VImage &dst)
   std::lock_guard<ConditionalLock>(m_pool->m_lock);
 
   vkCmdCopyImage(m_buffer, src.m_image, src.m_layout, dst.m_image, dst.m_layout, 1, &copy);
-
-  return true;
 }
 
-bool VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint64_t dstOffset, uint64_t size)
+void VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint64_t dstOffset, uint64_t size)
 {
-  if (!AutoBegin())
-    return false;
+  AutoBegin();
 
   VkBufferCopy copy;
   copy.size = std::min(size, std::min(src.m_size - srcOffset, dst.m_size - dstOffset));
@@ -579,8 +502,6 @@ bool VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint
   std::lock_guard<ConditionalLock>(m_pool->m_lock);
 
   vkCmdCopyBuffer(m_buffer, src.m_buffer, dst.m_buffer, 1, &copy);
-
-  return true;
 }
 
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
@@ -591,10 +512,9 @@ VQueue::~VQueue()
 {
 }
 
-bool VQueue::Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*>* waitSemaphores)
+void VQueue::Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*>* waitSemaphores)
 {
-  if (!cmdBuffer.AutoEnd())
-    return false;
+  cmdBuffer.AutoEnd();
 
   std::vector<VkSemaphore> semaphores;
   std::vector<VkPipelineStageFlags> stages;
@@ -620,92 +540,61 @@ bool VQueue::Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*>* waitSemapho
 
   VkResult err = vkQueueSubmit(m_queue, 1, &subInfo, cmdBuffer.m_fence ? cmdBuffer.m_fence->m_fence : VK_NULL_HANDLE);
   if (err < 0)
-    return false;
-
-  return true;
+    throw VGraphicsException("VQueue::Submit failed in vkQueueSubmit", err);
 }
 
-VDevice::VDevice(VGraphics &graphics) : m_graphics(&graphics)
+void VQueue::WaitIdle()
 {
+  VkResult err = vkQueueWaitIdle(m_queue);
+  if (err < 0)
+    throw VGraphicsException("VQueue::WaitIdle failed in vkQueueWaitIdle", err);
+}
+
+VDevice::VDevice(VGraphics &graphics) :
+  m_graphics(&graphics),
+  m_device(VK_NULL_HANDLE, [](VkDevice &device) { vkDestroyDevice(device, nullptr); }, false)
+{
+  InitCapabilities();
+  InitDevice();
+  InitCmdBuffers(true, 1);
+  m_swapchain.reset(new VSwapchain(*this));
+  InitDepth();
+  SubmitInitCommands();
 }
 
 VDevice::~VDevice()
 {
 }
 
-bool VDevice::Init()
-{
-  if (!InitCapabilities())
-    return false;
-  if (!InitDevice())
-    return false;
-  if (!InitCmdBuffers(true, 1))
-    return false;
-
-  if (!InitSwapchain())
-    return false;
-
-  if (!InitDepth())
-    return false;
-
-  VImage *img = LoadVImage("../../Terrain/Data/Textures/Earth.bmp");
-  DoneResource(img);
-
-  std::vector<char> trash(1024);
-  VBuffer *buf = LoadVBuffer(trash.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, trash.data());
-  DoneResource(buf);
-
-  if (!SubmitInitCommands())
-    return false;
-
-  return true;
-}
-
-void VDevice::Done()
-{
-  DoneResource(m_staging);
-  DoneDepth();
-  DoneSwapchain();
-  DoneCmdBuffers();
-  DoneDevice();
-  DoneCapabilities();
-}
-
-bool VDevice::InitCapabilities()
+void VDevice::InitCapabilities()
 {
   std::vector<VkLayerProperties> layers;
   VkResult err = AppendData<VkLayerProperties>(layers, [this](uint32_t &s, VkLayerProperties *p)->VkResult { return vkEnumerateDeviceLayerProperties(m_graphics->m_physicalDevice, &s, p); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VDevice::InitCapabilities failed in vkEnumerateDeviceLayerProperties", err);
 
   m_layerNames.clear();
   if (m_graphics->m_validate) {
     if (!VGraphics::AddLayerName(layers, "VK_LAYER_LUNARG_standard_validation", m_layerNames))
-      return false;
+      throw VGraphicsException("VDevice::InitCapabilities failed to add device validation layer", err);
   }
 
   std::vector<VkExtensionProperties> extensions;
   err = AppendData<VkExtensionProperties>(extensions, [this](uint32_t &s, VkExtensionProperties *p)->VkResult { return vkEnumerateDeviceExtensionProperties(m_graphics->m_physicalDevice, nullptr, &s, p); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VDevice::InitCapabilities failed in vkEnumerateDeviceExtensionProperties", err);
   for (auto &l : m_layerNames) {
     err = AppendData<VkExtensionProperties>(extensions, [this, &l](uint32_t &s, VkExtensionProperties *p)->VkResult { return vkEnumerateDeviceExtensionProperties(m_graphics->m_physicalDevice, l.c_str(), &s, p); });
     if (err < 0)
-      return false;
+      throw VGraphicsException("VDevice::InitCapabilities failed in vkEnumerateDeviceExtensionProperties", err);
   }
 
   m_extensionNames.clear();
   if (!VGraphics::AddExtensionName(extensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, m_extensionNames))
-    return false;
-
-  return true;
+    throw VGraphicsException("VDevice::InitCapabilities failed to add VK_KHR_SWAPCHAIN_EXTENSION_NAME extension", err);
 }
 
-void VDevice::DoneCapabilities()
-{
-}
-
-bool VDevice::InitDevice()
+void VDevice::InitDevice()
 {
   VkResult err;
   VkDeviceQueueCreateInfo queueInfo;
@@ -729,125 +618,62 @@ bool VDevice::InitDevice()
   deviceInfo.ppEnabledExtensionNames = extNames.data();
   deviceInfo.pEnabledFeatures = nullptr;
 
-  err = vkCreateDevice(m_graphics->m_physicalDevice, &deviceInfo, nullptr, &m_device);
+  VkDevice device = VK_NULL_HANDLE;
+  err = vkCreateDevice(m_graphics->m_physicalDevice, &deviceInfo, nullptr, &device);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VDevice::InitDevice failed in vkCreateDevice", err);
+  m_device.Reset(std::move(device));
 
   VkQueue queue;
-  vkGetDeviceQueue(m_device, m_graphics->m_graphicsQueueFamily, 0, &queue);
-  m_queue = new VQueue(*this, true, queue);
+  vkGetDeviceQueue(m_device.Get(), m_graphics->m_graphicsQueueFamily, 0, &queue);
+  m_queue.reset(new VQueue(*this, true, queue));
 
   GET_DEVICE_PROC_ADDRESS(CreateSwapchainKHR);
   GET_DEVICE_PROC_ADDRESS(DestroySwapchainKHR);
   GET_DEVICE_PROC_ADDRESS(GetSwapchainImagesKHR);
   GET_DEVICE_PROC_ADDRESS(AcquireNextImageKHR);
   GET_DEVICE_PROC_ADDRESS(QueuePresentKHR);
-
-  return true;
 }
 
-void VDevice::DoneDevice()
-{
-  if (m_queue) {
-    delete m_queue;
-    m_queue = nullptr;
-  }
-  vkDestroyDevice(m_device, nullptr);
-}
-
-bool VDevice::InitSwapchain()
-{
-  assert(!m_swapchain);
-  m_swapchain = new VSwapchain(*this);
-  if (!m_swapchain->Init())
-    return false;
-
-  return true;
-}
-
-void VDevice::DoneSwapchain()
-{
-  if (m_swapchain) {
-    m_swapchain->Done();
-    delete m_swapchain;
-    m_swapchain = nullptr;
-  }
-}
-
-bool VDevice::InitDepth()
+void VDevice::InitDepth()
 {
   VkSurfaceCapabilitiesKHR surfaceCaps;
-  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
+  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface.Get(), &surfaceCaps);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VDevice::InitDepth failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
-  m_depth = new VImage(*this);
-  if (!m_depth->Init(VK_FORMAT_D24_UNORM_S8_UINT, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height))
-    return false;
+  m_depth.reset(new VImage(*this, true, VK_FORMAT_D24_UNORM_S8_UINT, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height));
 
-  if (!m_cmdBuffer->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT))
-    return false;
-
-  return true;
+  m_cmdBuffer->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 }
 
-void VDevice::DoneDepth()
+void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
 {
-  if (m_depth) {
-    m_depth->Done();
-    delete m_depth;
-    m_depth = nullptr;
-  }
+  m_cmdPool.reset(new VCmdPool(*this, synchronize, false, true));
+  m_cmdBuffer.reset(m_cmdPool->CreateBuffer(true));
 }
 
-bool VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
+
+void VDevice::SubmitInitCommands()
 {
-  m_cmdPool = new VCmdPool(*this, synchronize, false, true);
-  m_cmdBuffer = m_cmdPool->CreateBuffer(true);
-
-  return true;
-}
-
-void VDevice::DoneCmdBuffers()
-{
-  if (m_cmdBuffer) {
-    delete m_cmdBuffer;
-    m_cmdBuffer = nullptr;
-  }
-  if (m_cmdPool) {
-    delete m_cmdPool;
-    m_cmdPool = nullptr;
-  }
-}
-
-bool VDevice::SubmitInitCommands()
-{
-  if (!m_queue->Submit(*m_cmdBuffer))
-    return false;
-
-  VkResult err = vkQueueWaitIdle(m_queue->m_queue);
-  if (err < 0)
-    return false;
-
-  if (!m_cmdBuffer->Reset())
-    return false;
-
-  if (!m_cmdBuffer->Begin())
-    return false;
-
-  return true;
+  m_queue->Submit(*m_cmdBuffer);
+  m_queue->WaitIdle();
+  m_cmdBuffer->Reset();
+  m_cmdBuffer->Begin();
 }
 
 VImage *VDevice::LoadVImage(std::string const &filename)
 {
-  VImage *vimg = nullptr;
+  uint32_t width, height, depth, components;
   try {
     cimg_library::cimg::exception_mode(1);
     cimg_library::CImg<unsigned char> image(filename.c_str());
-    uint32_t width = image.width(), height = image.height(), depth = image.depth(), components = image.spectrum();
+    width = image.width(); 
+    height = image.height(); 
+    depth = image.depth(); 
+    components = image.spectrum();
 
-    if (!UpdateStagingImage(width, height, depth, components))
-      return nullptr;
+    UpdateStagingImage(width, height, depth, components);
 
     cimg_library::CImg<unsigned char> imgRGBA;
     
@@ -865,125 +691,88 @@ VImage *VDevice::LoadVImage(std::string const &filename)
     memcpy(mem, imgRGBA.data(), imgRGBA.size());
     m_staging->Unmap();
 
-    vimg = new VImage(*this);
-    VkFormat format = VImage::FormatFromComponents(components);
-    if (!vimg->Init(format, width, height, depth)) {
-      delete vimg;
-      return nullptr;
-    }
-
-  } catch (...) {
+  } catch (cimg_library::CImgException &) {
     return nullptr;
   }
 
-  AutoDone<VImage> doneVimg(vimg);
+  VkFormat format = VImage::FormatFromComponents(components);
+  std::unique_ptr<VImage> vimg(new VImage(*this, true, format, width, height, depth));
 
-  if (m_staging->m_layout != VK_IMAGE_LAYOUT_GENERAL && !m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT))
-    return false;
+  if (m_staging->m_layout != VK_IMAGE_LAYOUT_GENERAL)
+    m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
 
-  if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT))
-    return false;
+  m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+  m_cmdBuffer->CopyImage(*m_staging, *vimg);
+  m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+  m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT);
 
-  if (!m_cmdBuffer->CopyImage(*m_staging, *vimg))
-    return false;
+  SubmitInitCommands();
 
-  if (!m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT))
-    return false;
-
-  if (!m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT))
-    return false;
-
-  if (!SubmitInitCommands())
-    return nullptr;
-
-  doneVimg.m_ptr = nullptr;
-  return vimg;
+  return vimg.release();
 }
 
 VBuffer *VDevice::LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data)
 {
-  VBuffer staging(*this, false), *buffer = nullptr;
-
-  if (!staging.Init(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true))
-    return nullptr;
-
-  AutoDone<VBuffer> doneStaging(&staging, false);
+  VBuffer staging(*this, false, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
 
   void *stagingMem = staging.Map();
   memcpy(stagingMem, data, size);
   staging.Unmap();
 
-  buffer = new VBuffer(*this, false);
-  AutoDone<VBuffer> bufferDone(buffer);
+  std::unique_ptr<VBuffer> buffer = std::make_unique<VBuffer>(*this, false, size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
 
-  if (!buffer->Init(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false))
-    return nullptr;
+  m_cmdBuffer->CopyBuffer(staging, *buffer);
+  SubmitInitCommands();
 
-  if (!m_cmdBuffer->CopyBuffer(staging, *buffer))
-    return nullptr;
-
-  if (!SubmitInitCommands())
-    return nullptr;
-
-  bufferDone.m_ptr = nullptr;
-  return buffer;
+  return buffer.release();
 }
 
-bool VDevice::UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components)
+VShader *VDevice::LoadVShader(std::string const &filename)
 {
-  if (m_staging)
-    if (m_staging->m_size.width < width || m_staging->m_size.height < height || m_staging->m_size.depth < depth)
-      DoneResource(m_staging);
-    else
-      return true;
-  m_staging = new VImage(*this);
-  if (!m_staging->Init(VK_FORMAT_R8G8B8A8_UNORM, width, height, depth, 1, 1, true))
-    return false;
+  std::ifstream file(filename, std::ios::binary);
+  std::vector<char> code;
+  code.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+  if (code.size() == 0 || code.size() % 4 != 0)
+    throw VGraphicsException("VDevice::LoadVShader failed because loaded shader code is invalid", VK_RESULT_MAX_ENUM);
+  VShader *shader = new VShader(*this, code.size(), (uint32_t*)code.data());
+  return shader;
+}
 
-  return true;
+void VDevice::UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components)
+{
+  if (!m_staging || m_staging->m_size.width < width || m_staging->m_size.height < height || m_staging->m_size.depth < depth)
+    m_staging.reset(new VImage(*this, true, VK_FORMAT_R8G8B8A8_UNORM, width, height, depth, 1, 1, true));
 }
 
 void VDevice::FreeStagingImage()
 {
-  DoneResource(m_staging);
+  m_staging.reset();
 }
 
-VSwapchain::VSwapchain(VDevice &device) : m_device(&device)
+VSwapchain::VSwapchain(VDevice &device) : 
+  m_device(&device), 
+  m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {m_device->m_DestroySwapchainKHR(m_device->m_device.Get(), swapchain, nullptr);}, false)
 {
+  InitSwapchain();
+  InitImages();
 }
 
 VSwapchain::~VSwapchain()
 {
 }
 
-bool VSwapchain::Init()
-{
-  if (!InitSwapchain())
-    return false;
-  if (!InitImages())
-    return false;
-
-  return true;
-}
-
-void VSwapchain::Done()
-{
-  DoneImages();
-  DoneSwapchain();
-}
-
-bool VSwapchain::InitSwapchain()
+void VSwapchain::InitSwapchain()
 {
   VkResult err;
   VkSurfaceCapabilitiesKHR surfaceCaps;
-  err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
+  err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface.Get(), &surfaceCaps);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
   std::vector<VkPresentModeKHR> presentModes;
-  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return m_device->m_graphics->m_GetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &s, m); });
+  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return m_device->m_graphics->m_GetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface.Get(), &s, m); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfacePresentModesKHR", err);
 
   VkPresentModeKHR mode = VK_PRESENT_MODE_MAX_ENUM_KHR;
   for (auto m : { VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_KHR }) {
@@ -993,15 +782,13 @@ bool VSwapchain::InitSwapchain()
     }
   }
   if (mode == VK_PRESENT_MODE_MAX_ENUM_KHR)
-    return false;
-
-  VkSwapchainKHR oldChain = m_swapchain;
+    throw VGraphicsException("VSwapchain::InitSwapchain failed to find a suitable present mode", VK_RESULT_MAX_ENUM);
 
   VkSwapchainCreateInfoKHR chainInfo;
   chainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   chainInfo.pNext = nullptr;
   chainInfo.flags = 0;
-  chainInfo.surface = m_device->m_graphics->m_surface;
+  chainInfo.surface = m_device->m_graphics->m_surface.Get();
   chainInfo.minImageCount = surfaceCaps.minImageCount + 1;
   chainInfo.imageFormat = m_device->m_graphics->m_surfaceFormat.format;
   chainInfo.imageColorSpace = m_device->m_graphics->m_surfaceFormat.colorSpace;
@@ -1015,59 +802,86 @@ bool VSwapchain::InitSwapchain()
   chainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   chainInfo.presentMode = mode;
   chainInfo.clipped = true;
-  chainInfo.oldSwapchain = oldChain;
+  chainInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  err = m_device->m_CreateSwapchainKHR(m_device->m_device, &chainInfo, nullptr, &m_swapchain);
+  VkSwapchainKHR swapchain;
+  err = m_device->m_CreateSwapchainKHR(m_device->m_device.Get(), &chainInfo, nullptr, &swapchain);
   if (err < 0)
-    return false;
-
-  if (oldChain) {
-    DoneImages(); // Images are deleted when their swapchain is destroyed, so we get rid of them too
-    m_device->m_DestroySwapchainKHR(m_device->m_device, m_swapchain, nullptr);
-  }
-
-  return true;
+    throw VGraphicsException("VSwapchain::InitSwapchain failed in CreateSwapchainKHR", err);
+  m_swapchain.Reset(std::move(swapchain));
 }
 
-void VSwapchain::DoneSwapchain()
-{
-  m_device->m_DestroySwapchainKHR(m_device->m_device, m_swapchain, nullptr);
-}
-
-bool VSwapchain::InitImages()
+void VSwapchain::InitImages()
 {
   std::vector<VkImage> images;
-  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
+  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device.Get(), m_swapchain.Get(), &s, i); });
   if (err < 0)
-    return false;
+    throw VGraphicsException("VSwapchain::InitImages failed in GetSwapchainImagesKHR", err);
 
   for (auto im : images) {
-    VImage *img = new VImage(*m_device);
-    m_images.push_back(img);
-    if (!img->Init(im, m_device->m_graphics->m_surfaceFormat.format, false))
-      return false;
-    if (!m_device->m_cmdBuffer->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0))
-      return false;
+    VImage *img = new VImage(*m_device, im, m_device->m_graphics->m_surfaceFormat.format);
+    m_images.push_back(std::unique_ptr<VImage>(img));
+    m_device->m_cmdBuffer->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
   }
-
-  return true;
 }
 
-void VSwapchain::DoneImages()
+VImage::VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, uint32_t arrayLayers, bool linear) :
+  m_device(&device)
 {
-  for (auto image : m_images) {
-    image->Done();
-    delete image;
-  }
-  m_images.clear();
+  m_format = format;
+  m_layout = linear ? VK_IMAGE_LAYOUT_PREINITIALIZED : VK_IMAGE_LAYOUT_UNDEFINED;
+  m_size = { width, height, depth };
+
+  VkImageCreateInfo imgInfo;
+  imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imgInfo.pNext = nullptr;
+  imgInfo.flags = 0;
+  imgInfo.imageType = depth == 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
+  imgInfo.extent = m_size;
+  imgInfo.format = format;
+  imgInfo.mipLevels = mipLevels;
+  imgInfo.arrayLayers = arrayLayers;
+  imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imgInfo.usage = linear ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : UsageFromFormat(format);
+  imgInfo.tiling = linear ? VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
+  imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imgInfo.initialLayout = m_layout;
+  imgInfo.queueFamilyIndexCount = 0;
+  imgInfo.pQueueFamilyIndices = nullptr;
+
+  VkResult err = vkCreateImage(m_device->m_device.Get(), &imgInfo, nullptr, &m_image);
+  if (err < 0)
+    throw VGraphicsException("VImage failed in vkCreateImage", err);
+
+  OnExit imageDelete([this]() { vkDestroyImage(m_device->m_device.Get(), m_image, nullptr); });
+
+  VkMemoryRequirements imgMem;
+  vkGetImageMemoryRequirements(m_device->m_device.Get(), m_image, &imgMem);
+
+  m_memory = std::make_shared<VMemory>(*m_device, synchronize, imgMem.size, imgMem.memoryTypeBits, linear ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0);
+
+  err = vkBindImageMemory(m_device->m_device.Get(), m_image, (*m_memory).m_memory, 0);
+  if (err < 0)
+    throw VGraphicsException("VImage failed in vkBindImageMemory", err);
+
+  if (!linear)
+    Init(m_image, format, ViewTypeFromDimensions(width, height, depth, arrayLayers));
+
+  imageDelete.Reset();
 }
 
-VImage::VImage(VDevice &device, bool synchronize) : m_device(&device), m_memory(synchronize)
+VImage::VImage(VDevice &device, VkImage image, VkFormat format, VkImageViewType imgType) :
+  m_device(&device)
 {
+  Init(image, format, imgType);
 }
 
 VImage::~VImage()
 {
+  if (m_view) 
+    vkDestroyImageView(m_device->m_device.Get(), m_view, nullptr);
+  if (m_memory) // if we have memory, we own the image so we need to destroy it
+    vkDestroyImage(m_device->m_device.Get(), m_image, nullptr);
 }
 
 VkImageUsageFlags VImage::UsageFromFormat(VkFormat format)
@@ -1129,58 +943,10 @@ VkImageViewType VImage::ViewTypeFromDimensions(uint32_t width, uint32_t height, 
     return VK_IMAGE_VIEW_TYPE_3D;
 }
 
-bool VImage::Init(VkFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, uint32_t arrayLayers, bool linear)
-{
-  m_format = format;
-  m_layout = linear ? VK_IMAGE_LAYOUT_PREINITIALIZED : VK_IMAGE_LAYOUT_UNDEFINED;
-  m_size = { width, height, depth };
-
-  VkImageCreateInfo imgInfo;
-  imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  imgInfo.pNext = nullptr;
-  imgInfo.flags = 0;
-  imgInfo.imageType = depth == 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
-  imgInfo.extent = m_size;
-  imgInfo.format = format;
-  imgInfo.mipLevels = mipLevels;
-  imgInfo.arrayLayers = arrayLayers;
-  imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-  imgInfo.usage = linear ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT :  UsageFromFormat(format);
-  imgInfo.tiling = linear ? VK_IMAGE_TILING_LINEAR : VK_IMAGE_TILING_OPTIMAL;
-  imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  imgInfo.initialLayout = m_layout;
-  imgInfo.queueFamilyIndexCount = 0;
-  imgInfo.pQueueFamilyIndices = nullptr;
-
-  VkImage image;
-  VkResult err = vkCreateImage(m_device->m_device, &imgInfo, nullptr, &image);
-  if (err < 0)
-    return false;
-
-  m_image = image;
-  m_ownImage = true;
-
-  VkMemoryRequirements imgMem;
-  vkGetImageMemoryRequirements(m_device->m_device, image, &imgMem);
-
-  if (!m_memory.Init(*m_device, imgMem.size, imgMem.memoryTypeBits, linear ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0))
-    return false;
-
-  err = vkBindImageMemory(m_device->m_device, image, m_memory.m_memory, 0);
-  if (err < 0)
-    return false;
-
-  if (!linear && !Init(image, format, true, ViewTypeFromDimensions(width, height, depth, arrayLayers)))
-    return false;
-
-  return true;
-}
-
-bool VImage::Init(VkImage image, VkFormat format, bool ownImage, VkImageViewType imgType)
+void VImage::Init(VkImage image, VkFormat format, VkImageViewType imgType)
 {
   m_format = format;
   m_image = image;
-  m_ownImage = ownImage;
 
   VkImageViewCreateInfo viewInfo;
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1192,34 +958,19 @@ bool VImage::Init(VkImage image, VkFormat format, bool ownImage, VkImageViewType
   viewInfo.viewType = imgType;
   viewInfo.subresourceRange = { AspectFromFormat(format), 0, 1, 0, 1 };
 
-  VkResult err = vkCreateImageView(m_device->m_device, &viewInfo, nullptr, &m_view);
+  VkResult err = vkCreateImageView(m_device->m_device.Get(), &viewInfo, nullptr, &m_view);
   if (err < 0)
-    return false;
-
-  return true;
-}
-
-void VImage::Done()
-{
-  if (m_view) {
-    vkDestroyImageView(m_device->m_device, m_view, nullptr);
-    m_view = nullptr;
-  }
-  if (m_ownImage) {
-    m_memory.Done(*m_device);
-    vkDestroyImage(m_device->m_device, m_image, nullptr);
-  }
-  m_image = nullptr;
+    throw VGraphicsException("VImage failed in vkCreateImageView", err);
 }
 
 void *VImage::Map()
 {
-  return m_memory.Map(*m_device);
+  return (*m_memory).Map();
 }
 
 void VImage::Unmap()
 {
-  m_memory.Unmap(*m_device);
+  (*m_memory).Unmap();
 }
 
 VSemaphore::VSemaphore(VDevice &device, VkPipelineStageFlags stages) : m_device(&device), m_stages(stages)
@@ -1229,13 +980,14 @@ VSemaphore::VSemaphore(VDevice &device, VkPipelineStageFlags stages) : m_device(
   semInfo.pNext = nullptr;
   semInfo.flags = 0;
 
-  VkResult err = vkCreateSemaphore(m_device->m_device, &semInfo, nullptr, &m_semaphore);
-  assert(err >= 0);
+  VkResult err = vkCreateSemaphore(m_device->m_device.Get(), &semInfo, nullptr, &m_semaphore);
+  if (err < 0)
+    throw VGraphicsException("VSemaphore failed in vkCreateSemaphore", err);
 }
 
 VSemaphore::~VSemaphore()
 {
-  vkDestroySemaphore(m_device->m_device, m_semaphore, nullptr);
+  vkDestroySemaphore(m_device->m_device.Get(), m_semaphore, nullptr);
 }
 
 VFence::VFence(VDevice &device, bool signaled) : m_device(&device)
@@ -1245,41 +997,34 @@ VFence::VFence(VDevice &device, bool signaled) : m_device(&device)
   fenceInfo.pNext = nullptr;
   fenceInfo.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-  VkResult err = vkCreateFence(m_device->m_device, &fenceInfo, nullptr, &m_fence);
-  assert(err >= 0);
+  VkResult err = vkCreateFence(m_device->m_device.Get(), &fenceInfo, nullptr, &m_fence);
+  if (err < 0)
+    throw VGraphicsException("VFence failed in vkCreateFence", err);
 }
 
 VFence::~VFence()
 {
-  vkDestroyFence(m_device->m_device, m_fence, nullptr);
+  vkDestroyFence(m_device->m_device.Get(), m_fence, nullptr);
 }
 
 bool VFence::IsSignaled()
 {
-  VkResult err = vkGetFenceStatus(m_device->m_device, m_fence);
+  VkResult err = vkGetFenceStatus(m_device->m_device.Get(), m_fence);
   return err == VK_SUCCESS;
 }
 
 void VFence::Reset()
 {
-  vkResetFences(m_device->m_device, 1, &m_fence);
+  vkResetFences(m_device->m_device.Get(), 1, &m_fence);
 }
 
 bool VFence::Wait(uint64_t nsTimeout)
 {
-  VkResult err = vkWaitForFences(m_device->m_device, 1, &m_fence, true, nsTimeout);
+  VkResult err = vkWaitForFences(m_device->m_device.Get(), 1, &m_fence, true, nsTimeout);
   return err == VK_SUCCESS;
 }
 
-VSampler::VSampler(VDevice & device): m_device(&device)
-{
-}
-
-VSampler::~VSampler()
-{
-}
-
-bool VSampler::Init(VkSamplerAddressMode addressMode, VkFilter magFilter, VkFilter minFilter, VkSamplerMipmapMode mipmapMode, float maxAnisotropy)
+VSampler::VSampler(VDevice &device, VkSamplerAddressMode addressMode, VkFilter magFilter, VkFilter minFilter, VkSamplerMipmapMode mipmapMode, float maxAnisotropy): m_device(&device)
 {
   VkSamplerCreateInfo samplerInfo;
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1301,73 +1046,55 @@ bool VSampler::Init(VkSamplerAddressMode addressMode, VkFilter magFilter, VkFilt
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 0.0f;
 
-  VkResult err = vkCreateSampler(m_device->m_device, &samplerInfo, nullptr, &m_sampler);
+  VkResult err = vkCreateSampler(m_device->m_device.Get(), &samplerInfo, nullptr, &m_sampler);
   if (err < 0)
-    return false;
-
-  return true;
+    throw VGraphicsException("VSampler failed in vkCreateSampler", err);
 }
 
-void VSampler::Done()
+VSampler::~VSampler()
 {
-  vkDestroySampler(m_device->m_device, m_sampler, nullptr);
+  vkDestroySampler(m_device->m_device.Get(), m_sampler, nullptr);
 }
 
-VMemory::VMemory(bool synchronize) : m_lock(synchronize)
-{
-}
-
-VMemory::~VMemory()
-{
-  assert(!m_memory);
-}
-
-bool VMemory::Init(VDevice &device, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags)
+VMemory::VMemory(VDevice &device, bool synchronize, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags) : 
+  m_device(&device),
+  m_lock(synchronize)
 {
   VkMemoryAllocateInfo memInfo;
   memInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   memInfo.pNext = nullptr;
   memInfo.allocationSize = size;
-  memInfo.memoryTypeIndex = device.m_graphics->GetMemoryTypeIndex(validMemoryTypes, memFlags);
-  VkResult err = vkAllocateMemory(device.m_device, &memInfo, nullptr, &m_memory);
+  memInfo.memoryTypeIndex = m_device->m_graphics->GetMemoryTypeIndex(validMemoryTypes, memFlags);
+  VkResult err = vkAllocateMemory(m_device->m_device.Get(), &memInfo, nullptr, &m_memory);
   if (err < 0)
-    return nullptr;
+    throw VGraphicsException("VMemory: failed in vkAllocateMemory", err);
   m_size = size;
-  return true;
 }
 
-void VMemory::Done(VDevice &device)
+VMemory::~VMemory()
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
-  vkFreeMemory(device.m_device, m_memory, nullptr);
-  m_memory = VK_NULL_HANDLE;
+  vkFreeMemory(m_device->m_device.Get(), m_memory, nullptr);
 }
 
-void *VMemory::Map(VDevice &device, uint64_t offset, uint64_t size)
+void *VMemory::Map(uint64_t offset, uint64_t size)
 {
   void *mapped;
   std::lock_guard<ConditionalLock> lock(m_lock);
-  VkResult err = vkMapMemory(device.m_device, m_memory, offset, size, 0, &mapped);
+  VkResult err = vkMapMemory(m_device->m_device.Get(), m_memory, offset, size, 0, &mapped);
   if (err < 0)
-    return nullptr;
+    throw VGraphicsException("VMemory::Map failed in vkMapMemory", err);
   return mapped;
 }
 
-void VMemory::Unmap(VDevice &device)
+void VMemory::Unmap()
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
-  vkUnmapMemory(device.m_device, m_memory);
+  vkUnmapMemory(m_device->m_device.Get(), m_memory);
 }
 
-VBuffer::VBuffer(VDevice &device, bool synchronize) : m_device(&device), m_memory(synchronize)
-{
-}
-
-VBuffer::~VBuffer()
-{
-}
-
-bool VBuffer::Init(uint64_t size, VkBufferUsageFlags usage, bool hostVisible)
+VBuffer::VBuffer(VDevice &device, bool synchronize, uint64_t size, VkBufferUsageFlags usage, bool hostVisible) : 
+  m_device(&device)
 {
   m_usage = usage;
   m_size = size;
@@ -1382,38 +1109,56 @@ bool VBuffer::Init(uint64_t size, VkBufferUsageFlags usage, bool hostVisible)
   bufInfo.queueFamilyIndexCount = 0;
   bufInfo.pQueueFamilyIndices = nullptr;
 
-  VkResult err = vkCreateBuffer(m_device->m_device, &bufInfo, nullptr, &m_buffer);
+  VkResult err = vkCreateBuffer(m_device->m_device.Get(), &bufInfo, nullptr, &m_buffer);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VBuffer failed in vkCreateBuffer", err);
+  OnExit bufferDelete([this]() { vkDestroyBuffer(m_device->m_device.Get(), m_buffer, nullptr); });
 
   VkMemoryRequirements memReqs;
-  vkGetBufferMemoryRequirements(m_device->m_device, m_buffer, &memReqs);
+  vkGetBufferMemoryRequirements(m_device->m_device.Get(), m_buffer, &memReqs);
 
-  if (!m_memory.Init(*m_device, memReqs.size, memReqs.memoryTypeBits, hostVisible ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0))
-    return false;
+  m_memory = std::make_shared<VMemory>(*m_device, true, memReqs.size, memReqs.memoryTypeBits, hostVisible ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0);
 
-  err = vkBindBufferMemory(m_device->m_device, m_buffer, m_memory.m_memory, 0);
+  err = vkBindBufferMemory(m_device->m_device.Get(), m_buffer, (*m_memory).m_memory, 0);
   if (err < 0)
-    return false;
+    throw VGraphicsException("VBuffer failed in vkBindBufferMemory", err);
 
   // The following usages require a buffer view, we don't care for them now
   assert(!(m_usage & (VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)));
 
-  return true;
+  bufferDelete.Reset();
 }
 
-void VBuffer::Done()
+VBuffer::~VBuffer()
 {
-  m_memory.Done(*m_device);
-  vkDestroyBuffer(m_device->m_device, m_buffer, nullptr);
+  vkDestroyBuffer(m_device->m_device.Get(), m_buffer, nullptr);
 }
 
 void *VBuffer::Map()
 {
-  return m_memory.Map(*m_device);
+  return (*m_memory).Map();
 }
 
 void VBuffer::Unmap()
 {
-  m_memory.Unmap(*m_device);
+  (*m_memory).Unmap();
+}
+
+VShader::VShader(VDevice &device, size_t size, uint32_t *code): m_device(&device)
+{
+  VkShaderModuleCreateInfo shaderInfo;
+  shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shaderInfo.pNext = nullptr;
+  shaderInfo.flags = 0;
+  shaderInfo.codeSize = size;
+  shaderInfo.pCode = code;
+
+  VkResult err = vkCreateShaderModule(m_device->m_device.Get(), &shaderInfo, nullptr, &m_shader);
+  if (err < 0)
+    throw VGraphicsException("VShader failed in vkCreateShaderModule", err);
+}
+
+VShader::~VShader()
+{
+  vkDestroyShaderModule(m_device->m_device.Get(), m_shader, nullptr);
 }
