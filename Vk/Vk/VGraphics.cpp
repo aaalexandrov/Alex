@@ -6,6 +6,7 @@
 #include <iterator>
 #include <functional>
 #include <algorithm>
+#include <array>
 
 #pragma warning(push)
 #pragma warning(disable: 4477)
@@ -23,8 +24,8 @@
 VGraphics::VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID) :
   m_validate(validate),
   m_instance(VK_NULL_HANDLE, [](VkInstance &instance) { vkDestroyInstance(instance, nullptr); }, false),
-  m_surface(VK_NULL_HANDLE, [this](VkSurfaceKHR &surface) { vkDestroySurfaceKHR(m_instance.Get(), surface, nullptr); }, false),
-  m_debugReportCallback(VK_NULL_HANDLE, [this](VkDebugReportCallbackEXT &callback) { if (callback) m_DestroyDebugReportCallbackEXT(m_instance.Get(), callback, nullptr); }, false)
+  m_surface(VK_NULL_HANDLE, [this](VkSurfaceKHR &surface) { vkDestroySurfaceKHR(m_instance, surface, nullptr); }, false),
+  m_debugReportCallback(VK_NULL_HANDLE, [this](VkDebugReportCallbackEXT &callback) { if (callback) m_DestroyDebugReportCallbackEXT(m_instance, callback, nullptr); }, false)
 {
   InitInstance(appName, appVersion);
   InitPhysicalDevice();
@@ -32,8 +33,26 @@ VGraphics::VGraphics(bool validate, std::string const &appName, uint32_t appVers
   m_device.reset(new VDevice(*this));
 }
 
-VGraphics::~VGraphics()
+struct VPipelineCacheDataHeader {
+  uint32_t headerSize;
+  VkPipelineCacheHeaderVersion headerVersion;
+  uint32_t vendorID;
+  uint32_t deviceID;
+  uint8_t  pipelineCacheUUID[VK_UUID_SIZE];
+};
+
+bool VGraphics::IsPipelineCacheDataCompatible(std::vector<uint8_t> const &data)
 {
+  if (data.size() < sizeof(VPipelineCacheDataHeader))
+    return false;
+  VPipelineCacheDataHeader const *header = (VPipelineCacheDataHeader const *)data.data();
+  if (header->headerSize != sizeof(VPipelineCacheDataHeader) || 
+    header->headerVersion != VK_PIPELINE_CACHE_HEADER_VERSION_ONE ||
+    header->vendorID != m_physicalDeviceProps.vendorID || 
+    header->deviceID != m_physicalDeviceProps.deviceID ||
+    memcmp(header->pipelineCacheUUID, m_physicalDeviceProps.pipelineCacheUUID, VK_UUID_SIZE) != 0)
+    return false;
+  return true;
 }
 
 bool VGraphics::AddLayerName(std::vector<VkLayerProperties> const &layers, std::string const &name, std::vector<std::string> &layerNames)
@@ -178,7 +197,7 @@ void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
 }
 
 #define GET_INSTANCE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance.Get(), "vk"#proc)); \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance, "vk"#proc)); \
     if (!m_##proc) { \
       std::cerr << "GET_INSTANCE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
       throw VGraphicsException("GET_INSTANCE_PROC_ADDRESS failed in vkGetInstanceProcAddr", VK_RESULT_MAX_ENUM); \
@@ -186,7 +205,7 @@ void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
   } while (false)
 
 #define GET_DEVICE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device.Get(), "vk"#proc)); \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device, "vk"#proc)); \
     if (!m_##proc) { \
       std::cerr << "GET_DEVICE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
       throw VGraphicsException("GET_DEVICE_PROC_ADDRESS failed in vkGetDeviceProcAddr", VK_RESULT_MAX_ENUM); \
@@ -197,11 +216,11 @@ void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
 void VGraphics::InitPhysicalDevice()
 {
   uint32_t gpuCount;
-  VkResult err = vkEnumeratePhysicalDevices(m_instance.Get(), &gpuCount, nullptr);
+  VkResult err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);
   if (err < 0 || gpuCount == 0)
     throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkEnumeratePhysicalDevices", err);
   std::vector<VkPhysicalDevice> gpus(gpuCount);
-  err = vkEnumeratePhysicalDevices(m_instance.Get(), &gpuCount, gpus.data());
+  err = vkEnumeratePhysicalDevices(m_instance, &gpuCount, gpus.data());
   if (err < 0)
     throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkEnumeratePhysicalDevices", err);
 
@@ -219,7 +238,7 @@ void VGraphics::InitPhysicalDevice()
     dbgCreateInfo.pUserData = this;
     dbgCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
     VkDebugReportCallbackEXT callback = VK_NULL_HANDLE;
-    err = m_CreateDebugReportCallbackEXT(m_instance.Get(), &dbgCreateInfo, nullptr, &callback);
+    err = m_CreateDebugReportCallbackEXT(m_instance, &dbgCreateInfo, nullptr, &callback);
     if (err < 0)
       throw VGraphicsException("VGraphics::InitPhysicalDevice failed in CreateDebugReportCallbackEXT", err);
     m_debugReportCallback.Reset(std::move(callback));
@@ -251,7 +270,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
   surfInfo.flags = 0;
   surfInfo.hinstance = reinterpret_cast<HINSTANCE>(instanceID);
   surfInfo.hwnd = reinterpret_cast<HWND>(windowID);
-  err = vkCreateWin32SurfaceKHR(m_instance.Get(), &surfInfo, nullptr, &surface);
+  err = vkCreateWin32SurfaceKHR(m_instance, &surfInfo, nullptr, &surface);
 #elif defined(linux)
   VkXcbSurfaceCreateInfoKHR surfInfo;
   surfInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
@@ -259,7 +278,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
   surfInfo.flags = 0;
   surfInfo.connection = reinterpret_cast<xcb_connection_t*>(instanceID);
   surfInfo.window = reinterpret_cast<xcb_window_t>(windowID);
-  err = vkCreateXcbSurfaceKHR(m_instance.Get(), &surfInfo, nullptr, &surface);
+  err = vkCreateXcbSurfaceKHR(m_instance, &surfInfo, nullptr, &surface);
 #endif
   if (err < 0)
     throw VGraphicsException("VGraphics::InitSurface failed in vkCreateXXXXSurfaceKHR", err);
@@ -267,7 +286,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
 
   std::vector<VkBool32> supportsPresent(m_queueFamilies.size());
   for (int i = 0; i < supportsPresent.size(); ++i) {
-    err = m_GetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface.Get(), &supportsPresent[i]);
+    err = m_GetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent[i]);
     if (err < 0)
       throw VGraphicsException("VGraphics::InitSurface failed in m_GetPhysicalDeviceSurfaceSupportKHR", err);
   }
@@ -283,7 +302,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
     throw VGraphicsException("VGraphics::InitSurface failed to find a graphics queue family", err);
 
   std::vector<VkSurfaceFormatKHR> surfFormats;
-  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return m_GetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface.Get(), &s, f); });
+  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return m_GetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &s, f); });
   if (err < 0 || surfFormats.empty())
     throw VGraphicsException("VGraphics::InitSurface failed in GetPhysicalDeviceSurfaceFormatsKHR", err);
 
@@ -314,13 +333,14 @@ VCmdPool::VCmdPool(VDevice &device, bool synchronize, bool transient, bool reset
   poolInfo.pNext = nullptr;
   poolInfo.flags = (transient ? VK_COMMAND_POOL_CREATE_TRANSIENT_BIT : 0) | (resetBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0);
   poolInfo.queueFamilyIndex = m_device->m_graphics->m_graphicsQueueFamily;
-  VkResult err = vkCreateCommandPool(m_device->m_device.Get(), &poolInfo, nullptr, &m_pool);
-  assert(err >= 0);
+  VkResult err = vkCreateCommandPool(m_device->m_device, &poolInfo, nullptr, &m_pool);
+  if (err < 0)
+    throw VGraphicsException("VCmdPool failed in vkCreateCommandPool", err);
 }
 
 VCmdPool::~VCmdPool()
 {
-  vkDestroyCommandPool(m_device->m_device.Get(), m_pool, nullptr);
+  vkDestroyCommandPool(m_device->m_device, m_pool, nullptr);
 }
 
 void VCmdPool::InitBufferInfo(VkCommandBufferAllocateInfo &bufInfo, bool primary, uint32_t count)
@@ -338,8 +358,9 @@ VCmdBuffer *VCmdPool::CreateBuffer(bool primary)
   VkCommandBufferAllocateInfo bufInfo;
   InitBufferInfo(bufInfo, primary, 1);
   VkCommandBuffer buffer;
-  VkResult err = vkAllocateCommandBuffers(m_device->m_device.Get(), &bufInfo, &buffer);
-  assert(err >= 0);
+  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, &buffer);
+  if (err < 0)
+    throw VGraphicsException("VCmdPool::CreateBuffer failed in vkAllocateCommandBuffers", err);
   return new VCmdBuffer(*this, buffer);
 }
 
@@ -349,8 +370,9 @@ void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffe
   VkCommandBufferAllocateInfo bufInfo;
   InitBufferInfo(bufInfo, primary, count);
   std::vector<VkCommandBuffer> vkBuffers(count);
-  VkResult err = vkAllocateCommandBuffers(m_device->m_device.Get(), &bufInfo, vkBuffers.data());
-  assert(err >= 0);
+  VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, vkBuffers.data());
+  if (err < 0)
+    throw VGraphicsException("VCmdPool::CreateBuffers failed in vkAllocateCommandBuffers", err);
   for (auto b : vkBuffers)
     buffers.push_back(new VCmdBuffer(*this, b));
 }
@@ -362,7 +384,7 @@ VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer) : m_pool(&pool), 
 VCmdBuffer::~VCmdBuffer()
 {
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
-  vkFreeCommandBuffers(m_pool->m_device->m_device.Get(), m_pool->m_pool, 1, &m_buffer);
+  vkFreeCommandBuffers(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_buffer);
 }
 
 void VCmdBuffer::SetUseSemaphore(bool use, VkPipelineStageFlags stages)
@@ -421,7 +443,7 @@ void VCmdBuffer::Begin(bool simultaneous)
   beginInfo.flags = simultaneous ? VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT : 0;
   beginInfo.pInheritanceInfo = &inheritInfo;
 
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
 
   VkResult err = vkBeginCommandBuffer(m_buffer, &beginInfo);
   if (err < 0)
@@ -433,7 +455,7 @@ void VCmdBuffer::Begin(bool simultaneous)
 void VCmdBuffer::End()
 {
   assert(m_begun);
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
   VkResult err = vkEndCommandBuffer(m_buffer);
   if (err < 0)
     throw VGraphicsException("VCmdBuffer::End failed in vkEndCommandBuffer", err);
@@ -443,7 +465,7 @@ void VCmdBuffer::End()
 
 void VCmdBuffer::Reset(bool releaseResources)
 {
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
   VkResult err = vkResetCommandBuffer(m_buffer, releaseResources ? VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT : 0);
   if (err < 0)
     throw VGraphicsException("VCmdBuffer::Reset failed in vkResetCommandBuffer", err);
@@ -467,7 +489,7 @@ void VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFla
   imgBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   imgBarrier.subresourceRange = { aspectFlags, 0, 1, 0, 1 };
 
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
 
   vkCmdPipelineBarrier(m_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgBarrier);
 
@@ -485,7 +507,7 @@ void VCmdBuffer::CopyImage(VImage &src, VImage &dst)
   copy.dstOffset = { 0, 0, 0 };
   copy.extent = { std::min(src.m_size.width, dst.m_size.width), std::min(src.m_size.height, dst.m_size.height), std::min(src.m_size.depth, dst.m_size.depth) };
 
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
 
   vkCmdCopyImage(m_buffer, src.m_image, src.m_layout, dst.m_image, dst.m_layout, 1, &copy);
 }
@@ -499,16 +521,12 @@ void VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint
   copy.srcOffset = srcOffset;
   copy.dstOffset = dstOffset;
 
-  std::lock_guard<ConditionalLock>(m_pool->m_lock);
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
 
   vkCmdCopyBuffer(m_buffer, src.m_buffer, dst.m_buffer, 1, &copy);
 }
 
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
-{
-}
-
-VQueue::~VQueue()
 {
 }
 
@@ -560,10 +578,12 @@ VDevice::VDevice(VGraphics &graphics) :
   m_swapchain.reset(new VSwapchain(*this));
   InitDepth();
   SubmitInitCommands();
-}
-
-VDevice::~VDevice()
-{
+  m_renderPass.reset(new VRenderPass(*this));
+  m_pipelineCache.reset(new VPipelineCache(*this));
+  m_descriptorPool.reset(new VDescriptorPool(*this, true, 256));
+  InitViewportState();
+  m_multisampleState = std::make_shared<VMultisampleState>();
+  m_dynamicState = std::make_shared<VDynamicState>();
 }
 
 void VDevice::InitCapabilities()
@@ -625,7 +645,7 @@ void VDevice::InitDevice()
   m_device.Reset(std::move(device));
 
   VkQueue queue;
-  vkGetDeviceQueue(m_device.Get(), m_graphics->m_graphicsQueueFamily, 0, &queue);
+  vkGetDeviceQueue(m_device, m_graphics->m_graphicsQueueFamily, 0, &queue);
   m_queue.reset(new VQueue(*this, true, queue));
 
   GET_DEVICE_PROC_ADDRESS(CreateSwapchainKHR);
@@ -638,7 +658,7 @@ void VDevice::InitDevice()
 void VDevice::InitDepth()
 {
   VkSurfaceCapabilitiesKHR surfaceCaps;
-  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface.Get(), &surfaceCaps);
+  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VDevice::InitDepth failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
@@ -653,6 +673,11 @@ void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
   m_cmdBuffer.reset(m_cmdPool->CreateBuffer(true));
 }
 
+void VDevice::InitViewportState()
+{
+  VkExtent3D &size = m_swapchain->m_images[0]->m_size;
+  m_viewportState = std::make_shared<VViewportState>(size.width, size.height);
+}
 
 void VDevice::SubmitInitCommands()
 {
@@ -687,9 +712,9 @@ VImage *VDevice::LoadVImage(std::string const &filename)
 
     imgRGBA.permute_axes("cxyz");
 
-    void *mem = m_staging->Map();
+    void *mem = m_stagingImage->Map();
     memcpy(mem, imgRGBA.data(), imgRGBA.size());
-    m_staging->Unmap();
+    m_stagingImage->Unmap();
 
   } catch (cimg_library::CImgException &) {
     return nullptr;
@@ -698,13 +723,13 @@ VImage *VDevice::LoadVImage(std::string const &filename)
   VkFormat format = VImage::FormatFromComponents(components);
   std::unique_ptr<VImage> vimg(new VImage(*this, true, format, width, height, depth));
 
-  if (m_staging->m_layout != VK_IMAGE_LAYOUT_GENERAL)
-    m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+  if (m_stagingImage->m_layout != VK_IMAGE_LAYOUT_GENERAL)
+    m_cmdBuffer->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
 
   m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
-  m_cmdBuffer->CopyImage(*m_staging, *vimg);
+  m_cmdBuffer->CopyImage(*m_stagingImage, *vimg);
   m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-  m_cmdBuffer->SetImageLayout(*m_staging, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT);
+  m_cmdBuffer->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT);
 
   SubmitInitCommands();
 
@@ -713,17 +738,18 @@ VImage *VDevice::LoadVImage(std::string const &filename)
 
 VBuffer *VDevice::LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data)
 {
-  VBuffer staging(*this, false, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
-
-  void *stagingMem = staging.Map();
-  memcpy(stagingMem, data, size);
-  staging.Unmap();
-
   std::unique_ptr<VBuffer> buffer = std::make_unique<VBuffer>(*this, false, size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
+  if (data) {
+    UpdateStagingBuffer(size);
 
-  m_cmdBuffer->CopyBuffer(staging, *buffer);
-  SubmitInitCommands();
+    void *stagingMem = m_stagingBuffer->Map();
+    memcpy(stagingMem, data, size);
+    m_stagingBuffer->Unmap();
 
+
+    m_cmdBuffer->CopyBuffer(*m_stagingBuffer, *buffer);
+    SubmitInitCommands();
+  }
   return buffer.release();
 }
 
@@ -734,43 +760,67 @@ VShader *VDevice::LoadVShader(std::string const &filename)
   code.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
   if (code.size() == 0 || code.size() % 4 != 0)
     throw VGraphicsException("VDevice::LoadVShader failed because loaded shader code is invalid", VK_RESULT_MAX_ENUM);
-  VShader *shader = new VShader(*this, code.size(), (uint32_t*)code.data());
+
+  VkShaderStageFlagBits stageBits = {};
+  if (filename.find(".vert") >= 0)
+    stageBits = VK_SHADER_STAGE_VERTEX_BIT;
+  else if (filename.find(".frag") >= 0)
+    stageBits = VK_SHADER_STAGE_FRAGMENT_BIT;
+  else if (filename.find(".comp") >= 0)
+    stageBits = VK_SHADER_STAGE_COMPUTE_BIT;
+  else if (filename.find(".geom") >= 0)
+    stageBits = VK_SHADER_STAGE_GEOMETRY_BIT;
+  else if (filename.find(".tesc") >= 0)
+    stageBits = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+  else if (filename.find(".tese") >= 0)
+    stageBits = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+  if (!stageBits)
+    throw VGraphicsException("VDevice::LoadVShader failed to recongize shader file extension", VK_RESULT_MAX_ENUM);
+
+  VShader *shader = new VShader(*this, stageBits, code.size(), (uint32_t*)code.data());
   return shader;
 }
 
 void VDevice::UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components)
 {
-  if (!m_staging || m_staging->m_size.width < width || m_staging->m_size.height < height || m_staging->m_size.depth < depth)
-    m_staging.reset(new VImage(*this, true, VK_FORMAT_R8G8B8A8_UNORM, width, height, depth, 1, 1, true));
+  if (!m_stagingImage || m_stagingImage->m_size.width < width || m_stagingImage->m_size.height < height || m_stagingImage->m_size.depth < depth)
+    m_stagingImage.reset(new VImage(*this, true, VK_FORMAT_R8G8B8A8_UNORM, width, height, depth, 1, 1, true));
 }
 
 void VDevice::FreeStagingImage()
 {
-  m_staging.reset();
+  m_stagingImage.reset();
+}
+
+void VDevice::UpdateStagingBuffer(uint64_t size)
+{
+  if (!m_stagingBuffer || m_stagingBuffer->m_size < size)
+    m_stagingBuffer.reset(new VBuffer(*this, true, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true));
+}
+
+void VDevice::FreeStagingBuffer()
+{
+  m_stagingBuffer.reset();
 }
 
 VSwapchain::VSwapchain(VDevice &device) : 
   m_device(&device), 
-  m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {m_device->m_DestroySwapchainKHR(m_device->m_device.Get(), swapchain, nullptr);}, false)
+  m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {m_device->m_DestroySwapchainKHR(m_device->m_device, swapchain, nullptr);}, false)
 {
   InitSwapchain();
   InitImages();
-}
-
-VSwapchain::~VSwapchain()
-{
 }
 
 void VSwapchain::InitSwapchain()
 {
   VkResult err;
   VkSurfaceCapabilitiesKHR surfaceCaps;
-  err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface.Get(), &surfaceCaps);
+  err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
   std::vector<VkPresentModeKHR> presentModes;
-  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return m_device->m_graphics->m_GetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface.Get(), &s, m); });
+  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return m_device->m_graphics->m_GetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &s, m); });
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfacePresentModesKHR", err);
 
@@ -788,7 +838,7 @@ void VSwapchain::InitSwapchain()
   chainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   chainInfo.pNext = nullptr;
   chainInfo.flags = 0;
-  chainInfo.surface = m_device->m_graphics->m_surface.Get();
+  chainInfo.surface = m_device->m_graphics->m_surface;
   chainInfo.minImageCount = surfaceCaps.minImageCount + 1;
   chainInfo.imageFormat = m_device->m_graphics->m_surfaceFormat.format;
   chainInfo.imageColorSpace = m_device->m_graphics->m_surfaceFormat.colorSpace;
@@ -805,7 +855,7 @@ void VSwapchain::InitSwapchain()
   chainInfo.oldSwapchain = VK_NULL_HANDLE;
 
   VkSwapchainKHR swapchain;
-  err = m_device->m_CreateSwapchainKHR(m_device->m_device.Get(), &chainInfo, nullptr, &swapchain);
+  err = m_device->m_CreateSwapchainKHR(m_device->m_device, &chainInfo, nullptr, &swapchain);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in CreateSwapchainKHR", err);
   m_swapchain.Reset(std::move(swapchain));
@@ -814,7 +864,7 @@ void VSwapchain::InitSwapchain()
 void VSwapchain::InitImages()
 {
   std::vector<VkImage> images;
-  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device.Get(), m_swapchain.Get(), &s, i); });
+  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitImages failed in GetSwapchainImagesKHR", err);
 
@@ -826,7 +876,9 @@ void VSwapchain::InitImages()
 }
 
 VImage::VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, uint32_t arrayLayers, bool linear) :
-  m_device(&device)
+  m_device(&device),
+  m_image(VK_NULL_HANDLE, [this](VkImage &image) { vkDestroyImage(m_device->m_device, image, nullptr); }, false),
+  m_view(VK_NULL_HANDLE, [this](VkImageView &view) { vkDestroyImageView(m_device->m_device, view, nullptr); }, false)
 {
   m_format = format;
   m_layout = linear ? VK_IMAGE_LAYOUT_PREINITIALIZED : VK_IMAGE_LAYOUT_UNDEFINED;
@@ -849,39 +901,57 @@ VImage::VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t widt
   imgInfo.queueFamilyIndexCount = 0;
   imgInfo.pQueueFamilyIndices = nullptr;
 
-  VkResult err = vkCreateImage(m_device->m_device.Get(), &imgInfo, nullptr, &m_image);
+  VkImage image = VK_NULL_HANDLE;
+  VkResult err = vkCreateImage(m_device->m_device, &imgInfo, nullptr, &image);
   if (err < 0)
     throw VGraphicsException("VImage failed in vkCreateImage", err);
-
-  OnExit imageDelete([this]() { vkDestroyImage(m_device->m_device.Get(), m_image, nullptr); });
+  m_image.Reset(std::move(image));
 
   VkMemoryRequirements imgMem;
-  vkGetImageMemoryRequirements(m_device->m_device.Get(), m_image, &imgMem);
+  vkGetImageMemoryRequirements(m_device->m_device, m_image, &imgMem);
 
-  m_memory = std::make_shared<VMemory>(*m_device, synchronize, imgMem.size, imgMem.memoryTypeBits, linear ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0);
+  m_memory = std::make_shared<VMemory>(*m_device, synchronize, imgMem.size, imgMem.memoryTypeBits, linear ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : 0);
 
-  err = vkBindImageMemory(m_device->m_device.Get(), m_image, (*m_memory).m_memory, 0);
+  err = vkBindImageMemory(m_device->m_device, m_image, (*m_memory).m_memory, 0);
   if (err < 0)
     throw VGraphicsException("VImage failed in vkBindImageMemory", err);
 
   if (!linear)
-    Init(m_image, format, ViewTypeFromDimensions(width, height, depth, arrayLayers));
-
-  imageDelete.Reset();
+    Init(VK_NULL_HANDLE, format, ViewTypeFromDimensions(width, height, depth, arrayLayers));
 }
 
 VImage::VImage(VDevice &device, VkImage image, VkFormat format, VkImageViewType imgType) :
-  m_device(&device)
+  m_device(&device),
+  m_image(VK_NULL_HANDLE, [this](VkImage &image) { vkDestroyImage(m_device->m_device, image, nullptr); }, false),
+  m_view(VK_NULL_HANDLE, [this](VkImageView &view) { vkDestroyImageView(m_device->m_device, view, nullptr); }, false)
 {
   Init(image, format, imgType);
 }
 
-VImage::~VImage()
+void VImage::Init(VkImage image, VkFormat format, VkImageViewType imgType)
 {
-  if (m_view) 
-    vkDestroyImageView(m_device->m_device.Get(), m_view, nullptr);
-  if (m_memory) // if we have memory, we own the image so we need to destroy it
-    vkDestroyImage(m_device->m_device.Get(), m_image, nullptr);
+  if (image) {
+    assert(!m_memory);
+    m_image.Reset(std::move(image));
+    m_image.Release(); // do not delete in image we were passed on construction, we do not own that
+  }
+  m_format = format;
+
+  VkImageViewCreateInfo viewInfo;
+  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewInfo.pNext = nullptr;
+  viewInfo.flags = 0;
+  viewInfo.image = m_image;
+  viewInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+  viewInfo.format = format;
+  viewInfo.viewType = imgType;
+  viewInfo.subresourceRange = { AspectFromFormat(format), 0, 1, 0, 1 };
+
+  VkImageView view = VK_NULL_HANDLE;
+  VkResult err = vkCreateImageView(m_device->m_device, &viewInfo, nullptr, &view);
+  if (err < 0)
+    throw VGraphicsException("VImage failed in vkCreateImageView", err);
+  m_view.Reset(std::move(view));
 }
 
 VkImageUsageFlags VImage::UsageFromFormat(VkFormat format)
@@ -943,26 +1013,6 @@ VkImageViewType VImage::ViewTypeFromDimensions(uint32_t width, uint32_t height, 
     return VK_IMAGE_VIEW_TYPE_3D;
 }
 
-void VImage::Init(VkImage image, VkFormat format, VkImageViewType imgType)
-{
-  m_format = format;
-  m_image = image;
-
-  VkImageViewCreateInfo viewInfo;
-  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.pNext = nullptr;
-  viewInfo.flags = 0;
-  viewInfo.image = m_image;
-  viewInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-  viewInfo.format = format;
-  viewInfo.viewType = imgType;
-  viewInfo.subresourceRange = { AspectFromFormat(format), 0, 1, 0, 1 };
-
-  VkResult err = vkCreateImageView(m_device->m_device.Get(), &viewInfo, nullptr, &m_view);
-  if (err < 0)
-    throw VGraphicsException("VImage failed in vkCreateImageView", err);
-}
-
 void *VImage::Map()
 {
   return (*m_memory).Map();
@@ -980,14 +1030,14 @@ VSemaphore::VSemaphore(VDevice &device, VkPipelineStageFlags stages) : m_device(
   semInfo.pNext = nullptr;
   semInfo.flags = 0;
 
-  VkResult err = vkCreateSemaphore(m_device->m_device.Get(), &semInfo, nullptr, &m_semaphore);
+  VkResult err = vkCreateSemaphore(m_device->m_device, &semInfo, nullptr, &m_semaphore);
   if (err < 0)
     throw VGraphicsException("VSemaphore failed in vkCreateSemaphore", err);
 }
 
 VSemaphore::~VSemaphore()
 {
-  vkDestroySemaphore(m_device->m_device.Get(), m_semaphore, nullptr);
+  vkDestroySemaphore(m_device->m_device, m_semaphore, nullptr);
 }
 
 VFence::VFence(VDevice &device, bool signaled) : m_device(&device)
@@ -997,30 +1047,30 @@ VFence::VFence(VDevice &device, bool signaled) : m_device(&device)
   fenceInfo.pNext = nullptr;
   fenceInfo.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
-  VkResult err = vkCreateFence(m_device->m_device.Get(), &fenceInfo, nullptr, &m_fence);
+  VkResult err = vkCreateFence(m_device->m_device, &fenceInfo, nullptr, &m_fence);
   if (err < 0)
     throw VGraphicsException("VFence failed in vkCreateFence", err);
 }
 
 VFence::~VFence()
 {
-  vkDestroyFence(m_device->m_device.Get(), m_fence, nullptr);
+  vkDestroyFence(m_device->m_device, m_fence, nullptr);
 }
 
 bool VFence::IsSignaled()
 {
-  VkResult err = vkGetFenceStatus(m_device->m_device.Get(), m_fence);
+  VkResult err = vkGetFenceStatus(m_device->m_device, m_fence);
   return err == VK_SUCCESS;
 }
 
 void VFence::Reset()
 {
-  vkResetFences(m_device->m_device.Get(), 1, &m_fence);
+  vkResetFences(m_device->m_device, 1, &m_fence);
 }
 
 bool VFence::Wait(uint64_t nsTimeout)
 {
-  VkResult err = vkWaitForFences(m_device->m_device.Get(), 1, &m_fence, true, nsTimeout);
+  VkResult err = vkWaitForFences(m_device->m_device, 1, &m_fence, true, nsTimeout);
   return err == VK_SUCCESS;
 }
 
@@ -1046,14 +1096,14 @@ VSampler::VSampler(VDevice &device, VkSamplerAddressMode addressMode, VkFilter m
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 0.0f;
 
-  VkResult err = vkCreateSampler(m_device->m_device.Get(), &samplerInfo, nullptr, &m_sampler);
+  VkResult err = vkCreateSampler(m_device->m_device, &samplerInfo, nullptr, &m_sampler);
   if (err < 0)
     throw VGraphicsException("VSampler failed in vkCreateSampler", err);
 }
 
 VSampler::~VSampler()
 {
-  vkDestroySampler(m_device->m_device.Get(), m_sampler, nullptr);
+  vkDestroySampler(m_device->m_device, m_sampler, nullptr);
 }
 
 VMemory::VMemory(VDevice &device, bool synchronize, uint64_t size, uint32_t validMemoryTypes, VkMemoryPropertyFlags memFlags) : 
@@ -1065,7 +1115,7 @@ VMemory::VMemory(VDevice &device, bool synchronize, uint64_t size, uint32_t vali
   memInfo.pNext = nullptr;
   memInfo.allocationSize = size;
   memInfo.memoryTypeIndex = m_device->m_graphics->GetMemoryTypeIndex(validMemoryTypes, memFlags);
-  VkResult err = vkAllocateMemory(m_device->m_device.Get(), &memInfo, nullptr, &m_memory);
+  VkResult err = vkAllocateMemory(m_device->m_device, &memInfo, nullptr, &m_memory);
   if (err < 0)
     throw VGraphicsException("VMemory: failed in vkAllocateMemory", err);
   m_size = size;
@@ -1074,14 +1124,14 @@ VMemory::VMemory(VDevice &device, bool synchronize, uint64_t size, uint32_t vali
 VMemory::~VMemory()
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
-  vkFreeMemory(m_device->m_device.Get(), m_memory, nullptr);
+  vkFreeMemory(m_device->m_device, m_memory, nullptr);
 }
 
 void *VMemory::Map(uint64_t offset, uint64_t size)
 {
   void *mapped;
   std::lock_guard<ConditionalLock> lock(m_lock);
-  VkResult err = vkMapMemory(m_device->m_device.Get(), m_memory, offset, size, 0, &mapped);
+  VkResult err = vkMapMemory(m_device->m_device, m_memory, offset, size, 0, &mapped);
   if (err < 0)
     throw VGraphicsException("VMemory::Map failed in vkMapMemory", err);
   return mapped;
@@ -1090,11 +1140,12 @@ void *VMemory::Map(uint64_t offset, uint64_t size)
 void VMemory::Unmap()
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
-  vkUnmapMemory(m_device->m_device.Get(), m_memory);
+  vkUnmapMemory(m_device->m_device, m_memory);
 }
 
 VBuffer::VBuffer(VDevice &device, bool synchronize, uint64_t size, VkBufferUsageFlags usage, bool hostVisible) : 
-  m_device(&device)
+  m_device(&device),
+  m_buffer(VK_NULL_HANDLE, [this](VkBuffer &buffer) { vkDestroyBuffer(m_device->m_device, buffer, nullptr); }, false)
 {
   m_usage = usage;
   m_size = size;
@@ -1109,29 +1160,23 @@ VBuffer::VBuffer(VDevice &device, bool synchronize, uint64_t size, VkBufferUsage
   bufInfo.queueFamilyIndexCount = 0;
   bufInfo.pQueueFamilyIndices = nullptr;
 
-  VkResult err = vkCreateBuffer(m_device->m_device.Get(), &bufInfo, nullptr, &m_buffer);
+  VkBuffer buffer = VK_NULL_HANDLE;
+  VkResult err = vkCreateBuffer(m_device->m_device, &bufInfo, nullptr, &buffer);
   if (err < 0)
     throw VGraphicsException("VBuffer failed in vkCreateBuffer", err);
-  OnExit bufferDelete([this]() { vkDestroyBuffer(m_device->m_device.Get(), m_buffer, nullptr); });
+  m_buffer.Reset(std::move(buffer));
 
   VkMemoryRequirements memReqs;
-  vkGetBufferMemoryRequirements(m_device->m_device.Get(), m_buffer, &memReqs);
+  vkGetBufferMemoryRequirements(m_device->m_device, m_buffer, &memReqs);
 
-  m_memory = std::make_shared<VMemory>(*m_device, true, memReqs.size, memReqs.memoryTypeBits, hostVisible ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0);
+  m_memory = std::make_shared<VMemory>(*m_device, true, memReqs.size, memReqs.memoryTypeBits, hostVisible ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : 0);
 
-  err = vkBindBufferMemory(m_device->m_device.Get(), m_buffer, (*m_memory).m_memory, 0);
+  err = vkBindBufferMemory(m_device->m_device, m_buffer, (*m_memory).m_memory, 0);
   if (err < 0)
     throw VGraphicsException("VBuffer failed in vkBindBufferMemory", err);
 
   // The following usages require a buffer view, we don't care for them now
   assert(!(m_usage & (VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)));
-
-  bufferDelete.Reset();
-}
-
-VBuffer::~VBuffer()
-{
-  vkDestroyBuffer(m_device->m_device.Get(), m_buffer, nullptr);
 }
 
 void *VBuffer::Map()
@@ -1144,7 +1189,9 @@ void VBuffer::Unmap()
   (*m_memory).Unmap();
 }
 
-VShader::VShader(VDevice &device, size_t size, uint32_t *code): m_device(&device)
+VShader::VShader(VDevice &device, VkShaderStageFlagBits stageBits, size_t size, uint32_t *code): 
+  m_device(&device),
+  m_stageBits(stageBits)
 {
   VkShaderModuleCreateInfo shaderInfo;
   shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1153,12 +1200,576 @@ VShader::VShader(VDevice &device, size_t size, uint32_t *code): m_device(&device
   shaderInfo.codeSize = size;
   shaderInfo.pCode = code;
 
-  VkResult err = vkCreateShaderModule(m_device->m_device.Get(), &shaderInfo, nullptr, &m_shader);
+  VkResult err = vkCreateShaderModule(m_device->m_device, &shaderInfo, nullptr, &m_shader);
   if (err < 0)
     throw VGraphicsException("VShader failed in vkCreateShaderModule", err);
 }
 
 VShader::~VShader()
 {
-  vkDestroyShaderModule(m_device->m_device.Get(), m_shader, nullptr);
+  vkDestroyShaderModule(m_device->m_device, m_shader, nullptr);
+}
+
+void VShader::FillPipelineInfo(VkPipelineShaderStageCreateInfo &info)
+{
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.module = m_shader;
+  info.stage = m_stageBits;
+  info.pName = "main";
+  info.pSpecializationInfo = nullptr;
+}
+
+VDescriptorSetLayout::VDescriptorSetLayout(VDevice &device) :
+  m_device(&device)
+{
+  VkDescriptorSetLayoutBinding uniformBinding;
+  uniformBinding.binding = 0;
+  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBinding.descriptorCount = 1;
+  uniformBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+  uniformBinding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo layout;
+  layout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layout.pNext = nullptr;
+  layout.flags = 0;
+  layout.bindingCount = 1;
+  layout.pBindings = &uniformBinding;
+
+  VkResult err = vkCreateDescriptorSetLayout(m_device->m_device, &layout, nullptr, &m_layout);
+  if (err < 0)
+    throw VGraphicsException("VDescriptorSetLayout failed in vkCreateDescriptorSetLayout", err);
+}
+
+VDescriptorSetLayout::~VDescriptorSetLayout()
+{
+  vkDestroyDescriptorSetLayout(m_device->m_device, m_layout, nullptr);
+}
+
+VPipelineLayout::VPipelineLayout(VDevice &device, std::vector<std::shared_ptr<VDescriptorSetLayout>> const &setLayouts) :
+  m_device(&device),
+  m_setLayouts(setLayouts.begin(), setLayouts.end())
+{
+  std::vector<VkDescriptorSetLayout> vkSetLayouts(m_setLayouts.size());
+  for (int i = 0; i < m_setLayouts.size(); ++i)
+    vkSetLayouts[i] = m_setLayouts[i]->m_layout;
+
+  VkPipelineLayoutCreateInfo layoutInfo;
+  layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  layoutInfo.pNext = nullptr;
+  layoutInfo.flags = 0;
+  layoutInfo.setLayoutCount = (uint32_t)vkSetLayouts.size();
+  layoutInfo.pSetLayouts = vkSetLayouts.data();
+  layoutInfo.pushConstantRangeCount = 0;
+  layoutInfo.pPushConstantRanges = nullptr;
+
+  VkResult err = vkCreatePipelineLayout(m_device->m_device, &layoutInfo, nullptr, &m_layout);
+  if (err < 0)
+    throw VGraphicsException("VPipelineLayout failed in vkCreatePipelineLayout", err);
+}
+
+VPipelineLayout::~VPipelineLayout()
+{
+  vkDestroyPipelineLayout(m_device->m_device, m_layout, nullptr);
+}
+
+void VVertexInfo::AddAttribute(VkFormat format, uint32_t offset)
+{
+  m_attr.resize(m_attr.size() + 1);
+  m_attr.back().binding = 0;
+  m_attr.back().location = m_attr.size() == 1 ? 0 : m_attr[m_attr.size() - 2].location + 1;
+  m_attr.back().format = format;
+  m_attr.back().offset = offset;
+}
+
+void VVertexInfo::FillPipelineInfo(VkPipelineVertexInputStateCreateInfo &info)
+{
+  assert(m_stride > 0);
+  // no support for instancing or separate buffers for different attributes yet, everything goes in a single binding with per vertex input rate
+  m_binding.binding = 0;
+  m_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+  m_binding.stride = m_stride;
+
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.vertexBindingDescriptionCount = 1;
+  info.pVertexBindingDescriptions = &m_binding;
+  info.vertexAttributeDescriptionCount = static_cast<uint32_t>(m_attr.size());
+  info.pVertexAttributeDescriptions = m_attr.data();
+}
+
+VVertexBuffer::VVertexBuffer(VDevice &device, uint64_t size, void *data, std::shared_ptr<VVertexInfo> vertexInfo) :
+  m_vertexInfo(std::move(vertexInfo)),
+  m_buffer(device.LoadVBuffer(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, data))
+{
+}
+
+VIndexBuffer::VIndexBuffer(VDevice &device, uint64_t count, uint16_t *indices) :
+  m_type(VK_INDEX_TYPE_UINT16),
+  m_buffer(device.LoadVBuffer(count * sizeof(uint16_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indices))
+{
+}
+
+VIndexBuffer::VIndexBuffer(VDevice &device, uint64_t count, uint32_t *indices) :
+  m_type(VK_INDEX_TYPE_UINT32),
+  m_buffer(device.LoadVBuffer(count * sizeof(uint32_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indices))
+{
+}
+
+uint32_t VIndexBuffer::TypeSize(VkIndexType type)
+{
+  switch (type) {
+    case VK_INDEX_TYPE_UINT16:
+      return sizeof(uint16_t);
+    case VK_INDEX_TYPE_UINT32:
+      return sizeof(uint32_t);
+    default:
+      assert(!"Invalid index type");
+      return 0;
+  }
+}
+
+VMaterial::VMaterial(std::vector<std::shared_ptr<VShader>> const &shaders) :
+  m_shaders(shaders),
+  m_blendState(std::make_shared<VBlendState>(VBlendState::DISABLED)),
+  m_depthStencilState(std::make_shared<VDepthStencilState>()),
+  m_rasterizationState(std::make_shared<VRasterizationState>()),
+  m_multisampleState(GetDevice().m_multisampleState),
+  m_viewportState(GetDevice().m_viewportState),
+  m_dynamicState(GetDevice().m_dynamicState)
+{
+  CreatePipelineLayout();
+}
+
+void VMaterial::CreatePipelineLayout()
+{
+  std::vector<std::shared_ptr<VDescriptorSetLayout>> descriptorSets;
+  // just one set with a single uniform buffer shared by all stages
+  descriptorSets.push_back(std::make_shared<VDescriptorSetLayout>(GetDevice()));
+  m_pipelineLayout.reset(new VPipelineLayout(GetDevice(), descriptorSets));
+}
+
+VGeometry::VGeometry(VkPrimitiveTopology topology, std::shared_ptr<VIndexBuffer> indexBuffer, std::shared_ptr<VVertexBuffer> vertexBuffer) :
+  m_topology(topology),
+  m_indexBuffer(indexBuffer),
+  m_vertexBuffer(vertexBuffer)
+{
+}
+
+void VGeometry::FillPipelineInfo(VkPipelineInputAssemblyStateCreateInfo &info)
+{
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.topology = m_topology;
+  info.primitiveRestartEnable = false;
+}
+
+void VModel::CreatePipeline(uint32_t subpass)
+{
+  std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+  shaderStages.resize(m_material->m_shaders.size());
+  for (int i = 0; i < shaderStages.size(); ++i)
+    m_material->m_shaders[i]->FillPipelineInfo(shaderStages[i]);
+
+  VkPipelineVertexInputStateCreateInfo vertexInput;
+  m_geometry->m_vertexBuffer->m_vertexInfo->FillPipelineInfo(vertexInput);
+
+  VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+  m_geometry->FillPipelineInfo(inputAssembly);
+
+  VkPipelineViewportStateCreateInfo viewportState;
+  m_material->m_viewportState->FillPilelineInfo(viewportState);
+
+  VkPipelineRasterizationStateCreateInfo rasterizationState;
+  m_material->m_rasterizationState->FillPipelineInfo(rasterizationState);
+
+  VkPipelineMultisampleStateCreateInfo multisampleState;
+  m_material->m_multisampleState->FillPipelineState(multisampleState);
+
+  VkPipelineDepthStencilStateCreateInfo depthStencilState;
+  m_material->m_depthStencilState->FillPipelineState(depthStencilState);
+
+  VkPipelineColorBlendStateCreateInfo blendState;
+  m_material->m_blendState->FillPipelineState(blendState);
+
+  VkPipelineDynamicStateCreateInfo dynamicState;
+  m_material->m_dynamicState->FillPipelineState(dynamicState);
+
+  VDevice *device = m_geometry->m_vertexBuffer->m_buffer->m_device;
+
+  VkGraphicsPipelineCreateInfo pipelineInfo;
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+  pipelineInfo.pNext = nullptr;
+  pipelineInfo.flags = 0;
+  pipelineInfo.stageCount = (uint32_t)shaderStages.size();
+  pipelineInfo.pStages = shaderStages.data();
+  pipelineInfo.pVertexInputState = &vertexInput;
+  pipelineInfo.pInputAssemblyState = &inputAssembly;
+  pipelineInfo.pTessellationState = nullptr;
+  pipelineInfo.pViewportState = &viewportState;
+  pipelineInfo.pRasterizationState = &rasterizationState;
+  pipelineInfo.pMultisampleState = &multisampleState;
+  pipelineInfo.pDepthStencilState = &depthStencilState;
+  pipelineInfo.pColorBlendState = &blendState;
+  pipelineInfo.pDynamicState = &dynamicState;
+  pipelineInfo.layout = m_material->m_pipelineLayout->m_layout;
+  pipelineInfo.renderPass = device->m_renderPass->m_renderPass;
+  pipelineInfo.subpass = subpass;
+  pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+  pipelineInfo.basePipelineIndex = -1;
+
+  VkPipeline pipeline = VK_NULL_HANDLE;
+  VkResult err = vkCreateGraphicsPipelines(device->m_device, device->m_pipelineCache->m_cache, 1, &pipelineInfo, nullptr, &pipeline);
+  if (err < 0)
+    throw VGraphicsException("VModel::CreatePipeline failed in vkCreateGraphicsPipelines", err);
+
+  m_pipeline.reset(new VGraphicsPipeline(*device->m_pipelineCache, pipeline));
+}
+
+VViewportState::VViewportState(uint32_t width, uint32_t height)
+{
+  SetSize(width, height);
+}
+
+void VViewportState::SetSize(uint32_t width, uint32_t height)
+{
+  m_viewport.x = 0.0f;
+  m_viewport.y = 0.0f;
+  m_viewport.width = (float)width;
+  m_viewport.height = (float)height;
+  m_viewport.minDepth = 0.0f;
+  m_viewport.maxDepth = 1.0f;
+
+  m_scissor.offset = { 0, 0 };
+  m_scissor.extent = { width, height };
+}
+
+void VViewportState::FillPilelineInfo(VkPipelineViewportStateCreateInfo &info)
+{
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.viewportCount = 1;
+  info.pViewports = &m_viewport;
+  info.scissorCount = 1;
+  info.pScissors = &m_scissor;
+}
+
+VRasterizationState::VRasterizationState()
+{
+  m_rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  m_rasterization.pNext = nullptr;
+  m_rasterization.flags = 0;
+  m_rasterization.depthClampEnable = VK_FALSE;
+  m_rasterization.rasterizerDiscardEnable = VK_FALSE;
+  m_rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+  m_rasterization.cullMode = VK_CULL_MODE_BACK_BIT;
+  m_rasterization.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  m_rasterization.depthBiasEnable = VK_FALSE;
+  m_rasterization.depthBiasConstantFactor = 0.0f;
+  m_rasterization.depthBiasClamp = 0.0f;
+  m_rasterization.depthBiasSlopeFactor = 0.0f;
+  m_rasterization.lineWidth = 1.0f;
+}
+
+void VRasterizationState::FillPipelineInfo(VkPipelineRasterizationStateCreateInfo &info)
+{
+  info = m_rasterization;
+}
+
+VMultisampleState::VMultisampleState()
+{
+  m_multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  m_multisample.pNext = nullptr;
+  m_multisample.flags = 0;
+  m_multisample.sampleShadingEnable = VK_FALSE;
+  m_multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  m_multisample.minSampleShading = 1.0f;
+  m_multisample.pSampleMask = nullptr;
+  m_multisample.alphaToCoverageEnable = VK_FALSE;
+  m_multisample.alphaToOneEnable = VK_FALSE;
+}
+
+void VMultisampleState::FillPipelineState(VkPipelineMultisampleStateCreateInfo &info)
+{
+  info = m_multisample;
+}
+
+VDepthStencilState::VDepthStencilState()
+{
+  m_depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  m_depthStencil.pNext = nullptr;
+  m_depthStencil.flags = 0;
+  m_depthStencil.depthTestEnable = VK_TRUE;
+  m_depthStencil.depthWriteEnable = VK_TRUE;
+  m_depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  m_depthStencil.depthBoundsTestEnable = VK_FALSE;
+  m_depthStencil.stencilTestEnable = VK_FALSE;
+  m_depthStencil.front = {};
+  m_depthStencil.back = {};
+  m_depthStencil.minDepthBounds = 0.0f;
+  m_depthStencil.maxDepthBounds = 1.0f;
+}
+
+void VDepthStencilState::FillPipelineState(VkPipelineDepthStencilStateCreateInfo &info)
+{
+  info = m_depthStencil;
+}
+
+VBlendState::VBlendState(Blend blend)
+{
+  SetBlend(blend);
+}
+
+void VBlendState::SetBlend(Blend blend)
+{
+  m_blendState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  switch (blend) {
+    case DISABLED:
+      m_blendState.blendEnable = VK_FALSE;
+      m_blendState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+      m_blendState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+      m_blendState.colorBlendOp = VK_BLEND_OP_ADD;
+      m_blendState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+      m_blendState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+      m_blendState.alphaBlendOp = VK_BLEND_OP_ADD;
+      break;
+    case SRC_ALPHA:
+      m_blendState.blendEnable = VK_TRUE;
+      m_blendState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+      m_blendState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+      m_blendState.colorBlendOp = VK_BLEND_OP_ADD;
+      m_blendState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+      m_blendState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+      m_blendState.alphaBlendOp = VK_BLEND_OP_ADD;
+      break;
+    default:
+      assert(0);
+  }
+}
+
+void VBlendState::FillPipelineState(VkPipelineColorBlendStateCreateInfo &info)
+{
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.logicOpEnable = VK_FALSE;
+  info.logicOp = VK_LOGIC_OP_COPY;
+  info.attachmentCount = 1;
+  info.pAttachments = &m_blendState;
+  info.blendConstants[0] = m_Rconst;
+  info.blendConstants[1] = m_Gconst;
+  info.blendConstants[2] = m_Bconst;
+  info.blendConstants[3] = m_Aconst;
+}
+
+VDynamicState::VDynamicState() :
+  m_states{ VK_DYNAMIC_STATE_VIEWPORT }
+{
+}
+
+void VDynamicState::FillPipelineState(VkPipelineDynamicStateCreateInfo &info)
+{
+  info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  info.pNext = nullptr;
+  info.flags = 0;
+  info.dynamicStateCount = (uint32_t)m_states.size();
+  info.pDynamicStates = m_states.data();
+}
+
+VRenderPass::VRenderPass(VDevice &device) :
+  m_device(&device)
+{
+  std::array<VkAttachmentDescription, 2> attachments;
+  VkAttachmentDescription &color = attachments[0], &depth = attachments[1];
+
+  color.flags = 0;
+  color.format = m_device->m_swapchain->m_images[0]->m_format;
+  color.samples = VK_SAMPLE_COUNT_1_BIT;
+  color.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  color.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  color.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorRef;
+  colorRef.attachment = 0;
+  colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  depth.flags = 0;
+  depth.format = m_device->m_depth->m_format;
+  depth.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depth.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depth.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+  depth.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depth.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depthRef;
+  depthRef.attachment = 1;
+  depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subPass;
+  subPass.flags = 0;
+  subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subPass.inputAttachmentCount = 0;
+  subPass.pInputAttachments = nullptr;
+  subPass.colorAttachmentCount = 1;
+  subPass.pColorAttachments = &colorRef;
+  subPass.pResolveAttachments = nullptr;
+  subPass.pDepthStencilAttachment = &depthRef;
+  subPass.preserveAttachmentCount = 0;
+  subPass.pPreserveAttachments = nullptr;
+
+  VkRenderPassCreateInfo pass;
+  pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  pass.pNext = nullptr;
+  pass.flags = 0;
+  pass.attachmentCount = (uint32_t)attachments.size();
+  pass.pAttachments = attachments.data();
+  pass.subpassCount = 1;
+  pass.pSubpasses = &subPass;
+  pass.dependencyCount = 0;
+  pass.pDependencies = nullptr;
+
+  VkResult err = vkCreateRenderPass(m_device->m_device, &pass, nullptr, &m_renderPass);
+  if (err < 0)
+    throw VGraphicsException("VRenderPass failed in vkCreateRenderPass", err);
+}
+
+VRenderPass::~VRenderPass()
+{
+  vkDestroyRenderPass(m_device->m_device, m_renderPass, nullptr);
+}
+
+VDescriptorPool::VDescriptorPool(VDevice &device, bool synchronize, uint32_t uniformDescriptors) :
+  m_device(&device),
+  m_lock(synchronize)
+{
+  VkDescriptorPoolSize poolSize;
+  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSize.descriptorCount = uniformDescriptors;
+
+  VkDescriptorPoolCreateInfo poolInfo;
+  poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  poolInfo.pNext = nullptr;
+  poolInfo.flags = 0;
+  poolInfo.maxSets = 1;
+  poolInfo.poolSizeCount = 1;
+  poolInfo.pPoolSizes = &poolSize;
+
+  VkResult err = vkCreateDescriptorPool(m_device->m_device, &poolInfo, nullptr, &m_pool);
+  if (err < 0)
+    throw VGraphicsException("VDescriptorPool failed in vkCreateDescriptorPool", err);
+}
+
+VDescriptorPool::~VDescriptorPool()
+{
+  vkDestroyDescriptorPool(m_device->m_device, m_pool, nullptr);
+}
+
+VDescriptorSet *VDescriptorPool::CreateSet(VDescriptorSetLayout *layout)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+
+  VkDescriptorSetAllocateInfo setInfo;
+  setInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  setInfo.pNext = nullptr;
+  setInfo.descriptorPool = m_pool;
+  setInfo.descriptorSetCount = 1;
+  setInfo.pSetLayouts = &layout->m_layout;
+
+  VkDescriptorSet vkSet;
+  VkResult err = vkAllocateDescriptorSets(m_device->m_device, &setInfo, &vkSet);
+  if (err < 0)
+    throw VGraphicsException("VDescriptorPool::CreateSet failed in vkAllocateDescriptorSets", err);
+
+  return new VDescriptorSet(*this, vkSet);
+}
+
+void VDescriptorPool::CreateSets(std::vector<VDescriptorSetLayout*> const &layouts, std::vector<VDescriptorSet*> &sets)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+
+  std::vector<VkDescriptorSetLayout> vkLayouts(layouts.size());
+  for (int i = 0; i < layouts.size(); ++i)
+    vkLayouts[i] = layouts[i]->m_layout;
+
+  VkDescriptorSetAllocateInfo setInfo;
+  setInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  setInfo.pNext = nullptr;
+  setInfo.descriptorPool = m_pool;
+  setInfo.descriptorSetCount = (uint32_t)vkLayouts.size();
+  setInfo.pSetLayouts = vkLayouts.data();
+
+  std::vector<VkDescriptorSet> vkSets(vkLayouts.size());
+  VkResult err = vkAllocateDescriptorSets(m_device->m_device, &setInfo, vkSets.data());
+  if (err < 0)
+    throw VGraphicsException("VDescriptorPool::CreateSets failed in vkAllocateDescriptorSets", err);
+
+  for (auto s : vkSets)
+    sets.push_back(new VDescriptorSet(*this, s));
+}
+
+VDescriptorSet::VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set) :
+  m_pool(&pool), m_set(set)
+{
+}
+
+VDescriptorSet::VDescriptorSet()
+{
+  vkFreeDescriptorSets(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_set);
+}
+
+VPipelineCache::VPipelineCache(VDevice &device, bool synchronize, std::vector<uint8_t> const *initialData) :
+  m_device(&device),
+  m_lock(synchronize)
+{
+  if (initialData && !m_device->m_graphics->IsPipelineCacheDataCompatible(*initialData))
+    initialData = nullptr;
+
+  VkPipelineCacheCreateInfo cacheInfo;
+  cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+  cacheInfo.pNext = nullptr;
+  cacheInfo.flags = 0;
+  cacheInfo.initialDataSize = initialData ? (uint8_t)initialData->size() : 0;
+  cacheInfo.pInitialData = initialData ? initialData->data() : nullptr;
+
+  VkResult err = vkCreatePipelineCache(m_device->m_device, &cacheInfo, nullptr, &m_cache);
+  if (err < 0)
+    throw VGraphicsException("VPipelineCache failed in vkCreatePipelineCache", err);
+}
+
+VPipelineCache::~VPipelineCache()
+{
+  vkDestroyPipelineCache(m_device->m_device, m_cache, nullptr);
+}
+
+void VPipelineCache::GetData(std::vector<uint8_t> &data)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  size_t dataSize = 0;
+  VkResult err = vkGetPipelineCacheData(m_device->m_device, m_cache, &dataSize, nullptr);
+  if (err < 0)
+    throw VGraphicsException("VPipelineCache::GetData failed in vkGetPipelineCacheData", err);
+  data.resize(dataSize);
+  err = vkGetPipelineCacheData(m_device->m_device, m_cache, &dataSize, data.data());
+  if (err < 0)
+    throw VGraphicsException("VPipelineCache::GetData failed in vkGetPipelineCacheData", err);
+}
+
+VGraphicsPipeline::VGraphicsPipeline(VPipelineCache &cache, VkPipeline pipeline) :
+  m_cache(&cache), m_pipeline(pipeline)
+{
+}
+
+VGraphicsPipeline::~VGraphicsPipeline()
+{
+  vkDestroyPipeline(m_cache->m_device->m_device, m_pipeline, nullptr);
 }

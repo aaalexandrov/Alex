@@ -76,7 +76,6 @@ public:
   ConditionalLock m_lock;
 
   VQueue(VDevice &device, bool synchronize, VkQueue queue);
-  ~VQueue();
 
   void Submit(VCmdBuffer &cmdBuffer, std::vector<VSemaphore*> *waitSemaphores = nullptr);
   void WaitIdle();
@@ -85,8 +84,8 @@ public:
 class VImage {
 public:
   VDevice *m_device;
-  VkImage m_image = VK_NULL_HANDLE;
-  VkImageView m_view = VK_NULL_HANDLE;
+  UniqueResource<VkImage> m_image;
+  UniqueResource<VkImageView> m_view;
   std::shared_ptr<VMemory> m_memory;
   VkImageLayout m_layout = VK_IMAGE_LAYOUT_UNDEFINED;
   VkFormat m_format = VK_FORMAT_UNDEFINED;
@@ -94,7 +93,6 @@ public:
 
   VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t width, uint32_t height, uint32_t depth = 1, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, bool linear = false);
   VImage(VDevice &device, VkImage image, VkFormat format, VkImageViewType imgType = VK_IMAGE_VIEW_TYPE_2D);
-  ~VImage();
 
   void *Map();
   void Unmap();
@@ -120,13 +118,12 @@ public:
 class VBuffer {
 public:
   VDevice *m_device;
-  VkBuffer m_buffer = VK_NULL_HANDLE;
+  UniqueResource<VkBuffer> m_buffer;
   std::shared_ptr<VMemory> m_memory;
   VkBufferUsageFlags m_usage = 0;
   uint64_t m_size = 0;
 
   VBuffer(VDevice &device, bool synchronize, uint64_t size, VkBufferUsageFlags usage, bool hostVisible);
-  ~VBuffer();
 
   void *Map();
   void Unmap();
@@ -134,11 +131,14 @@ public:
 
 class VShader {
 public:
-  VDevice        *m_device;
-  VkShaderModule  m_shader = VK_NULL_HANDLE;
+  VDevice               *m_device;
+  VkShaderModule         m_shader = VK_NULL_HANDLE;
+  VkShaderStageFlagBits  m_stageBits;
 
-  VShader(VDevice &device, size_t size, uint32_t *code);
+  VShader(VDevice &device, VkShaderStageFlagBits stageBits, size_t size, uint32_t *code);
   ~VShader();
+
+  void FillPipelineInfo(VkPipelineShaderStageCreateInfo &info);
 };
 
 class VSwapchain {
@@ -148,7 +148,6 @@ public:
   std::vector<std::unique_ptr<VImage>> m_images;
 
   VSwapchain(VDevice &device);
-  ~VSwapchain();
 
 public:
   void InitSwapchain();
@@ -200,6 +199,215 @@ public:
   void CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset = 0, uint64_t dstOffset = 0, uint64_t size = VK_WHOLE_SIZE);
 };
 
+class VDescriptorSetLayout {
+public:
+  VDevice *m_device;
+  VkDescriptorSetLayout m_layout;
+
+  VDescriptorSetLayout(VDevice &device);
+  ~VDescriptorSetLayout();
+};
+
+class VPipelineLayout {
+public:
+  VDevice *m_device;
+  VkPipelineLayout m_layout;
+  std::vector<std::shared_ptr<VDescriptorSetLayout>> m_setLayouts;
+
+  VPipelineLayout(VDevice &m_device, std::vector<std::shared_ptr<VDescriptorSetLayout>> const &setLayouts);
+  ~VPipelineLayout();
+};
+
+struct VVertexInfo {
+  std::vector<VkVertexInputAttributeDescription> m_attr;
+  VkVertexInputBindingDescription m_binding;
+  uint32_t m_stride = 0;
+
+  void AddAttribute(VkFormat format, uint32_t offset);
+  void FillPipelineInfo(VkPipelineVertexInputStateCreateInfo &info);
+};
+
+class VVertexBuffer {
+public:
+  std::shared_ptr<VVertexInfo> m_vertexInfo;
+  std::unique_ptr<VBuffer> m_buffer;
+
+  VVertexBuffer(VDevice &device, uint64_t size, void *data, std::shared_ptr<VVertexInfo> vertexInfo = std::make_shared<VVertexInfo>());
+};
+
+class VIndexBuffer {
+public:
+  VkIndexType m_type;
+  std::unique_ptr<VBuffer> m_buffer;
+
+  VIndexBuffer(VDevice &device, uint64_t count, uint16_t *indices);
+  VIndexBuffer(VDevice &device, uint64_t count, uint32_t *indices);
+
+  static uint32_t TypeSize(VkIndexType type);
+};
+
+class VViewportState {
+public:
+  VkViewport m_viewport;
+  VkRect2D m_scissor;
+
+  VViewportState(uint32_t width, uint32_t height);
+
+  void SetSize(uint32_t width, uint32_t height);
+  void FillPilelineInfo(VkPipelineViewportStateCreateInfo &info);
+};
+
+class VRasterizationState {
+public:
+  VkPipelineRasterizationStateCreateInfo m_rasterization;
+
+  VRasterizationState();
+
+  void FillPipelineInfo(VkPipelineRasterizationStateCreateInfo &info);
+};
+
+class VMultisampleState {
+public:
+  VkPipelineMultisampleStateCreateInfo m_multisample;
+
+  VMultisampleState();
+
+  void FillPipelineState(VkPipelineMultisampleStateCreateInfo &info);
+};
+
+class VDepthStencilState {
+public:
+  VkPipelineDepthStencilStateCreateInfo m_depthStencil;
+
+  VDepthStencilState();
+
+  void FillPipelineState(VkPipelineDepthStencilStateCreateInfo &info);
+};
+
+class VBlendState {
+public:
+  enum Blend {
+    DISABLED,
+    SRC_ALPHA,
+  };
+
+  VkPipelineColorBlendAttachmentState m_blendState;
+  float m_Rconst = 0.0f, m_Gconst = 0.0f, m_Bconst = 0.0f, m_Aconst = 0.0f;
+
+  VBlendState(Blend blend);
+
+  void SetBlend(Blend blend);
+
+  void FillPipelineState(VkPipelineColorBlendStateCreateInfo &info);
+};
+
+class VDynamicState {
+public:
+  std::vector<VkDynamicState> m_states;
+
+  VDynamicState();
+
+  void FillPipelineState(VkPipelineDynamicStateCreateInfo &info);
+};
+
+class VRenderPass {
+public:
+  VDevice *m_device;
+  VkRenderPass m_renderPass = VK_NULL_HANDLE;
+
+  VRenderPass(VDevice &device);
+  ~VRenderPass();
+};
+
+class VDescriptorSet;
+class VDescriptorPool {
+public:
+  VDevice *m_device;
+  VkDescriptorPool m_pool;
+  ConditionalLock m_lock;
+
+  VDescriptorPool(VDevice &device, bool synchronize, uint32_t uniformDescriptors);
+  ~VDescriptorPool();
+
+  VDescriptorSet *CreateSet(VDescriptorSetLayout *layout);
+  void CreateSets(std::vector<VDescriptorSetLayout*> const &layouts, std::vector<VDescriptorSet*> &sets);
+};
+
+class VDescriptorSet {
+public:
+  VDescriptorPool *m_pool;
+  VkDescriptorSet m_set;
+
+  VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set);
+  VDescriptorSet();
+};
+
+class VGraphicsPipeline;
+class VPipelineCache {
+public:
+  VDevice *m_device;
+  VkPipelineCache m_cache;
+  ConditionalLock m_lock;
+
+  VPipelineCache(VDevice &device, bool synchronize = true, std::vector<uint8_t> const *initialData = nullptr);
+  ~VPipelineCache();
+
+  void GetData(std::vector<uint8_t> &data);
+};
+
+class VGraphicsPipeline {
+public:
+  VPipelineCache *m_cache;
+  VkPipeline m_pipeline;
+
+  VGraphicsPipeline(VPipelineCache &cache, VkPipeline pipeline);
+  ~VGraphicsPipeline();
+};
+
+class VMaterial {
+public:
+  std::vector<std::shared_ptr<VShader>> m_shaders;
+  std::shared_ptr<VBlendState> m_blendState;
+  std::shared_ptr<VDepthStencilState> m_depthStencilState;
+  std::shared_ptr<VRasterizationState> m_rasterizationState;
+  std::shared_ptr<VMultisampleState> m_multisampleState;
+  std::shared_ptr<VViewportState> m_viewportState;
+  std::shared_ptr<VDynamicState> m_dynamicState;
+
+  std::unique_ptr<VPipelineLayout> m_pipelineLayout;
+
+  VMaterial(std::vector<std::shared_ptr<VShader>> const &shaders);
+
+  VDevice &GetDevice() const { return *m_shaders[0]->m_device; }
+
+  void CreatePipelineLayout();
+};
+
+class VGeometry {
+public:
+  std::shared_ptr<VVertexBuffer> m_vertexBuffer;
+  std::shared_ptr<VIndexBuffer> m_indexBuffer;
+  VkPrimitiveTopology m_topology;
+
+  VGeometry(VkPrimitiveTopology topology, std::shared_ptr<VIndexBuffer> indexBuffer, std::shared_ptr<VVertexBuffer> vertexBuffer);
+
+  void FillPipelineInfo(VkPipelineInputAssemblyStateCreateInfo &info);
+};
+
+class VModel {
+public:
+  std::shared_ptr<VGeometry> m_geometry;
+  std::shared_ptr<VMaterial> m_material;
+  std::unique_ptr<VGraphicsPipeline> m_pipeline;
+
+  void CreatePipeline(uint32_t subpass = 0);
+};
+
+class VModelInstance {
+public:
+  std::shared_ptr<VModel> m_model;
+};
+
 class VDevice {
 public:
   VGraphics *m_graphics;
@@ -210,7 +418,14 @@ public:
   std::unique_ptr<VQueue> m_queue;
   std::unique_ptr<VCmdPool> m_cmdPool;
   std::unique_ptr<VCmdBuffer> m_cmdBuffer;
-  std::unique_ptr<VImage> m_staging;
+  std::unique_ptr<VRenderPass> m_renderPass;
+  std::unique_ptr<VPipelineCache> m_pipelineCache;
+  std::unique_ptr<VDescriptorPool> m_descriptorPool;
+  std::shared_ptr<VViewportState> m_viewportState;
+  std::shared_ptr<VMultisampleState> m_multisampleState;
+  std::shared_ptr<VDynamicState> m_dynamicState;
+  std::unique_ptr<VImage> m_stagingImage;
+  std::unique_ptr<VBuffer> m_stagingBuffer;
 
   PFN_vkCreateSwapchainKHR    m_CreateSwapchainKHR = nullptr;
   PFN_vkDestroySwapchainKHR   m_DestroySwapchainKHR = nullptr;
@@ -219,7 +434,6 @@ public:
   PFN_vkQueuePresentKHR       m_QueuePresentKHR = nullptr;
 
   VDevice(VGraphics &graphics);
-  ~VDevice();
 
   VImage *LoadVImage(std::string const &filename);
   VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
@@ -228,11 +442,15 @@ public:
   void UpdateStagingImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t components);
   void FreeStagingImage();
 
+  void UpdateStagingBuffer(uint64_t size);
+  void FreeStagingBuffer();
+
 public:
   void InitCapabilities();
   void InitDevice();
   void InitDepth();
   void InitCmdBuffers(bool synchronize, uint32_t count);
+  void InitViewportState();
 
   void SubmitInitCommands();
 };
@@ -266,7 +484,8 @@ public:
   PFN_vkDebugReportMessageEXT         m_DebugReportMessageEXT = nullptr;
 
   VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID);
-  ~VGraphics();
+
+  bool IsPipelineCacheDataCompatible(std::vector<uint8_t> const &data);
 
 public:
   void InitInstance(std::string const &appName, uint32_t appVersion);

@@ -57,6 +57,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     VShader *shader = (*vg.m_device).LoadVShader("/src/VulkanSDK/1.0.42.1/Bin/cube-vert.spv");
     delete shader;
 
+    auto ib = std::make_shared<VIndexBuffer>(*vg.m_device, 128, (uint16_t*)nullptr);
+    auto vb = std::make_shared<VVertexBuffer>(*vg.m_device, 1024, nullptr);
+    auto geom = std::make_shared<VGeometry>(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, ib, vb);
+
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
     }

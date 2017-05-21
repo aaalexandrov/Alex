@@ -41,6 +41,7 @@ struct UniqueResource {
     other.Release();
   }
 
+  operator R const &() const noexcept { return m_resource; }
   R const &Get() const noexcept { return m_resource; }
   D const &GetDeleter() const noexcept { return m_deleter; }
 
