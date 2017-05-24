@@ -59,10 +59,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     auto ib = std::make_shared<VIndexBuffer>(*vg.m_device, 128, (uint16_t*)nullptr);
     auto vb = std::make_shared<VVertexBuffer>(*vg.m_device, 1024, nullptr);
-    auto geom = std::make_shared<VGeometry>(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, ib, vb);
+    auto geom = std::make_shared<VGeometry>(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, ib, std::vector<std::shared_ptr<VVertexBuffer>>{vb});
 
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
+      vg.m_device->RenderFrame();
     }
   }
   catch (VGraphicsException &vgEx) {

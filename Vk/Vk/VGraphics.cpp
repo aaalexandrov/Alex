@@ -361,7 +361,7 @@ VCmdBuffer *VCmdPool::CreateBuffer(bool primary)
   VkResult err = vkAllocateCommandBuffers(m_device->m_device, &bufInfo, &buffer);
   if (err < 0)
     throw VGraphicsException("VCmdPool::CreateBuffer failed in vkAllocateCommandBuffers", err);
-  return new VCmdBuffer(*this, buffer);
+  return new VCmdBuffer(*this, buffer, primary);
 }
 
 void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffer*> &buffers)
@@ -374,10 +374,10 @@ void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffe
   if (err < 0)
     throw VGraphicsException("VCmdPool::CreateBuffers failed in vkAllocateCommandBuffers", err);
   for (auto b : vkBuffers)
-    buffers.push_back(new VCmdBuffer(*this, b));
+    buffers.push_back(new VCmdBuffer(*this, b, primary));
 }
 
-VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer) : m_pool(&pool), m_buffer(buffer) 
+VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary) : m_pool(&pool), m_buffer(buffer), m_primary(primary), m_autoBegin(primary)
 {
 }
 
@@ -425,13 +425,13 @@ void VCmdBuffer::AutoEnd()
     End();
 }
 
-void VCmdBuffer::Begin(bool simultaneous)
+void VCmdBuffer::Begin(bool simultaneous, VRenderPass *renderPass, uint32_t subpass)
 {
   VkCommandBufferInheritanceInfo inheritInfo;
   inheritInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
   inheritInfo.pNext = nullptr;
-  inheritInfo.renderPass = VK_NULL_HANDLE;
-  inheritInfo.subpass = 0;
+  inheritInfo.renderPass = renderPass ? renderPass->m_renderPass : VK_NULL_HANDLE;
+  inheritInfo.subpass = subpass;
   inheritInfo.framebuffer = VK_NULL_HANDLE;
   inheritInfo.occlusionQueryEnable = false;
   inheritInfo.queryFlags = 0;
@@ -440,7 +440,7 @@ void VCmdBuffer::Begin(bool simultaneous)
   VkCommandBufferBeginInfo beginInfo;
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.pNext = nullptr;
-  beginInfo.flags = simultaneous ? VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT : 0;
+  beginInfo.flags = (simultaneous ? VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT : 0) | (renderPass ? VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT : 0);
   beginInfo.pInheritanceInfo = &inheritInfo;
 
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
@@ -473,8 +473,6 @@ void VCmdBuffer::Reset(bool releaseResources)
 
 void VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFlags priorAccess, VkAccessFlags followingAccess)
 {
-  AutoBegin();
-
   VkImageAspectFlags aspectFlags = VImage::AspectFromFormat(image.m_format);
 
   VkImageMemoryBarrier imgBarrier;
@@ -490,6 +488,7 @@ void VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFla
   imgBarrier.subresourceRange = { aspectFlags, 0, 1, 0, 1 };
 
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
 
   vkCmdPipelineBarrier(m_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imgBarrier);
 
@@ -498,8 +497,6 @@ void VCmdBuffer::SetImageLayout(VImage &image, VkImageLayout layout, VkAccessFla
 
 void VCmdBuffer::CopyImage(VImage &src, VImage &dst)
 {
-  AutoBegin();
-  
   VkImageCopy copy;
   copy.srcSubresource = { VImage::AspectFromFormat(src.m_format), 0, 0, 1 };
   copy.srcOffset = { 0, 0, 0 };
@@ -508,22 +505,132 @@ void VCmdBuffer::CopyImage(VImage &src, VImage &dst)
   copy.extent = { std::min(src.m_size.width, dst.m_size.width), std::min(src.m_size.height, dst.m_size.height), std::min(src.m_size.depth, dst.m_size.depth) };
 
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
 
   vkCmdCopyImage(m_buffer, src.m_image, src.m_layout, dst.m_image, dst.m_layout, 1, &copy);
 }
 
 void VCmdBuffer::CopyBuffer(VBuffer &src, VBuffer &dst, uint64_t srcOffset, uint64_t dstOffset, uint64_t size)
 {
-  AutoBegin();
-
   VkBufferCopy copy;
   copy.size = std::min(size, std::min(src.m_size - srcOffset, dst.m_size - dstOffset));
   copy.srcOffset = srcOffset;
   copy.dstOffset = dstOffset;
 
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
 
   vkCmdCopyBuffer(m_buffer, src.m_buffer, dst.m_buffer, 1, &copy);
+}
+
+void VCmdBuffer::SetViewport(VkViewport &viewport)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdSetViewport(m_buffer, 0, 1, &viewport);
+}
+
+void VCmdBuffer::BindPipeline(VGraphicsPipeline &pipeline)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdBindPipeline(m_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.m_pipeline);
+}
+
+void VCmdBuffer::BindDescriptorSets(VPipelineLayout &pipelineLayout, std::vector<std::unique_ptr<VDescriptorSet>> const &sets, VkPipelineBindPoint bindPoint)
+{
+  std::vector<VkDescriptorSet> vkSets;
+  for (auto &set : sets) 
+    vkSets.push_back(set->m_set);
+
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdBindDescriptorSets(m_buffer, bindPoint, pipelineLayout.m_layout, 0, (uint32_t)vkSets.size(), vkSets.data(), 0, nullptr);
+}
+
+void VCmdBuffer::BindVertexBuffers(std::vector<std::shared_ptr<VVertexBuffer>> &vertexBuffers)
+{
+  std::vector<VkBuffer> vkBuffers;
+  for (auto &buf : vertexBuffers)
+    vkBuffers.push_back(buf->m_buffer->m_buffer);
+
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdBindVertexBuffers(m_buffer, 0, (uint32_t)vkBuffers.size(), vkBuffers.data(), nullptr);
+}
+
+void VCmdBuffer::BindIndexBuffer(VIndexBuffer &indexBuffer, VkDeviceSize offset)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdBindIndexBuffer(m_buffer, indexBuffer.m_buffer->m_buffer, offset, indexBuffer.m_type);
+}
+
+void VCmdBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, uint32_t vertexOffset, uint32_t firstInstance)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdDrawIndexed(m_buffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+void VCmdBuffer::ExecuteCommands(VCmdBuffer &cmdBuffer)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdExecuteCommands(m_buffer, 1, &cmdBuffer.m_buffer);
+}
+
+void VCmdBuffer::ExecuteCommands(std::vector<VCmdBuffer*> const &cmdBuffers)
+{
+  std::vector<VkCommandBuffer> vkBuffers;
+  for (auto buf : cmdBuffers)
+    vkBuffers.push_back(buf->m_buffer);
+
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdExecuteCommands(m_buffer, (uint32_t)vkBuffers.size(), vkBuffers.data());
+}
+
+
+void VCmdBuffer::BeginRenderPass(VRenderPass &pass, VFramebuffer &framebuffer, uint32_t width, uint32_t height, std::vector<VkClearValue> const &clearValues, bool secondaryBuffers)
+{
+  VkRenderPassBeginInfo passBegin;
+  passBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  passBegin.pNext = nullptr;
+  passBegin.renderPass = pass.m_renderPass;
+  passBegin.framebuffer = framebuffer.m_framebuffer;
+  passBegin.renderArea = { { 0, 0 }, { width, height } };
+  passBegin.clearValueCount = (uint32_t)clearValues.size();
+  passBegin.pClearValues = clearValues.data();
+
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdBeginRenderPass(m_buffer, &passBegin, secondaryBuffers ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void VCmdBuffer::EndRenderPass()
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdEndRenderPass(m_buffer);
+}
+
+void VCmdBuffer::NextSubpass(bool secondaryBuffers)
+{
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdNextSubpass(m_buffer, secondaryBuffers ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
 }
 
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
@@ -570,7 +677,8 @@ void VQueue::WaitIdle()
 
 VDevice::VDevice(VGraphics &graphics) :
   m_graphics(&graphics),
-  m_device(VK_NULL_HANDLE, [](VkDevice &device) { vkDestroyDevice(device, nullptr); }, false)
+  m_device(VK_NULL_HANDLE, [](VkDevice &device) { vkDestroyDevice(device, nullptr); }, false),
+  m_clearValues(2)
 {
   InitCapabilities();
   InitDevice();
@@ -579,11 +687,20 @@ VDevice::VDevice(VGraphics &graphics) :
   InitDepth();
   SubmitInitCommands();
   m_renderPass.reset(new VRenderPass(*this));
+  m_imageAvailable.reset(new VSemaphore(*this, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
+  InitFramebuffers();
   m_pipelineCache.reset(new VPipelineCache(*this));
   m_descriptorPool.reset(new VDescriptorPool(*this, true, 256));
   InitViewportState();
   m_multisampleState = std::make_shared<VMultisampleState>();
   m_dynamicState = std::make_shared<VDynamicState>();
+  SetClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+  SetClearDepthStencil(1.0f, 0);
+}
+
+VDevice::~VDevice()
+{
+  WaitIdle();
 }
 
 void VDevice::InitCapabilities()
@@ -664,13 +781,22 @@ void VDevice::InitDepth()
 
   m_depth.reset(new VImage(*this, true, VK_FORMAT_D24_UNORM_S8_UINT, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height));
 
-  m_cmdBuffer->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+  m_cmdInit->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 }
 
 void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
 {
   m_cmdPool.reset(new VCmdPool(*this, synchronize, false, true));
-  m_cmdBuffer.reset(m_cmdPool->CreateBuffer(true));
+  m_cmdInit.reset(m_cmdPool->CreateBuffer(true));
+  m_cmdFrame.reset(m_cmdPool->CreateBuffer(true));
+  m_cmdFrame->m_autoBegin = false;
+  m_cmdFrame->SetUseSemaphore(true, VK_PIPELINE_STAGE_TRANSFER_BIT);
+}
+
+void VDevice::InitFramebuffers()
+{
+  for (auto &img : m_swapchain->m_images)
+    m_framebuffers.push_back(std::make_unique<VFramebuffer>(m_renderPass.get(), std::vector<VImage*>{ img.get(), m_depth.get() }));
 }
 
 void VDevice::InitViewportState()
@@ -681,10 +807,10 @@ void VDevice::InitViewportState()
 
 void VDevice::SubmitInitCommands()
 {
-  m_queue->Submit(*m_cmdBuffer);
+  m_queue->Submit(*m_cmdInit);
   m_queue->WaitIdle();
-  m_cmdBuffer->Reset();
-  m_cmdBuffer->Begin();
+  m_cmdInit->Reset();
+  m_cmdInit->Begin();
 }
 
 VImage *VDevice::LoadVImage(std::string const &filename)
@@ -724,12 +850,12 @@ VImage *VDevice::LoadVImage(std::string const &filename)
   std::unique_ptr<VImage> vimg(new VImage(*this, true, format, width, height, depth));
 
   if (m_stagingImage->m_layout != VK_IMAGE_LAYOUT_GENERAL)
-    m_cmdBuffer->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
+    m_cmdInit->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_HOST_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT);
 
-  m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
-  m_cmdBuffer->CopyImage(*m_stagingImage, *vimg);
-  m_cmdBuffer->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-  m_cmdBuffer->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT);
+  m_cmdInit->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+  m_cmdInit->CopyImage(*m_stagingImage, *vimg);
+  m_cmdInit->SetImageLayout(*vimg, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+  m_cmdInit->SetImageLayout(*m_stagingImage, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_HOST_WRITE_BIT);
 
   SubmitInitCommands();
 
@@ -746,8 +872,7 @@ VBuffer *VDevice::LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *dat
     memcpy(stagingMem, data, size);
     m_stagingBuffer->Unmap();
 
-
-    m_cmdBuffer->CopyBuffer(*m_stagingBuffer, *buffer);
+    m_cmdInit->CopyBuffer(*m_stagingBuffer, *buffer);
     SubmitInitCommands();
   }
   return buffer.release();
@@ -803,18 +928,75 @@ void VDevice::FreeStagingBuffer()
   m_stagingBuffer.reset();
 }
 
+void VDevice::SetClearColor(float r, float g, float b, float a)
+{
+  m_clearValues[0].color = { r, g, b, a };
+}
+
+void VDevice::SetClearDepthStencil(float depth, uint32_t stencil)
+{
+  m_clearValues[1].depthStencil = { depth, stencil };
+}
+
+void VDevice::Add(std::shared_ptr<VModelInstance> instance)
+{
+  m_toRender.push_back(std::move(instance));
+}
+
+void VDevice::RenderFrame()
+{
+  uint32_t imageIndex;
+  VkResult err = m_AcquireNextImageKHR(m_device, m_swapchain->m_swapchain, (uint64_t)-1, m_imageAvailable->m_semaphore, VK_NULL_HANDLE, &imageIndex);
+  if (err < 0)
+    throw VGraphicsException("VDevice::RenderFrame failed in vkAcquireNextImageKHR", err);
+
+  m_cmdFrame->Reset();
+  m_cmdFrame->Begin(false, m_renderPass.get(), 0);
+  m_cmdFrame->BeginRenderPass(*m_renderPass, *m_framebuffers[imageIndex], m_swapchain->m_images[0]->m_size.width, m_swapchain->m_images[0]->m_size.height, m_clearValues, true);
+
+  for (auto &inst : m_toRender)
+    m_cmdFrame->ExecuteCommands(*inst->m_cmdBuffer);
+
+  m_cmdFrame->EndRenderPass();
+  m_cmdFrame->End();
+
+  std::vector<VSemaphore*> sem{ m_imageAvailable.get() };
+  m_queue->Submit(*m_cmdFrame, &sem);
+
+  VkPresentInfoKHR presentInfo;
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.pNext = 0;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &m_cmdFrame->m_semaphore->m_semaphore;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &m_swapchain->m_swapchain.Get();
+  presentInfo.pImageIndices = &imageIndex;
+  presentInfo.pResults = nullptr;
+
+  err = m_QueuePresentKHR(m_queue->m_queue, &presentInfo);
+  if (err < 0)
+    throw VGraphicsException("VDevice::RenderFrame failed in vkQueuePresentKHR", err);
+}
+
+void VDevice::WaitIdle()
+{
+  VkResult err = vkDeviceWaitIdle(m_device);
+  if (err < 0)
+    throw VGraphicsException("VDevice::WaitIdle failed in vkDeviceWaitIdle", err);
+}
+
 VSwapchain::VSwapchain(VDevice &device) : 
   m_device(&device), 
   m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {m_device->m_DestroySwapchainKHR(m_device->m_device, swapchain, nullptr);}, false)
 {
-  InitSwapchain();
-  InitImages();
+  VkSurfaceCapabilitiesKHR surfaceCaps;
+  InitSwapchain(surfaceCaps);
+  InitImages(surfaceCaps);
 }
 
-void VSwapchain::InitSwapchain()
+void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
 {
   VkResult err;
-  VkSurfaceCapabilitiesKHR surfaceCaps;
   err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
@@ -861,7 +1043,7 @@ void VSwapchain::InitSwapchain()
   m_swapchain.Reset(std::move(swapchain));
 }
 
-void VSwapchain::InitImages()
+void VSwapchain::InitImages(VkSurfaceCapabilitiesKHR &surfaceCaps)
 {
   std::vector<VkImage> images;
   VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
@@ -869,11 +1051,40 @@ void VSwapchain::InitImages()
     throw VGraphicsException("VSwapchain::InitImages failed in GetSwapchainImagesKHR", err);
 
   for (auto im : images) {
-    VImage *img = new VImage(*m_device, im, m_device->m_graphics->m_surfaceFormat.format);
+    VImage *img = new VImage(*m_device, im, m_device->m_graphics->m_surfaceFormat.format, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height, 1);
     m_images.push_back(std::unique_ptr<VImage>(img));
-    m_device->m_cmdBuffer->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
+    m_device->m_cmdInit->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
   }
 }
+
+VFramebuffer::VFramebuffer(VRenderPass *renderPass, std::vector<VImage*> attachments) :
+  m_device(attachments[0]->m_device)
+{
+  std::vector<VkImageView> views;
+  for (auto img : attachments)
+    views.push_back(img->m_view);
+
+  VkFramebufferCreateInfo fbInfo;
+  fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  fbInfo.pNext = nullptr;
+  fbInfo.flags = 0;
+  fbInfo.renderPass = renderPass->m_renderPass;
+  fbInfo.attachmentCount = (uint32_t)views.size();
+  fbInfo.pAttachments = views.data();
+  fbInfo.width = attachments[0]->m_size.width;
+  fbInfo.height = attachments[0]->m_size.height;
+  fbInfo.layers = 1;
+
+  VkResult err = vkCreateFramebuffer(m_device->m_device, &fbInfo, nullptr, &m_framebuffer);
+  if (err < 0)
+    throw VGraphicsException("VFramebuffer failed in vkCreateFramebuffer", err);
+}
+
+VFramebuffer::~VFramebuffer()
+{
+  vkDestroyFramebuffer(m_device->m_device, m_framebuffer, nullptr);
+}
+
 
 VImage::VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, uint32_t arrayLayers, bool linear) :
   m_device(&device),
@@ -920,8 +1131,9 @@ VImage::VImage(VDevice &device, bool synchronize, VkFormat format, uint32_t widt
     Init(VK_NULL_HANDLE, format, ViewTypeFromDimensions(width, height, depth, arrayLayers));
 }
 
-VImage::VImage(VDevice &device, VkImage image, VkFormat format, VkImageViewType imgType) :
+VImage::VImage(VDevice &device, VkImage image, VkFormat format, uint32_t width, uint32_t height, uint32_t depth, VkImageViewType imgType) :
   m_device(&device),
+  m_size{width, height, depth},
   m_image(VK_NULL_HANDLE, [this](VkImage &image) { vkDestroyImage(m_device->m_device, image, nullptr); }, false),
   m_view(VK_NULL_HANDLE, [this](VkImageView &view) { vkDestroyImageView(m_device->m_device, view, nullptr); }, false)
 {
@@ -1277,29 +1489,32 @@ VPipelineLayout::~VPipelineLayout()
 
 void VVertexInfo::AddAttribute(VkFormat format, uint32_t offset)
 {
-  m_attr.resize(m_attr.size() + 1);
-  m_attr.back().binding = 0;
-  m_attr.back().location = m_attr.size() == 1 ? 0 : m_attr[m_attr.size() - 2].location + 1;
-  m_attr.back().format = format;
-  m_attr.back().offset = offset;
+  AddAttribute(0, m_attr, format, offset);
 }
 
-void VVertexInfo::FillPipelineInfo(VkPipelineVertexInputStateCreateInfo &info)
+void VVertexInfo::FillPipelineInfo(uint32_t binding, std::vector<VkVertexInputAttributeDescription> &attr, std::vector<VkVertexInputBindingDescription> &bindings)
 {
   assert(m_stride > 0);
-  // no support for instancing or separate buffers for different attributes yet, everything goes in a single binding with per vertex input rate
-  m_binding.binding = 0;
-  m_binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-  m_binding.stride = m_stride;
+  VkVertexInputBindingDescription bind;
 
-  info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  info.pNext = nullptr;
-  info.flags = 0;
-  info.vertexBindingDescriptionCount = 1;
-  info.pVertexBindingDescriptions = &m_binding;
-  info.vertexAttributeDescriptionCount = static_cast<uint32_t>(m_attr.size());
-  info.pVertexAttributeDescriptions = m_attr.data();
+  bind.binding = binding;
+  bind.inputRate = m_rate;
+  bind.stride = m_stride;
+  bindings.push_back(bind);
+
+  for (auto &desc : m_attr)
+    AddAttribute(binding, attr, desc.format, desc.offset);
 }
+
+void VVertexInfo::AddAttribute(uint32_t binding, std::vector<VkVertexInputAttributeDescription> &attr, VkFormat format, uint32_t offset)
+{
+  attr.resize(attr.size() + 1);
+  attr.back().binding = binding;
+  attr.back().location = attr.size() == 1 ? 0 : attr[attr.size() - 2].location + 1;
+  attr.back().format = format;
+  attr.back().offset = offset;
+}
+
 
 VVertexBuffer::VVertexBuffer(VDevice &device, uint64_t size, void *data, std::shared_ptr<VVertexInfo> vertexInfo) :
   m_vertexInfo(std::move(vertexInfo)),
@@ -1352,10 +1567,23 @@ void VMaterial::CreatePipelineLayout()
   m_pipelineLayout.reset(new VPipelineLayout(GetDevice(), descriptorSets));
 }
 
-VGeometry::VGeometry(VkPrimitiveTopology topology, std::shared_ptr<VIndexBuffer> indexBuffer, std::shared_ptr<VVertexBuffer> vertexBuffer) :
+void VMaterial::SetDynamicState(VCmdBuffer *cmdBuffer)
+{
+  for (auto state : m_dynamicState->m_states) {
+    switch (state) {
+      case VK_DYNAMIC_STATE_VIEWPORT:
+        cmdBuffer->SetViewport(m_viewportState->m_viewport);
+        break;
+      default:
+        assert(!"Unsupported dynamic state");
+    }
+  }
+}
+
+VGeometry::VGeometry(VkPrimitiveTopology topology, std::shared_ptr<VIndexBuffer> indexBuffer, std::vector<std::shared_ptr<VVertexBuffer>> &vertexBuffers) :
   m_topology(topology),
   m_indexBuffer(indexBuffer),
-  m_vertexBuffer(vertexBuffer)
+  m_vertexBuffers(vertexBuffers)
 {
 }
 
@@ -1375,8 +1603,19 @@ void VModel::CreatePipeline(uint32_t subpass)
   for (int i = 0; i < shaderStages.size(); ++i)
     m_material->m_shaders[i]->FillPipelineInfo(shaderStages[i]);
 
+  std::vector<VkVertexInputAttributeDescription> vertexAttr;
+  std::vector<VkVertexInputBindingDescription> vertexBindings;
+  for (uint32_t i = 0; i < m_geometry->m_vertexBuffers.size(); ++i)
+    m_geometry->m_vertexBuffers[i]->m_vertexInfo->FillPipelineInfo(i, vertexAttr, vertexBindings);
+
   VkPipelineVertexInputStateCreateInfo vertexInput;
-  m_geometry->m_vertexBuffer->m_vertexInfo->FillPipelineInfo(vertexInput);
+  vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInput.pNext = nullptr;
+  vertexInput.flags = 0;
+  vertexInput.vertexBindingDescriptionCount = (uint32_t)vertexBindings.size();
+  vertexInput.pVertexBindingDescriptions = vertexBindings.data();
+  vertexInput.vertexAttributeDescriptionCount = (uint32_t)vertexAttr.size();
+  vertexInput.pVertexAttributeDescriptions = vertexAttr.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly;
   m_geometry->FillPipelineInfo(inputAssembly);
@@ -1399,7 +1638,7 @@ void VModel::CreatePipeline(uint32_t subpass)
   VkPipelineDynamicStateCreateInfo dynamicState;
   m_material->m_dynamicState->FillPipelineState(dynamicState);
 
-  VDevice *device = m_geometry->m_vertexBuffer->m_buffer->m_device;
+  VDevice &device = m_geometry->GetDevice();
 
   VkGraphicsPipelineCreateInfo pipelineInfo;
   pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1417,17 +1656,17 @@ void VModel::CreatePipeline(uint32_t subpass)
   pipelineInfo.pColorBlendState = &blendState;
   pipelineInfo.pDynamicState = &dynamicState;
   pipelineInfo.layout = m_material->m_pipelineLayout->m_layout;
-  pipelineInfo.renderPass = device->m_renderPass->m_renderPass;
+  pipelineInfo.renderPass = device.m_renderPass->m_renderPass;
   pipelineInfo.subpass = subpass;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
   pipelineInfo.basePipelineIndex = -1;
 
   VkPipeline pipeline = VK_NULL_HANDLE;
-  VkResult err = vkCreateGraphicsPipelines(device->m_device, device->m_pipelineCache->m_cache, 1, &pipelineInfo, nullptr, &pipeline);
+  VkResult err = vkCreateGraphicsPipelines(device.m_device, device.m_pipelineCache->m_cache, 1, &pipelineInfo, nullptr, &pipeline);
   if (err < 0)
     throw VGraphicsException("VModel::CreatePipeline failed in vkCreateGraphicsPipelines", err);
 
-  m_pipeline.reset(new VGraphicsPipeline(*device->m_pipelineCache, pipeline));
+  m_pipeline.reset(new VGraphicsPipeline(*device.m_pipelineCache, pipeline));
 }
 
 VViewportState::VViewportState(uint32_t width, uint32_t height)
@@ -1607,7 +1846,7 @@ VRenderPass::VRenderPass(VDevice &device) :
   depth.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depth.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depth.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depth.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+  depth.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depth.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   depth.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
@@ -1627,6 +1866,14 @@ VRenderPass::VRenderPass(VDevice &device) :
   subPass.preserveAttachmentCount = 0;
   subPass.pPreserveAttachments = nullptr;
 
+  VkSubpassDependency subpassDep;
+  subpassDep.srcSubpass = VK_SUBPASS_EXTERNAL;
+  subpassDep.dstSubpass = 0;
+  subpassDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDep.srcAccessMask = 0;
+  subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
   VkRenderPassCreateInfo pass;
   pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   pass.pNext = nullptr;
@@ -1635,8 +1882,8 @@ VRenderPass::VRenderPass(VDevice &device) :
   pass.pAttachments = attachments.data();
   pass.subpassCount = 1;
   pass.pSubpasses = &subPass;
-  pass.dependencyCount = 0;
-  pass.pDependencies = nullptr;
+  pass.dependencyCount = 1;
+  pass.pDependencies = &subpassDep;
 
   VkResult err = vkCreateRenderPass(m_device->m_device, &pass, nullptr, &m_renderPass);
   if (err < 0)
@@ -1693,7 +1940,7 @@ VDescriptorSet *VDescriptorPool::CreateSet(VDescriptorSetLayout *layout)
   return new VDescriptorSet(*this, vkSet);
 }
 
-void VDescriptorPool::CreateSets(std::vector<VDescriptorSetLayout*> const &layouts, std::vector<VDescriptorSet*> &sets)
+void VDescriptorPool::CreateSets(std::vector<std::shared_ptr<VDescriptorSetLayout>> const &layouts, std::vector<std::unique_ptr<VDescriptorSet>> &sets)
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
 
@@ -1714,7 +1961,7 @@ void VDescriptorPool::CreateSets(std::vector<VDescriptorSetLayout*> const &layou
     throw VGraphicsException("VDescriptorPool::CreateSets failed in vkAllocateDescriptorSets", err);
 
   for (auto s : vkSets)
-    sets.push_back(new VDescriptorSet(*this, s));
+    sets.push_back(std::make_unique<VDescriptorSet>(*this, s));
 }
 
 VDescriptorSet::VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set) :
@@ -1772,4 +2019,72 @@ VGraphicsPipeline::VGraphicsPipeline(VPipelineCache &cache, VkPipeline pipeline)
 VGraphicsPipeline::~VGraphicsPipeline()
 {
   vkDestroyPipeline(m_cache->m_device->m_device, m_pipeline, nullptr);
+}
+
+VModelInstance::VModelInstance(std::shared_ptr<VModel> model) :
+  m_model(model)
+{
+  InitDescriptorSets();
+  InitCmdBuffer();
+}
+
+void VModelInstance::InitDescriptorSets()
+{
+  VDevice &device = GetDevice();
+  auto &setLayouts = m_model->m_material->m_pipelineLayout->m_setLayouts;
+  device.m_descriptorPool->CreateSets(setLayouts, m_descriptorSets);
+
+  std::vector<VkDescriptorBufferInfo> bufferInfos;
+  std::vector<VkWriteDescriptorSet> uniformWrites;
+  // reserve the vectors so they don't get reallocated, we'll be getting pointers to elements
+  bufferInfos.reserve(setLayouts.size());
+  uniformWrites.reserve(setLayouts.size());
+  m_uniformBuffers.resize(setLayouts.size());
+  for (int i = 0; i < setLayouts.size(); ++i) {
+    if (setLayouts[i]->HasUniformBuffer()) {
+      assert(m_model->m_material->m_uniformContent[i].size() > 0);
+      m_uniformBuffers[i] = std::make_unique<VBuffer>(device, true, m_model->m_material->m_uniformContent[i].size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+      void *content = m_uniformBuffers[i]->Map();
+      memcpy(content, m_model->m_material->m_uniformContent[i].data(), m_model->m_material->m_uniformContent[i].size());
+      m_uniformBuffers[i]->Unmap();
+
+      VkDescriptorBufferInfo bufInfo;
+      bufInfo.buffer = m_uniformBuffers[i]->m_buffer;
+      bufInfo.offset = 0;
+      bufInfo.range = m_uniformBuffers[i]->m_size;
+      bufferInfos.push_back(bufInfo);
+
+      VkWriteDescriptorSet write;
+      write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write.pNext = nullptr;
+      write.dstSet = m_descriptorSets[i]->m_set;
+      write.dstBinding = 0;
+      write.dstArrayElement = 0;
+      write.descriptorCount = 1;
+      write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      write.pImageInfo = nullptr;
+      write.pBufferInfo = &bufferInfos.back();
+      write.pTexelBufferView = nullptr;
+      uniformWrites.push_back(write);
+    }
+  }
+
+  vkUpdateDescriptorSets(device.m_device, (uint32_t)uniformWrites.size(), uniformWrites.data(), 0, nullptr);
+}
+
+void VModelInstance::InitCmdBuffer()
+{
+  VDevice &device = GetDevice();
+  m_cmdBuffer.reset(device.m_cmdPool->CreateBuffer(false));
+  m_cmdBuffer->Begin(true, device.m_renderPass.get(), 0);
+
+  m_model->m_material->SetDynamicState(m_cmdBuffer.get());
+
+  m_cmdBuffer->BindPipeline(*m_model->m_pipeline);
+  m_cmdBuffer->BindVertexBuffers(m_model->m_geometry->m_vertexBuffers);
+  m_cmdBuffer->BindIndexBuffer(*m_model->m_geometry->m_indexBuffer);
+  m_cmdBuffer->BindDescriptorSets(*m_model->m_material->m_pipelineLayout, m_descriptorSets);
+  m_cmdBuffer->DrawIndexed(m_model->m_geometry->m_indexBuffer->GetIndexCount());
+
+  m_cmdBuffer->End();
 }
