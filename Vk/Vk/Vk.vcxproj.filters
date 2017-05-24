@@ -42,4 +42,8 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="simple.vert" />
+    <CustomBuild Include="simple.frag" />
+  </ItemGroup>
 </Project>

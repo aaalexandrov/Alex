@@ -557,10 +557,13 @@ void VCmdBuffer::BindVertexBuffers(std::vector<std::shared_ptr<VVertexBuffer>> &
   for (auto &buf : vertexBuffers)
     vkBuffers.push_back(buf->m_buffer->m_buffer);
 
+  std::vector<VkDeviceSize> offsets;
+  offsets.assign(vkBuffers.size(), 0);
+
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
   AutoBegin();
 
-  vkCmdBindVertexBuffers(m_buffer, 0, (uint32_t)vkBuffers.size(), vkBuffers.data(), nullptr);
+  vkCmdBindVertexBuffers(m_buffer, 0, (uint32_t)vkBuffers.size(), vkBuffers.data(), offsets.data());
 }
 
 void VCmdBuffer::BindIndexBuffer(VIndexBuffer &indexBuffer, VkDeviceSize offset)
@@ -738,6 +741,7 @@ void VDevice::InitDevice()
   float queuePriorities[] = { 0.0 };
   queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
   queueInfo.pNext = nullptr;
+  queueInfo.flags = 0;
   queueInfo.queueFamilyIndex = m_graphics->m_graphicsQueueFamily;
   queueInfo.queueCount = 1;
   queueInfo.pQueuePriorities = queuePriorities;
@@ -887,17 +891,17 @@ VShader *VDevice::LoadVShader(std::string const &filename)
     throw VGraphicsException("VDevice::LoadVShader failed because loaded shader code is invalid", VK_RESULT_MAX_ENUM);
 
   VkShaderStageFlagBits stageBits = {};
-  if (filename.find(".vert") >= 0)
+  if (filename.find(".vert") != std::string::npos)
     stageBits = VK_SHADER_STAGE_VERTEX_BIT;
-  else if (filename.find(".frag") >= 0)
+  else if (filename.find(".frag") != std::string::npos)
     stageBits = VK_SHADER_STAGE_FRAGMENT_BIT;
-  else if (filename.find(".comp") >= 0)
+  else if (filename.find(".comp") != std::string::npos)
     stageBits = VK_SHADER_STAGE_COMPUTE_BIT;
-  else if (filename.find(".geom") >= 0)
+  else if (filename.find(".geom") != std::string::npos)
     stageBits = VK_SHADER_STAGE_GEOMETRY_BIT;
-  else if (filename.find(".tesc") >= 0)
+  else if (filename.find(".tesc") != std::string::npos)
     stageBits = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-  else if (filename.find(".tese") >= 0)
+  else if (filename.find(".tese") != std::string::npos)
     stageBits = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
   if (!stageBits)
     throw VGraphicsException("VDevice::LoadVShader failed to recongize shader file extension", VK_RESULT_MAX_ENUM);
@@ -950,12 +954,15 @@ void VDevice::RenderFrame()
   if (err < 0)
     throw VGraphicsException("VDevice::RenderFrame failed in vkAcquireNextImageKHR", err);
 
+  m_queue->WaitIdle();
+  
   m_cmdFrame->Reset();
   m_cmdFrame->Begin(false, m_renderPass.get(), 0);
   m_cmdFrame->BeginRenderPass(*m_renderPass, *m_framebuffers[imageIndex], m_swapchain->m_images[0]->m_size.width, m_swapchain->m_images[0]->m_size.height, m_clearValues, true);
 
   for (auto &inst : m_toRender)
     m_cmdFrame->ExecuteCommands(*inst->m_cmdBuffer);
+  m_toRender.clear();
 
   m_cmdFrame->EndRenderPass();
   m_cmdFrame->End();
@@ -1053,7 +1060,7 @@ void VSwapchain::InitImages(VkSurfaceCapabilitiesKHR &surfaceCaps)
   for (auto im : images) {
     VImage *img = new VImage(*m_device, im, m_device->m_graphics->m_surfaceFormat.format, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height, 1);
     m_images.push_back(std::unique_ptr<VImage>(img));
-    m_device->m_cmdInit->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
+    m_device->m_cmdInit->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, VK_ACCESS_MEMORY_READ_BIT);
   }
 }
 
@@ -1596,6 +1603,13 @@ void VGeometry::FillPipelineInfo(VkPipelineInputAssemblyStateCreateInfo &info)
   info.primitiveRestartEnable = false;
 }
 
+VModel::VModel(std::shared_ptr<VGeometry> geometry, std::shared_ptr<VMaterial> material) :
+  m_geometry(std::move(geometry)),
+  m_material(std::move(material))
+{
+  CreatePipeline();
+}
+
 void VModel::CreatePipeline(uint32_t subpass)
 {
   std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
@@ -1873,6 +1887,7 @@ VRenderPass::VRenderPass(VDevice &device) :
   subpassDep.srcAccessMask = 0;
   subpassDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   subpassDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  subpassDep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
   VkRenderPassCreateInfo pass;
   pass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;

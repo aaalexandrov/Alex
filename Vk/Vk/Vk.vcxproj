@@ -158,6 +158,34 @@
     <ClCompile Include="VGraphics.cpp" />
     <ClCompile Include="Vk.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="simple.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">glslangValidator -V -o ..\data\%(Identity).spv %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building shader</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\data\%(Identity).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TreatOutputAsContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">glslangValidator -V -o ..\data\%(Identity).spv %(Identity)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building shader</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\data\%(Identity).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatOutputAsContent>
+    </CustomBuild>
+    <CustomBuild Include="simple.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">glslangValidator -V -o ..\data\%(Identity).spv %(Identity)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\data\%(Identity).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</TreatOutputAsContent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">glslangValidator -V -o ..\data\%(Identity).spv %(Identity)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\data\%(Identity).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <TreatOutputAsContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatOutputAsContent>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building shader</Message>
+    </CustomBuild>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

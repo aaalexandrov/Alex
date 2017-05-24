@@ -437,6 +437,8 @@ public:
   std::shared_ptr<VMaterial> m_material;
   std::unique_ptr<VGraphicsPipeline> m_pipeline;
 
+  VModel(std::shared_ptr<VGeometry> geometry, std::shared_ptr<VMaterial> material);
+
   void CreatePipeline(uint32_t subpass = 0);
 };
 
