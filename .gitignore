@@ -24,6 +24,8 @@ blueprints.json
 result.txt
 IndustryFormulas.pdf
 
+*.spv
+
 x64/
 ipch/
 *.suo
