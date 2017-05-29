@@ -141,26 +141,13 @@ public:
   void FillPipelineInfo(VkPipelineShaderStageCreateInfo &info);
 };
 
-class VSwapchain {
-public:
-  VDevice *m_device;
-  UniqueResource<VkSwapchainKHR> m_swapchain;
-  std::vector<std::unique_ptr<VImage>> m_images;
-
-  VSwapchain(VDevice &device);
-
-public:
-  void InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps);
-  void InitImages(VkSurfaceCapabilitiesKHR &surfaceCaps);
-};
-
 class VRenderPass;
 class VFramebuffer {
 public:
   VDevice *m_device;
   VkFramebuffer m_framebuffer;
 
-  VFramebuffer(VRenderPass *renderPass, std::vector<VImage*> attachments);
+  VFramebuffer(VRenderPass *renderPass, std::vector<VImage*> &attachments);
   ~VFramebuffer();
 };
 
@@ -200,7 +187,7 @@ public:
   ~VCmdBuffer();
 
   void SetUseSemaphore(bool use, VkPipelineStageFlags stages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-  void SetUseFence(bool use);
+  void SetUseFence(bool use, bool createSignaled = false);
 
   void AutoBegin();
   void AutoEnd();
@@ -224,6 +211,33 @@ public:
   void BeginRenderPass(VRenderPass &pass, VFramebuffer &framebuffer, uint32_t width, uint32_t height, std::vector<VkClearValue> const &clearValues, bool secondaryBuffers);
   void EndRenderPass();
   void NextSubpass(bool secondaryBuffers);
+};
+
+class VSwapchain {
+public:
+  struct Surface {
+    std::unique_ptr<VImage> m_image;
+    std::unique_ptr<VCmdBuffer> m_cmdRender;
+    std::unique_ptr<VFramebuffer> m_framebuffer;
+  };
+
+  VDevice *m_device;
+  UniqueResource<VkSwapchainKHR> m_swapchain;
+  std::vector<Surface> m_surfaces;
+
+  VSwapchain(VDevice &device);
+
+  uint32_t GetWidth() const { return m_surfaces[0].m_image->m_size.width; }
+  uint32_t GetHeight() const { return m_surfaces[0].m_image->m_size.height; }
+  VkFormat GetFormat() const { return m_surfaces[0].m_image->m_format; }
+
+  Surface &AcquireNext(VSemaphore *semaphore);
+  void Present(Surface &surface);
+
+public:
+  void InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps);
+  void InitSurfaces(VkSurfaceCapabilitiesKHR &surfaceCaps);
+  void InitFramebuffers(VRenderPass &renderPass, VImage *depth);
 };
 
 class VDescriptorSetLayout {
@@ -463,13 +477,12 @@ public:
   VGraphics *m_graphics;
   std::vector<std::string> m_layerNames, m_extensionNames;
   UniqueResource<VkDevice> m_device;
-  std::unique_ptr<VSwapchain> m_swapchain;
   std::unique_ptr<VImage> m_depth;
   std::unique_ptr<VQueue> m_queue;
   std::unique_ptr<VCmdPool> m_cmdPool;
-  std::unique_ptr<VCmdBuffer> m_cmdInit, m_cmdFrame;
+  std::unique_ptr<VCmdBuffer> m_cmdInit;
   std::unique_ptr<VRenderPass> m_renderPass;
-  std::vector<std::unique_ptr<VFramebuffer>> m_framebuffers;
+  std::unique_ptr<VSwapchain> m_swapchain;
   std::unique_ptr<VSemaphore> m_imageAvailable;
   std::unique_ptr<VPipelineCache> m_pipelineCache;
   std::unique_ptr<VDescriptorPool> m_descriptorPool;
@@ -481,14 +494,7 @@ public:
   std::vector<std::shared_ptr<VModelInstance>> m_toRender;
   std::vector<VkClearValue> m_clearValues;
 
-  PFN_vkCreateSwapchainKHR    m_CreateSwapchainKHR = nullptr;
-  PFN_vkDestroySwapchainKHR   m_DestroySwapchainKHR = nullptr;
-  PFN_vkGetSwapchainImagesKHR m_GetSwapchainImagesKHR = nullptr;
-  PFN_vkAcquireNextImageKHR   m_AcquireNextImageKHR = nullptr;
-  PFN_vkQueuePresentKHR       m_QueuePresentKHR = nullptr;
-
   VDevice(VGraphics &graphics);
-  ~VDevice();
 
   VImage *LoadVImage(std::string const &filename);
   VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
@@ -513,7 +519,6 @@ public:
   void InitDevice();
   void InitDepth();
   void InitCmdBuffers(bool synchronize, uint32_t count);
-  void InitFramebuffers();
   void InitViewportState();
 
   void SubmitInitCommands();
@@ -536,12 +541,6 @@ public:
 
   std::vector<std::string> m_layerNames, m_extensionNames;
   UniqueResource<VkDebugReportCallbackEXT> m_debugReportCallback;
-
-  PFN_vkGetPhysicalDeviceSurfaceSupportKHR      m_GetPhysicalDeviceSurfaceSupportKHR = nullptr;
-  PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR m_GetPhysicalDeviceSurfaceCapabilitiesKHR = nullptr;
-  PFN_vkGetPhysicalDeviceSurfaceFormatsKHR      m_GetPhysicalDeviceSurfaceFormatsKHR = nullptr;
-  PFN_vkGetPhysicalDeviceSurfacePresentModesKHR m_GetPhysicalDeviceSurfacePresentModesKHR = nullptr;
-  PFN_vkDestroySurfaceKHR                       m_DestroySurfaceKHR = nullptr;
 
   PFN_vkCreateDebugReportCallbackEXT  m_CreateDebugReportCallbackEXT = nullptr;
   PFN_vkDestroyDebugReportCallbackEXT m_DestroyDebugReportCallbackEXT = nullptr;

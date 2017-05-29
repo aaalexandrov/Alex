@@ -114,6 +114,22 @@ VkResult AppendData(std::vector<T> &data, std::function<VkResult(uint32_t&, T*)>
   return err;
 }
 
+#define GET_INSTANCE_PROC_ADDRESS(proc) \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance, "vk"#proc)); \
+    if (!m_##proc) { \
+      std::cerr << "GET_INSTANCE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
+      throw VGraphicsException("GET_INSTANCE_PROC_ADDRESS failed in vkGetInstanceProcAddr", VK_RESULT_MAX_ENUM); \
+    } \
+  } while (false)
+
+#define GET_DEVICE_PROC_ADDRESS(proc) \
+  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device, "vk"#proc)); \
+    if (!m_##proc) { \
+      std::cerr << "GET_DEVICE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
+      throw VGraphicsException("GET_DEVICE_PROC_ADDRESS failed in vkGetDeviceProcAddr", VK_RESULT_MAX_ENUM); \
+    } \
+  } while (false)
+
 void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
 {
   VkResult err;
@@ -196,23 +212,6 @@ void VGraphics::InitInstance(std::string const &appName, uint32_t appVersion)
   m_instance.Reset(std::move(instance));
 }
 
-#define GET_INSTANCE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetInstanceProcAddr(m_instance, "vk"#proc)); \
-    if (!m_##proc) { \
-      std::cerr << "GET_INSTANCE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
-      throw VGraphicsException("GET_INSTANCE_PROC_ADDRESS failed in vkGetInstanceProcAddr", VK_RESULT_MAX_ENUM); \
-    } \
-  } while (false)
-
-#define GET_DEVICE_PROC_ADDRESS(proc) \
-  do { m_##proc = reinterpret_cast<PFN_vk##proc>(vkGetDeviceProcAddr(m_device, "vk"#proc)); \
-    if (!m_##proc) { \
-      std::cerr << "GET_DEVICE_PROC_ADDRESS() failed on " << "vk"#proc << std::endl; \
-      throw VGraphicsException("GET_DEVICE_PROC_ADDRESS failed in vkGetDeviceProcAddr", VK_RESULT_MAX_ENUM); \
-    } \
-  } while (false)
-
-
 void VGraphics::InitPhysicalDevice()
 {
   uint32_t gpuCount;
@@ -251,12 +250,6 @@ void VGraphics::InitPhysicalDevice()
   err = AppendData<VkQueueFamilyProperties>(m_queueFamilies, [this](uint32_t &s, VkQueueFamilyProperties *p)->VkResult { vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &s, p); return VK_SUCCESS; });
   if (err < 0)
     throw VGraphicsException("VGraphics::InitPhysicalDevice failed in vkGetPhysicalDeviceQueueFamilyProperties", err);
-
-  GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceSupportKHR);
-  GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceCapabilitiesKHR);
-  GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfaceFormatsKHR);
-  GET_INSTANCE_PROC_ADDRESS(GetPhysicalDeviceSurfacePresentModesKHR);
-  GET_INSTANCE_PROC_ADDRESS(DestroySurfaceKHR);
 }
 
 void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
@@ -286,7 +279,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
 
   std::vector<VkBool32> supportsPresent(m_queueFamilies.size());
   for (int i = 0; i < supportsPresent.size(); ++i) {
-    err = m_GetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent[i]);
+    err = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent[i]);
     if (err < 0)
       throw VGraphicsException("VGraphics::InitSurface failed in m_GetPhysicalDeviceSurfaceSupportKHR", err);
   }
@@ -302,7 +295,7 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
     throw VGraphicsException("VGraphics::InitSurface failed to find a graphics queue family", err);
 
   std::vector<VkSurfaceFormatKHR> surfFormats;
-  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return m_GetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &s, f); });
+  err = AppendData<VkSurfaceFormatKHR>(surfFormats, [this](uint32_t &s, VkSurfaceFormatKHR *f)->VkResult { return vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &s, f); });
   if (err < 0 || surfFormats.empty())
     throw VGraphicsException("VGraphics::InitSurface failed in GetPhysicalDeviceSurfaceFormatsKHR", err);
 
@@ -383,6 +376,8 @@ VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary) : m
 
 VCmdBuffer::~VCmdBuffer()
 {
+  delete m_fence;
+  delete m_semaphore;
   std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
   vkFreeCommandBuffers(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_buffer);
 }
@@ -400,13 +395,13 @@ void VCmdBuffer::SetUseSemaphore(bool use, VkPipelineStageFlags stages)
   }
 }
 
-void VCmdBuffer::SetUseFence(bool use)
+void VCmdBuffer::SetUseFence(bool use, bool createSignaled)
 {
   if (use == !!m_fence)
     return;
 
   if (use)
-    m_fence = new VFence(*m_pool->m_device);
+    m_fence = new VFence(*m_pool->m_device, createSignaled);
   else {
     delete m_fence;
     m_fence = nullptr;
@@ -686,12 +681,12 @@ VDevice::VDevice(VGraphics &graphics) :
   InitCapabilities();
   InitDevice();
   InitCmdBuffers(true, 1);
-  m_swapchain.reset(new VSwapchain(*this));
   InitDepth();
+  m_swapchain.reset(new VSwapchain(*this));
   SubmitInitCommands();
   m_renderPass.reset(new VRenderPass(*this));
+  m_swapchain->InitFramebuffers(*m_renderPass, m_depth.get());
   m_imageAvailable.reset(new VSemaphore(*this, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-  InitFramebuffers();
   m_pipelineCache.reset(new VPipelineCache(*this));
   m_descriptorPool.reset(new VDescriptorPool(*this, true, 256));
   InitViewportState();
@@ -699,11 +694,6 @@ VDevice::VDevice(VGraphics &graphics) :
   m_dynamicState = std::make_shared<VDynamicState>();
   SetClearColor(0.0f, 0.0f, 1.0f, 1.0f);
   SetClearDepthStencil(1.0f, 0);
-}
-
-VDevice::~VDevice()
-{
-  WaitIdle();
 }
 
 void VDevice::InitCapabilities()
@@ -768,18 +758,12 @@ void VDevice::InitDevice()
   VkQueue queue;
   vkGetDeviceQueue(m_device, m_graphics->m_graphicsQueueFamily, 0, &queue);
   m_queue.reset(new VQueue(*this, true, queue));
-
-  GET_DEVICE_PROC_ADDRESS(CreateSwapchainKHR);
-  GET_DEVICE_PROC_ADDRESS(DestroySwapchainKHR);
-  GET_DEVICE_PROC_ADDRESS(GetSwapchainImagesKHR);
-  GET_DEVICE_PROC_ADDRESS(AcquireNextImageKHR);
-  GET_DEVICE_PROC_ADDRESS(QueuePresentKHR);
 }
 
 void VDevice::InitDepth()
 {
   VkSurfaceCapabilitiesKHR surfaceCaps;
-  VkResult err = m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
+  VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VDevice::InitDepth failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
@@ -792,21 +776,11 @@ void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
 {
   m_cmdPool.reset(new VCmdPool(*this, synchronize, false, true));
   m_cmdInit.reset(m_cmdPool->CreateBuffer(true));
-  m_cmdFrame.reset(m_cmdPool->CreateBuffer(true));
-  m_cmdFrame->m_autoBegin = false;
-  m_cmdFrame->SetUseSemaphore(true, VK_PIPELINE_STAGE_TRANSFER_BIT);
-}
-
-void VDevice::InitFramebuffers()
-{
-  for (auto &img : m_swapchain->m_images)
-    m_framebuffers.push_back(std::make_unique<VFramebuffer>(m_renderPass.get(), std::vector<VImage*>{ img.get(), m_depth.get() }));
 }
 
 void VDevice::InitViewportState()
 {
-  VkExtent3D &size = m_swapchain->m_images[0]->m_size;
-  m_viewportState = std::make_shared<VViewportState>(size.width, size.height);
+  m_viewportState = std::make_shared<VViewportState>(m_swapchain->GetWidth(), m_swapchain->GetHeight());
 }
 
 void VDevice::SubmitInitCommands()
@@ -949,40 +923,27 @@ void VDevice::Add(std::shared_ptr<VModelInstance> instance)
 
 void VDevice::RenderFrame()
 {
-  uint32_t imageIndex;
-  VkResult err = m_AcquireNextImageKHR(m_device, m_swapchain->m_swapchain, (uint64_t)-1, m_imageAvailable->m_semaphore, VK_NULL_HANDLE, &imageIndex);
-  if (err < 0)
-    throw VGraphicsException("VDevice::RenderFrame failed in vkAcquireNextImageKHR", err);
+  VSwapchain::Surface &surface = m_swapchain->AcquireNext(m_imageAvailable.get());
+  VCmdBuffer &cmdRender = *surface.m_cmdRender;
 
-  m_queue->WaitIdle();
-  
-  m_cmdFrame->Reset();
-  m_cmdFrame->Begin(false, m_renderPass.get(), 0);
-  m_cmdFrame->BeginRenderPass(*m_renderPass, *m_framebuffers[imageIndex], m_swapchain->m_images[0]->m_size.width, m_swapchain->m_images[0]->m_size.height, m_clearValues, true);
+  cmdRender.m_fence->Wait();
+  cmdRender.m_fence->Reset();
+
+  cmdRender.Reset();
+  cmdRender.Begin(false, m_renderPass.get(), 0);
+  cmdRender.BeginRenderPass(*m_renderPass, *surface.m_framebuffer, surface.m_image->m_size.width, surface.m_image->m_size.height, m_clearValues, true);
 
   for (auto &inst : m_toRender)
-    m_cmdFrame->ExecuteCommands(*inst->m_cmdBuffer);
+    cmdRender.ExecuteCommands(*inst->m_cmdBuffer);
   m_toRender.clear();
 
-  m_cmdFrame->EndRenderPass();
-  m_cmdFrame->End();
+  cmdRender.EndRenderPass();
+  cmdRender.End();
 
   std::vector<VSemaphore*> sem{ m_imageAvailable.get() };
-  m_queue->Submit(*m_cmdFrame, &sem);
+  m_queue->Submit(cmdRender, &sem);
 
-  VkPresentInfoKHR presentInfo;
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.pNext = 0;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &m_cmdFrame->m_semaphore->m_semaphore;
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &m_swapchain->m_swapchain.Get();
-  presentInfo.pImageIndices = &imageIndex;
-  presentInfo.pResults = nullptr;
-
-  err = m_QueuePresentKHR(m_queue->m_queue, &presentInfo);
-  if (err < 0)
-    throw VGraphicsException("VDevice::RenderFrame failed in vkQueuePresentKHR", err);
+  m_swapchain->Present(surface);
 }
 
 void VDevice::WaitIdle()
@@ -994,22 +955,22 @@ void VDevice::WaitIdle()
 
 VSwapchain::VSwapchain(VDevice &device) : 
   m_device(&device), 
-  m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {m_device->m_DestroySwapchainKHR(m_device->m_device, swapchain, nullptr);}, false)
+  m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {vkDestroySwapchainKHR(m_device->m_device, swapchain, nullptr);}, false)
 {
   VkSurfaceCapabilitiesKHR surfaceCaps;
   InitSwapchain(surfaceCaps);
-  InitImages(surfaceCaps);
+  InitSurfaces(surfaceCaps);
 }
 
 void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
 {
   VkResult err;
-  err = m_device->m_graphics->m_GetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
+  err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
   std::vector<VkPresentModeKHR> presentModes;
-  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return m_device->m_graphics->m_GetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &s, m); });
+  err = AppendData<VkPresentModeKHR>(presentModes, [this](uint32_t &s, VkPresentModeKHR *m)->VkResult { return vkGetPhysicalDeviceSurfacePresentModesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &s, m); });
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfacePresentModesKHR", err);
 
@@ -1044,27 +1005,74 @@ void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
   chainInfo.oldSwapchain = VK_NULL_HANDLE;
 
   VkSwapchainKHR swapchain;
-  err = m_device->m_CreateSwapchainKHR(m_device->m_device, &chainInfo, nullptr, &swapchain);
+  err = vkCreateSwapchainKHR(m_device->m_device, &chainInfo, nullptr, &swapchain);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in CreateSwapchainKHR", err);
   m_swapchain.Reset(std::move(swapchain));
 }
 
-void VSwapchain::InitImages(VkSurfaceCapabilitiesKHR &surfaceCaps)
+void VSwapchain::InitSurfaces(VkSurfaceCapabilitiesKHR &surfaceCaps)
 {
   std::vector<VkImage> images;
-  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return m_device->m_GetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
+  VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return vkGetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitImages failed in GetSwapchainImagesKHR", err);
 
-  for (auto im : images) {
-    VImage *img = new VImage(*m_device, im, m_device->m_graphics->m_surfaceFormat.format, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height, 1);
-    m_images.push_back(std::unique_ptr<VImage>(img));
-    m_device->m_cmdInit->SetImageLayout(*img, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, VK_ACCESS_MEMORY_READ_BIT);
+  m_surfaces.resize(images.size());
+  for (int i = 0; i < images.size(); ++i) {
+    m_surfaces[i].m_image.reset(new VImage(*m_device, images[i], m_device->m_graphics->m_surfaceFormat.format, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height, 1));
+    m_device->m_cmdInit->SetImageLayout(*m_surfaces[i].m_image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, VK_ACCESS_MEMORY_READ_BIT);
+
+    m_surfaces[i].m_cmdRender.reset(m_device->m_cmdPool->CreateBuffer(true));
+    m_surfaces[i].m_cmdRender->m_autoBegin = false;
+    m_surfaces[i].m_cmdRender->SetUseSemaphore(true, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    m_surfaces[i].m_cmdRender->SetUseFence(true, true);
   }
 }
 
-VFramebuffer::VFramebuffer(VRenderPass *renderPass, std::vector<VImage*> attachments) :
+void VSwapchain::InitFramebuffers(VRenderPass &renderPass, VImage *depth)
+{
+  std::vector<VImage*> attachments(2);
+  for (auto &surf : m_surfaces) {
+    attachments.clear();
+    attachments.push_back(surf.m_image.get());
+    if (depth)
+      attachments.push_back(depth);
+    surf.m_framebuffer.reset(new VFramebuffer(&renderPass, attachments));
+  }
+}
+
+VSwapchain::Surface &VSwapchain::AcquireNext(VSemaphore *semaphore)
+{
+  uint32_t imageIndex;
+  VkResult err = vkAcquireNextImageKHR(m_device->m_device, m_swapchain, (uint64_t)-1, semaphore ? semaphore->m_semaphore : VK_NULL_HANDLE, VK_NULL_HANDLE, &imageIndex);
+  if (err < 0)
+    throw VGraphicsException("VDevice::RenderFrame failed in vkAcquireNextImageKHR", err);
+  return m_surfaces[imageIndex];
+}
+
+void VSwapchain::Present(Surface &surface)
+{
+  uint32_t imageIndex = (uint32_t) (&surface - m_surfaces.data());
+  assert(imageIndex < m_surfaces.size());
+
+  VkPresentInfoKHR presentInfo;
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.pNext = 0;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &surface.m_cmdRender->m_semaphore->m_semaphore;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &m_swapchain.Get();
+  presentInfo.pImageIndices = &imageIndex;
+  presentInfo.pResults = nullptr;
+
+  VkResult err = vkQueuePresentKHR(m_device->m_queue->m_queue, &presentInfo);
+  if (err < 0)
+    throw VGraphicsException("VDevice::RenderFrame failed in vkQueuePresentKHR", err);
+}
+
+
+VFramebuffer::VFramebuffer(VRenderPass *renderPass, std::vector<VImage*> &attachments) :
   m_device(attachments[0]->m_device)
 {
   std::vector<VkImageView> views;
@@ -1841,7 +1849,7 @@ VRenderPass::VRenderPass(VDevice &device) :
   VkAttachmentDescription &color = attachments[0], &depth = attachments[1];
 
   color.flags = 0;
-  color.format = m_device->m_swapchain->m_images[0]->m_format;
+  color.format = m_device->m_swapchain->GetFormat();
   color.samples = VK_SAMPLE_COUNT_1_BIT;
   color.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   color.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

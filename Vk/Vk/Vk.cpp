@@ -111,8 +111,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
       data->vg->m_device->Add(data->modelInstance);
       data->vg->m_device->RenderFrame();
     }
-  }
-  catch (VGraphicsException &vgEx) {
+
+    data->vg->m_device->WaitIdle();
+  } catch (VGraphicsException &vgEx) {
     int i = 0;
   }
 
