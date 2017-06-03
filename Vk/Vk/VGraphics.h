@@ -8,8 +8,17 @@
 
 #include "vulkan/vulkan.h"
 #include <mutex>
+#include <queue>
 
 #include "UniqueResource.h"
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 struct VGraphicsException : public std::runtime_error {
   VkResult m_err;
@@ -182,6 +191,8 @@ public:
   bool m_simultaneousBegin = false;
   bool m_begun = false;
   bool m_primary;
+  uint64_t m_frameRecorded = 0;
+  uint64_t m_frameUsed = 0;
 
   VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary);
   ~VCmdBuffer();
@@ -213,6 +224,22 @@ public:
   void NextSubpass(bool secondaryBuffers);
 };
 
+class VBufferPool
+{
+public:
+  struct CmdBufferFrameUsedComparer {
+    bool operator()(std::unique_ptr<VCmdBuffer> const &b1, std::unique_ptr<VCmdBuffer> const &b2) { return b1->m_frameUsed > b2->m_frameUsed; }
+  };
+  typedef std::priority_queue<std::unique_ptr<VCmdBuffer>, std::vector<std::unique_ptr<VCmdBuffer>>, CmdBufferFrameUsedComparer> CmdBufferQueue;
+
+  std::unique_ptr<VCmdPool> m_pool;
+  CmdBufferQueue m_buffers;
+
+  std::unique_ptr<VCmdBuffer> GetBuffer(uint64_t frameMax, bool primary);
+  void ReleaseBuffer(std::unique_ptr<VCmdBuffer> &&buffer);
+  void FreeBuffers(uint64_t frameMax);
+};
+
 class VSwapchain {
 public:
   struct Surface {
@@ -225,7 +252,7 @@ public:
   UniqueResource<VkSwapchainKHR> m_swapchain;
   std::vector<Surface> m_surfaces;
 
-  VSwapchain(VDevice &device);
+  VSwapchain(VDevice &device, uint32_t width, uint32_t height);
 
   uint32_t GetWidth() const { return m_surfaces[0].m_image->m_size.width; }
   uint32_t GetHeight() const { return m_surfaces[0].m_image->m_size.height; }
@@ -235,8 +262,8 @@ public:
   void Present(Surface &surface);
 
 public:
-  void InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps);
-  void InitSurfaces(VkSurfaceCapabilitiesKHR &surfaceCaps);
+  void InitSwapchain(uint32_t width, uint32_t height);
+  void InitSurfaces(uint32_t width, uint32_t height);
   void InitFramebuffers(VRenderPass &renderPass, VImage *depth);
 };
 
@@ -462,24 +489,28 @@ public:
   std::vector<std::unique_ptr<VDescriptorSet>> m_descriptorSets;
   std::vector<std::unique_ptr<VBuffer>> m_uniformBuffers;
   std::unique_ptr<VCmdBuffer> m_cmdBuffer;
+  uint64_t m_frameModified = 0;
 
   VModelInstance(std::shared_ptr<VModel> model);
 
   VDevice &GetDevice() const { return m_model->m_material->GetDevice(); }
 
+  void Update();
 public:
   void InitDescriptorSets();
-  void InitCmdBuffer();
+  void UpdateCmdBuffer();
 };
 
 class VDevice {
 public:
+  const uint32_t INVALID_DIM = std::numeric_limits<uint32_t>::max();
+
   VGraphics *m_graphics;
   std::vector<std::string> m_layerNames, m_extensionNames;
   UniqueResource<VkDevice> m_device;
   std::unique_ptr<VImage> m_depth;
   std::unique_ptr<VQueue> m_queue;
-  std::unique_ptr<VCmdPool> m_cmdPool;
+  VBufferPool m_bufferPool;
   std::unique_ptr<VCmdBuffer> m_cmdInit;
   std::unique_ptr<VRenderPass> m_renderPass;
   std::unique_ptr<VSwapchain> m_swapchain;
@@ -493,8 +524,12 @@ public:
   std::unique_ptr<VBuffer> m_stagingBuffer;
   std::vector<std::shared_ptr<VModelInstance>> m_toRender;
   std::vector<VkClearValue> m_clearValues;
+  uint64_t m_frame = 100; // start from a big number so we don't have to worry about subtracting from this number when we manage releasing of resources from previous frames
+  uint64_t m_frameInvalidated = 0;
 
   VDevice(VGraphics &graphics);
+
+  uint64_t GetSafeReleaseFrame() const { return m_frame - m_swapchain->m_surfaces.size(); }
 
   VImage *LoadVImage(std::string const &filename);
   VBuffer *LoadVBuffer(uint64_t size, VkBufferUsageFlags usage, void *data);
@@ -509,6 +544,8 @@ public:
   void SetClearColor(float r, float g, float b, float a);
   void SetClearDepthStencil(float depth, uint32_t stencil);
 
+  void InitSwapchain(uint32_t width, uint32_t height);
+  
   void Add(std::shared_ptr<VModelInstance> instance);
 
   void RenderFrame();
@@ -517,11 +554,13 @@ public:
 public:
   void InitCapabilities();
   void InitDevice();
-  void InitDepth();
+  void InitDepth(uint32_t width, uint32_t height);
   void InitCmdBuffers(bool synchronize, uint32_t count);
   void InitViewportState();
 
   void SubmitInitCommands();
+
+  void UpdateToRender();
 };
 
 class VGraphics

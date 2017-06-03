@@ -13,14 +13,6 @@
 #include "../cimg/CImg.h"
 #pragma warning(pop)
 
-#ifdef min
-#undef min
-#endif
-
-#ifdef max
-#undef max
-#endif
-
 VGraphics::VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID) :
   m_validate(validate),
   m_instance(VK_NULL_HANDLE, [](VkInstance &instance) { vkDestroyInstance(instance, nullptr); }, false),
@@ -445,6 +437,7 @@ void VCmdBuffer::Begin(bool simultaneous, VRenderPass *renderPass, uint32_t subp
     throw VGraphicsException("VCmdBuffer::Begin failed in vkBeginCommandBuffer", err);
 
   m_begun = true;
+  m_frameRecorded = 0;
 }
 
 void VCmdBuffer::End()
@@ -456,6 +449,7 @@ void VCmdBuffer::End()
     throw VGraphicsException("VCmdBuffer::End failed in vkEndCommandBuffer", err);
 
   m_begun = false;
+  m_frameRecorded = m_pool->m_device->m_frame;
 }
 
 void VCmdBuffer::Reset(bool releaseResources)
@@ -631,6 +625,28 @@ void VCmdBuffer::NextSubpass(bool secondaryBuffers)
   vkCmdNextSubpass(m_buffer, secondaryBuffers ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
 }
 
+std::unique_ptr<VCmdBuffer> VBufferPool::GetBuffer(uint64_t frameMax, bool primary)
+{
+  if (!m_buffers.empty() && m_buffers.top()->m_frameUsed <= frameMax) {
+    std::unique_ptr<VCmdBuffer> top = std::move(const_cast<std::unique_ptr<VCmdBuffer>&>(m_buffers.top()));
+    m_buffers.pop();
+    return std::move(top);
+  }
+  return std::unique_ptr<VCmdBuffer>(m_pool->CreateBuffer(primary));
+}
+
+void VBufferPool::ReleaseBuffer(std::unique_ptr<VCmdBuffer> &&buffer)
+{
+  if (buffer)
+    m_buffers.push(std::move(buffer));
+}
+
+void VBufferPool::FreeBuffers(uint64_t frameMax)
+{
+  while (!m_buffers.empty() && m_buffers.top()->m_frameUsed <= frameMax)
+    m_buffers.pop();
+}
+
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
 {
 }
@@ -681,11 +697,7 @@ VDevice::VDevice(VGraphics &graphics) :
   InitCapabilities();
   InitDevice();
   InitCmdBuffers(true, 1);
-  InitDepth();
-  m_swapchain.reset(new VSwapchain(*this));
-  SubmitInitCommands();
-  m_renderPass.reset(new VRenderPass(*this));
-  m_swapchain->InitFramebuffers(*m_renderPass, m_depth.get());
+  InitSwapchain(INVALID_DIM, INVALID_DIM);
   m_imageAvailable.reset(new VSemaphore(*this, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
   m_pipelineCache.reset(new VPipelineCache(*this));
   m_descriptorPool.reset(new VDescriptorPool(*this, true, 256));
@@ -760,27 +772,22 @@ void VDevice::InitDevice()
   m_queue.reset(new VQueue(*this, true, queue));
 }
 
-void VDevice::InitDepth()
+void VDevice::InitDepth(uint32_t width, uint32_t height)
 {
-  VkSurfaceCapabilitiesKHR surfaceCaps;
-  VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
-  if (err < 0)
-    throw VGraphicsException("VDevice::InitDepth failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
-
-  m_depth.reset(new VImage(*this, true, VK_FORMAT_D24_UNORM_S8_UINT, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height));
-
+  m_depth.reset(new VImage(*this, true, VK_FORMAT_D24_UNORM_S8_UINT, width, height));
   m_cmdInit->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 }
 
 void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
 {
-  m_cmdPool.reset(new VCmdPool(*this, synchronize, false, true));
-  m_cmdInit.reset(m_cmdPool->CreateBuffer(true));
+  m_bufferPool.m_pool.reset(new VCmdPool(*this, synchronize, false, true));
+  m_cmdInit.reset(m_bufferPool.m_pool->CreateBuffer(true));
 }
 
 void VDevice::InitViewportState()
 {
   m_viewportState = std::make_shared<VViewportState>(m_swapchain->GetWidth(), m_swapchain->GetHeight());
+  m_viewportState->m_scissor.extent = { m_graphics->m_physicalDeviceProps.limits.maxViewportDimensions[0], m_graphics->m_physicalDeviceProps.limits.maxViewportDimensions[1] };
 }
 
 void VDevice::SubmitInitCommands()
@@ -916,15 +923,54 @@ void VDevice::SetClearDepthStencil(float depth, uint32_t stencil)
   m_clearValues[1].depthStencil = { depth, stencil };
 }
 
+void VDevice::InitSwapchain(uint32_t width, uint32_t height)
+{
+  WaitIdle();
+
+  m_swapchain.reset();
+  m_renderPass.reset();
+  m_depth.reset();
+
+  if (width == INVALID_DIM || height == INVALID_DIM) {
+    VkSurfaceCapabilitiesKHR surfaceCaps;
+    VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_graphics->m_physicalDevice, m_graphics->m_surface, &surfaceCaps);
+    if (err < 0)
+      throw VGraphicsException("VDevice::InitDepth failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
+    if (width == INVALID_DIM)
+      width = surfaceCaps.currentExtent.width;
+    if (height == INVALID_DIM)
+      height = surfaceCaps.currentExtent.height;
+  }
+
+  InitDepth(width, height);
+  m_swapchain.reset(new VSwapchain(*this, width, height));
+  SubmitInitCommands();
+  m_renderPass.reset(new VRenderPass(*this));
+  m_swapchain->InitFramebuffers(*m_renderPass, m_depth.get());
+  if (m_viewportState) {
+    m_viewportState->m_viewport.width = (float)width;
+    m_viewportState->m_viewport.height = (float)height;
+  }
+  m_frameInvalidated = m_frame;
+}
+
 void VDevice::Add(std::shared_ptr<VModelInstance> instance)
 {
   m_toRender.push_back(std::move(instance));
+}
+
+void VDevice::UpdateToRender()
+{
+  for (auto &inst : m_toRender)
+    inst->Update();
 }
 
 void VDevice::RenderFrame()
 {
   VSwapchain::Surface &surface = m_swapchain->AcquireNext(m_imageAvailable.get());
   VCmdBuffer &cmdRender = *surface.m_cmdRender;
+
+  UpdateToRender();
 
   cmdRender.m_fence->Wait();
   cmdRender.m_fence->Reset();
@@ -933,8 +979,10 @@ void VDevice::RenderFrame()
   cmdRender.Begin(false, m_renderPass.get(), 0);
   cmdRender.BeginRenderPass(*m_renderPass, *surface.m_framebuffer, surface.m_image->m_size.width, surface.m_image->m_size.height, m_clearValues, true);
 
-  for (auto &inst : m_toRender)
+  for (auto &inst : m_toRender) {
     cmdRender.ExecuteCommands(*inst->m_cmdBuffer);
+    inst->m_cmdBuffer->m_frameUsed = m_frame;
+  }
   m_toRender.clear();
 
   cmdRender.EndRenderPass();
@@ -944,6 +992,8 @@ void VDevice::RenderFrame()
   m_queue->Submit(cmdRender, &sem);
 
   m_swapchain->Present(surface);
+  m_bufferPool.FreeBuffers(GetSafeReleaseFrame());
+  ++m_frame;
 }
 
 void VDevice::WaitIdle()
@@ -953,19 +1003,18 @@ void VDevice::WaitIdle()
     throw VGraphicsException("VDevice::WaitIdle failed in vkDeviceWaitIdle", err);
 }
 
-VSwapchain::VSwapchain(VDevice &device) : 
+VSwapchain::VSwapchain(VDevice &device, uint32_t width, uint32_t height) : 
   m_device(&device), 
   m_swapchain(VK_NULL_HANDLE, [this](VkSwapchainKHR& swapchain) {vkDestroySwapchainKHR(m_device->m_device, swapchain, nullptr);}, false)
 {
-  VkSurfaceCapabilitiesKHR surfaceCaps;
-  InitSwapchain(surfaceCaps);
-  InitSurfaces(surfaceCaps);
+  InitSwapchain(width, height);
+  InitSurfaces(width, height);
 }
 
-void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
+void VSwapchain::InitSwapchain(uint32_t width, uint32_t height)
 {
-  VkResult err;
-  err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
+  VkSurfaceCapabilitiesKHR surfaceCaps;
+  VkResult err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_device->m_graphics->m_physicalDevice, m_device->m_graphics->m_surface, &surfaceCaps);
   if (err < 0)
     throw VGraphicsException("VSwapchain::InitSwapchain failed in GetPhysicalDeviceSurfaceCapabilitiesKHR", err);
 
@@ -992,7 +1041,7 @@ void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
   chainInfo.minImageCount = surfaceCaps.minImageCount + 1;
   chainInfo.imageFormat = m_device->m_graphics->m_surfaceFormat.format;
   chainInfo.imageColorSpace = m_device->m_graphics->m_surfaceFormat.colorSpace;
-  chainInfo.imageExtent = surfaceCaps.currentExtent;
+  chainInfo.imageExtent = VkExtent2D{ width, height };
   chainInfo.imageArrayLayers = 1;
   chainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   chainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -1011,7 +1060,7 @@ void VSwapchain::InitSwapchain(VkSurfaceCapabilitiesKHR &surfaceCaps)
   m_swapchain.Reset(std::move(swapchain));
 }
 
-void VSwapchain::InitSurfaces(VkSurfaceCapabilitiesKHR &surfaceCaps)
+void VSwapchain::InitSurfaces(uint32_t width, uint32_t height)
 {
   std::vector<VkImage> images;
   VkResult err = AppendData<VkImage>(images, [this](uint32_t &s, VkImage *i)->VkResult { return vkGetSwapchainImagesKHR(m_device->m_device, m_swapchain, &s, i); });
@@ -1020,10 +1069,10 @@ void VSwapchain::InitSurfaces(VkSurfaceCapabilitiesKHR &surfaceCaps)
 
   m_surfaces.resize(images.size());
   for (int i = 0; i < images.size(); ++i) {
-    m_surfaces[i].m_image.reset(new VImage(*m_device, images[i], m_device->m_graphics->m_surfaceFormat.format, surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height, 1));
+    m_surfaces[i].m_image.reset(new VImage(*m_device, images[i], m_device->m_graphics->m_surfaceFormat.format, width, height, 1));
     m_device->m_cmdInit->SetImageLayout(*m_surfaces[i].m_image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, VK_ACCESS_MEMORY_READ_BIT);
 
-    m_surfaces[i].m_cmdRender.reset(m_device->m_cmdPool->CreateBuffer(true));
+    m_surfaces[i].m_cmdRender.reset(m_device->m_bufferPool.m_pool->CreateBuffer(true));
     m_surfaces[i].m_cmdRender->m_autoBegin = false;
     m_surfaces[i].m_cmdRender->SetUseSemaphore(true, VK_PIPELINE_STAGE_TRANSFER_BIT);
     m_surfaces[i].m_cmdRender->SetUseFence(true, true);
@@ -2048,7 +2097,6 @@ VModelInstance::VModelInstance(std::shared_ptr<VModel> model) :
   m_model(model)
 {
   InitDescriptorSets();
-  InitCmdBuffer();
 }
 
 void VModelInstance::InitDescriptorSets()
@@ -2095,10 +2143,11 @@ void VModelInstance::InitDescriptorSets()
   vkUpdateDescriptorSets(device.m_device, (uint32_t)uniformWrites.size(), uniformWrites.data(), 0, nullptr);
 }
 
-void VModelInstance::InitCmdBuffer()
+void VModelInstance::UpdateCmdBuffer()
 {
   VDevice &device = GetDevice();
-  m_cmdBuffer.reset(device.m_cmdPool->CreateBuffer(false));
+  device.m_bufferPool.ReleaseBuffer(std::move(m_cmdBuffer));
+  m_cmdBuffer = device.m_bufferPool.GetBuffer(device.GetSafeReleaseFrame(), false);
   m_cmdBuffer->Begin(true, device.m_renderPass.get(), 0);
 
   m_model->m_material->SetDynamicState(m_cmdBuffer.get());
@@ -2110,4 +2159,11 @@ void VModelInstance::InitCmdBuffer()
   m_cmdBuffer->DrawIndexed(m_model->m_geometry->m_indexBuffer->GetIndexCount());
 
   m_cmdBuffer->End();
+}
+
+void VModelInstance::Update()
+{
+  VDevice &device = GetDevice();
+  if (!m_cmdBuffer || m_cmdBuffer->m_frameRecorded < std::max(m_frameModified, device.m_frameInvalidated))
+    UpdateCmdBuffer();
 }

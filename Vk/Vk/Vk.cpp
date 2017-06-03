@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include <array>
+#include <iostream>
+#include <chrono>
 #include "Vk.h"
 #include "VGraphics.h"
 
@@ -74,6 +76,13 @@ void InitModelInstance(AppData &data)
   data.modelInstance = std::make_shared<VModelInstance>(data.model);
 }
 
+void FramebufferSizeChanged(GLFWwindow *window, int width, int height)
+{
+  AppData *data = static_cast<AppData*>(glfwGetWindowUserPointer(window));
+  if (data) 
+    data->vg->m_device->InitSwapchain(width, height);
+}
+
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 #ifdef _WIN32
@@ -91,6 +100,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     auto data = std::make_unique<AppData>();
     data->vg.reset(new VGraphics(true, "VGraphics", 1, (uintptr_t)hInstance, (uintptr_t)glfwGetWin32Window(window)));
 
+    glfwSetWindowUserPointer(window, data.get());
+    glfwSetFramebufferSizeCallback(window, FramebufferSizeChanged);
+
     InitMaterial(*data);
     InitModel(*data);
     InitModelInstance(*data);
@@ -106,11 +118,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     auto vb = std::make_shared<VVertexBuffer>(*data->vg->m_device, 1024, nullptr);
     auto geom = std::make_shared<VGeometry>(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, ib, std::vector<std::shared_ptr<VVertexBuffer>>{vb});
 */
+    size_t frames = 0;
+    auto start = std::chrono::system_clock::now();
+
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
       data->vg->m_device->Add(data->modelInstance);
       data->vg->m_device->RenderFrame();
+      ++frames;
     }
+
+    auto end = std::chrono::system_clock::now();
+    double fps = (double)(frames / std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+    std::clog << "FPS: " << fps << std::endl;
 
     data->vg->m_device->WaitIdle();
   } catch (VGraphicsException &vgEx) {
