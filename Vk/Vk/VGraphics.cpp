@@ -362,7 +362,16 @@ void VCmdPool::CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffe
     buffers.push_back(new VCmdBuffer(*this, b, primary));
 }
 
-VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary) : m_pool(&pool), m_buffer(buffer), m_primary(primary), m_autoBegin(primary)
+void VCmdPool::Reset(bool releasePoolResources)
+{
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  VkResult err = vkResetCommandPool(m_device->m_device, m_pool, releasePoolResources ? VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT : 0);
+  if (err < 0)
+    throw VGraphicsException("VCmdPool::Reset failed in vkResetCommandPool", err);
+}
+
+VCmdBuffer::VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary) : 
+  m_pool(&pool), m_buffer(buffer), m_primary(primary), m_autoBegin(primary)
 {
 }
 
@@ -437,7 +446,7 @@ void VCmdBuffer::Begin(bool simultaneous, VRenderPass *renderPass, uint32_t subp
     throw VGraphicsException("VCmdBuffer::Begin failed in vkBeginCommandBuffer", err);
 
   m_begun = true;
-  m_frameRecorded = 0;
+  m_frameUpdated = 0;
 }
 
 void VCmdBuffer::End()
@@ -449,7 +458,7 @@ void VCmdBuffer::End()
     throw VGraphicsException("VCmdBuffer::End failed in vkEndCommandBuffer", err);
 
   m_begun = false;
-  m_frameRecorded = m_pool->m_device->m_frame;
+  m_frameUpdated = m_pool->m_device->m_frame;
 }
 
 void VCmdBuffer::Reset(bool releaseResources)
@@ -625,28 +634,6 @@ void VCmdBuffer::NextSubpass(bool secondaryBuffers)
   vkCmdNextSubpass(m_buffer, secondaryBuffers ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
 }
 
-std::unique_ptr<VCmdBuffer> VBufferPool::GetBuffer(uint64_t frameMax, bool primary)
-{
-  if (!m_buffers.empty() && m_buffers.top()->m_frameUsed <= frameMax) {
-    std::unique_ptr<VCmdBuffer> top = std::move(const_cast<std::unique_ptr<VCmdBuffer>&>(m_buffers.top()));
-    m_buffers.pop();
-    return std::move(top);
-  }
-  return std::unique_ptr<VCmdBuffer>(m_pool->CreateBuffer(primary));
-}
-
-void VBufferPool::ReleaseBuffer(std::unique_ptr<VCmdBuffer> &&buffer)
-{
-  if (buffer)
-    m_buffers.push(std::move(buffer));
-}
-
-void VBufferPool::FreeBuffers(uint64_t frameMax)
-{
-  while (!m_buffers.empty() && m_buffers.top()->m_frameUsed <= frameMax)
-    m_buffers.pop();
-}
-
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
 {
 }
@@ -699,11 +686,9 @@ VDevice::VDevice(VGraphics &graphics) :
   InitCmdBuffers(true, 1);
   InitSwapchain(INVALID_DIM, INVALID_DIM);
   m_imageAvailable.reset(new VSemaphore(*this, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT));
-  m_pipelineCache.reset(new VPipelineCache(*this));
-  m_descriptorPool.reset(new VDescriptorPool(*this, true, 256));
-  InitViewportState();
-  m_multisampleState = std::make_shared<VMultisampleState>();
-  m_dynamicState = std::make_shared<VDynamicState>();
+  m_pipelinePool.m_pool.reset(new VPipelineCache(*this));
+  m_descriptorPool.reset(new VDescriptorPool(*this, true, true, 256));
+  InitState();
   SetClearColor(0.0f, 0.0f, 1.0f, 1.0f);
   SetClearDepthStencil(1.0f, 0);
 }
@@ -784,10 +769,14 @@ void VDevice::InitCmdBuffers(bool synchronize, uint32_t count)
   m_cmdInit.reset(m_bufferPool.m_pool->CreateBuffer(true));
 }
 
-void VDevice::InitViewportState()
+void VDevice::InitState()
 {
-  m_viewportState = std::make_shared<VViewportState>(m_swapchain->GetWidth(), m_swapchain->GetHeight());
+  m_viewportState = std::make_shared<VViewportState>(*this, m_swapchain->GetWidth(), m_swapchain->GetHeight());
   m_viewportState->m_scissor.extent = { m_graphics->m_physicalDeviceProps.limits.maxViewportDimensions[0], m_graphics->m_physicalDeviceProps.limits.maxViewportDimensions[1] };
+
+  m_multisampleState = std::make_shared<VMultisampleState>(*this);
+
+  m_dynamicState = std::make_shared<VDynamicState>(*this);
 }
 
 void VDevice::SubmitInitCommands()
@@ -950,6 +939,7 @@ void VDevice::InitSwapchain(uint32_t width, uint32_t height)
   if (m_viewportState) {
     m_viewportState->m_viewport.width = (float)width;
     m_viewportState->m_viewport.height = (float)height;
+    m_viewportState->StateUpdated();
   }
   m_frameInvalidated = m_frame;
 }
@@ -979,10 +969,8 @@ void VDevice::RenderFrame()
   cmdRender.Begin(false, m_renderPass.get(), 0);
   cmdRender.BeginRenderPass(*m_renderPass, *surface.m_framebuffer, surface.m_image->m_size.width, surface.m_image->m_size.height, m_clearValues, true);
 
-  for (auto &inst : m_toRender) {
+  for (auto &inst : m_toRender) 
     cmdRender.ExecuteCommands(*inst->m_cmdBuffer);
-    inst->m_cmdBuffer->m_frameUsed = m_frame;
-  }
   m_toRender.clear();
 
   cmdRender.EndRenderPass();
@@ -992,7 +980,8 @@ void VDevice::RenderFrame()
   m_queue->Submit(cmdRender, &sem);
 
   m_swapchain->Present(surface);
-  m_bufferPool.FreeBuffers(GetSafeReleaseFrame());
+  m_bufferPool.FreeReleased(GetSafeReleaseFrame());
+  m_pipelinePool.FreeReleased(GetSafeReleaseFrame());
   ++m_frame;
 }
 
@@ -1613,9 +1602,9 @@ uint32_t VIndexBuffer::TypeSize(VkIndexType type)
 
 VMaterial::VMaterial(std::vector<std::shared_ptr<VShader>> const &shaders) :
   m_shaders(shaders),
-  m_blendState(std::make_shared<VBlendState>(VBlendState::DISABLED)),
-  m_depthStencilState(std::make_shared<VDepthStencilState>()),
-  m_rasterizationState(std::make_shared<VRasterizationState>()),
+  m_blendState(std::make_shared<VBlendState>(GetDevice(), VBlendState::DISABLED)),
+  m_depthStencilState(std::make_shared<VDepthStencilState>(GetDevice())),
+  m_rasterizationState(std::make_shared<VRasterizationState>(GetDevice())),
   m_multisampleState(GetDevice().m_multisampleState),
   m_viewportState(GetDevice().m_viewportState),
   m_dynamicState(GetDevice().m_dynamicState)
@@ -1629,6 +1618,11 @@ void VMaterial::CreatePipelineLayout()
   // just one set with a single uniform buffer shared by all stages
   descriptorSets.push_back(std::make_shared<VDescriptorSetLayout>(GetDevice()));
   m_pipelineLayout.reset(new VPipelineLayout(GetDevice(), descriptorSets));
+}
+
+uint64_t VMaterial::GetFrameUpdated() const
+{
+  return std::max<uint64_t>({m_blendState->m_frameUpdated, m_rasterizationState->m_frameUpdated, m_multisampleState->m_frameUpdated, m_viewportState->m_frameUpdated, m_dynamicState->m_frameUpdated});
 }
 
 void VMaterial::SetDynamicState(VCmdBuffer *cmdBuffer)
@@ -1664,83 +1658,32 @@ VModel::VModel(std::shared_ptr<VGeometry> geometry, std::shared_ptr<VMaterial> m
   m_geometry(std::move(geometry)),
   m_material(std::move(material))
 {
-  CreatePipeline();
-}
-
-void VModel::CreatePipeline(uint32_t subpass)
-{
-  std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-  shaderStages.resize(m_material->m_shaders.size());
-  for (int i = 0; i < shaderStages.size(); ++i)
-    m_material->m_shaders[i]->FillPipelineInfo(shaderStages[i]);
-
-  std::vector<VkVertexInputAttributeDescription> vertexAttr;
-  std::vector<VkVertexInputBindingDescription> vertexBindings;
-  for (uint32_t i = 0; i < m_geometry->m_vertexBuffers.size(); ++i)
-    m_geometry->m_vertexBuffers[i]->m_vertexInfo->FillPipelineInfo(i, vertexAttr, vertexBindings);
-
-  VkPipelineVertexInputStateCreateInfo vertexInput;
-  vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInput.pNext = nullptr;
-  vertexInput.flags = 0;
-  vertexInput.vertexBindingDescriptionCount = (uint32_t)vertexBindings.size();
-  vertexInput.pVertexBindingDescriptions = vertexBindings.data();
-  vertexInput.vertexAttributeDescriptionCount = (uint32_t)vertexAttr.size();
-  vertexInput.pVertexAttributeDescriptions = vertexAttr.data();
-
-  VkPipelineInputAssemblyStateCreateInfo inputAssembly;
-  m_geometry->FillPipelineInfo(inputAssembly);
-
-  VkPipelineViewportStateCreateInfo viewportState;
-  m_material->m_viewportState->FillPilelineInfo(viewportState);
-
-  VkPipelineRasterizationStateCreateInfo rasterizationState;
-  m_material->m_rasterizationState->FillPipelineInfo(rasterizationState);
-
-  VkPipelineMultisampleStateCreateInfo multisampleState;
-  m_material->m_multisampleState->FillPipelineState(multisampleState);
-
-  VkPipelineDepthStencilStateCreateInfo depthStencilState;
-  m_material->m_depthStencilState->FillPipelineState(depthStencilState);
-
-  VkPipelineColorBlendStateCreateInfo blendState;
-  m_material->m_blendState->FillPipelineState(blendState);
-
-  VkPipelineDynamicStateCreateInfo dynamicState;
-  m_material->m_dynamicState->FillPipelineState(dynamicState);
-
   VDevice &device = m_geometry->GetDevice();
-
-  VkGraphicsPipelineCreateInfo pipelineInfo;
-  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  pipelineInfo.pNext = nullptr;
-  pipelineInfo.flags = 0;
-  pipelineInfo.stageCount = (uint32_t)shaderStages.size();
-  pipelineInfo.pStages = shaderStages.data();
-  pipelineInfo.pVertexInputState = &vertexInput;
-  pipelineInfo.pInputAssemblyState = &inputAssembly;
-  pipelineInfo.pTessellationState = nullptr;
-  pipelineInfo.pViewportState = &viewportState;
-  pipelineInfo.pRasterizationState = &rasterizationState;
-  pipelineInfo.pMultisampleState = &multisampleState;
-  pipelineInfo.pDepthStencilState = &depthStencilState;
-  pipelineInfo.pColorBlendState = &blendState;
-  pipelineInfo.pDynamicState = &dynamicState;
-  pipelineInfo.layout = m_material->m_pipelineLayout->m_layout;
-  pipelineInfo.renderPass = device.m_renderPass->m_renderPass;
-  pipelineInfo.subpass = subpass;
-  pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-  pipelineInfo.basePipelineIndex = -1;
-
-  VkPipeline pipeline = VK_NULL_HANDLE;
-  VkResult err = vkCreateGraphicsPipelines(device.m_device, device.m_pipelineCache->m_cache, 1, &pipelineInfo, nullptr, &pipeline);
-  if (err < 0)
-    throw VGraphicsException("VModel::CreatePipeline failed in vkCreateGraphicsPipelines", err);
-
-  m_pipeline.reset(new VGraphicsPipeline(*device.m_pipelineCache, pipeline));
+  m_pipeline = device.m_pipelinePool.GetResource(device.m_frame, *this, 0);
 }
 
-VViewportState::VViewportState(uint32_t width, uint32_t height)
+void VModel::Update()
+{
+  VDevice &device = m_geometry->GetDevice();
+  if (m_pipeline->m_frameUpdated < std::max(m_material->GetFrameUpdated(), device.m_frameInvalidated))
+    m_pipeline = device.m_pipelinePool.GetResource(device.m_frame, *this, 0);
+
+  m_pipeline->m_frameUsed = device.m_frame;
+}
+
+VDeviceState::VDeviceState(VDevice &device) : 
+  m_device(&device), 
+  m_frameUpdated(device.m_frame) 
+{
+}
+
+void VDeviceState::StateUpdated() 
+{ 
+  m_frameUpdated = m_device->m_frame; 
+}
+
+VViewportState::VViewportState(VDevice &device, uint32_t width, uint32_t height) :
+  VDeviceState(device)
 {
   SetSize(width, height);
 }
@@ -1769,7 +1712,8 @@ void VViewportState::FillPilelineInfo(VkPipelineViewportStateCreateInfo &info)
   info.pScissors = &m_scissor;
 }
 
-VRasterizationState::VRasterizationState()
+VRasterizationState::VRasterizationState(VDevice &device) :
+  VDeviceState(device)
 {
   m_rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   m_rasterization.pNext = nullptr;
@@ -1791,7 +1735,8 @@ void VRasterizationState::FillPipelineInfo(VkPipelineRasterizationStateCreateInf
   info = m_rasterization;
 }
 
-VMultisampleState::VMultisampleState()
+VMultisampleState::VMultisampleState(VDevice &device) :
+  VDeviceState(device)
 {
   m_multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   m_multisample.pNext = nullptr;
@@ -1809,7 +1754,8 @@ void VMultisampleState::FillPipelineState(VkPipelineMultisampleStateCreateInfo &
   info = m_multisample;
 }
 
-VDepthStencilState::VDepthStencilState()
+VDepthStencilState::VDepthStencilState(VDevice &device) :
+  VDeviceState(device)
 {
   m_depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   m_depthStencil.pNext = nullptr;
@@ -1830,7 +1776,8 @@ void VDepthStencilState::FillPipelineState(VkPipelineDepthStencilStateCreateInfo
   info = m_depthStencil;
 }
 
-VBlendState::VBlendState(Blend blend)
+VBlendState::VBlendState(VDevice &device, Blend blend) :
+  VDeviceState(device)
 {
   SetBlend(blend);
 }
@@ -1877,8 +1824,9 @@ void VBlendState::FillPipelineState(VkPipelineColorBlendStateCreateInfo &info)
   info.blendConstants[3] = m_Aconst;
 }
 
-VDynamicState::VDynamicState() :
-  m_states{ VK_DYNAMIC_STATE_VIEWPORT }
+VDynamicState::VDynamicState(VDevice &device) :
+  VDeviceState(device),
+  m_states{ /*VK_DYNAMIC_STATE_VIEWPORT*/ }
 {
 }
 
@@ -1967,7 +1915,7 @@ VRenderPass::~VRenderPass()
   vkDestroyRenderPass(m_device->m_device, m_renderPass, nullptr);
 }
 
-VDescriptorPool::VDescriptorPool(VDevice &device, bool synchronize, uint32_t uniformDescriptors) :
+VDescriptorPool::VDescriptorPool(VDevice &device, bool synchronize, bool resetDescriptors, uint32_t uniformDescriptors) :
   m_device(&device),
   m_lock(synchronize)
 {
@@ -1978,7 +1926,7 @@ VDescriptorPool::VDescriptorPool(VDevice &device, bool synchronize, uint32_t uni
   VkDescriptorPoolCreateInfo poolInfo;
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.pNext = nullptr;
-  poolInfo.flags = 0;
+  poolInfo.flags = resetDescriptors ? VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT : 0;
   poolInfo.maxSets = 1;
   poolInfo.poolSizeCount = 1;
   poolInfo.pPoolSizes = &poolSize;
@@ -1993,7 +1941,7 @@ VDescriptorPool::~VDescriptorPool()
   vkDestroyDescriptorPool(m_device->m_device, m_pool, nullptr);
 }
 
-VDescriptorSet *VDescriptorPool::CreateSet(VDescriptorSetLayout *layout)
+VDescriptorSet *VDescriptorPool::CreateSet(std::shared_ptr<VDescriptorSetLayout> const &layout)
 {
   std::lock_guard<ConditionalLock> lock(m_lock);
 
@@ -2009,7 +1957,7 @@ VDescriptorSet *VDescriptorPool::CreateSet(VDescriptorSetLayout *layout)
   if (err < 0)
     throw VGraphicsException("VDescriptorPool::CreateSet failed in vkAllocateDescriptorSets", err);
 
-  return new VDescriptorSet(*this, vkSet);
+  return new VDescriptorSet(*this, vkSet, layout);
 }
 
 void VDescriptorPool::CreateSets(std::vector<std::shared_ptr<VDescriptorSetLayout>> const &layouts, std::vector<std::unique_ptr<VDescriptorSet>> &sets)
@@ -2032,18 +1980,81 @@ void VDescriptorPool::CreateSets(std::vector<std::shared_ptr<VDescriptorSetLayou
   if (err < 0)
     throw VGraphicsException("VDescriptorPool::CreateSets failed in vkAllocateDescriptorSets", err);
 
-  for (auto s : vkSets)
-    sets.push_back(std::make_unique<VDescriptorSet>(*this, s));
+  for (int i = 0; i < vkSets.size(); ++i)
+    sets.push_back(std::make_unique<VDescriptorSet>(*this, vkSets[i], layouts[i]));
 }
 
-VDescriptorSet::VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set) :
-  m_pool(&pool), m_set(set)
+void VDescriptorPool::Reset()
 {
+  std::lock_guard<ConditionalLock> lock(m_lock);
+  VkResult err = vkResetDescriptorPool(m_device->m_device, m_pool, 0);
+  if (err < 0)
+    throw VGraphicsException("VDescriptorPool::Reset failed in vkResetDescriptorPool", err);
 }
 
-VDescriptorSet::VDescriptorSet()
+VDescriptorSet::VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set, std::shared_ptr<VDescriptorSetLayout> const &layout) :
+  m_pool(&pool), 
+  m_set(set),
+  m_layout(layout)
 {
-  vkFreeDescriptorSets(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_set);
+  m_frameUpdated = m_pool->m_device->m_frame;
+}
+
+VDescriptorSet::~VDescriptorSet()
+{
+  VkResult err = vkFreeDescriptorSets(m_pool->m_device->m_device, m_pool->m_pool, 1, &m_set);
+  assert(err >= 0);
+}
+
+void VDescriptorSet::Update(std::unique_ptr<VBuffer> const &uniformBuffer)
+{
+  std::vector<VkDescriptorBufferInfo> bufferInfos;
+  std::vector<VkWriteDescriptorSet> uniformWrites;
+  FillPipelineInfo(uniformBuffer, bufferInfos, uniformWrites);
+  m_frameUpdated = m_pool->m_device->m_frame;
+  vkUpdateDescriptorSets(m_pool->m_device->m_device, (uint32_t)uniformWrites.size(), uniformWrites.data(), 0, nullptr);
+}
+
+void VDescriptorSet::Update(std::vector<std::unique_ptr<VDescriptorSet>> &sets, std::vector<std::unique_ptr<VBuffer>> const &uniformBuffers)
+{
+  assert(sets.size() == uniformBuffers.size());
+  if (!sets.size())
+    return;
+  std::vector<VkDescriptorBufferInfo> bufferInfos;
+  std::vector<VkWriteDescriptorSet> uniformWrites;
+  VDescriptorPool *pool = sets[0]->m_pool;
+  bufferInfos.reserve(sets.size());
+  uniformWrites.reserve(sets.size());
+  for (int i = 0; i < sets.size(); ++i) {
+    assert(sets[i]->m_pool == pool);
+    sets[i]->FillPipelineInfo(uniformBuffers[i], bufferInfos, uniformWrites);
+    sets[i]->m_frameUpdated = pool->m_device->m_frame;
+  }
+  vkUpdateDescriptorSets(pool->m_device->m_device, (uint32_t)uniformWrites.size(), uniformWrites.data(), 0, nullptr);
+}
+
+void VDescriptorSet::FillPipelineInfo(std::unique_ptr<VBuffer> const &uniformBuffer, std::vector<VkDescriptorBufferInfo> &bufferInfos, std::vector<VkWriteDescriptorSet> &uniformWrites)
+{
+  if (uniformBuffer) {
+    VkDescriptorBufferInfo bufInfo;
+    bufInfo.buffer = uniformBuffer->m_buffer;
+    bufInfo.offset = 0;
+    bufInfo.range = uniformBuffer->m_size;
+    bufferInfos.push_back(bufInfo);
+  }
+
+  VkWriteDescriptorSet write;
+  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write.pNext = nullptr;
+  write.dstSet = m_set;
+  write.dstBinding = 0;
+  write.dstArrayElement = 0;
+  write.descriptorCount = 1;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  write.pImageInfo = nullptr;
+  write.pBufferInfo = uniformBuffer ? &bufferInfos.back() : nullptr;
+  write.pTexelBufferView = nullptr;
+  uniformWrites.push_back(write);
 }
 
 VPipelineCache::VPipelineCache(VDevice &device, bool synchronize, std::vector<uint8_t> const *initialData) :
@@ -2083,9 +2094,83 @@ void VPipelineCache::GetData(std::vector<uint8_t> &data)
     throw VGraphicsException("VPipelineCache::GetData failed in vkGetPipelineCacheData", err);
 }
 
+VGraphicsPipeline *VPipelineCache::CreatePipeline(VModel &model, uint32_t subpass)
+{
+  std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+  shaderStages.resize(model.m_material->m_shaders.size());
+  for (int i = 0; i < shaderStages.size(); ++i)
+    model.m_material->m_shaders[i]->FillPipelineInfo(shaderStages[i]);
+
+  std::vector<VkVertexInputAttributeDescription> vertexAttr;
+  std::vector<VkVertexInputBindingDescription> vertexBindings;
+  for (uint32_t i = 0; i < model.m_geometry->m_vertexBuffers.size(); ++i)
+    model.m_geometry->m_vertexBuffers[i]->m_vertexInfo->FillPipelineInfo(i, vertexAttr, vertexBindings);
+
+  VkPipelineVertexInputStateCreateInfo vertexInput;
+  vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInput.pNext = nullptr;
+  vertexInput.flags = 0;
+  vertexInput.vertexBindingDescriptionCount = (uint32_t)vertexBindings.size();
+  vertexInput.pVertexBindingDescriptions = vertexBindings.data();
+  vertexInput.vertexAttributeDescriptionCount = (uint32_t)vertexAttr.size();
+  vertexInput.pVertexAttributeDescriptions = vertexAttr.data();
+
+  VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+  model.m_geometry->FillPipelineInfo(inputAssembly);
+
+  VkPipelineViewportStateCreateInfo viewportState;
+  model.m_material->m_viewportState->FillPilelineInfo(viewportState);
+
+  VkPipelineRasterizationStateCreateInfo rasterizationState;
+  model.m_material->m_rasterizationState->FillPipelineInfo(rasterizationState);
+
+  VkPipelineMultisampleStateCreateInfo multisampleState;
+  model.m_material->m_multisampleState->FillPipelineState(multisampleState);
+
+  VkPipelineDepthStencilStateCreateInfo depthStencilState;
+  model.m_material->m_depthStencilState->FillPipelineState(depthStencilState);
+
+  VkPipelineColorBlendStateCreateInfo blendState;
+  model.m_material->m_blendState->FillPipelineState(blendState);
+
+  VkPipelineDynamicStateCreateInfo dynamicState;
+  model.m_material->m_dynamicState->FillPipelineState(dynamicState);
+
+  VDevice &device = model.m_geometry->GetDevice();
+
+  VkGraphicsPipelineCreateInfo pipelineInfo;
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+  pipelineInfo.pNext = nullptr;
+  pipelineInfo.flags = 0;
+  pipelineInfo.stageCount = (uint32_t)shaderStages.size();
+  pipelineInfo.pStages = shaderStages.data();
+  pipelineInfo.pVertexInputState = &vertexInput;
+  pipelineInfo.pInputAssemblyState = &inputAssembly;
+  pipelineInfo.pTessellationState = nullptr;
+  pipelineInfo.pViewportState = &viewportState;
+  pipelineInfo.pRasterizationState = &rasterizationState;
+  pipelineInfo.pMultisampleState = &multisampleState;
+  pipelineInfo.pDepthStencilState = &depthStencilState;
+  pipelineInfo.pColorBlendState = &blendState;
+  pipelineInfo.pDynamicState = dynamicState.dynamicStateCount ? &dynamicState : nullptr;
+  pipelineInfo.layout = model.m_material->m_pipelineLayout->m_layout;
+  pipelineInfo.renderPass = device.m_renderPass->m_renderPass;
+  pipelineInfo.subpass = subpass;
+  pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+  pipelineInfo.basePipelineIndex = -1;
+
+  VkPipeline pipeline = VK_NULL_HANDLE;
+  VkResult err = vkCreateGraphicsPipelines(device.m_device, m_cache, 1, &pipelineInfo, nullptr, &pipeline);
+  if (err < 0)
+    throw VGraphicsException("VPipelineCache::CreatePipeline failed in vkCreateGraphicsPipelines", err);
+
+  return new VGraphicsPipeline(*device.m_pipelinePool.m_pool, pipeline);
+}
+
 VGraphicsPipeline::VGraphicsPipeline(VPipelineCache &cache, VkPipeline pipeline) :
   m_cache(&cache), m_pipeline(pipeline)
 {
+  m_frameUpdated = m_cache->m_device->m_frame;
 }
 
 VGraphicsPipeline::~VGraphicsPipeline()
@@ -2105,11 +2190,6 @@ void VModelInstance::InitDescriptorSets()
   auto &setLayouts = m_model->m_material->m_pipelineLayout->m_setLayouts;
   device.m_descriptorPool->CreateSets(setLayouts, m_descriptorSets);
 
-  std::vector<VkDescriptorBufferInfo> bufferInfos;
-  std::vector<VkWriteDescriptorSet> uniformWrites;
-  // reserve the vectors so they don't get reallocated, we'll be getting pointers to elements
-  bufferInfos.reserve(setLayouts.size());
-  uniformWrites.reserve(setLayouts.size());
   m_uniformBuffers.resize(setLayouts.size());
   for (int i = 0; i < setLayouts.size(); ++i) {
     if (setLayouts[i]->HasUniformBuffer()) {
@@ -2118,36 +2198,17 @@ void VModelInstance::InitDescriptorSets()
       void *content = m_uniformBuffers[i]->Map();
       memcpy(content, m_model->m_material->m_uniformContent[i].data(), m_model->m_material->m_uniformContent[i].size());
       m_uniformBuffers[i]->Unmap();
-
-      VkDescriptorBufferInfo bufInfo;
-      bufInfo.buffer = m_uniformBuffers[i]->m_buffer;
-      bufInfo.offset = 0;
-      bufInfo.range = m_uniformBuffers[i]->m_size;
-      bufferInfos.push_back(bufInfo);
-
-      VkWriteDescriptorSet write;
-      write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write.pNext = nullptr;
-      write.dstSet = m_descriptorSets[i]->m_set;
-      write.dstBinding = 0;
-      write.dstArrayElement = 0;
-      write.descriptorCount = 1;
-      write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      write.pImageInfo = nullptr;
-      write.pBufferInfo = &bufferInfos.back();
-      write.pTexelBufferView = nullptr;
-      uniformWrites.push_back(write);
     }
   }
 
-  vkUpdateDescriptorSets(device.m_device, (uint32_t)uniformWrites.size(), uniformWrites.data(), 0, nullptr);
+  VDescriptorSet::Update(m_descriptorSets, m_uniformBuffers);
 }
 
 void VModelInstance::UpdateCmdBuffer()
 {
   VDevice &device = GetDevice();
-  device.m_bufferPool.ReleaseBuffer(std::move(m_cmdBuffer));
-  m_cmdBuffer = device.m_bufferPool.GetBuffer(device.GetSafeReleaseFrame(), false);
+  device.m_bufferPool.ReleaseResource(std::move(m_cmdBuffer));
+  m_cmdBuffer = device.m_bufferPool.GetResource(device.GetSafeReleaseFrame(), false);
   m_cmdBuffer->Begin(true, device.m_renderPass.get(), 0);
 
   m_model->m_material->SetDynamicState(m_cmdBuffer.get());
@@ -2163,7 +2224,12 @@ void VModelInstance::UpdateCmdBuffer()
 
 void VModelInstance::Update()
 {
+  m_model->Update();
+
   VDevice &device = GetDevice();
-  if (!m_cmdBuffer || m_cmdBuffer->m_frameRecorded < std::max(m_frameModified, device.m_frameInvalidated))
+  if (!m_cmdBuffer || m_cmdBuffer->m_frameUpdated < std::max(m_frameModified, device.m_frameInvalidated))
     UpdateCmdBuffer();
+  m_cmdBuffer->m_frameUsed = device.m_frame;
+  for (auto &set : m_descriptorSets)
+    set->m_frameUsed = device.m_frame;
 }

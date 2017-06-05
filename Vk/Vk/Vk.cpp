@@ -129,7 +129,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     }
 
     auto end = std::chrono::system_clock::now();
-    double fps = (double)(frames / std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+    double fps = (double)frames / std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
     std::clog << "FPS: " << fps << std::endl;
 
     data->vg->m_device->WaitIdle();

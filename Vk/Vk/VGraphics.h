@@ -20,6 +20,60 @@
 #undef max
 #endif
 
+class VTrackedResource {
+public:
+  uint64_t m_frameUpdated = 0;
+  uint64_t m_frameUsed = 0;
+};
+
+template <class R, class P, class D>
+class VResourcePool {
+public:
+  struct ResourceFrameUsedComparer {
+    bool operator()(std::unique_ptr<R> const &r1, std::unique_ptr<R> const &r2) { return r1->m_frameUsed > r2->m_frameUsed; }
+  };
+  typedef std::priority_queue<std::unique_ptr<R>, std::vector<std::unique_ptr<R>>, ResourceFrameUsedComparer> ResourceQueue;
+
+  std::unique_ptr<P> m_pool;
+  ResourceQueue m_released;
+
+  // To be implemented by derived classes
+  //bool CompatibleResource(R *resource, Args... args);
+  //R *CreateResource(Args... args);
+
+  template <typename... Args>
+  std::unique_ptr<R> GetResource(uint64_t frameMax, Args... args)
+  {
+    std::vector<std::unique_ptr<R>> inspected;
+    std::unique_ptr<R> found;
+    while (!m_released.empty() && m_released.top()->m_frameUsed <= frameMax)
+    {
+      found = std::move(const_cast<std::unique_ptr<R>&>(m_released.top()));
+      m_released.pop();
+      if (static_cast<D*>(this)->CompatibleResource(found.get(), std::forward<Args>(args)...))
+        break;
+      inspected.emplace_back(std::move(found));
+    }
+    for (auto &r : inspected)
+      m_released.push(std::move(r));
+    if (!found)
+      found = std::unique_ptr<R>(static_cast<D*>(this)->CreateResource(std::forward<Args>(args)...));
+    return found;
+  }
+
+  void ReleaseResource(std::unique_ptr<R> &&resource)
+  {
+    if (resource)
+      m_released.push(std::move(resource));
+  }
+
+  void FreeReleased(uint64_t frameMax)
+  {
+    while (!m_released.empty() && m_released.top()->m_frameUsed <= frameMax)
+      m_released.pop();
+  }
+};
+
 struct VGraphicsException : public std::runtime_error {
   VkResult m_err;
   explicit VGraphicsException(const char *msg, VkResult err) : std::runtime_error(msg), m_err(err) {}
@@ -172,6 +226,7 @@ public:
   VCmdBuffer *CreateBuffer(bool primary);
   void CreateBuffers(bool primary, uint32_t count, std::vector<VCmdBuffer*> &buffers);
 
+  void Reset(bool releasePoolResources);
 public:
   void InitBufferInfo(VkCommandBufferAllocateInfo &bufInfo, bool primary, uint32_t count);
 };
@@ -181,7 +236,7 @@ class VPipelineLayout;
 class VDescriptorSet;
 class VVertexBuffer;
 class VIndexBuffer;
-class VCmdBuffer {
+class VCmdBuffer : public VTrackedResource {
 public:
   VCmdPool *m_pool;
   VkCommandBuffer m_buffer;
@@ -191,8 +246,6 @@ public:
   bool m_simultaneousBegin = false;
   bool m_begun = false;
   bool m_primary;
-  uint64_t m_frameRecorded = 0;
-  uint64_t m_frameUsed = 0;
 
   VCmdBuffer(VCmdPool &pool, VkCommandBuffer buffer, bool primary);
   ~VCmdBuffer();
@@ -224,20 +277,10 @@ public:
   void NextSubpass(bool secondaryBuffers);
 };
 
-class VBufferPool
-{
+class VPooledBuffers : public VResourcePool<VCmdBuffer, VCmdPool, VPooledBuffers> {
 public:
-  struct CmdBufferFrameUsedComparer {
-    bool operator()(std::unique_ptr<VCmdBuffer> const &b1, std::unique_ptr<VCmdBuffer> const &b2) { return b1->m_frameUsed > b2->m_frameUsed; }
-  };
-  typedef std::priority_queue<std::unique_ptr<VCmdBuffer>, std::vector<std::unique_ptr<VCmdBuffer>>, CmdBufferFrameUsedComparer> CmdBufferQueue;
-
-  std::unique_ptr<VCmdPool> m_pool;
-  CmdBufferQueue m_buffers;
-
-  std::unique_ptr<VCmdBuffer> GetBuffer(uint64_t frameMax, bool primary);
-  void ReleaseBuffer(std::unique_ptr<VCmdBuffer> &&buffer);
-  void FreeBuffers(uint64_t frameMax);
+  bool CompatibleResource(VCmdBuffer *cmdBuf, bool primary) const { return cmdBuf->m_primary == primary; }
+  VCmdBuffer *CreateResource(bool primary) { return m_pool->CreateBuffer(primary); }
 };
 
 class VSwapchain {
@@ -320,45 +363,55 @@ public:
   static uint32_t TypeSize(VkIndexType type);
 };
 
-class VViewportState {
+class VDeviceState {
+public:
+  VDevice *m_device;
+  uint64_t m_frameUpdated;
+
+  VDeviceState(VDevice &device);
+
+  void StateUpdated();
+};
+
+class VViewportState : public VDeviceState {
 public:
   VkViewport m_viewport;
   VkRect2D m_scissor;
 
-  VViewportState(uint32_t width, uint32_t height);
+  VViewportState(VDevice &device, uint32_t width, uint32_t height);
 
   void SetSize(uint32_t width, uint32_t height);
   void FillPilelineInfo(VkPipelineViewportStateCreateInfo &info);
 };
 
-class VRasterizationState {
+class VRasterizationState : public VDeviceState {
 public:
   VkPipelineRasterizationStateCreateInfo m_rasterization;
 
-  VRasterizationState();
+  VRasterizationState(VDevice &device);
 
   void FillPipelineInfo(VkPipelineRasterizationStateCreateInfo &info);
 };
 
-class VMultisampleState {
+class VMultisampleState : public VDeviceState {
 public:
   VkPipelineMultisampleStateCreateInfo m_multisample;
 
-  VMultisampleState();
+  VMultisampleState(VDevice &device);
 
   void FillPipelineState(VkPipelineMultisampleStateCreateInfo &info);
 };
 
-class VDepthStencilState {
+class VDepthStencilState : public VDeviceState {
 public:
   VkPipelineDepthStencilStateCreateInfo m_depthStencil;
 
-  VDepthStencilState();
+  VDepthStencilState(VDevice &device);
 
   void FillPipelineState(VkPipelineDepthStencilStateCreateInfo &info);
 };
 
-class VBlendState {
+class VBlendState : public VDeviceState {
 public:
   enum Blend {
     DISABLED,
@@ -368,18 +421,18 @@ public:
   VkPipelineColorBlendAttachmentState m_blendState;
   float m_Rconst = 0.0f, m_Gconst = 0.0f, m_Bconst = 0.0f, m_Aconst = 0.0f;
 
-  VBlendState(Blend blend);
+  VBlendState(VDevice &device, Blend blend);
 
   void SetBlend(Blend blend);
 
   void FillPipelineState(VkPipelineColorBlendStateCreateInfo &info);
 };
 
-class VDynamicState {
+class VDynamicState : public VDeviceState {
 public:
   std::vector<VkDynamicState> m_states;
 
-  VDynamicState();
+  VDynamicState(VDevice &device);
 
   void FillPipelineState(VkPipelineDynamicStateCreateInfo &info);
 };
@@ -400,23 +453,38 @@ public:
   VkDescriptorPool m_pool;
   ConditionalLock m_lock;
 
-  VDescriptorPool(VDevice &device, bool synchronize, uint32_t uniformDescriptors);
+  VDescriptorPool(VDevice &device, bool synchronize, bool resetDescriptors, uint32_t uniformDescriptors);
   ~VDescriptorPool();
 
-  VDescriptorSet *CreateSet(VDescriptorSetLayout *layout);
+  VDescriptorSet *CreateSet(std::shared_ptr<VDescriptorSetLayout> const &layout);
   void CreateSets(std::vector<std::shared_ptr<VDescriptorSetLayout>> const &layouts, std::vector<std::unique_ptr<VDescriptorSet>> &sets);
+
+  void Reset();
 };
 
-class VDescriptorSet {
+class VDescriptorSet : public VTrackedResource {
 public:
   VDescriptorPool *m_pool;
   VkDescriptorSet m_set;
+  std::shared_ptr<VDescriptorSetLayout> m_layout;
 
-  VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set);
-  VDescriptorSet();
+  VDescriptorSet(VDescriptorPool &pool, VkDescriptorSet set, std::shared_ptr<VDescriptorSetLayout> const &layout);
+  ~VDescriptorSet();
+
+  void Update(std::unique_ptr<VBuffer> const &uniformBuffer);
+  static void Update(std::vector<std::unique_ptr<VDescriptorSet>> &sets, std::vector<std::unique_ptr<VBuffer>> const &uniformBuffers);
+public:
+  void FillPipelineInfo(std::unique_ptr<VBuffer> const &uniformBuffer, std::vector<VkDescriptorBufferInfo> &bufferInfos, std::vector<VkWriteDescriptorSet> &uniformWrites);
+};
+
+class VPooledDescriptors : VResourcePool<VDescriptorSet, VDescriptorPool, VPooledDescriptors> {
+public:
+  bool CompatibleResource(VDescriptorSet *descSet, std::shared_ptr<VDescriptorSetLayout> const &layout) const { return descSet->m_layout == layout; }
+  VDescriptorSet *CreateResource(std::shared_ptr<VDescriptorSetLayout> const &layout) { return m_pool->CreateSet(layout); }
 };
 
 class VGraphicsPipeline;
+class VModel;
 class VPipelineCache {
 public:
   VDevice *m_device;
@@ -427,15 +495,26 @@ public:
   ~VPipelineCache();
 
   void GetData(std::vector<uint8_t> &data);
+
+  VGraphicsPipeline *CreatePipeline(VModel &model, uint32_t subpass);
 };
 
-class VGraphicsPipeline {
+class VGraphicsPipeline : public VTrackedResource {
 public:
   VPipelineCache *m_cache;
   VkPipeline m_pipeline;
 
   VGraphicsPipeline(VPipelineCache &cache, VkPipeline pipeline);
   ~VGraphicsPipeline();
+};
+
+class VPooledPipelines : public VResourcePool<VGraphicsPipeline, VPipelineCache, VPooledPipelines> {
+public:
+  // We override GetResource to not use the released pipelines but always create a new one
+  std::unique_ptr<VGraphicsPipeline> GetResource(uint64_t frameMax, VModel &model, uint32_t subpass)
+  {
+    return std::unique_ptr<VGraphicsPipeline>(m_pool->CreatePipeline(model, subpass));
+  }
 };
 
 class VMaterial {
@@ -454,6 +533,7 @@ public:
   VMaterial(std::vector<std::shared_ptr<VShader>> const &shaders);
 
   VDevice &GetDevice() const { return *m_shaders[0]->m_device; }
+  uint64_t GetFrameUpdated() const;
 
   void CreatePipelineLayout();
   void SetDynamicState(VCmdBuffer *cmdBuffer);
@@ -468,7 +548,7 @@ public:
   VGeometry(VkPrimitiveTopology topology, std::shared_ptr<VIndexBuffer> indexBuffer, std::vector<std::shared_ptr<VVertexBuffer>> &vertexBuffers);
 
   VDevice &GetDevice() const { return *m_vertexBuffers[0]->m_buffer->m_device; }
-
+public:
   void FillPipelineInfo(VkPipelineInputAssemblyStateCreateInfo &info);
 };
 
@@ -480,7 +560,7 @@ public:
 
   VModel(std::shared_ptr<VGeometry> geometry, std::shared_ptr<VMaterial> material);
 
-  void CreatePipeline(uint32_t subpass = 0);
+  void Update();
 };
 
 class VModelInstance {
@@ -510,12 +590,12 @@ public:
   UniqueResource<VkDevice> m_device;
   std::unique_ptr<VImage> m_depth;
   std::unique_ptr<VQueue> m_queue;
-  VBufferPool m_bufferPool;
+  VPooledBuffers m_bufferPool;
   std::unique_ptr<VCmdBuffer> m_cmdInit;
   std::unique_ptr<VRenderPass> m_renderPass;
   std::unique_ptr<VSwapchain> m_swapchain;
   std::unique_ptr<VSemaphore> m_imageAvailable;
-  std::unique_ptr<VPipelineCache> m_pipelineCache;
+  VPooledPipelines m_pipelinePool;
   std::unique_ptr<VDescriptorPool> m_descriptorPool;
   std::shared_ptr<VViewportState> m_viewportState;
   std::shared_ptr<VMultisampleState> m_multisampleState;
@@ -556,7 +636,7 @@ public:
   void InitDevice();
   void InitDepth(uint32_t width, uint32_t height);
   void InitCmdBuffers(bool synchronize, uint32_t count);
-  void InitViewportState();
+  void InitState();
 
   void SubmitInitCommands();
 
