@@ -22,6 +22,7 @@ VGraphics::VGraphics(bool validate, std::string const &appName, uint32_t appVers
   InitInstance(appName, appVersion);
   InitPhysicalDevice();
   InitSurface(instanceID, windowID);
+  InitDepthFormat();
   m_device.reset(new VDevice(*this));
 }
 
@@ -269,16 +270,24 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
     throw VGraphicsException("VGraphics::InitSurface failed in vkCreateXXXXSurfaceKHR", err);
   m_surface.Reset(std::move(surface));
 
-  std::vector<VkBool32> supportsPresent(m_queueFamilies.size());
-  for (int i = 0; i < supportsPresent.size(); ++i) {
-    err = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent[i]);
+  m_presentQueueFamily = -1;
+  for (int i = 0; i < m_queueFamilies.size(); ++i) {
+    VkBool32 supportsPresent;
+    err = vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent);
     if (err < 0)
       throw VGraphicsException("VGraphics::InitSurface failed in m_GetPhysicalDeviceSurfaceSupportKHR", err);
+    if (supportsPresent) {
+      assert(m_queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT);
+      m_presentQueueFamily = i;
+      break;
+    }
   }
+  if (m_presentQueueFamily >= m_queueFamilies.size())
+    throw VGraphicsException("VGraphics::InitSurface failed to find a presentation queue family", err);
 
   m_graphicsQueueFamily = -1;
   for (unsigned i = 0; i < m_queueFamilies.size(); ++i) {
-    if ((m_queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supportsPresent[i]) {
+    if ((m_queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
       m_graphicsQueueFamily = i;
       break;
     }
@@ -294,6 +303,31 @@ void VGraphics::InitSurface(uintptr_t instanceID, uintptr_t windowID)
   m_surfaceFormat = surfFormats[0];
   if (m_surfaceFormat.format == VK_FORMAT_UNDEFINED) // no preferred format
     m_surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
+}
+
+bool VGraphics::CompatibleOptimalFormat(VkFormat format, VkFormatFeatureFlagBits requiredFeatures)
+{
+  VkFormatProperties formatProperties;
+  vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &formatProperties);
+  return (formatProperties.optimalTilingFeatures & requiredFeatures) == requiredFeatures;
+}
+
+void VGraphics::InitDepthFormat()
+{
+  std::vector<VkFormat> depthFormats{ 
+    VK_FORMAT_D24_UNORM_S8_UINT,
+    VK_FORMAT_D32_SFLOAT_S8_UINT,
+    VK_FORMAT_D16_UNORM_S8_UINT,
+    VK_FORMAT_D32_SFLOAT,
+    VK_FORMAT_X8_D24_UNORM_PACK32,
+    VK_FORMAT_D16_UNORM
+  };
+  for (VkFormat fmt : depthFormats) 
+    if (CompatibleOptimalFormat(fmt, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
+      m_depthFormat = fmt;
+      return;
+    }
+  throw VGraphicsException("VGraphics::InitDepthFormat failed to find a compatible depth buffer format", VK_ERROR_FORMAT_NOT_SUPPORTED);
 }
 
 uint32_t VGraphics::GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags)
@@ -634,6 +668,30 @@ void VCmdBuffer::NextSubpass(bool secondaryBuffers)
   vkCmdNextSubpass(m_buffer, secondaryBuffers ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
 }
 
+void VCmdBuffer::FramebufferBarrier(VImage &image, bool present2graphics)
+{
+  VDevice &device = *m_pool->m_device;
+
+  VkImageMemoryBarrier imgBarrier;
+  imgBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imgBarrier.pNext = nullptr;
+  imgBarrier.srcAccessMask = present2graphics ? VK_ACCESS_MEMORY_READ_BIT : VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  imgBarrier.dstAccessMask = present2graphics ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_MEMORY_READ_BIT;
+  imgBarrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  imgBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  imgBarrier.image = image.m_image;
+  imgBarrier.srcQueueFamilyIndex = present2graphics ? device.m_graphics->m_presentQueueFamily : device.m_graphics->m_graphicsQueueFamily;
+  imgBarrier.dstQueueFamilyIndex = present2graphics ? device.m_graphics->m_graphicsQueueFamily : device.m_graphics->m_presentQueueFamily;
+  imgBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+
+  std::lock_guard<ConditionalLock> lock(m_pool->m_lock);
+  AutoBegin();
+
+  vkCmdPipelineBarrier(m_buffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
+    present2graphics ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+    0, 0, nullptr, 0, nullptr, 1, &imgBarrier);
+}
+
 VQueue::VQueue(VDevice &device, bool synchronize, VkQueue queue): m_queue(queue), m_device(&device), m_lock(synchronize)
 {
 }
@@ -724,22 +782,32 @@ void VDevice::InitCapabilities()
 void VDevice::InitDevice()
 {
   VkResult err;
-  VkDeviceQueueCreateInfo queueInfo;
+  std::vector<VkDeviceQueueCreateInfo> queueInfo(1);
   float queuePriorities[] = { 0.0 };
-  queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queueInfo.pNext = nullptr;
-  queueInfo.flags = 0;
-  queueInfo.queueFamilyIndex = m_graphics->m_graphicsQueueFamily;
-  queueInfo.queueCount = 1;
-  queueInfo.pQueuePriorities = queuePriorities;
+  queueInfo.back().sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queueInfo.back().pNext = nullptr;
+  queueInfo.back().flags = 0;
+  queueInfo.back().queueFamilyIndex = m_graphics->m_graphicsQueueFamily;
+  queueInfo.back().queueCount = 1;
+  queueInfo.back().pQueuePriorities = queuePriorities;
+
+  if (m_graphics->m_presentQueueFamily != m_graphics->m_graphicsQueueFamily) {
+    queueInfo.resize(queueInfo.size() + 1);
+    queueInfo.back().sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueInfo.back().pNext = nullptr;
+    queueInfo.back().flags = 0;
+    queueInfo.back().queueFamilyIndex = m_graphics->m_presentQueueFamily;
+    queueInfo.back().queueCount = 1;
+    queueInfo.back().pQueuePriorities = queuePriorities;
+  }
 
   std::vector<char const *> layerNames = VGraphics::GetPtrArray(m_layerNames), extNames = VGraphics::GetPtrArray(m_extensionNames);
   VkDeviceCreateInfo deviceInfo;
   deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   deviceInfo.pNext = nullptr;
   deviceInfo.flags = 0;
-  deviceInfo.queueCreateInfoCount = 1;
-  deviceInfo.pQueueCreateInfos = &queueInfo;
+  deviceInfo.queueCreateInfoCount = (uint32_t)queueInfo.size();
+  deviceInfo.pQueueCreateInfos = queueInfo.data();
   deviceInfo.enabledLayerCount = static_cast<uint32_t>(layerNames.size());
   deviceInfo.ppEnabledLayerNames = layerNames.data();
   deviceInfo.enabledExtensionCount = static_cast<uint32_t>(extNames.size());
@@ -752,14 +820,21 @@ void VDevice::InitDevice()
     throw VGraphicsException("VDevice::InitDevice failed in vkCreateDevice", err);
   m_device.Reset(std::move(device));
 
-  VkQueue queue;
-  vkGetDeviceQueue(m_device, m_graphics->m_graphicsQueueFamily, 0, &queue);
-  m_queue.reset(new VQueue(*this, true, queue));
+  VkQueue renderQueue;
+  vkGetDeviceQueue(m_device, m_graphics->m_graphicsQueueFamily, 0, &renderQueue);
+  m_graphicsQueue.reset(new VQueue(*this, true, renderQueue));
+  if (m_graphics->m_presentQueueFamily == m_graphics->m_graphicsQueueFamily)
+    m_presentQueue = m_graphicsQueue;
+  else {
+    VkQueue presentQueue;
+    vkGetDeviceQueue(m_device, m_graphics->m_presentQueueFamily, 0, &presentQueue);
+    m_presentQueue.reset(new VQueue(*this, true, presentQueue));
+  }
 }
 
 void VDevice::InitDepth(uint32_t width, uint32_t height)
 {
-  m_depth.reset(new VImage(*this, true, VK_FORMAT_D24_UNORM_S8_UINT, width, height));
+  m_depth.reset(new VImage(*this, true, m_graphics->m_depthFormat, width, height));
   m_cmdInit->SetImageLayout(*m_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 }
 
@@ -781,8 +856,8 @@ void VDevice::InitState()
 
 void VDevice::SubmitInitCommands()
 {
-  m_queue->Submit(*m_cmdInit);
-  m_queue->WaitIdle();
+  m_graphicsQueue->Submit(*m_cmdInit);
+  m_graphicsQueue->WaitIdle();
   m_cmdInit->Reset();
   m_cmdInit->Begin();
 }
@@ -941,7 +1016,7 @@ void VDevice::InitSwapchain(uint32_t width, uint32_t height)
     m_viewportState->m_viewport.height = (float)height;
     m_viewportState->StateUpdated();
   }
-  m_frameInvalidated = m_frame;
+  //m_frameInvalidated = m_frame;
 }
 
 void VDevice::Add(std::shared_ptr<VModelInstance> instance)
@@ -967,6 +1042,8 @@ void VDevice::RenderFrame()
 
   cmdRender.Reset();
   cmdRender.Begin(false, m_renderPass.get(), 0);
+  if (m_presentQueue != m_graphicsQueue)
+    cmdRender.FramebufferBarrier(*surface.m_image, true);
   cmdRender.BeginRenderPass(*m_renderPass, *surface.m_framebuffer, surface.m_image->m_size.width, surface.m_image->m_size.height, m_clearValues, true);
 
   for (auto &inst : m_toRender) 
@@ -974,10 +1051,12 @@ void VDevice::RenderFrame()
   m_toRender.clear();
 
   cmdRender.EndRenderPass();
+  if (m_presentQueue != m_graphicsQueue) 
+    cmdRender.FramebufferBarrier(*surface.m_image, false);
   cmdRender.End();
 
   std::vector<VSemaphore*> sem{ m_imageAvailable.get() };
-  m_queue->Submit(cmdRender, &sem);
+  m_graphicsQueue->Submit(cmdRender, &sem);
 
   m_swapchain->Present(surface);
   m_bufferPool.FreeReleased(GetSafeReleaseFrame());
@@ -1104,7 +1183,7 @@ void VSwapchain::Present(Surface &surface)
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr;
 
-  VkResult err = vkQueuePresentKHR(m_device->m_queue->m_queue, &presentInfo);
+  VkResult err = vkQueuePresentKHR(m_device->m_presentQueue->m_queue, &presentInfo);
   if (err < 0)
     throw VGraphicsException("VDevice::RenderFrame failed in vkQueuePresentKHR", err);
 }
@@ -2227,7 +2306,7 @@ void VModelInstance::Update()
   m_model->Update();
 
   VDevice &device = GetDevice();
-  if (!m_cmdBuffer || m_cmdBuffer->m_frameUpdated < std::max(m_frameModified, device.m_frameInvalidated))
+  if (!m_cmdBuffer || m_cmdBuffer->m_frameUpdated < std::max({ m_model->GetFrameUpdated(), m_frameModified, device.m_frameInvalidated }))
     UpdateCmdBuffer();
   m_cmdBuffer->m_frameUsed = device.m_frame;
   for (auto &set : m_descriptorSets)

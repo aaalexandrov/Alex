@@ -275,6 +275,7 @@ public:
   void BeginRenderPass(VRenderPass &pass, VFramebuffer &framebuffer, uint32_t width, uint32_t height, std::vector<VkClearValue> const &clearValues, bool secondaryBuffers);
   void EndRenderPass();
   void NextSubpass(bool secondaryBuffers);
+  void FramebufferBarrier(VImage &image, bool present2graphics);
 };
 
 class VPooledBuffers : public VResourcePool<VCmdBuffer, VCmdPool, VPooledBuffers> {
@@ -560,6 +561,8 @@ public:
 
   VModel(std::shared_ptr<VGeometry> geometry, std::shared_ptr<VMaterial> material);
 
+  uint64_t GetFrameUpdated() const { return m_pipeline->m_frameUpdated; }
+
   void Update();
 };
 
@@ -589,7 +592,7 @@ public:
   std::vector<std::string> m_layerNames, m_extensionNames;
   UniqueResource<VkDevice> m_device;
   std::unique_ptr<VImage> m_depth;
-  std::unique_ptr<VQueue> m_queue;
+  std::shared_ptr<VQueue> m_graphicsQueue, m_presentQueue;
   VPooledBuffers m_bufferPool;
   std::unique_ptr<VCmdBuffer> m_cmdInit;
   std::unique_ptr<VRenderPass> m_renderPass;
@@ -653,9 +656,10 @@ public:
   VkPhysicalDeviceFeatures m_physicalDeviceFeatures;
   VkPhysicalDeviceMemoryProperties m_physicalDeviceMemoryProps;
   std::vector<VkQueueFamilyProperties> m_queueFamilies;
-  unsigned m_graphicsQueueFamily;
+  unsigned m_graphicsQueueFamily, m_presentQueueFamily;
   UniqueResource<VkSurfaceKHR> m_surface;
   VkSurfaceFormatKHR m_surfaceFormat;
+  VkFormat m_depthFormat;
   std::unique_ptr<VDevice> m_device;
 
   std::vector<std::string> m_layerNames, m_extensionNames;
@@ -667,12 +671,15 @@ public:
 
   VGraphics(bool validate, std::string const &appName, uint32_t appVersion, uintptr_t instanceID, uintptr_t windowID);
 
+  bool CompatibleOptimalFormat(VkFormat format, VkFormatFeatureFlagBits requiredFeatures);
+  
   bool IsPipelineCacheDataCompatible(std::vector<uint8_t> const &data);
 
 public:
   void InitInstance(std::string const &appName, uint32_t appVersion);
   void InitPhysicalDevice();
   void InitSurface(uintptr_t instanceID, uintptr_t windowID);
+  void InitDepthFormat();
 
   uint32_t GetMemoryTypeIndex(uint32_t validTypeMask, VkMemoryPropertyFlags flags);
 

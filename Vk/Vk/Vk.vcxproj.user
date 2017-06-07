@@ -3,4 +3,23 @@
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <RemoteDebuggerCommand>D:\Alex-DBG\$(TargetName)</RemoteDebuggerCommand>
+    <RemoteDebuggerWorkingDirectory>D:\Alex-DBG\</RemoteDebuggerWorkingDirectory>
+    <RemoteDebuggerServerName>ELITSA:4020</RemoteDebuggerServerName>
+    <DeploymentDirectory>D:\Alex-DBG\</DeploymentDirectory>
+    <AdditionalFiles>$(ProjectDir)..\data</AdditionalFiles>
+    <RemoteDebuggerDeployDebugCppRuntime>true</RemoteDebuggerDeployDebugCppRuntime>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <RemoteDebuggerConnection>RemoteWithoutAuthentication</RemoteDebuggerConnection>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <RemoteDebuggerCommand>D:\Alex-DBG\$(TargetName)</RemoteDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <RemoteDebuggerWorkingDirectory>D:\Alex-DBG\</RemoteDebuggerWorkingDirectory>
+    <RemoteDebuggerServerName>ELITSA:4020</RemoteDebuggerServerName>
+    <DeploymentDirectory>D:\Alex-DBG\</DeploymentDirectory>
+    <AdditionalFiles>$(ProjectDir)..\data</AdditionalFiles>
+    <RemoteDebuggerConnection>RemoteWithoutAuthentication</RemoteDebuggerConnection>
+  </PropertyGroup>
 </Project>
