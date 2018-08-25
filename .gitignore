@@ -5,6 +5,12 @@ bin/
 Temp
 Ray
 
+Ray1/Debug
+Ray1/Release
+
+Misc/Try
+Misc/TryDispatch
+
 Terrain/Output
 Terrain/Data/Textures
 Terrain/Project
@@ -26,6 +32,7 @@ IndustryFormulas.pdf
 
 *.spv
 
+.vs/
 x64/
 ipch/
 *.suo
