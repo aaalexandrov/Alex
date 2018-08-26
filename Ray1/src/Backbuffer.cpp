@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Backbuffer.h"
-#include "util.h"
+#include "Util.h"
 
 #undef max
 
@@ -15,7 +15,7 @@ void Backbuffer::Resize(uint32_t width, uint32_t height)
   DeleteTexture();
   CreateTexture(width, height);
 
-  m_Projection = Ortho(-1.0f, 2 * width / (float)m_TextureSize - 1,
+  m_Projection = Orthographic(-1.0f, 2 * width / (float)m_TextureSize - 1,
     -1.0f, 2 * height / (float)m_TextureSize - 1,
     1.0f, -1.0f);
 

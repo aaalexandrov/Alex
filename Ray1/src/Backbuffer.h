@@ -2,6 +2,9 @@
 
 #include "glad/glad.h"
 
+#undef near
+#undef far
+
 class Backbuffer {
 public:
   ~Backbuffer();

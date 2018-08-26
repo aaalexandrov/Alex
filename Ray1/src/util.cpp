@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "util.h"
+#include "Util.h"
 
 int SolveQuadratic(float a, float b, float c, float & x0, float & x1)
 {

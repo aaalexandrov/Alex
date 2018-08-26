@@ -24,22 +24,32 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Backbuffer.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Octree.cpp" />
     <ClCompile Include="src\Geom.cpp" />
+    <ClCompile Include="src\Ray.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneMaterial.cpp" />
+    <ClCompile Include="src\SceneObj.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glad\glad.h" />
     <ClInclude Include="src\Backbuffer.h" />
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Octree.h" />
     <ClInclude Include="src\Geom.h" />
+    <ClInclude Include="src\Ray.h" />
+    <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\SceneMaterial.h" />
+    <ClInclude Include="src\SceneObj.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\Util.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -135,6 +145,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,6 +158,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

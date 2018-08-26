@@ -96,7 +96,7 @@ const char vertexShaderSrc[] =
     "}";
 
 
-Backbuffer *g_Backbuffer = nullptr;
+std::shared_ptr<Backbuffer> g_Backbuffer;
 
 void UpdateBackbuffer()
 {
@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
     //beckground color
     glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
 
-    g_Backbuffer = new Backbuffer();
+    g_Backbuffer = std::make_shared<Backbuffer>();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     framebuffer_size_callback(window, width, height);
@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
     glDeleteBuffers(1, &texbo);
     glDeleteVertexArrays(1, &vao);
 
-    delete g_Backbuffer;
+    g_Backbuffer.reset();
 
     glfwDestroyWindow(window);
     glfwTerminate();

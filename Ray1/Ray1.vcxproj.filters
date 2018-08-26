@@ -12,9 +12,6 @@
     <ClCompile Include="src\Backbuffer.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="glad\glad.c">
       <Filter>glad</Filter>
     </ClCompile>
@@ -24,10 +21,28 @@
     <ClCompile Include="src\Octree.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\util.cpp">
+    <ClCompile Include="src\Geom.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Geom.cpp">
+    <ClCompile Include="src\SceneObj.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneMaterial.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ray.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scene.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Util.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,13 +56,28 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\util.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Octree.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Geom.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneObj.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneMaterial.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Ray.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scene.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Util.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

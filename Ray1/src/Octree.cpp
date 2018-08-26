@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Octree.h"
-#include "util.h"
+#include "Util.h"
 
 Octree::Octree(AABB const & bound, float minSize)
 {
