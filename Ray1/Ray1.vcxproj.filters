@@ -21,6 +21,15 @@
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Octree.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Geom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Backbuffer.h">
@@ -33,6 +42,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\util.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Octree.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Geom.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

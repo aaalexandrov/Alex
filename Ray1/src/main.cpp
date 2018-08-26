@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "../glad/glad.h"
-#include "../glfw/glfw3.h"
+#include "glad/glad.h"
+#include "glfw/glfw3.h"
 
 #include <cstdlib>
 #include <iostream>
