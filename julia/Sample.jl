@@ -58,7 +58,7 @@ function onupdate(engine::GamEn.Engine, event::Symbol, objects::Dict{Symbol, Any
 	fps = frames / (frameTimes[curFrame] - frameTimes[nextFrame])
 	frameTimes[nextFrame] = engine.timeNow
 	objects[:frames] = frameCount + 1
-	GRU.drawtext(font, cursor, "FPS: " * string(round(fps, 2)), (1f0, 1f0, 0f0, 1f0))
+	GRU.drawtext(font, cursor, "FPS: " * string(round(fps; digits=2)), (1f0, 1f0, 0f0, 1f0))
 end
 
 function oninput(engine::GamEn.Engine, event::Symbol)
@@ -72,7 +72,7 @@ function setup_matrices(model::GRU.Model)
 	GRU.setuniform(model.material, :view, GRU.getview(camera))
 	GRU.setuniform(model.material, :projection, GRU.getproj(camera))
 	if GRU.hasuniform(model.material, :modelIT)
-		GRU.setuniform(model.material, :modelIT, transpose(inv(model.transform[1:3, 1:3])))
+		GRU.setuniform(model.material, :modelIT, collect(transpose(inv(model.transform[1:3, 1:3]))))
 	end
 end
 
@@ -115,8 +115,8 @@ function run()
 
 	GamEn.run(engine)
 
-	fps = round(loaded[:frames] / (time() - start), 2)
-	info("Total FPS: $fps")
+	fps = round(loaded[:frames] / (time() - start); digits=2)
+	@info("Total FPS: $fps")
 
 	GamEn.done(engine)
 end
