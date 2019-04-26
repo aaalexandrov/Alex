@@ -57,7 +57,7 @@ void InitModel(AppData &data)
     VertexFormat{ glm::vec3( -0.5f,  0.5f, 0.5f ), glm::vec3( 0.0f, 0.0f, 1.0f ) }
   };
 
-  std::array<uint16_t, 6> indices{ 0, 2, 1 };
+  std::array<uint16_t, 3> indices{ 0, 2, 1 };
 
   std::shared_ptr<VVertexBuffer> vb = std::make_shared<VVertexBuffer>(*data.vg->m_device, vertices.size() * sizeof(VertexFormat), vertices.data());
   vb->m_vertexInfo->m_stride = sizeof(VertexFormat);

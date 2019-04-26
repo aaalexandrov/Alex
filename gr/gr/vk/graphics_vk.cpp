@@ -1,0 +1,131 @@
+#include "graphics_vk.h"
+#include "physical_device_vk.h"
+#include "host_allocation_tracker_vk.h"
+#include "util/dbg.h"
+
+namespace gr {
+
+GraphicsVk::GraphicsVk()
+{
+}
+
+GraphicsVk::~GraphicsVk()
+{
+}
+
+void GraphicsVk::Init()
+{
+  InitInstance();
+  InitPhysicalDevice();
+}
+
+void GraphicsVk::InitInstance()
+{
+  _apiVersion = Vk2Version(vk::enumerateInstanceVersion());
+  _instanceLayers = vk::enumerateInstanceLayerProperties();
+  _instanceExtensions = vk::enumerateInstanceExtensionProperties();
+
+  std::vector<char const*> layerNames;
+  std::vector<char const *> extensionNames;
+  if (_validationLevel > ValidationLevel::None) {
+    AppendLayer(layerNames, "VK_LAYER_LUNARG_standard_validation");
+    AppendExtension(extensionNames, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+  }
+
+  AppendExtension(extensionNames, VK_KHR_SURFACE_EXTENSION_NAME);
+#if defined(_WIN32)
+  AppendExtension(extensionNames, VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(linux)
+  AppendExtension(extensionNames, VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#else
+#error Unsupported platform!
+#endif
+
+  vk::ApplicationInfo appInfo(_appName.c_str(), Version2Vk(_appVersion), _engineName.c_str(), Version2Vk(_engineVersion));
+  vk::InstanceCreateInfo instanceInfo(vk::InstanceCreateFlags(), &appInfo,
+    static_cast<uint32_t>(layerNames.size()), layerNames.data(),
+    static_cast<uint32_t>(extensionNames.size()), extensionNames.data());
+
+  vk::DebugReportCallbackCreateInfoEXT debugCBInfo(vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::eError,
+    DbgReportFunc, this);
+
+  if (_validationLevel > ValidationLevel::None) {
+    instanceInfo.pNext = &debugCBInfo;
+
+    _hostAllocTracker = std::make_unique<HostAllocationTrackerVk>();
+  }
+
+  _instance = vk::createInstanceUnique(instanceInfo);
+
+  _dynamicDispatch.init(*_instance);
+
+  if (_validationLevel > ValidationLevel::None) {
+    _debugReportCallback = _instance->createDebugReportCallbackEXTUnique(debugCBInfo, AllocationCallbacks(), _dynamicDispatch);
+  }
+}
+
+void GraphicsVk::InitPhysicalDevice()
+{
+  std::vector<vk::PhysicalDevice> physicalDevices = _instance->enumeratePhysicalDevices();
+  _physicalDevice = std::make_unique<PhysicalDeviceVk>(this, physicalDevices[0]);
+}
+
+vk::LayerProperties const *GraphicsVk::GetLayer(std::string const &layerName) 
+{
+  auto layerIt = std::find_if(_instanceLayers.begin(), _instanceLayers.end(), 
+    [&](vk::LayerProperties const& layer)->bool { return layerName == layer.layerName; });
+  if (layerIt == _instanceLayers.end())
+    return nullptr;
+  return &*layerIt;
+}
+
+vk::ExtensionProperties const *GraphicsVk::GetExtension(std::string const &extensionName)
+{
+  auto extIt = std::find_if(_instanceExtensions.begin(), _instanceExtensions.end(),
+    [&](vk::ExtensionProperties const& extension)->bool { return extensionName == extension.extensionName; });
+  if (extIt == _instanceExtensions.end())
+    return nullptr;
+  return &*extIt;
+}
+
+void GraphicsVk::AppendLayer(std::vector<char const *> &layers, std::string const &layerName)
+{
+  auto layer = GetLayer(layerName);
+  if (!layer)
+    throw GraphicsException("GraphicsVk::AppendLayer() failed to find layer " + layerName, VK_RESULT_MAX_ENUM);
+  layers.push_back(layer->layerName);
+}
+
+void GraphicsVk::AppendExtension(std::vector<char const *> &extensions, std::string const &extensionName)
+{
+  auto ext = GetExtension(extensionName);
+  if (!ext)
+    throw GraphicsException("GraphicsVk::AppendExtension() failed to find extension " + extensionName, VK_RESULT_MAX_ENUM);
+  extensions.push_back(ext->extensionName);
+}
+
+vk::AllocationCallbacks *GraphicsVk::AllocationCallbacks()
+{
+  if (!_hostAllocTracker)
+    return nullptr;
+  return &_hostAllocTracker->_allocCallbacks;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL GraphicsVk::DbgReportFunc(
+  VkFlags msgFlags, 
+  VkDebugReportObjectTypeEXT objType, 
+  uint64_t srcObject, 
+  size_t location, 
+  int32_t msgCode, 
+  const char *pLayerPrefix, 
+  const char *pMsg, 
+  void *pUserData)
+{
+  std::string flag = (msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT) ? "error" : "warning";
+
+  LOG("Vulkan debug ", flag, ", code: ", msgCode, ", layer: ", pLayerPrefix, ", msg: ", pMsg);
+
+  return false;
+}
+
+}
