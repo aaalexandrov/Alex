@@ -11,7 +11,7 @@
 
 namespace gr {
 
-PresentationSurfaceVk::PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, CreateData &createData)
+PresentationSurfaceVk::PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, PresentationSurfaceCreateData &createData)
   : _physicalDevice(physicalDevice), PresentationSurface(createData)
 {
 #if defined(_WIN32)
@@ -19,8 +19,8 @@ PresentationSurfaceVk::PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, C
 #elif defined(linux)
   InitSurfaceXlib(&createData);
 #endif
-  _presentQueueFamily = GetPresentQueueFamily();
-  if (_presentQueueFamily < 0)
+  _physicalDevice->_presentQueueFamily = GetPresentQueueFamily();
+  if (_physicalDevice->_presentQueueFamily < 0)
     throw GraphicsException("Present queue family for surface not found", VK_ERROR_FEATURE_NOT_PRESENT);
   _surfaceFormat = GetSurfaceFormat();
 }
@@ -42,7 +42,7 @@ GraphicsVk *PresentationSurfaceVk::GetGraphics()
 
 #if defined(_WIN32)
 
-void PresentationSurfaceVk::InitSurfaceWin32(CreateData *createData)
+void PresentationSurfaceVk::InitSurfaceWin32(PresentationSurfaceCreateData *createData)
 {
   auto createWin32 = static_cast<PresentationSurfaceCreateDataWin32*>(createData);
   vk::Win32SurfaceCreateInfoKHR surfaceInfo(vk::Win32SurfaceCreateFlagsKHR(), createWin32->_hInstance, createWin32->_hWnd);
@@ -51,7 +51,7 @@ void PresentationSurfaceVk::InitSurfaceWin32(CreateData *createData)
 
 #elif defined(linux)
 
-void PresentationSurfaceVk::InitSurfaceXlib(CreateData *createData)
+void PresentationSurfaceVk::InitSurfaceXlib(PresentationSurfaceCreateData *createData)
 {
 #error Unimplemented
 }

@@ -36,6 +36,9 @@ if(gr_implementation STREQUAL VK)
 		vk/device_vk.h
 		vk/device_vk.cpp
 
+		vk/queue_vk.h
+		vk/queue_vk.cpp
+
 		vk/presentation_surface_vk.h
 		vk/presentation_surface_vk.cpp
 	)

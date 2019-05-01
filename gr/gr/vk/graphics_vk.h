@@ -7,6 +7,8 @@ namespace gr {
 
 class PhysicalDeviceVk;
 struct HostAllocationTrackerVk;
+class PresentationSurfaceVk;
+class DeviceVk;
 
 class GraphicsVk : public Graphics {
 public:
@@ -14,7 +16,11 @@ public:
   GraphicsVk();
   ~GraphicsVk() override;
 
-  void Init() override;
+  void Init(PresentationSurfaceCreateData &surfaceData) override;
+
+  PresentationSurface *CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
+
+  PresentationSurface *GetDefaultPresentationSurface() override;
 
   void InitInstance();
   void InitPhysicalDevice();
@@ -22,11 +28,11 @@ public:
   static uint32_t Version2Vk(Version const &version) { return VK_MAKE_VERSION(version._major, version._minor, version._patch); }
   static Version  Vk2Version(uint32_t version) { return Version{ VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version), VK_VERSION_PATCH(version) }; }
 
-  vk::LayerProperties const *GetLayer(std::string const &layerName);
-  vk::ExtensionProperties const *GetExtension(std::string const &extensionName);
+  static vk::LayerProperties const *GetLayer(std::vector<vk::LayerProperties> const &layers, std::string const &layerName);
+  static vk::ExtensionProperties const *GetExtension(std::vector<vk::ExtensionProperties> const &extensions, std::string const &extensionName);
 
-  void AppendLayer(std::vector<char const *> &layers, std::string const &layerName);
-  void AppendExtension(std::vector<char const *> &extensions, std::string const &extensionName);
+  static void AppendLayer(std::vector<char const *> &layers, std::vector<vk::LayerProperties> const &availableLayers, std::string const &layerName);
+  static void AppendExtension(std::vector<char const *> &extensions, std::vector<vk::ExtensionProperties> const &availableExtensions, std::string const &extensionName);
 
   vk::AllocationCallbacks *AllocationCallbacks();
 
@@ -50,6 +56,10 @@ public:
   UniqueDebugReportCallbackEXT _debugReportCallback;
 
   std::unique_ptr<PhysicalDeviceVk> _physicalDevice;
+
+  std::unique_ptr<PresentationSurfaceVk> _presentationSurface;
+
+  std::unique_ptr<DeviceVk> _device;
 };
 
 }

@@ -10,12 +10,12 @@ class PhysicalDeviceVk;
 
 class PresentationSurfaceVk : public PresentationSurface {
 public:
-  PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, CreateData &createData);
+  PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, PresentationSurfaceCreateData &createData);
 
 #if defined(_WIN32)
-  void InitSurfaceWin32(CreateData *createData);
+  void InitSurfaceWin32(PresentationSurfaceCreateData *createData);
 #elif defined(linux)
-  void InitSurfaceXlib(CreateData *createData);
+  void InitSurfaceXlib(PresentationSurfaceCreateData *createData);
 #endif
 
   int32_t GetPresentQueueFamily();
@@ -27,7 +27,6 @@ public:
 
   PhysicalDeviceVk *_physicalDevice;
   vk::UniqueSurfaceKHR _surface;
-  int32_t _presentQueueFamily;
   vk::SurfaceFormatKHR _surfaceFormat;
 };
 

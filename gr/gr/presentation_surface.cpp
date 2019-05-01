@@ -2,7 +2,7 @@
 
 namespace gr {
 
-PresentationSurface::PresentationSurface(CreateData &createData)
+PresentationSurface::PresentationSurface(PresentationSurfaceCreateData &createData)
 {
 }
 

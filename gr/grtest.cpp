@@ -6,6 +6,11 @@
 #include "platform/platform.h"
 #include "gr/graphics.h"
 
+#if defined(_WIN32)
+#include "gr/win32/presentation_surface_create_data_win32.h"
+#include "platform/win32/window_win32.h"
+#endif
+
 using namespace std;
 using namespace glm;
 using namespace platform;
@@ -33,7 +38,15 @@ int main()
   ri = window->GetRect();
 
   auto graphics = std::unique_ptr<Graphics>(Graphics::Create());
-  graphics->Init();
+
+#if defined(_WIN32)
+  auto windowWin32 = dynamic_cast<WindowWin32*>(window);
+  PresentationSurfaceCreateDataWin32 surfaceData;
+  surfaceData._hInstance = windowWin32->GetPlatformWin32()->_hInstance;
+  surfaceData._hWnd = windowWin32->_hWnd;
+#endif
+
+  graphics->Init(surfaceData);
 
   auto start = std::chrono::system_clock::now();
 

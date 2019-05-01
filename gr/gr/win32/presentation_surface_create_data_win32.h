@@ -10,7 +10,7 @@
 
 namespace gr {
 
-struct PresentationSurfaceCreateDataWin32 : public PresentationSurface::CreateData {
+struct PresentationSurfaceCreateDataWin32 : public PresentationSurfaceCreateData {
   HINSTANCE _hInstance;
   HWND _hWnd;
 };

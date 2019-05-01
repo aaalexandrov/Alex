@@ -806,7 +806,7 @@ void VDevice::InitDevice()
   deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   deviceInfo.pNext = nullptr;
   deviceInfo.flags = 0;
-  deviceInfo.queueCreateInfoCount = (uint32_t)queueInfo.size();
+  deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfo.size());
   deviceInfo.pQueueCreateInfos = queueInfo.data();
   deviceInfo.enabledLayerCount = static_cast<uint32_t>(layerNames.size());
   deviceInfo.ppEnabledLayerNames = layerNames.data();

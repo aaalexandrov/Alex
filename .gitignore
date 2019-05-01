@@ -23,6 +23,8 @@ SOS/Project
 julia/data
 julia/misc
 
+gr/project
+
 EveJew/Mosaic_1.2_112318
 julia/EveInvent/cache
 julia/EveInvent/*.json

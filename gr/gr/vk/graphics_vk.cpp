@@ -1,6 +1,8 @@
 #include "graphics_vk.h"
 #include "physical_device_vk.h"
 #include "host_allocation_tracker_vk.h"
+#include "presentation_surface_vk.h"
+#include "device_vk.h"
 #include "util/dbg.h"
 
 namespace gr {
@@ -13,10 +15,22 @@ GraphicsVk::~GraphicsVk()
 {
 }
 
-void GraphicsVk::Init()
+void GraphicsVk::Init(PresentationSurfaceCreateData &surfaceData)
 {
   InitInstance();
   InitPhysicalDevice();
+  _presentationSurface = std::unique_ptr<PresentationSurfaceVk>(static_cast<PresentationSurfaceVk*>(CreatePresentationSurface(surfaceData)));
+  _device = std::make_unique<DeviceVk>(&*_physicalDevice);
+}
+
+PresentationSurface *GraphicsVk::CreatePresentationSurface(PresentationSurfaceCreateData &createData)
+{
+  return new PresentationSurfaceVk(&*_physicalDevice, createData);
+}
+
+PresentationSurface *GraphicsVk::GetDefaultPresentationSurface()
+{
+  return &*_presentationSurface;
 }
 
 void GraphicsVk::InitInstance()
@@ -28,15 +42,15 @@ void GraphicsVk::InitInstance()
   std::vector<char const*> layerNames;
   std::vector<char const *> extensionNames;
   if (_validationLevel > ValidationLevel::None) {
-    AppendLayer(layerNames, "VK_LAYER_LUNARG_standard_validation");
-    AppendExtension(extensionNames, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+    AppendLayer(layerNames, _instanceLayers, "VK_LAYER_LUNARG_standard_validation");
+    AppendExtension(extensionNames, _instanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
   }
 
-  AppendExtension(extensionNames, VK_KHR_SURFACE_EXTENSION_NAME);
+  AppendExtension(extensionNames, _instanceExtensions, VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(_WIN32)
-  AppendExtension(extensionNames, VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+  AppendExtension(extensionNames, _instanceExtensions, VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(linux)
-  AppendExtension(extensionNames, VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+  AppendExtension(extensionNames, _instanceExtensions, VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #else
 #error Unsupported platform!
 #endif
@@ -70,35 +84,35 @@ void GraphicsVk::InitPhysicalDevice()
   _physicalDevice = std::make_unique<PhysicalDeviceVk>(this, physicalDevices[0]);
 }
 
-vk::LayerProperties const *GraphicsVk::GetLayer(std::string const &layerName) 
+vk::LayerProperties const *GraphicsVk::GetLayer(std::vector<vk::LayerProperties> const &layers, std::string const &layerName)
 {
-  auto layerIt = std::find_if(_instanceLayers.begin(), _instanceLayers.end(), 
+  auto layerIt = std::find_if(layers.begin(), layers.end(), 
     [&](vk::LayerProperties const& layer)->bool { return layerName == layer.layerName; });
-  if (layerIt == _instanceLayers.end())
+  if (layerIt == layers.end())
     return nullptr;
   return &*layerIt;
 }
 
-vk::ExtensionProperties const *GraphicsVk::GetExtension(std::string const &extensionName)
+vk::ExtensionProperties const *GraphicsVk::GetExtension(std::vector<vk::ExtensionProperties> const &extensions, std::string const &extensionName)
 {
-  auto extIt = std::find_if(_instanceExtensions.begin(), _instanceExtensions.end(),
+  auto extIt = std::find_if(extensions.begin(), extensions.end(),
     [&](vk::ExtensionProperties const& extension)->bool { return extensionName == extension.extensionName; });
-  if (extIt == _instanceExtensions.end())
+  if (extIt == extensions.end())
     return nullptr;
   return &*extIt;
 }
 
-void GraphicsVk::AppendLayer(std::vector<char const *> &layers, std::string const &layerName)
+void GraphicsVk::AppendLayer(std::vector<char const *> &layers, std::vector<vk::LayerProperties> const &availableLayers, std::string const &layerName)
 {
-  auto layer = GetLayer(layerName);
+  auto layer = GetLayer(availableLayers, layerName);
   if (!layer)
     throw GraphicsException("GraphicsVk::AppendLayer() failed to find layer " + layerName, VK_RESULT_MAX_ENUM);
   layers.push_back(layer->layerName);
 }
 
-void GraphicsVk::AppendExtension(std::vector<char const *> &extensions, std::string const &extensionName)
+void GraphicsVk::AppendExtension(std::vector<char const *> &extensions, std::vector<vk::ExtensionProperties> const &availableExtensions, std::string const &extensionName)
 {
-  auto ext = GetExtension(extensionName);
+  auto ext = GetExtension(availableExtensions, extensionName);
   if (!ext)
     throw GraphicsException("GraphicsVk::AppendExtension() failed to find extension " + extensionName, VK_RESULT_MAX_ENUM);
   extensions.push_back(ext->extensionName);

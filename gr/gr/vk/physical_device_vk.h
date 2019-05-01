@@ -25,6 +25,7 @@ public:
   int32_t _computeQueueFamily;
   int32_t _transferQueueFamily;
   int32_t _sparseOpQueueFamily;
+  int32_t _presentQueueFamily = -1;
 
   vk::Format _depthFormat;
 };

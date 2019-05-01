@@ -2,13 +2,14 @@
 
 namespace gr {
 
+struct PresentationSurfaceCreateData {
+};
+
+
 class PresentationSurface {
 public:
-  struct CreateData {
 
-  };
-
-  PresentationSurface(CreateData &createData);
+  PresentationSurface(PresentationSurfaceCreateData &createData);
   virtual ~PresentationSurface();
 };
 

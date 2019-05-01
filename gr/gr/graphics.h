@@ -9,6 +9,9 @@ struct Version {
   uint32_t _major, _minor, _patch;
 };
 
+class PresentationSurface;
+struct PresentationSurfaceCreateData;
+
 class Graphics {
 public:
   enum class ValidationLevel {
@@ -25,7 +28,11 @@ public:
   Graphics();
   virtual ~Graphics();
 
-  virtual void Init() = 0;
+  virtual void Init(PresentationSurfaceCreateData &surfaceData) = 0;
+
+  virtual PresentationSurface *CreatePresentationSurface(PresentationSurfaceCreateData &createData) = 0;
+
+  virtual PresentationSurface *GetDefaultPresentationSurface() = 0;
 };
 
 }
