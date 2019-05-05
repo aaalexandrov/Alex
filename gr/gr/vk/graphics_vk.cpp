@@ -5,7 +5,7 @@
 #include "device_vk.h"
 #include "util/dbg.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 GraphicsVk::GraphicsVk()
 {
@@ -18,14 +18,18 @@ GraphicsVk::~GraphicsVk()
 void GraphicsVk::Init(PresentationSurfaceCreateData &surfaceData)
 {
   InitInstance();
-  InitPhysicalDevice();
   _presentationSurface = std::unique_ptr<PresentationSurfaceVk>(static_cast<PresentationSurfaceVk*>(CreatePresentationSurface(surfaceData)));
+  InitPhysicalDevice(&*_presentationSurface);
   _device = std::make_unique<DeviceVk>(&*_physicalDevice);
+  _presentationSurface->InitForDevice(&*_device);
 }
 
 PresentationSurface *GraphicsVk::CreatePresentationSurface(PresentationSurfaceCreateData &createData)
 {
-  return new PresentationSurfaceVk(&*_physicalDevice, createData);
+  auto surface = new PresentationSurfaceVk(this, createData);
+  if (_device)
+    surface->InitForDevice(&*_device);
+  return surface;
 }
 
 PresentationSurface *GraphicsVk::GetDefaultPresentationSurface()
@@ -78,10 +82,10 @@ void GraphicsVk::InitInstance()
   }
 }
 
-void GraphicsVk::InitPhysicalDevice()
+void GraphicsVk::InitPhysicalDevice(PresentationSurfaceVk *initialSurface)
 {
   std::vector<vk::PhysicalDevice> physicalDevices = _instance->enumeratePhysicalDevices();
-  _physicalDevice = std::make_unique<PhysicalDeviceVk>(this, physicalDevices[0]);
+  _physicalDevice = std::make_unique<PhysicalDeviceVk>(this, physicalDevices[0], initialSurface);
 }
 
 vk::LayerProperties const *GraphicsVk::GetLayer(std::vector<vk::LayerProperties> const &layers, std::string const &layerName)
@@ -142,4 +146,4 @@ VKAPI_ATTR VkBool32 VKAPI_CALL GraphicsVk::DbgReportFunc(
   return false;
 }
 
-}
+NAMESPACE_END(gr)

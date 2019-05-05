@@ -3,7 +3,7 @@
 #include "util/mem.h"
 #include <cstdlib>
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 static bool IsAligned(void *mem, size_t alignment)
 {
@@ -67,4 +67,4 @@ VKAPI_ATTR void VKAPI_CALL HostAllocationTrackerVk::InternalFreeNotify(void *pUs
   tracker->_sizeAllocatedInternal -= size;
 }
 
-}
+NAMESPACE_END(gr)

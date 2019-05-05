@@ -12,3 +12,7 @@
 
 #undef min
 #undef max
+
+#include "vk_mem_alloc/vma.h"
+
+#include "util/namespace.h"

@@ -1,5 +1,5 @@
 #include "enumutl.h"
 
-namespace util {
+NAMESPACE_BEGIN(util)
 
-}
+NAMESPACE_END(util)

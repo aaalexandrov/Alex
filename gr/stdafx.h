@@ -14,5 +14,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
 
+#include "util/namespace.h"
 #include "util/dbg.h"
 

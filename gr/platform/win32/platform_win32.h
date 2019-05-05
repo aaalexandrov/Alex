@@ -8,7 +8,7 @@
 
 #include "../platform.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 class PlatformWin32 : public Platform {
 public:
@@ -28,4 +28,4 @@ public:
   ATOM _windowClass = INVALID_ATOM;
 };
 
-}
+NAMESPACE_END(platform)

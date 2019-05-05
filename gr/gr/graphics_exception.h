@@ -1,10 +1,11 @@
 #pragma once
 
+#include "util/namespace.h"
 #include <cstdint>
 #include <stdexcept>
 #include <string>
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 class GraphicsException : public std::runtime_error {
 public:
@@ -13,4 +14,4 @@ public:
   GraphicsException(std::string const &msg, uint32_t err) : std::runtime_error(msg), _errCode(err) {}
 };
 
-}
+NAMESPACE_END(gr)

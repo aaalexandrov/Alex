@@ -1,6 +1,6 @@
 #include "resource.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 void ResourceHolder::RegisterResource(Resource *resource)
 {
@@ -25,4 +25,4 @@ void ResourceHolder::DestroyResources()
   }
 }
 
-}
+NAMESPACE_END(platform)

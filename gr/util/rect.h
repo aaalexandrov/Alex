@@ -3,8 +3,9 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
 #include "mathutl.h"
+#include "namespace.h"
 
-namespace util {
+NAMESPACE_BEGIN(util)
 
 template <class NUM, int DIM>
 class Box {
@@ -29,7 +30,7 @@ public:
   Vec _min = Vec(util::limits<NUM>::Max());
   Vec _max = Vec(util::limits<NUM>::Min());
 
-  inline Vec GetSize() const { return _max - min + SizeOffset::GetOffset(); }
+  inline Vec GetSize() const { return _max - _min + SizeOffset::GetOffset(); }
   inline void SetSize(Vec const &size) { _max = _min + size - SizeOffset::GetOffset(); }
 
   inline bool IsEmpty() const 
@@ -58,4 +59,4 @@ typedef Box<float, 2>   RectF;
 
 typedef Box<float, 3>   BoxF;
 
-}
+NAMESPACE_END(util)

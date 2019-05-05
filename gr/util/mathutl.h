@@ -1,9 +1,17 @@
 #pragma once
 
+#include <algorithm>
 #include <limits>
 #include <sstream>
+#include "namespace.h"
 
-namespace util {
+NAMESPACE_BEGIN(util)
+
+template <typename N>
+constexpr N Clamp(N min, N max, N n)
+{
+  return std::max(min, std::min(max, n));
+}
 
 template <typename N>
 constexpr bool IsPowerOf2(N n) { return !(n & (n - 1)); }
@@ -57,4 +65,4 @@ std::string ToString(V const &v)
   return stream.str();
 }
 
-}
+NAMESPACE_END(util)

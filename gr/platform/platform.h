@@ -3,7 +3,7 @@
 #include "window.h"
 #include "resource.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 class Platform : public ResourceHolder {
 public:
@@ -20,4 +20,4 @@ public:
   virtual Window *CreateWindowInternal() = 0;
 };
 
-}
+NAMESPACE_END(platform)

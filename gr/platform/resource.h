@@ -2,8 +2,9 @@
 
 #include <memory>
 #include <unordered_set>
+#include "util/namespace.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 class Resource;
 
@@ -30,4 +31,4 @@ public:
   void SetHolder(ResourceHolder *holder) { _holder = holder; }
 };
 
-}
+NAMESPACE_END(platform)

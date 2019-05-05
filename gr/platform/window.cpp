@@ -1,7 +1,7 @@
 #include "window.h"
 #include "platform.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 Platform *Window::GetPlatform()
 {
@@ -24,4 +24,4 @@ void Window::Update()
   _input.Update();
 }
 
-}
+NAMESPACE_END(platform)

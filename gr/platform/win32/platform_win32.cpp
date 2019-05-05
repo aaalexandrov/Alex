@@ -1,7 +1,7 @@
 #include "platform_win32.h"
 #include "window_win32.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 PlatformWin32::PlatformWin32()
 {
@@ -52,4 +52,4 @@ std::wstring PlatformWin32::ToWChar(std::string const &str)
   return wstr;
 }
 
-}
+NAMESPACE_END(platform)

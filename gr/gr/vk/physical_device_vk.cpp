@@ -1,11 +1,22 @@
 #include "physical_device_vk.h"
+#include "presentation_surface_vk.h"
 #include "util/mathutl.h"
 #include <array>
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
-PhysicalDeviceVk::PhysicalDeviceVk(GraphicsVk *graphics, vk::PhysicalDevice physicalDevice) 
-  : _graphics(graphics), _physicalDevice(physicalDevice)
+std::vector<vk::Format> PhysicalDeviceVk::_depthFormats { 
+  vk::Format::eD24UnormS8Uint,
+  vk::Format::eD32SfloatS8Uint,
+  vk::Format::eD16UnormS8Uint,
+  vk::Format::eD32Sfloat,
+  vk::Format::eX8D24UnormPack32,
+  vk::Format::eD16Unorm,
+};
+
+PhysicalDeviceVk::PhysicalDeviceVk(GraphicsVk *graphics, vk::PhysicalDevice physicalDevice, PresentationSurfaceVk *initialSurface) 
+  : _graphics{ graphics }
+  , _physicalDevice{ physicalDevice }
 {
   _properties = _physicalDevice.getProperties();
   _features = _physicalDevice.getFeatures();
@@ -16,9 +27,13 @@ PhysicalDeviceVk::PhysicalDeviceVk(GraphicsVk *graphics, vk::PhysicalDevice phys
   _computeQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eCompute);
   _transferQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eTransfer);
   _sparseOpQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eSparseBinding);
+  _presentQueueFamily = GetPresentQueueFamily(initialSurface);
 
   if (_graphicsQueueFamily < 0 || _transferQueueFamily < 0)
     throw GraphicsException("Required queue family support not found", VK_ERROR_FEATURE_NOT_PRESENT);
+
+  if (_presentQueueFamily < 0)
+    throw GraphicsException("Present queue family for surface not found", VK_ERROR_FEATURE_NOT_PRESENT);
 
   _depthFormat = GetDepthFormat();
 
@@ -42,17 +57,37 @@ int32_t PhysicalDeviceVk::GetSuitableQueueFamily(vk::QueueFlags flags, std::func
   return best;
 }
 
+int32_t PhysicalDeviceVk::GetPresentQueueFamily(PresentationSurfaceVk *surface)
+{
+  int32_t queueFamily = GetSuitableQueueFamily(vk::QueueFlags(), [this, surface](int32_t q) {
+    return _physicalDevice.getSurfaceSupportKHR(q, *surface->_surface);
+  });
+  return queueFamily;
+}
+
+vk::SurfaceFormatKHR PhysicalDeviceVk::GetSurfaceFormat(PresentationSurfaceVk *surface)
+{
+  std::vector<vk::SurfaceFormatKHR> formats = _physicalDevice.getSurfaceFormatsKHR(*surface->_surface);
+  auto format = formats[0];
+  if (format.format == vk::Format::eUndefined)
+    format.format = vk::Format::eR8G8B8A8Unorm;
+  return format;
+}
+
+vk::PresentModeKHR PhysicalDeviceVk::GetSurfacePresentMode(PresentationSurfaceVk *surface)
+{
+  vk::PresentModeKHR mode = vk::PresentModeKHR::eFifo;
+  std::vector<vk::PresentModeKHR> modes = _physicalDevice.getSurfacePresentModesKHR(*surface->_surface);
+  if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
+    ASSERT(!"Fifo present mode should always be available!");
+    mode = modes[0];
+  }
+  return mode;
+}
+
 vk::Format PhysicalDeviceVk::GetDepthFormat()
 {
-  std::array<vk::Format, 6> formats = {
-    vk::Format::eD24UnormS8Uint,
-    vk::Format::eD32SfloatS8Uint,
-    vk::Format::eD16UnormS8Uint,
-    vk::Format::eD32Sfloat,
-    vk::Format::eX8D24UnormPack32,
-    vk::Format::eD16Unorm,
-  };
-  for (auto format: formats) {
+  for (auto format: _depthFormats) {
     vk::FormatProperties props = _physicalDevice.getFormatProperties(format);
     if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
       return format;
@@ -60,4 +95,18 @@ vk::Format PhysicalDeviceVk::GetDepthFormat()
   return vk::Format::eUndefined;
 }
 
+bool PhysicalDeviceVk::IsDepthFormat(vk::Format format)
+{
+  return std::find(_depthFormats.begin(), _depthFormats.end(), format) != _depthFormats.end();
 }
+
+uint32_t PhysicalDeviceVk::GetMemoryTypeIndex(uint32_t validMemoryTypes, vk::MemoryPropertyFlags memoryFlags)
+{
+  for (uint32_t i = 0; i < _memoryProperties.memoryTypeCount; ++i) {
+    if ((validMemoryTypes & (1 << i)) && (_memoryProperties.memoryTypes[i].propertyFlags & memoryFlags) == memoryFlags)
+      return i;
+  }
+  return -1;
+}
+
+NAMESPACE_END(gr)

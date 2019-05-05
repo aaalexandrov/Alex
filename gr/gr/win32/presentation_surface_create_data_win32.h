@@ -8,11 +8,11 @@
 
 #include "../presentation_surface.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 struct PresentationSurfaceCreateDataWin32 : public PresentationSurfaceCreateData {
   HINSTANCE _hInstance;
   HWND _hWnd;
 };
 
-}
+NAMESPACE_END(gr)

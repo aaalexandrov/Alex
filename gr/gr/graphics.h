@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include "util/namespace.h"
 #include "graphics_exception.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 struct Version {
   uint32_t _major, _minor, _patch;
@@ -35,4 +36,4 @@ public:
   virtual PresentationSurface *GetDefaultPresentationSurface() = 0;
 };
 
-}
+NAMESPACE_END(gr)

@@ -5,7 +5,7 @@
 #include "win32/platform_win32.h"
 #endif
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 Platform *Platform::Create()
 {
@@ -44,4 +44,4 @@ Window *Platform::CreateWindow()
   return window;
 }
 
-}
+NAMESPACE_END(platform)

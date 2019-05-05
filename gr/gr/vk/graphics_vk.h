@@ -3,7 +3,7 @@
 #include "../graphics.h"
 #include "vk.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 class PhysicalDeviceVk;
 struct HostAllocationTrackerVk;
@@ -23,7 +23,7 @@ public:
   PresentationSurface *GetDefaultPresentationSurface() override;
 
   void InitInstance();
-  void InitPhysicalDevice();
+  void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
 
   static uint32_t Version2Vk(Version const &version) { return VK_MAKE_VERSION(version._major, version._minor, version._patch); }
   static Version  Vk2Version(uint32_t version) { return Version{ VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version), VK_VERSION_PATCH(version) }; }
@@ -57,9 +57,9 @@ public:
 
   std::unique_ptr<PhysicalDeviceVk> _physicalDevice;
 
-  std::unique_ptr<PresentationSurfaceVk> _presentationSurface;
-
   std::unique_ptr<DeviceVk> _device;
+
+  std::unique_ptr<PresentationSurfaceVk> _presentationSurface;
 };
 
-}
+NAMESPACE_END(gr)

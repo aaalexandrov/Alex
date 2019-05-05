@@ -3,7 +3,7 @@
 #include "graphics_vk.h"
 #include "physical_device_vk.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 DeviceVk::DeviceVk(PhysicalDeviceVk *physicalDevice)
   : _physicalDevice{ physicalDevice }
@@ -34,6 +34,8 @@ DeviceVk::DeviceVk(PhysicalDeviceVk *physicalDevice)
     .setPpEnabledExtensionNames(extensionNames.data());
 
   _device = GetPhysicalDevice().createDeviceUnique(deviceInfo, GetGraphics()->AllocationCallbacks());
+
+  _allocator = VmaAllocatorCreateUnique(_physicalDevice->_physicalDevice, *_device, GetGraphics()->AllocationCallbacks());
 
   InitQueues();
 }
@@ -102,4 +104,4 @@ vk::PhysicalDevice &DeviceVk::GetPhysicalDevice()
   return _physicalDevice->_physicalDevice;
 }
 
-}
+NAMESPACE_END(gr)

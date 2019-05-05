@@ -2,7 +2,7 @@
 
 #include "vk.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 class DeviceVk;
 
@@ -15,4 +15,4 @@ struct QueueVk {
   void Init(DeviceVk &device, int32_t family, int32_t queueIndex);
 };
 
-}
+NAMESPACE_END(gr)

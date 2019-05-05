@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 WCHAR const * const WindowWin32::WindowClass = L"PlatformWindowWin32";
 
@@ -362,4 +362,4 @@ LRESULT WindowWin32::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-}
+NAMESPACE_END(platform)

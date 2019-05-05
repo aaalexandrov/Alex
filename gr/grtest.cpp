@@ -47,6 +47,7 @@ int main()
 #endif
 
   graphics->Init(surfaceData);
+  graphics->GetDefaultPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
 
   auto start = std::chrono::system_clock::now();
 

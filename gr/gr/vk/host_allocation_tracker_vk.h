@@ -2,7 +2,7 @@
 
 #include "vk.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 struct HostAllocationTrackerVk {
   vk::AllocationCallbacks _allocCallbacks{ this, Allocate, Reallocate, Free, InternalAllocationNotify, InternalFreeNotify };
@@ -23,4 +23,4 @@ struct HostAllocationTrackerVk {
   static VKAPI_ATTR void VKAPI_CALL InternalFreeNotify(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope);
 };
 
-}
+NAMESPACE_END(gr)

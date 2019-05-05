@@ -5,8 +5,9 @@
 #include "util/rect.h"
 #include "resource.h"
 #include "input.h"
+#include "util/namespace.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 class Platform;
 
@@ -49,4 +50,4 @@ public:
   virtual void Update();
 };
 
-}
+NAMESPACE_END(platform)

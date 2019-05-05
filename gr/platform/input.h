@@ -3,8 +3,9 @@
 #include <unordered_map>
 #include <chrono>
 #include "util/enumutl.h"
+#include "util/namespace.h"
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 enum class Key : int32_t {
   Invalid = -1,
@@ -146,4 +147,4 @@ public:
   void Update();
 };
 
-}
+NAMESPACE_END(platform)

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "vk.h"
+#include "vma.h"
 #include "queue_vk.h"
 #include <mutex>
 
-namespace gr {
+
+NAMESPACE_BEGIN(gr)
 
 class GraphicsVk;
 class PhysicalDeviceVk;
@@ -24,6 +26,7 @@ public:
   std::vector<vk::ExtensionProperties> _extensions;
 
   vk::UniqueDevice _device;
+  UniqueVmaAllocator _allocator;
 
   QueueVk _graphicsQueue;
   QueueVk _presentQueue;
@@ -35,4 +38,4 @@ public:
 
 };
 
-}
+NAMESPACE_END(gr)

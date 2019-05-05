@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 class WindowWin32 : public Window {
 public:
@@ -49,4 +49,4 @@ public:
   static LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-}
+NAMESPACE_END(platform)

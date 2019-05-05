@@ -3,31 +3,33 @@
 #include "vk.h"
 #include "../presentation_surface.h"
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 class GraphicsVk;
-class PhysicalDeviceVk;
+class DeviceVk;
 
 class PresentationSurfaceVk : public PresentationSurface {
 public:
-  PresentationSurfaceVk(PhysicalDeviceVk *physicalDevice, PresentationSurfaceCreateData &createData);
+  PresentationSurfaceVk(GraphicsVk *graphics, PresentationSurfaceCreateData &createData);
+
+  void Update(uint32_t width, uint32_t height) override;
+
+  void InitForDevice(DeviceVk *device);
+  void CreateSwapChain(uint32_t width, uint32_t height);
 
 #if defined(_WIN32)
-  void InitSurfaceWin32(PresentationSurfaceCreateData *createData);
+  void InitSurfaceWin32(GraphicsVk *graphics, PresentationSurfaceCreateData *createData);
 #elif defined(linux)
-  void InitSurfaceXlib(PresentationSurfaceCreateData *createData);
+  void InitSurfaceXlib(GraphicsVk *graphics, PresentationSurfaceCreateData *createData);
 #endif
 
-  int32_t GetPresentQueueFamily();
-  vk::SurfaceFormatKHR GetSurfaceFormat();
+  static vk::Extent2D GetExtent(vk::SurfaceCapabilitiesKHR const &surfaceCaps, uint32_t width, uint32_t height);
 
-  vk::PhysicalDevice &GetPhysicalDevice();
-  vk::Instance &GetInstance();
-  GraphicsVk *GetGraphics();
-
-  PhysicalDeviceVk *_physicalDevice;
+  DeviceVk *_device = nullptr;
   vk::UniqueSurfaceKHR _surface;
   vk::SurfaceFormatKHR _surfaceFormat;
+  vk::PresentModeKHR _presentMode;
+  vk::UniqueSwapchainKHR _swapchain;
 };
 
-}
+NAMESPACE_END(gr)

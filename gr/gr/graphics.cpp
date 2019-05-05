@@ -4,7 +4,7 @@
 #include "vk/graphics_vk.h"
 #endif
 
-namespace gr {
+NAMESPACE_BEGIN(gr)
 
 Graphics *Graphics::Create()
 {
@@ -24,4 +24,4 @@ Graphics::~Graphics()
 {
 }
 
-}
+NAMESPACE_END(gr)

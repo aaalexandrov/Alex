@@ -2,7 +2,7 @@
 #include "util/time.h"
 
 
-namespace platform {
+NAMESPACE_BEGIN(platform)
 
 void Input::KeyEvent(InputEvent event, Key key)
 {
@@ -53,4 +53,4 @@ void Input::Update()
   _input.clear();
 }
 
-}
+NAMESPACE_END(platform)

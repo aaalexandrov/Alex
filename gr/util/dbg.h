@@ -1,8 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include "namespace.h"
 
-namespace util {
+NAMESPACE_BEGIN(util)
 
 #define ASSERT assert
 
@@ -21,4 +22,4 @@ void LogLine(std::ostream &out, ARG&& arg, ARGS&&... args)
   out << std::endl;
 }
 
-}
+NAMESPACE_END(util)
