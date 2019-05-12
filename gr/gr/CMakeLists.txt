@@ -14,6 +14,9 @@ set(dir_SOURCES
 
 	presentation_surface.h
 	presentation_surface.cpp
+
+	shader.h
+	shader.cpp
 )
 
 if (WIN32)
@@ -38,9 +41,6 @@ if(gr_implementation STREQUAL VK)
 		vk/image_vk.h
 		vk/image_vk.cpp
 
-		vk/memory_vk.h
-		vk/memory_vk.cpp
-
 		vk/presentation_surface_vk.h
 		vk/presentation_surface_vk.cpp
 
@@ -50,11 +50,24 @@ if(gr_implementation STREQUAL VK)
 		vk/queue_vk.h
 		vk/queue_vk.cpp
 
+		vk/shader_vk.h
+		vk/shader_vk.cpp
+
 		vk/vk.h
 		
 		vk/vma.h
 		vk/vma.cpp
 	)
+
+	set(third_party_LIBS
+		vma
+		shaderc_shared
+		spirv-cross-glsl
+		spirv-cross-reflect
+		spirv-cross-core
+	)
+
+	set_target_properties(shaderc_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 	target_include_directories(${BINARY} PRIVATE $ENV{VK_SDK_PATH}/include)
 
@@ -66,7 +79,7 @@ if(gr_implementation STREQUAL VK)
 	list(TRANSFORM vk_LIBS PREPEND $ENV{VK_SDK_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX})
 	list(TRANSFORM vk_LIBS APPEND ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-	target_link_libraries(${BINARY} PRIVATE ${vk_LIBS} vk_mem_alloc)
+	target_link_libraries(${BINARY} PRIVATE ${vk_LIBS} ${third_party_LIBS})
 elseif(gr_implementation STREQUAL STUB)
 endif()
 

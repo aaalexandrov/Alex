@@ -19,6 +19,8 @@ public:
 
   Window *CreateWindowInternal() override;
 
+  std::string CurrentDirectory() override;
+
   void RunMessageLoop();
 
   std::string ToUtf8(std::wstring const &wstr);

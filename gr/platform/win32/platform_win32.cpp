@@ -20,6 +20,15 @@ Window *PlatformWin32::CreateWindowInternal()
   return new WindowWin32();
 }
 
+std::string PlatformWin32::CurrentDirectory()
+{
+  std::wstring buf;
+  buf.resize(1024);
+  size_t size = GetCurrentDirectory(static_cast<DWORD>(buf.size()), const_cast<wchar_t *>(buf.c_str()));
+  buf.resize(size);
+  return ToUtf8(buf);
+}
+
 void PlatformWin32::RunMessageLoop()
 {
   MSG msg;

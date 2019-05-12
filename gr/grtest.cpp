@@ -1,10 +1,12 @@
 #include <iostream>
 #include <chrono>
+#include <filesystem>
 #include "glm/glm.hpp"
 #include "util/rect.h"
 #include "util/time.h"
 #include "platform/platform.h"
 #include "gr/graphics.h"
+#include "gr/shader.h"
 
 #if defined(_WIN32)
 #include "gr/win32/presentation_surface_create_data_win32.h"
@@ -16,9 +18,17 @@ using namespace glm;
 using namespace platform;
 using namespace gr;
 
+namespace util {
+void Test();
+}
+
 int main()
 {
+  util::Test();
   auto platform = std::unique_ptr<Platform>(Platform::Create());
+
+  cout << "Current execution directory: " << platform->CurrentDirectory() << endl;
+
   Window *window = platform->CreateWindow();
 
   window->SetName("gr test");
@@ -38,6 +48,7 @@ int main()
   ri = window->GetRect();
 
   auto graphics = std::unique_ptr<Graphics>(Graphics::Create());
+  graphics->SetLoadPath("../data");
 
 #if defined(_WIN32)
   auto windowWin32 = dynamic_cast<WindowWin32*>(window);
@@ -48,6 +59,8 @@ int main()
 
   graphics->Init(surfaceData);
   graphics->GetDefaultPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
+
+  auto shader = std::unique_ptr<Shader>(graphics->LoadShader("simple"));
 
   auto start = std::chrono::system_clock::now();
 

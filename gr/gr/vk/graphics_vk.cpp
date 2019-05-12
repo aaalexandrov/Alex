@@ -3,6 +3,7 @@
 #include "host_allocation_tracker_vk.h"
 #include "presentation_surface_vk.h"
 #include "device_vk.h"
+#include "shader_vk.h"
 #include "util/dbg.h"
 
 NAMESPACE_BEGIN(gr)
@@ -35,6 +36,12 @@ PresentationSurface *GraphicsVk::CreatePresentationSurface(PresentationSurfaceCr
 PresentationSurface *GraphicsVk::GetDefaultPresentationSurface()
 {
   return &*_presentationSurface;
+}
+
+Shader *GraphicsVk::LoadShader(std::string const &name)
+{
+  ShaderVk *shader = new ShaderVk(*_device, name);
+  return shader;
 }
 
 void GraphicsVk::InitInstance()

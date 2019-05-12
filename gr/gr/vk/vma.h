@@ -4,10 +4,11 @@
 #include "util/namespace.h"
 #include "util/mem.h"
 
+#include "vk.h"
+
 #define VMA_ASSERT(cond) ASSERT(cond)
 
-#include "vk.h"
-#include "vk_mem_alloc/vk_mem_alloc.h"
+#include "vma/vk_mem_alloc.h"
 
 NAMESPACE_BEGIN(gr)
 

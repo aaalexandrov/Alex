@@ -6,6 +6,9 @@ set(dir_SOURCES
 	enumutl.h
 	enumutl.cpp
 
+	file.h
+	file.cpp
+
 	mathutl.h
 	mathutl.cpp
 
@@ -19,6 +22,9 @@ set(dir_SOURCES
 
 	rect.h
 	rect.cpp
+
+	rtti.h
+	rtti.cpp
 	
 	time.h
 	time.cpp

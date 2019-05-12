@@ -22,6 +22,8 @@ public:
 
   PresentationSurface *GetDefaultPresentationSurface() override;
 
+  Shader *LoadShader(std::string const &name) override;
+
   void InitInstance();
   void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
 

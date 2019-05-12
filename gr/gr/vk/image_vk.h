@@ -2,7 +2,6 @@
 
 #include "vk.h"
 #include "vma.h"
-#include "memory_vk.h"
 #include "../image.h"
 #include "util/enumutl.h"
 

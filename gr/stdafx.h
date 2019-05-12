@@ -16,4 +16,5 @@
 
 #include "util/namespace.h"
 #include "util/dbg.h"
+#include "util/rtti.h"
 

@@ -18,6 +18,8 @@ public:
   void UpdateWindows();
 
   virtual Window *CreateWindowInternal() = 0;
+
+  virtual std::string CurrentDirectory() = 0;
 };
 
 NAMESPACE_END(platform)

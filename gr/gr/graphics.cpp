@@ -24,4 +24,16 @@ Graphics::~Graphics()
 {
 }
 
+void Graphics::SetLoadPath(std::string loadPath)
+{
+  _loadPath = loadPath;
+  if (_loadPath.length() > 0 && _loadPath[_loadPath.length() - 1] != '/')
+    _loadPath += '/';
+}
+
+std::string Graphics::GetResourcePath(std::string name)
+{
+  return _loadPath + name;
+}
+
 NAMESPACE_END(gr)

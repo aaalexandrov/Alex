@@ -5,6 +5,12 @@
 
 NAMESPACE_BEGIN(util)
 
+template <typename Elem, size_t N>
+constexpr size_t ArraySize(Elem(&)[N])
+{
+  return N;
+}
+
 inline size_t MemSize(void *mem)
 {
   if (!mem)
@@ -18,6 +24,23 @@ inline size_t MemSize(void *mem)
   return size;
 }
 
+template <typename Class, typename MemType>
+size_t MemberOffset(MemType Class::*memPtr)
+{
+  return reinterpret_cast<uint8_t*>(&(static_cast<Class*>(nullptr)->*memPtr)) - static_cast<uint8_t*>(nullptr);
+}
+
+template <typename Cls>
+struct SizeAlign {
+  static constexpr size_t SizeOf() { return sizeof(Cls); }
+  static constexpr size_t AlignOf() { return alignof(Cls); }
+};
+
+template <>
+struct SizeAlign<void> {
+  static constexpr size_t SizeOf() { return 0; }
+  static constexpr size_t AlignOf() { return 1; }
+};
 
 template <typename TRAITS>
 struct UniqueHandle {

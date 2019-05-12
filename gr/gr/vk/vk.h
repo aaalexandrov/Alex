@@ -13,6 +13,8 @@
 #undef min
 #undef max
 
-#include "vk_mem_alloc/vma.h"
+#include "gr/vk/vma.h"
+#include "shaderc/libshaderc/include/shaderc/shaderc.hpp"
+#include "SPIRV-Cross/spirv_reflect.hpp"
 
 #include "util/namespace.h"

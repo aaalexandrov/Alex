@@ -57,6 +57,7 @@ ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_
     : vk::MemoryPropertyFlags();
 
   _memory = VmaAllocateMemoryUnique(*_device->_allocator, memReq, memProps);
+  vmaBindImageMemory(*_device->_allocator, *_memory, _image);
 
   CreateView();
 }
