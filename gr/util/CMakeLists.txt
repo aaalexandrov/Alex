@@ -28,6 +28,9 @@ set(dir_SOURCES
 	
 	time.h
 	time.cpp
+
+	type_layout.h
+	type_layout.cpp
 )
 
 target_sources(${BINARY} PRIVATE ${dir_SOURCES} CMakeLists.txt)

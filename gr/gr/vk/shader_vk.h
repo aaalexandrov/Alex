@@ -26,6 +26,11 @@ public:
 
   std::vector<vk::VertexInputAttributeDescription> GetVertexAttributeDescriptions(spirv_cross::CompilerReflection const &reflected);
 
+  static util::TypeInfo *GetTypeInfoFromSpirv(spirv_cross::SPIRType type);
+  void InitVertexDescription(spirv_cross::CompilerReflection const &reflected);
+  void InitUniformBufferDescriptions(spirv_cross::CompilerReflection const &reflected);
+
+
   DeviceVk *_device;
   std::vector<ModuleInfo> _modules;
 
