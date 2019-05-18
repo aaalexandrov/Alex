@@ -33,5 +33,25 @@ UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRe
   return UniqueVmaAllocation(allocation, allocator);
 }
 
+UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRequirements const &memReq, bool hostVisible)
+{
+  vk::MemoryPropertyFlags memProps =
+    hostVisible
+    ? vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+    : vk::MemoryPropertyFlags();
+
+  return std::move(VmaAllocateMemoryUnique(allocator, memReq, memProps));
+}
+
+void *VmaMapMemory(VmaAllocator allocator, VmaAllocation memory)
+{
+  void *mapped;
+  VkResult res = vmaMapMemory(allocator, memory, &mapped);
+  if (res != VK_SUCCESS)
+    throw GraphicsException("VmaMapMemory() failed", res);
+  return mapped;
+}
+
+
 NAMESPACE_END(gr)
 

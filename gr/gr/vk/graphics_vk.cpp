@@ -4,6 +4,8 @@
 #include "presentation_surface_vk.h"
 #include "device_vk.h"
 #include "shader_vk.h"
+#include "image_vk.h"
+#include "buffer_vk.h"
 #include "util/dbg.h"
 
 NAMESPACE_BEGIN(gr)
@@ -36,6 +38,20 @@ PresentationSurface *GraphicsVk::CreatePresentationSurface(PresentationSurfaceCr
 PresentationSurface *GraphicsVk::GetDefaultPresentationSurface()
 {
   return &*_presentationSurface;
+}
+
+Buffer *GraphicsVk::CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size)
+{
+  BufferVk *buffer = new BufferVk(*_device, size, description, usage);
+  return buffer;
+}
+
+Image *GraphicsVk::CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers)
+{
+  vk::Extent3D ext { size.x, size.y, size.z };
+  vk::Format vkFormat = ImageVk::ColorFormat2vk(format);
+  ImageVk *image = new ImageVk(*_device, vkFormat, ext, mipLevels, arrayLayers, usage);
+  return image;
 }
 
 Shader *GraphicsVk::LoadShader(std::string const &name)

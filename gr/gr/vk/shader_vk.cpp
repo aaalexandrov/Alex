@@ -39,14 +39,16 @@ void ShaderVk::LoadModules()
       throw GraphicsException("Shader " + path + " compilation failed with error : " + res.GetErrorMessage(), VK_RESULT_MAX_ENUM);
 
     vk::ShaderModuleCreateInfo moduleInfo(vk::ShaderModuleCreateFlags(), res.cend() - res.cbegin(), res.cbegin());
-    auto shaderModule = _device->_device->createShaderModuleUnique(moduleInfo, _device->GetGraphics()->AllocationCallbacks());
+    auto shaderModule = _device->_device->createShaderModuleUnique(moduleInfo, _device->AllocationCallbacks());
     _modules.push_back({ std::move(shaderModule), kind._stage });
 
+    spirv_cross::Compiler refl(res.cbegin(), res.cend() - res.cbegin());
+
     if (kind._stage == vk::ShaderStageFlagBits::eVertex) {
-      spirv_cross::CompilerReflection refl(res.cbegin(), res.cend() - res.cbegin());
       InitVertexDescription(refl);
-      GetVertexAttributeDescriptions(refl);
     }
+
+    InitUniformBufferDescriptions(refl);
   }
 }
 
@@ -57,6 +59,21 @@ std::vector<vk::PipelineShaderStageCreateInfo> ShaderVk::GetPipelineShaderStageC
     infos.emplace_back(vk::PipelineShaderStageCreateFlags(), mod._stageFlags, *mod._module, "main");
   }
   return infos;
+}
+
+vk::PipelineVertexInputStateCreateInfo ShaderVk::GetPipelineVertexInputStateCreateInfos(
+  std::vector<vk::VertexInputAttributeDescription> &vertexAttribs,
+  std::vector<vk::VertexInputBindingDescription> &vertexBinds)
+{
+  vertexAttribs = GetVertexAttributeDescriptions();
+  vertexBinds = GetVertexBindingDescriptions();
+  vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+  vertexInputInfo
+    .setVertexBindingDescriptionCount(static_cast<uint32_t>(vertexBinds.size()))
+    .setPVertexBindingDescriptions(vertexBinds.data())
+    .setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertexAttribs.size()))
+    .setPVertexAttributeDescriptions(vertexAttribs.data());
+  return vertexInputInfo;
 }
 
 struct SPIRTypeInfo {
@@ -120,14 +137,15 @@ util::TypeInfo *ShaderVk::GetTypeInfoFromSpirv(spirv_cross::SPIRType type)
   return typeInfo;
 }
 
-std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDescriptions(spirv_cross::CompilerReflection const &reflected)
+std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDescriptions()
 {
   std::vector<vk::VertexInputAttributeDescription> descriptions;
+  uint32_t binding = 0;
 
-  for (auto &nameElem : _vertexDesc._elements) {
+  for (auto &nameElem : _vertexDesc->_elements) {
     descriptions.emplace_back(
       nameElem.second._location, 
-      nameElem.second._binding, 
+      binding,
       Type2VkFormat.at(nameElem.second._type), 
       static_cast<uint32_t>(nameElem.second._offset));
   }
@@ -138,51 +156,74 @@ std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDes
   return descriptions;
 }
 
-void ShaderVk::InitVertexDescription(spirv_cross::CompilerReflection const &reflected)
+std::vector<vk::VertexInputBindingDescription> ShaderVk::GetVertexBindingDescriptions()
 {
-  ASSERT(_vertexDesc._elements.size() == 0);
+  std::vector<vk::VertexInputBindingDescription> descriptions;
+  uint32_t binding = 0;
+
+  descriptions.emplace_back(binding, static_cast<uint32_t>(_vertexDesc->_size), vk::VertexInputRate::eVertex);
+
+  return descriptions;
+}
+
+void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
+{
+  ASSERT(_vertexDesc->_elements.size() == 0);
 
   size_t offset = 0;
   for (auto s : reflected.get_shader_resources().stage_inputs) {
-    auto type = reflected.get_type(s.type_id);
+    auto &type = reflected.get_type(s.type_id);
 
     util::TypeInfo *typeInfo = GetTypeInfoFromSpirv(type);
 
     uint32_t location = reflected.get_decoration(s.id, spv::Decoration::DecorationLocation);
-    uint32_t binding = reflected.get_decoration(s.id, spv::Decoration::DecorationBinding);
 
-    BufferElement elem { typeInfo, offset, location, binding };
-    _vertexDesc.AddElement(s.name, elem);
+    BufferElement elem { typeInfo, offset, location };
+    _vertexDesc->AddElement(s.name, std::move(elem));
     offset += typeInfo->GetSize();
   }
 }
 
-void ShaderVk::InitUniformBufferDescriptions(spirv_cross::CompilerReflection const & reflected)
+void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected)
 {
-  ASSERT(_uniformBuffers.size() == 0);
-
   for (auto u : reflected.get_shader_resources().uniform_buffers) {
-    auto type = reflected.get_type(u.type_id);
+    auto &type = reflected.get_type(u.type_id);
 
-    auto binding = reflected.get_decoration(u.id, spv::Decoration::DecorationBinding);
-    auto name = reflected.get_name(u.id);
-    auto size = reflected.get_declared_struct_size(type);
+    uint32_t binding = reflected.get_decoration(u.id, spv::Decoration::DecorationBinding);
+    std::string const &name = reflected.get_name(u.id);
+    size_t size = reflected.get_declared_struct_size(type);
 
-    LOG("Uniform binding: ", binding, " ", name, " size: ", size);
+    auto found = std::find_if(_uniformBuffers.begin(), _uniformBuffers.end(), 
+      [&name](UniformBufferInfo const &uniformInfo) { return uniformInfo._name == name; });
+    if (found != _uniformBuffers.end()) {
+      // uniform buffers with the same name in different shader kinds need to be the same
+      ASSERT(found->_uniformDesc->_size == size);
+      continue;
+    }
+
+    UniformBufferInfo uniformInfo;
+    uniformInfo._name = name;
+    uniformInfo._binding = binding;
 
     auto members = type.member_types.size();
     for (auto i = 0; i < members; ++i) {
       auto &memberType = reflected.get_type(type.member_types[i]);
-      auto memberName = reflected.get_member_name(type.self, i);
+      std::string const &memberName = reflected.get_member_name(type.self, i);
       size_t memberSize = reflected.get_declared_struct_member_size(type, i);
       size_t memberOffset = reflected.type_struct_member_offset(type, i);
 
-      LOG("  Member ", memberName, " : ", memberType.basetype, " offset: ", memberOffset, " size: ", memberSize);
+      util::TypeInfo *elemType = GetTypeInfoFromSpirv(memberType);
+      ASSERT(memberSize == elemType->GetSize());
+      BufferElement elem { elemType, memberOffset };
+
+      uniformInfo._uniformDesc->AddElement(memberName, std::move(elem));
     }
+
+    ASSERT(uniformInfo._uniformDesc->_size <= size);
+    uniformInfo._uniformDesc->_size = size;
+    _uniformBuffers.push_back(std::move(uniformInfo));
   }
-
 }
-
 
 
 NAMESPACE_END(gr)

@@ -47,19 +47,24 @@ ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_
     .setSharingMode(vk::SharingMode::eExclusive)
     .setInitialLayout(_layout);
 
-  _ownImage = _device->_device->createImageUnique(imgInfo, _device->GetGraphics()->AllocationCallbacks());
+  _ownImage = _device->_device->createImageUnique(imgInfo, _device->AllocationCallbacks());
   _image = *_ownImage;
 
   vk::MemoryRequirements memReq = _device->_device->getImageMemoryRequirements(_image);
-  vk::MemoryPropertyFlags memProps = 
-    usage == Usage::Staging 
-    ? vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent 
-    : vk::MemoryPropertyFlags();
-
-  _memory = VmaAllocateMemoryUnique(*_device->_allocator, memReq, memProps);
+  _memory = VmaAllocateMemoryUnique(*_device->_allocator, memReq, usage == Usage::Staging);
   vmaBindImageMemory(*_device->_allocator, *_memory, _image);
 
   CreateView();
+}
+
+void *ImageVk::Map()
+{
+  return VmaMapMemory(*_device->_allocator, *_memory);
+}
+
+void ImageVk::Unmap()
+{
+  vmaUnmapMemory(*_device->_allocator, *_memory);
 }
 
 void ImageVk::CreateView()
@@ -73,7 +78,7 @@ void ImageVk::CreateView()
     .setComponents({vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity })
     .setSubresourceRange(range);
 
-  _view = _device->_device->createImageViewUnique(viewInfo, _device->GetGraphics()->AllocationCallbacks());
+  _view = _device->_device->createImageViewUnique(viewInfo, _device->AllocationCallbacks());
 }
 
 vk::ImageViewType ImageVk::GetImageViewType()

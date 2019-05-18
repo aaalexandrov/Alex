@@ -19,8 +19,10 @@ public:
   void Init(PresentationSurfaceCreateData &surfaceData) override;
 
   PresentationSurface *CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
-
   PresentationSurface *GetDefaultPresentationSurface() override;
+
+  virtual Buffer *CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
+  virtual Image *CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) override;
 
   Shader *LoadShader(std::string const &name) override;
 

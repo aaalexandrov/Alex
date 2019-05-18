@@ -99,6 +99,11 @@ GraphicsVk *DeviceVk::GetGraphics()
   return _physicalDevice->_graphics;
 }
 
+vk::AllocationCallbacks * DeviceVk::AllocationCallbacks()
+{
+  return GetGraphics()->AllocationCallbacks();
+}
+
 vk::PhysicalDevice &DeviceVk::GetPhysicalDevice()
 {
   return _physicalDevice->_physicalDevice;

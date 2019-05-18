@@ -23,12 +23,16 @@ public:
   void LoadModules();
 
   std::vector<vk::PipelineShaderStageCreateInfo> GetPipelineShaderStageCreateInfos();
+  vk::PipelineVertexInputStateCreateInfo GetPipelineVertexInputStateCreateInfos(
+    std::vector<vk::VertexInputAttributeDescription> &vertexAttribs, 
+    std::vector<vk::VertexInputBindingDescription> &vertexBinds);
 
-  std::vector<vk::VertexInputAttributeDescription> GetVertexAttributeDescriptions(spirv_cross::CompilerReflection const &reflected);
+  std::vector<vk::VertexInputAttributeDescription> GetVertexAttributeDescriptions();
+  std::vector<vk::VertexInputBindingDescription> GetVertexBindingDescriptions();
 
   static util::TypeInfo *GetTypeInfoFromSpirv(spirv_cross::SPIRType type);
-  void InitVertexDescription(spirv_cross::CompilerReflection const &reflected);
-  void InitUniformBufferDescriptions(spirv_cross::CompilerReflection const &reflected);
+  void InitVertexDescription(spirv_cross::Compiler const &reflected);
+  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected);
 
 
   DeviceVk *_device;

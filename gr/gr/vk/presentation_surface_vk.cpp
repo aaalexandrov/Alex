@@ -80,7 +80,7 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
     .setPresentMode(_presentMode)
     .setClipped(true);
 
-  _swapchain = _device->_device->createSwapchainKHRUnique(chainInfo, _device->GetGraphics()->AllocationCallbacks());
+  _swapchain = _device->_device->createSwapchainKHRUnique(chainInfo, _device->AllocationCallbacks());
 
   std::vector<vk::Image> chainImages = _device->_device->getSwapchainImagesKHR(*_swapchain);
 }

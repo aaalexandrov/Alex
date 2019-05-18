@@ -19,6 +19,7 @@ public:
   void InitQueues();
 
   GraphicsVk *GetGraphics();
+  vk::AllocationCallbacks *AllocationCallbacks();
   vk::PhysicalDevice &GetPhysicalDevice();
 
   PhysicalDeviceVk *_physicalDevice;

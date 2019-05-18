@@ -3,6 +3,12 @@ set(gr_implementation VK CACHE STRING "gr graphics implementation")
 set_property(CACHE gr_implementation PROPERTY STRINGS VK STUB)
 
 set(dir_SOURCES
+	buffer.h
+	buffer.cpp
+
+	buffer_desc.h
+	buffer_desc.cpp
+
 	graphics.h
 	graphics.cpp
 
@@ -28,6 +34,8 @@ endif()
 
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
+		vk/buffer_vk.h
+		vk/buffer_vk.cpp
 
 		vk/device_vk.h
 		vk/device_vk.cpp

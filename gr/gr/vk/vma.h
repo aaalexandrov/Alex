@@ -36,5 +36,8 @@ struct VmaAllocationTraits {
 using UniqueVmaAllocation = util::UniqueHandle<VmaAllocationTraits>;
 
 UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRequirements const &memReq, vk::MemoryPropertyFlags memPropFlags);
+UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRequirements const &memReq, bool hostVisible);
+
+void *VmaMapMemory(VmaAllocator allocator, VmaAllocation memory);
 
 NAMESPACE_END(gr)

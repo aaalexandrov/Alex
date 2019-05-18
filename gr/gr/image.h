@@ -22,11 +22,12 @@ public:
     RenderTarget = 0x1000,
   };
 
-  virtual ~Image() {}
-
   virtual ColorFormat GetColorFormat() = 0;
   virtual Usage GetUsage() = 0;
   virtual glm::u32vec3 GetSize() = 0;
+
+  virtual void *Map() = 0;
+  virtual void Unmap() = 0;
 };
 
 NAMESPACE_END(gr)

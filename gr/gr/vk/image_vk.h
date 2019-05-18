@@ -18,6 +18,9 @@ public:
   Usage GetUsage() override { return _usage; }
   glm::u32vec3 GetSize() override { return glm::u32vec3(_size.width, _size.height, _size.depth); }
 
+  void *Map() override;
+  void Unmap() override;
+
   void CreateView();
 
   static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return _vkFormat2ColorFormat.ToDst(vkFmt); }
