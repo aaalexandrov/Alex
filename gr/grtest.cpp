@@ -60,7 +60,7 @@ int main()
   graphics->Init(surfaceData);
   graphics->GetDefaultPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
 
-  auto shader = std::unique_ptr<Shader>(graphics->LoadShader("simple"));
+  auto shader = graphics->LoadShader("simple");
 
   auto start = std::chrono::system_clock::now();
 

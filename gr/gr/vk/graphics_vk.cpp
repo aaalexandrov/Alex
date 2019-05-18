@@ -6,6 +6,7 @@
 #include "shader_vk.h"
 #include "image_vk.h"
 #include "buffer_vk.h"
+#include "material_vk.h"
 #include "util/dbg.h"
 
 NAMESPACE_BEGIN(gr)
@@ -21,42 +22,48 @@ GraphicsVk::~GraphicsVk()
 void GraphicsVk::Init(PresentationSurfaceCreateData &surfaceData)
 {
   InitInstance();
-  _presentationSurface = std::unique_ptr<PresentationSurfaceVk>(static_cast<PresentationSurfaceVk*>(CreatePresentationSurface(surfaceData)));
+  _presentationSurface = std::static_pointer_cast<PresentationSurfaceVk>(CreatePresentationSurface(surfaceData));
   InitPhysicalDevice(&*_presentationSurface);
   _device = std::make_unique<DeviceVk>(&*_physicalDevice);
   _presentationSurface->InitForDevice(&*_device);
 }
 
-PresentationSurface *GraphicsVk::CreatePresentationSurface(PresentationSurfaceCreateData &createData)
+std::shared_ptr<PresentationSurface> GraphicsVk::CreatePresentationSurface(PresentationSurfaceCreateData &createData)
 {
-  auto surface = new PresentationSurfaceVk(this, createData);
+  auto surface = std::make_shared<PresentationSurfaceVk>(this, createData);
   if (_device)
     surface->InitForDevice(&*_device);
   return surface;
 }
 
-PresentationSurface *GraphicsVk::GetDefaultPresentationSurface()
+std::shared_ptr<PresentationSurface> GraphicsVk::GetDefaultPresentationSurface()
 {
-  return &*_presentationSurface;
+  return _presentationSurface;
 }
 
-Buffer *GraphicsVk::CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size)
+std::shared_ptr<Buffer> GraphicsVk::CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size)
 {
-  BufferVk *buffer = new BufferVk(*_device, size, description, usage);
+  auto buffer = std::make_shared<BufferVk>(*_device, size, description, usage);
   return buffer;
 }
 
-Image *GraphicsVk::CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers)
+std::shared_ptr<Image> GraphicsVk::CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers)
 {
   vk::Extent3D ext { size.x, size.y, size.z };
   vk::Format vkFormat = ImageVk::ColorFormat2vk(format);
-  ImageVk *image = new ImageVk(*_device, vkFormat, ext, mipLevels, arrayLayers, usage);
+  auto image = std::make_shared<ImageVk>(*_device, vkFormat, ext, mipLevels, arrayLayers, usage);
   return image;
 }
 
-Shader *GraphicsVk::LoadShader(std::string const &name)
+std::shared_ptr<Material> GraphicsVk::CreateMaterial(std::shared_ptr<Shader> &shader)
 {
-  ShaderVk *shader = new ShaderVk(*_device, name);
+  auto material = std::make_shared<MaterialVk>(*_device, shader);
+  return std::shared_ptr<Material>();
+}
+
+std::shared_ptr<Shader> GraphicsVk::LoadShader(std::string const &name)
+{
+  auto shader = std::make_shared<ShaderVk>(*_device, name);
   return shader;
 }
 

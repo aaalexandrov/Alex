@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include "util/namespace.h"
 #include "graphics_exception.h"
 #include "image.h"
@@ -15,6 +16,7 @@ struct Version {
 class PresentationSurface;
 struct PresentationSurfaceCreateData;
 class Shader;
+class Material;
 
 class Graphics {
 public:
@@ -30,21 +32,26 @@ public:
 
   virtual void Init(PresentationSurfaceCreateData &surfaceData) = 0;
 
-  virtual PresentationSurface *CreatePresentationSurface(PresentationSurfaceCreateData &createData) = 0;
-  virtual PresentationSurface *GetDefaultPresentationSurface() = 0;
+  virtual std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) = 0;
+  virtual std::shared_ptr<PresentationSurface> GetDefaultPresentationSurface() = 0;
 
-  virtual Buffer *CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) = 0;
-  virtual Image *CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) = 0;
+  virtual std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) = 0;
+  virtual std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) = 0;
+  virtual std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) = 0;
 
-  virtual Shader *LoadShader(std::string const &name) = 0;
+  virtual std::shared_ptr<Shader> LoadShader(std::string const &name) = 0;
 
   virtual void SetLoadPath(std::string loadPath);
   virtual std::string GetResourcePath(std::string name);
+
+  BufferDescPtr &GetIndexBufferDescU16() { return _indexDescU16; }
+  BufferDescPtr &GetIndexBufferDescU32() { return _indexDescU32; }
 
   ValidationLevel _validationLevel = ValidationLevel::None;
   std::string _appName { "gr app" };
   Version _appVersion { 0, 0, 0 };
   std::string _loadPath;
+  BufferDescPtr _indexDescU16 = BufferDesc::Create(), _indexDescU32 = BufferDesc::Create();
 };
 
 NAMESPACE_END(gr)

@@ -18,6 +18,8 @@ Graphics::Graphics()
 #ifdef _DEBUG
   _validationLevel = ValidationLevel::Full;
 #endif
+  _indexDescU16->AddElement("index", { util::TypeInfo::Get<uint16_t>(), 0 });
+  _indexDescU32->AddElement("index", { util::TypeInfo::Get<uint32_t>(), 0 });
 }
 
 Graphics::~Graphics()

@@ -15,8 +15,14 @@ set(dir_SOURCES
 	graphics_exception.h
 	graphics_exception.cpp
 
+	graphics_state.h
+	graphics_state.cpp
+
 	image.h
 	image.cpp
+
+	material.h
+	material.cpp
 
 	presentation_surface.h
 	presentation_surface.cpp
@@ -48,6 +54,9 @@ if(gr_implementation STREQUAL VK)
 
 		vk/image_vk.h
 		vk/image_vk.cpp
+
+		vk/material_vk.h
+		vk/material_vk.cpp
 
 		vk/presentation_surface_vk.h
 		vk/presentation_surface_vk.cpp

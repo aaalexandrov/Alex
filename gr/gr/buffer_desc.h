@@ -30,7 +30,12 @@ struct BufferElement {
   }
 };
 
+struct BufferDesc;
+using BufferDescPtr = std::shared_ptr<BufferDesc>;
+
 struct BufferDesc {
+  static BufferDescPtr Create() { return std::make_shared<BufferDesc>(); }
+
   BufferElement const *GetElement(std::string name) const
   {
     auto found = _elements.find(name);

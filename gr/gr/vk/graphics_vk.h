@@ -18,13 +18,14 @@ public:
 
   void Init(PresentationSurfaceCreateData &surfaceData) override;
 
-  PresentationSurface *CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
-  PresentationSurface *GetDefaultPresentationSurface() override;
+  std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
+  std::shared_ptr<PresentationSurface> GetDefaultPresentationSurface() override;
+  
+  std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
+  std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) override;
+  std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) override;
 
-  virtual Buffer *CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
-  virtual Image *CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) override;
-
-  Shader *LoadShader(std::string const &name) override;
+  std::shared_ptr<Shader> LoadShader(std::string const &name) override;
 
   void InitInstance();
   void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
@@ -63,7 +64,7 @@ public:
 
   std::unique_ptr<DeviceVk> _device;
 
-  std::unique_ptr<PresentationSurfaceVk> _presentationSurface;
+  std::shared_ptr<PresentationSurfaceVk> _presentationSurface;
 };
 
 NAMESPACE_END(gr)

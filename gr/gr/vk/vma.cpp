@@ -38,7 +38,7 @@ UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRe
   vk::MemoryPropertyFlags memProps =
     hostVisible
     ? vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-    : vk::MemoryPropertyFlags();
+    : vk::MemoryPropertyFlagBits::eDeviceLocal;
 
   return std::move(VmaAllocateMemoryUnique(allocator, memReq, memProps));
 }

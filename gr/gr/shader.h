@@ -12,14 +12,14 @@ public:
   struct UniformBufferInfo {
     std::string _name;
     uint32_t _binding;
-    BufferDescPtr _uniformDesc = std::make_shared<BufferDesc>();
+    BufferDescPtr _uniformDesc = BufferDesc::Create();
   };
 
   Shader(std::string const &name) : _name(name) {}
   virtual ~Shader() {}
 
   std::string _name;
-  BufferDescPtr _vertexDesc = std::make_shared<BufferDesc>();
+  BufferDescPtr _vertexDesc = BufferDesc::Create();
   std::vector<UniformBufferInfo> _uniformBuffers;
 };
 
