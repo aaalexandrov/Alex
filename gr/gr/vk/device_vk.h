@@ -10,6 +10,7 @@ NAMESPACE_BEGIN(gr)
 
 class GraphicsVk;
 class PhysicalDeviceVk;
+class ModelInstance;
 
 class DeviceVk {
 public:
@@ -17,6 +18,10 @@ public:
 
   void InitQueueFamilies(std::vector<vk::DeviceQueueCreateInfo> &queuesInfo, std::vector<float> &queuesPriorities);
   void InitQueues();
+
+  std::shared_ptr<vk::UniqueSemaphore> &&CreateSemaphore();
+
+  void RenderInstance(std::shared_ptr<ModelInstance> &modelInst);
 
   GraphicsVk *GetGraphics();
   vk::AllocationCallbacks *AllocationCallbacks();

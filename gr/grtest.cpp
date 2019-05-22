@@ -8,6 +8,30 @@
 #include "gr/graphics.h"
 #include "gr/shader.h"
 
+#if defined(_MSC_VER) && defined(_DEBUG)
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+static struct DbgInit {
+  DbgInit() 
+  {
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+    _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+  }
+} dbgInit;
+
+#endif
+
 #if defined(_WIN32)
 #include "gr/win32/presentation_surface_create_data_win32.h"
 #include "platform/win32/window_win32.h"
@@ -24,7 +48,7 @@ void Test();
 
 int main()
 {
-  util::Test();
+  //util::Test();
   auto platform = std::unique_ptr<Platform>(Platform::Create());
 
   cout << "Current execution directory: " << platform->CurrentDirectory() << endl;

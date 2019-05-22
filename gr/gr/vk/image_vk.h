@@ -14,6 +14,8 @@ public:
   ImageVk(DeviceVk &device, vk::Image image, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage);
   ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage);
 
+  util::TypeInfo *GetType() override;
+
   ColorFormat GetColorFormat() override { return Vk2ColorFormat(_format); }
   Usage GetUsage() override { return _usage; }
   glm::u32vec3 GetSize() override { return glm::u32vec3(_size.width, _size.height, _size.depth); }
@@ -47,3 +49,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::ImageVk, gr::Image)

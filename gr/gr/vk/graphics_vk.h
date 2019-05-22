@@ -27,6 +27,13 @@ public:
 
   std::shared_ptr<Shader> LoadShader(std::string const &name) override;
 
+  void AddModelInstance(std::shared_ptr<ModelInstance> &modelInst) override;
+  
+  void Render() override;
+
+  void AddResourceUpdate(std::shared_ptr<ResourceUpdate> &update);
+  void ProcessResourceUpdates();
+
   void InitInstance();
   void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
 
@@ -65,6 +72,9 @@ public:
   std::unique_ptr<DeviceVk> _device;
 
   std::shared_ptr<PresentationSurfaceVk> _presentationSurface;
+
+  std::vector<std::shared_ptr<ModelInstance>> _instancesToRender;
+  std::vector<std::shared_ptr<ResourceUpdate>> _resourceUpdates;
 };
 
 NAMESPACE_END(gr)

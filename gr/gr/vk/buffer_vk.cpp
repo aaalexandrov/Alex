@@ -23,6 +23,11 @@ BufferVk::BufferVk(DeviceVk &device, size_t size, BufferDescPtr &bufferDesc, Usa
   vmaBindBufferMemory(*_device->_allocator, *_memory, *_buffer);
 }
 
+util::TypeInfo * BufferVk::GetType()
+{
+  return util::TypeInfo::Get<BufferVk>();
+}
+
 void * BufferVk::Map()
 {
   return VmaMapMemory(*_device->_allocator, *_memory);

@@ -13,6 +13,8 @@ class BufferVk : public Buffer {
 public:
   BufferVk(DeviceVk &device, size_t size, BufferDescPtr &bufferDesc, Usage usage);
 
+  util::TypeInfo *GetType() override;
+
   Usage GetUsage() override { return _usage; }
   size_t GetSize() override { return _size; }
 
@@ -30,3 +32,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::BufferVk, gr::Buffer)

@@ -12,6 +12,8 @@ class PresentationSurfaceVk : public PresentationSurface {
 public:
   PresentationSurfaceVk(GraphicsVk *graphics, PresentationSurfaceCreateData &createData);
 
+  util::TypeInfo *GetType() override;
+
   void Update(uint32_t width, uint32_t height) override;
 
   void InitForDevice(DeviceVk *device);
@@ -33,3 +35,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::PresentationSurfaceVk, gr::PresentationSurface)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util/namespace.h"
+#include "graphics_resource.h"
 #include "glm/glm.hpp"
 
 NAMESPACE_BEGIN(gr)
@@ -12,7 +13,7 @@ enum class ColorFormat {
   D24S8,
 };
 
-class Image {
+class Image : public GraphicsResource {
 public:
   enum class Usage {
     Invalid,
@@ -31,3 +32,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::Image, gr::GraphicsResource)

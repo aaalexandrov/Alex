@@ -19,6 +19,11 @@ ShaderVk::ShaderVk(DeviceVk &device, std::string const &name)
   LoadModules();
 }
 
+util::TypeInfo * ShaderVk::GetType()
+{
+  return util::TypeInfo::Get<ShaderVk>();
+}
+
 GraphicsVk *ShaderVk::GetGraphics()
 {
   return _device->GetGraphics();

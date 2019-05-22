@@ -15,6 +15,9 @@ set(dir_SOURCES
 	graphics_exception.h
 	graphics_exception.cpp
 
+	graphics_resource.h
+	graphics_resource.cpp
+	
 	graphics_state.h
 	graphics_state.cpp
 
@@ -23,6 +26,12 @@ set(dir_SOURCES
 
 	material.h
 	material.cpp
+
+	model.h
+	model.cpp
+
+	model_instance.h
+	model_instance.cpp
 
 	presentation_surface.h
 	presentation_surface.cpp
@@ -40,6 +49,9 @@ endif()
 
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
+		vk/buffer_update_vk.h
+		vk/buffer_update_vk.cpp
+		
 		vk/buffer_vk.h
 		vk/buffer_vk.cpp
 

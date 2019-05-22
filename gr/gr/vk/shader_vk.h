@@ -18,6 +18,8 @@ public:
 
   ShaderVk(DeviceVk &device, std::string const &name);
 
+  util::TypeInfo *GetType() override;
+
   GraphicsVk *GetGraphics();
 
   void LoadModules();
@@ -48,3 +50,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::ShaderVk, gr::Shader)

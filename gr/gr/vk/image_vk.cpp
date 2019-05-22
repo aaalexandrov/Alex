@@ -57,6 +57,11 @@ ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_
   CreateView();
 }
 
+util::TypeInfo * ImageVk::GetType()
+{
+  return util::TypeInfo::Get<ImageVk>();
+}
+
 void *ImageVk::Map()
 {
   return VmaMapMemory(*_device->_allocator, *_memory);

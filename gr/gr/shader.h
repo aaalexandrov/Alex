@@ -2,12 +2,13 @@
 
 #include "util/namespace.h"
 #include "buffer_desc.h"
+#include "graphics_resource.h"
 #include <string>
 #include <memory>
 
 NAMESPACE_BEGIN(gr)
 
-class Shader {
+class Shader : public GraphicsResource {
 public:
   struct UniformBufferInfo {
     std::string _name;
@@ -25,3 +26,4 @@ public:
 
 NAMESPACE_END(gr)
 
+RTTI_BIND(gr::Shader, gr::GraphicsResource)

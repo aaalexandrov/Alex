@@ -17,6 +17,8 @@ class PresentationSurface;
 struct PresentationSurfaceCreateData;
 class Shader;
 class Material;
+class Model;
+class ModelInstance;
 
 class Graphics {
 public:
@@ -44,6 +46,11 @@ public:
   virtual void SetLoadPath(std::string loadPath);
   virtual std::string GetResourcePath(std::string name);
 
+  virtual void AddModelInstance(std::shared_ptr<ModelInstance> &modelInst) = 0;
+
+  virtual void Render() = 0;
+
+  BufferDescPtr &GetRawBufferDesc()      { return _rawDescU8; }
   BufferDescPtr &GetIndexBufferDescU16() { return _indexDescU16; }
   BufferDescPtr &GetIndexBufferDescU32() { return _indexDescU32; }
 
@@ -51,7 +58,9 @@ public:
   std::string _appName { "gr app" };
   Version _appVersion { 0, 0, 0 };
   std::string _loadPath;
-  BufferDescPtr _indexDescU16 = BufferDesc::Create(), _indexDescU32 = BufferDesc::Create();
+  BufferDescPtr _indexDescU16 = BufferDesc::Create(), 
+    _indexDescU32 = BufferDesc::Create(), 
+    _rawDescU8 = BufferDesc::Create();
 };
 
 NAMESPACE_END(gr)

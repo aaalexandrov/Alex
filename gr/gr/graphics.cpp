@@ -20,6 +20,7 @@ Graphics::Graphics()
 #endif
   _indexDescU16->AddElement("index", { util::TypeInfo::Get<uint16_t>(), 0 });
   _indexDescU32->AddElement("index", { util::TypeInfo::Get<uint32_t>(), 0 });
+  _rawDescU8->AddElement("data", { util::TypeInfo::Get<uint8_t>(), 0 });
 }
 
 Graphics::~Graphics()

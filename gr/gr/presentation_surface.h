@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util/namespace.h"
+#include "graphics_resource.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -8,7 +9,7 @@ struct PresentationSurfaceCreateData {
 };
 
 
-class PresentationSurface {
+class PresentationSurface : public GraphicsResource {
 public:
 
   PresentationSurface(PresentationSurfaceCreateData &createData);
@@ -18,3 +19,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::PresentationSurface, gr::GraphicsResource)

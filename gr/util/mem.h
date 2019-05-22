@@ -96,5 +96,4 @@ struct UniqueHandle {
   Handle _handle = TRAITS::NullHandle();
 };
 
-
 NAMESPACE_END(util)

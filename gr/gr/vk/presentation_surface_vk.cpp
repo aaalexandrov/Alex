@@ -24,6 +24,11 @@ PresentationSurfaceVk::PresentationSurfaceVk(GraphicsVk *graphics, PresentationS
 #endif
 }
 
+util::TypeInfo * PresentationSurfaceVk::GetType()
+{
+  return util::TypeInfo::Get<PresentationSurfaceVk>();
+}
+
 #if defined(_WIN32)
 
 void PresentationSurfaceVk::InitSurfaceWin32(GraphicsVk *graphics, PresentationSurfaceCreateData *createData)

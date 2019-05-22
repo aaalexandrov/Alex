@@ -12,4 +12,11 @@ void QueueVk::Init(DeviceVk &device, int32_t family, int32_t queueIndex)
   _cmdPool = device._device->createCommandPoolUnique(poolInfo);
 }
 
+vk::UniqueCommandBuffer &&QueueVk::AllocateCmdBuffer()
+{
+  vk::CommandBufferAllocateInfo cmdsInfo(*_cmdPool, vk::CommandBufferLevel::ePrimary, 1);
+  std::vector<vk::UniqueCommandBuffer> buffers = _device->_device->allocateCommandBuffersUnique(cmdsInfo);
+  return std::move(buffers[0]);
+}
+
 NAMESPACE_END(gr)

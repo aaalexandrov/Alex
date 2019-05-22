@@ -2,10 +2,11 @@
 
 #include "util/namespace.h"
 #include "buffer_desc.h"
+#include "graphics_resource.h"
 
 NAMESPACE_BEGIN(gr)
 
-class Buffer {
+class Buffer : public GraphicsResource {
 public:
   enum class Usage {
     Invalid,
@@ -27,3 +28,5 @@ public:
 };
 
 NAMESPACE_END(gr)
+
+RTTI_BIND(gr::Buffer, gr::GraphicsResource)
