@@ -6,6 +6,7 @@
 #include "graphics_exception.h"
 #include "image.h"
 #include "buffer.h"
+#include "render_queue.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -35,7 +36,6 @@ public:
   virtual void Init(PresentationSurfaceCreateData &surfaceData) = 0;
 
   virtual std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) = 0;
-  virtual std::shared_ptr<PresentationSurface> GetDefaultPresentationSurface() = 0;
 
   virtual std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) = 0;
   virtual std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) = 0;
@@ -46,9 +46,7 @@ public:
   virtual void SetLoadPath(std::string loadPath);
   virtual std::string GetResourcePath(std::string name);
 
-  virtual void AddModelInstance(std::shared_ptr<ModelInstance> &modelInst) = 0;
-
-  virtual void Render() = 0;
+  virtual RenderQueue *GetRenderQueue() = 0;
 
   BufferDescPtr &GetRawBufferDesc()      { return _rawDescU8; }
   BufferDescPtr &GetIndexBufferDescU16() { return _indexDescU16; }

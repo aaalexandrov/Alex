@@ -22,10 +22,13 @@ GraphicsVk::~GraphicsVk()
 void GraphicsVk::Init(PresentationSurfaceCreateData &surfaceData)
 {
   InitInstance();
-  _presentationSurface = std::static_pointer_cast<PresentationSurfaceVk>(CreatePresentationSurface(surfaceData));
-  InitPhysicalDevice(&*_presentationSurface);
+  auto surface = CreatePresentationSurface(surfaceData);
+  auto surfaceVk = static_cast<PresentationSurfaceVk*>(surface.get());
+  InitPhysicalDevice(surfaceVk);
   _device = std::make_unique<DeviceVk>(&*_physicalDevice);
-  _presentationSurface->InitForDevice(&*_device);
+  _renderQueue = std::make_unique<RenderQueueVk>(*_device);
+  _renderQueue->SetPresentationSurface(surface);
+  surfaceVk->InitForDevice(&*_device);
 }
 
 std::shared_ptr<PresentationSurface> GraphicsVk::CreatePresentationSurface(PresentationSurfaceCreateData &createData)
@@ -34,11 +37,6 @@ std::shared_ptr<PresentationSurface> GraphicsVk::CreatePresentationSurface(Prese
   if (_device)
     surface->InitForDevice(&*_device);
   return surface;
-}
-
-std::shared_ptr<PresentationSurface> GraphicsVk::GetDefaultPresentationSurface()
-{
-  return _presentationSurface;
 }
 
 std::shared_ptr<Buffer> GraphicsVk::CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size)
@@ -65,30 +63,6 @@ std::shared_ptr<Shader> GraphicsVk::LoadShader(std::string const &name)
 {
   auto shader = std::make_shared<ShaderVk>(*_device, name);
   return shader;
-}
-
-void GraphicsVk::AddModelInstance(std::shared_ptr<ModelInstance>& modelInst)
-{
-  _instancesToRender.push_back(modelInst);
-}
-
-void GraphicsVk::Render()
-{
-  for (std::shared_ptr<ModelInstance> &inst : _instancesToRender) {
-    _device->RenderInstance(inst);
-  }
-
-  ProcessResourceUpdates();
-}
-
-void GraphicsVk::AddResourceUpdate(std::shared_ptr<ResourceUpdate> &update)
-{
-  _resourceUpdates.push_back(update);
-}
-
-void GraphicsVk::ProcessResourceUpdates()
-{
-
 }
 
 void GraphicsVk::InitInstance()

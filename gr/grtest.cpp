@@ -82,7 +82,7 @@ int main()
 #endif
 
   graphics->Init(surfaceData);
-  graphics->GetDefaultPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
+  graphics->GetRenderQueue()->GetPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
 
   auto shader = graphics->LoadShader("simple");
 

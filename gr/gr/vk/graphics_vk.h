@@ -2,6 +2,7 @@
 
 #include "../graphics.h"
 #include "vk.h"
+#include "render_queue_vk.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -19,7 +20,6 @@ public:
   void Init(PresentationSurfaceCreateData &surfaceData) override;
 
   std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
-  std::shared_ptr<PresentationSurface> GetDefaultPresentationSurface() override;
   
   std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
   std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) override;
@@ -27,12 +27,7 @@ public:
 
   std::shared_ptr<Shader> LoadShader(std::string const &name) override;
 
-  void AddModelInstance(std::shared_ptr<ModelInstance> &modelInst) override;
-  
-  void Render() override;
-
-  void AddResourceUpdate(std::shared_ptr<ResourceUpdate> &update);
-  void ProcessResourceUpdates();
+  RenderQueue *GetRenderQueue() override { return _renderQueue.get(); }
 
   void InitInstance();
   void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
@@ -71,10 +66,7 @@ public:
 
   std::unique_ptr<DeviceVk> _device;
 
-  std::shared_ptr<PresentationSurfaceVk> _presentationSurface;
-
-  std::vector<std::shared_ptr<ModelInstance>> _instancesToRender;
-  std::vector<std::shared_ptr<ResourceUpdate>> _resourceUpdates;
+  std::unique_ptr<RenderQueueVk> _renderQueue;
 };
 
 NAMESPACE_END(gr)

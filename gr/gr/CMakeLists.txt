@@ -36,6 +36,9 @@ set(dir_SOURCES
 	presentation_surface.h
 	presentation_surface.cpp
 
+	render_queue.h
+	render_queue.cpp
+
 	shader.h
 	shader.cpp
 )
@@ -78,6 +81,9 @@ if(gr_implementation STREQUAL VK)
 
 		vk/queue_vk.h
 		vk/queue_vk.cpp
+
+		vk/render_queue_vk.h
+		vk/render_queue_vk.cpp
 
 		vk/shader_vk.h
 		vk/shader_vk.cpp
