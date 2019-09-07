@@ -12,6 +12,9 @@
 #ifdef LoadImage
 #undef LoadImage
 #endif
+#ifdef CreateSemaphore
+#undef CreateSemaphore
+#endif
 
 NAMESPACE_BEGIN(gr)
 

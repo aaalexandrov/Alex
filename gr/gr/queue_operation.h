@@ -16,6 +16,8 @@ public:
     Complete,
   };
 
+  virtual void Prepare() = 0;
+
   virtual int GetInputResourcesCount() const { return 0; }
   virtual std::shared_ptr<GraphicsResource> &GetInputResource(int index) const { throw GraphicsException("Queue operation input resource index out of range", -1); }
 

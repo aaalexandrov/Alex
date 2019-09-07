@@ -11,12 +11,10 @@ class ImageUpdateVk : public QueueOperationVk {
 public:
   ImageUpdateVk(ImageVk &updatedImage, ImageVk &sourceImage);
 
-  void RecordCommands(ImageVk &sourceImage);
+  void Prepare() override;
 
   std::shared_ptr<ImageVk> _image;
   std::shared_ptr<ImageVk> _stagingImage;
-  vk::UniqueCommandBuffer _transferCmds;
-  std::shared_ptr<vk::UniqueSemaphore> _signalAfterUpdate;
 };
 
 NAMESPACE_END(gr)

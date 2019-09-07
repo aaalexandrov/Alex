@@ -94,9 +94,9 @@ void DeviceVk::InitQueues()
   getQueue(_sparseOpQueue, _physicalDevice->_sparseOpQueueFamily);
 }
 
-std::shared_ptr<vk::UniqueSemaphore> &&DeviceVk::CreateSemaphore()
+vk::UniqueSemaphore DeviceVk::CreateSemaphore()
 {
-  return std::move(std::shared_ptr<vk::UniqueSemaphore>(new vk::UniqueSemaphore(_device->createSemaphoreUnique(vk::SemaphoreCreateInfo(), AllocationCallbacks()))));
+  return _device->createSemaphoreUnique(vk::SemaphoreCreateInfo(), AllocationCallbacks());
 }
 
 void DeviceVk::RenderInstance(std::shared_ptr<ModelInstance> &modelInst)

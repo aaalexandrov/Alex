@@ -4,6 +4,7 @@
 #define NOMINMAX
 #include <Windows.h>
 #undef CreateWindow
+#undef CreateSemaphore
 #undef LoadImage
 
 #include "../platform.h"

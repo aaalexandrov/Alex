@@ -20,7 +20,10 @@ public:
 
   void ProcessOperations();
 
+  virtual void PreProcessOperations() {}
   virtual void ExecuteOperation(QueueOperation *operation, std::vector<QueueOperation*> const &dependsOn) = 0;
+  virtual void PostProcessOperations() {}
+
 
   std::shared_ptr<PresentationSurface> _presentationSurface;
 

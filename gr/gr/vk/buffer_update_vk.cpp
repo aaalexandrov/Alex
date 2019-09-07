@@ -7,30 +7,36 @@
 NAMESPACE_BEGIN(gr)
 
 BufferUpdateVk::BufferUpdateVk(BufferVk &updatedBuffer, void *data, size_t size, ptrdiff_t offset)
-  : _buffer(util::SharedFromThis<BufferVk>(&updatedBuffer))
-  , _signalAfterUpdate{ updatedBuffer._device->CreateSemaphore() }
+  : _buffer{ util::SharedFromThis<BufferVk>(&updatedBuffer) }
+  , _offset{ offset }
 {
-  GraphicsVk *graphics = updatedBuffer._device->GetGraphics();
-  _stagingBuffer = std::static_pointer_cast<BufferVk>(graphics->CreateBuffer(Buffer::Usage::Staging, graphics->GetRawBufferDesc(), size));
+  CreateStagingBuffer(data, size);
+}
+
+void BufferUpdateVk::CreateStagingBuffer(void *data, size_t size)
+{
+  GraphicsVk *graphics = _buffer->_device->GetGraphics();
+  _stagingBuffer = graphics->CreateBufferTyped<BufferVk>(Buffer::Usage::Staging, graphics->GetRawBufferDesc(), size);
   void *staging = _stagingBuffer->Map();
   memcpy(staging, data, size);
   _stagingBuffer->Unmap();
-
-  RecordCommands(size, offset);
 }
 
-void BufferUpdateVk::RecordCommands(size_t size, ptrdiff_t offset)
+void BufferUpdateVk::Prepare()
 {
-  BufferVk &buffer = *_buffer;
-  _transferCmds = buffer._device->_transferQueue.AllocateCmdBuffer();
+  DeviceVk *device = _buffer->_device;
+  _queue = &device->_transferQueue;
+  _semaphoreDone = device->CreateSemaphore();
+
+  _commands = _queue->AllocateCmdBuffer();
 
   vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit, nullptr);
-  _transferCmds->begin(beginInfo);
+  _commands->begin(beginInfo);
 
-  std::array<vk::BufferCopy, 1> bufferCopy { { { 0, static_cast<vk::DeviceSize>(offset), size } } };
-  _transferCmds->copyBuffer(*_stagingBuffer->_buffer, *buffer._buffer, bufferCopy);
+  std::array<vk::BufferCopy, 1> bufferCopy { { { 0, static_cast<vk::DeviceSize>(_offset), _stagingBuffer->GetSize() } } };
+  _commands->copyBuffer(*_stagingBuffer->_buffer, *_buffer->_buffer, bufferCopy);
 
-  _transferCmds->end();
+  _commands->end();
 }
 
 NAMESPACE_END(gr)

@@ -16,7 +16,9 @@ public:
 
   PresentationSurfaceVk *GetPresentationSurfaceVk();
 
+  void PreProcessOperations() override;
   void ExecuteOperation(QueueOperation *operation, std::vector<QueueOperation*> const &dependsOn) override;
+  void PostProcessOperations() override;
 
   DeviceVk *_device;
 };

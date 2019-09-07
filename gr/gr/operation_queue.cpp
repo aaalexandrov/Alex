@@ -16,10 +16,10 @@ void OperationQueue::ClearOperations()
 
 void OperationQueue::ProcessOperations()
 {
+  PreProcessOperations();
+
   std::unordered_map<GraphicsResource*, QueueOperation*> activeUpdates;
-
   std::vector<QueueOperation*> waitForOperations;
-
   for (auto &opPtr : _operations) {
     QueueOperation *operation = opPtr.get();
 
@@ -35,6 +35,7 @@ void OperationQueue::ProcessOperations()
       activeUpdates.erase(updateIt);
     }
 
+    operation->Prepare();
     ExecuteOperation(operation, waitForOperations);
     operation->_status = QueueOperation::Status::Executing;
 
@@ -44,6 +45,8 @@ void OperationQueue::ProcessOperations()
       activeUpdates.insert({ outputResource, operation });
     }
   }
+
+  PostProcessOperations();
 }
 
 NAMESPACE_END(gr)

@@ -14,9 +14,17 @@ PresentationSurfaceVk *OperationQueueVk::GetPresentationSurfaceVk()
   return static_cast<PresentationSurfaceVk*>(_presentationSurface.get()); 
 }
 
+void OperationQueueVk::PreProcessOperations()
+{
+}
+
 void OperationQueueVk::ExecuteOperation(QueueOperation *operation, std::vector<QueueOperation*> const &dependsOn)
 {
 
+}
+
+void OperationQueueVk::PostProcessOperations()
+{
 }
 
 NAMESPACE_END(gr)

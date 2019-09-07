@@ -19,7 +19,7 @@ public:
   void InitQueueFamilies(std::vector<vk::DeviceQueueCreateInfo> &queuesInfo, std::vector<float> &queuesPriorities);
   void InitQueues();
 
-  std::shared_ptr<vk::UniqueSemaphore> &&CreateSemaphore();
+  vk::UniqueSemaphore CreateSemaphore();
 
   void RenderInstance(std::shared_ptr<ModelInstance> &modelInst);
 
