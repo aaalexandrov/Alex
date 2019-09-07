@@ -1,6 +1,7 @@
 #pragma once
 
 #include <malloc.h>
+#include <functional>
 #include "namespace.h"
 
 NAMESPACE_BEGIN(util)
@@ -40,6 +41,27 @@ template <>
 struct SizeAlign<void> {
   static constexpr size_t SizeOf() { return 0; }
   static constexpr size_t AlignOf() { return 1; }
+};
+
+template <typename Resource>
+struct AutoFree {
+  using FreeFunc = std::function<void(Resource)>;
+
+  Resource _data;
+  FreeFunc _free;
+
+  AutoFree(Resource data, FreeFunc free) : _data { data }, _free { free } {}
+  ~AutoFree() { Free(); }
+
+  void Free() 
+  {
+    if (_free) {
+      _free(_data);
+      _free = nullptr;
+    }
+  }
+
+  Resource Get() const { return _data; }
 };
 
 template <typename TRAITS>

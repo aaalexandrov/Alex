@@ -2,18 +2,17 @@
 
 #include "../graphics.h"
 #include "vk.h"
-#include "render_queue_vk.h"
 
 NAMESPACE_BEGIN(gr)
 
 class PhysicalDeviceVk;
 struct HostAllocationTrackerVk;
 class PresentationSurfaceVk;
+class OperationQueueVk;
 class DeviceVk;
 
 class GraphicsVk : public Graphics {
 public:
-
   GraphicsVk();
   ~GraphicsVk() override;
 
@@ -27,7 +26,7 @@ public:
 
   std::shared_ptr<Shader> LoadShader(std::string const &name) override;
 
-  RenderQueue *GetRenderQueue() override { return _renderQueue.get(); }
+  OperationQueue *GetOperationQueue() override;
 
   void InitInstance();
   void InitPhysicalDevice(PresentationSurfaceVk *initialSurface);
@@ -66,7 +65,7 @@ public:
 
   std::unique_ptr<DeviceVk> _device;
 
-  std::unique_ptr<RenderQueueVk> _renderQueue;
+  std::unique_ptr<OperationQueueVk> _operationQueue;
 };
 
 NAMESPACE_END(gr)

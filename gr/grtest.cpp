@@ -6,6 +6,7 @@
 #include "util/time.h"
 #include "platform/platform.h"
 #include "gr/graphics.h"
+#include "gr/operation_queue.h"
 #include "gr/shader.h"
 
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -82,7 +83,7 @@ int main()
 #endif
 
   graphics->Init(surfaceData);
-  graphics->GetRenderQueue()->GetPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
+  graphics->GetOperationQueue()->GetPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
 
   auto shader = graphics->LoadShader("simple");
 

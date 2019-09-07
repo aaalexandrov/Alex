@@ -6,9 +6,11 @@ set_target_properties(glm_shared glm_static PROPERTIES
 )
 
 add_subdirectory(vma)
+add_subdirectory(stb)
 
 set(SHADERC_SKIP_INSTALL ON)
 set(SHADERC_SKIP_TESTS ON)
+set(CMAKE_BUILD_TYPE Release)
 
 add_subdirectory(shaderc)
 

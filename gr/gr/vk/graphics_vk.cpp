@@ -2,6 +2,7 @@
 #include "physical_device_vk.h"
 #include "host_allocation_tracker_vk.h"
 #include "presentation_surface_vk.h"
+#include "operation_queue_vk.h"
 #include "device_vk.h"
 #include "shader_vk.h"
 #include "image_vk.h"
@@ -26,8 +27,8 @@ void GraphicsVk::Init(PresentationSurfaceCreateData &surfaceData)
   auto surfaceVk = static_cast<PresentationSurfaceVk*>(surface.get());
   InitPhysicalDevice(surfaceVk);
   _device = std::make_unique<DeviceVk>(&*_physicalDevice);
-  _renderQueue = std::make_unique<RenderQueueVk>(*_device);
-  _renderQueue->SetPresentationSurface(surface);
+  _operationQueue = std::make_unique<OperationQueueVk>(*_device);
+  _operationQueue->SetPresentationSurface(surface);
   surfaceVk->InitForDevice(&*_device);
 }
 
@@ -63,6 +64,11 @@ std::shared_ptr<Shader> GraphicsVk::LoadShader(std::string const &name)
 {
   auto shader = std::make_shared<ShaderVk>(*_device, name);
   return shader;
+}
+
+OperationQueue * GraphicsVk::GetOperationQueue()
+{
+  return _operationQueue.get();
 }
 
 void GraphicsVk::InitInstance()

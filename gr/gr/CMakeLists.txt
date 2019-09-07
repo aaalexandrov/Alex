@@ -33,11 +33,14 @@ set(dir_SOURCES
 	model_instance.h
 	model_instance.cpp
 
+	operation_queue.h
+	operation_queue.cpp
+
 	presentation_surface.h
 	presentation_surface.cpp
 
-	render_queue.h
-	render_queue.cpp
+	queue_operation.h
+	queue_operation.cpp
 
 	shader.h
 	shader.cpp
@@ -67,23 +70,29 @@ if(gr_implementation STREQUAL VK)
 		vk/host_allocation_tracker_vk.h
 		vk/host_allocation_tracker_vk.cpp
 
+		vk/image_update_vk.h
+		vk/image_update_vk.cpp
+
 		vk/image_vk.h
 		vk/image_vk.cpp
 
 		vk/material_vk.h
 		vk/material_vk.cpp
 
-		vk/presentation_surface_vk.h
-		vk/presentation_surface_vk.cpp
+		vk/operation_queue_vk.h
+		vk/operation_queue_vk.cpp
 
 		vk/physical_device_vk.h
 		vk/physical_device_vk.cpp
 
+		vk/presentation_surface_vk.h
+		vk/presentation_surface_vk.cpp
+
+		vk/queue_operation_vk.h
+		vk/queue_operation_vk.cpp
+
 		vk/queue_vk.h
 		vk/queue_vk.cpp
-
-		vk/render_queue_vk.h
-		vk/render_queue_vk.cpp
 
 		vk/shader_vk.h
 		vk/shader_vk.cpp
@@ -96,6 +105,7 @@ if(gr_implementation STREQUAL VK)
 
 	set(third_party_LIBS
 		vma
+		stb
 		shaderc_shared
 		spirv-cross-glsl
 		spirv-cross-reflect

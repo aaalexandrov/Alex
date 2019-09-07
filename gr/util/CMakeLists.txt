@@ -31,6 +31,9 @@ set(dir_SOURCES
 
 	type_layout.h
 	type_layout.cpp
+	
+	utl.h
+	utl.cpp
 )
 
 target_sources(${BINARY} PRIVATE ${dir_SOURCES} CMakeLists.txt)

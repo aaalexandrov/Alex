@@ -6,7 +6,6 @@
 #include "graphics_exception.h"
 #include "image.h"
 #include "buffer.h"
-#include "render_queue.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -20,6 +19,7 @@ class Shader;
 class Material;
 class Model;
 class ModelInstance;
+class OperationQueue;
 
 class Graphics {
 public:
@@ -42,11 +42,12 @@ public:
   virtual std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) = 0;
 
   virtual std::shared_ptr<Shader> LoadShader(std::string const &name) = 0;
+  std::shared_ptr<Image> LoadImage(std::string const &name);
 
   virtual void SetLoadPath(std::string loadPath);
   virtual std::string GetResourcePath(std::string name);
 
-  virtual RenderQueue *GetRenderQueue() = 0;
+  virtual OperationQueue *GetOperationQueue() = 0;
 
   BufferDescPtr &GetRawBufferDesc()      { return _rawDescU8; }
   BufferDescPtr &GetIndexBufferDescU16() { return _indexDescU16; }

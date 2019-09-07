@@ -1,4 +1,6 @@
 #include "graphics.h"
+#include "stb/stb_image.h"
+#include "util/mem.h"
 
 #ifdef GR_VK
 #include "vk/graphics_vk.h"
@@ -25,6 +27,19 @@ Graphics::Graphics()
 
 Graphics::~Graphics()
 {
+}
+
+std::shared_ptr<Image> Graphics::LoadImage(std::string const &name)
+{
+  std::string path = GetResourcePath(name);
+  int width, height, channels;
+
+  util::AutoFree<stbi_uc*> imgData { stbi_load(path.c_str(), &width, &height, &channels, 4), stbi_image_free };
+
+  auto img = CreateImage(Image::Usage::Staging, ColorFormat::R8G8B8A8, glm::uvec3(width, height, 0), 1, 0);
+
+
+  return std::shared_ptr<Image>();
 }
 
 void Graphics::SetLoadPath(std::string loadPath)
