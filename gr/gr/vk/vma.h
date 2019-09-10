@@ -15,6 +15,9 @@
 #ifdef CreateSemaphore
 #undef CreateSemaphore
 #endif
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
 
 NAMESPACE_BEGIN(gr)
 

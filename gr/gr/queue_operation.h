@@ -10,21 +10,8 @@ class OperationQueue;
 
 class QueueOperation : public std::enable_shared_from_this<QueueOperation> {
 public:
-  enum class Status {
-    Outstanding,
-    Executing,
-    Complete,
-  };
-
-  virtual void Prepare() = 0;
-
-  virtual int GetInputResourcesCount() const { return 0; }
-  virtual std::shared_ptr<GraphicsResource> &GetInputResource(int index) const { throw GraphicsException("Queue operation input resource index out of range", -1); }
-
-  virtual int GetOutputResourcesCount() const { return 0; }
-  virtual std::shared_ptr<GraphicsResource> &GetOutputResource(int index) const { throw GraphicsException("Queue operation output resource index out of range", -1); }
-
-  Status _status = Status::Outstanding;
+  virtual void Prepare(OperationQueue *operationQueue) = 0;
+  virtual void Execute(OperationQueue *operationQueue) = 0;
 };
 
 NAMESPACE_END(gr)

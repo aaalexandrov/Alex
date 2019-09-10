@@ -82,6 +82,9 @@ if(gr_implementation STREQUAL VK)
 		vk/operation_queue_vk.h
 		vk/operation_queue_vk.cpp
 
+		vk/owned_by_queue_vk.h
+		vk/owned_by_queue_vk.cpp
+
 		vk/physical_device_vk.h
 		vk/physical_device_vk.cpp
 

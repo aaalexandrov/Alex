@@ -41,7 +41,6 @@ public:
   QueueVk _sparseOpQueue;
 
   std::recursive_mutex _mutex;
-
 };
 
 NAMESPACE_END(gr)

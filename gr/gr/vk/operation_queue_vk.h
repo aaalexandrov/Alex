@@ -2,6 +2,7 @@
 
 #include "../operation_queue.h"
 #include "graphics_vk.h"
+#include "device_vk.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -16,11 +17,13 @@ public:
 
   PresentationSurfaceVk *GetPresentationSurfaceVk();
 
+  void ClearOperations() override;
+
   void PreProcessOperations() override;
-  void ExecuteOperation(QueueOperation *operation, std::vector<QueueOperation*> const &dependsOn) override;
   void PostProcessOperations() override;
 
   DeviceVk *_device;
+  std::map<QueueVk*, vk::UniqueFence> _queueFences;
 };
 
 NAMESPACE_END(gr)

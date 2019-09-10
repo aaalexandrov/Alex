@@ -16,12 +16,11 @@ public:
   void SetPresentationSurface(std::shared_ptr<PresentationSurface> &presentationSurface) { _presentationSurface = presentationSurface; }
 
   void AddOperation(std::unique_ptr<QueueOperation> operation);
-  void ClearOperations();
+  virtual void ClearOperations();
 
   void ProcessOperations();
 
   virtual void PreProcessOperations() {}
-  virtual void ExecuteOperation(QueueOperation *operation, std::vector<QueueOperation*> const &dependsOn) = 0;
   virtual void PostProcessOperations() {}
 
 

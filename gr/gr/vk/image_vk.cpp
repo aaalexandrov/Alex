@@ -80,10 +80,53 @@ void ImageVk::CreateView()
     .setImage(_image)
     .setFormat(_format)
     .setViewType(GetImageViewType())
-    .setComponents({vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity })
+    .setComponents({ vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity })
     .setSubresourceRange(range);
 
   _view = _device->_device->createImageViewUnique(viewInfo, _device->AllocationCallbacks());
+}
+
+void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *srcQueue, vk::CommandBuffer dstCommands, QueueVk *dstQueue, vk::PipelineStageFlags &dstStageFlags)
+{
+  std::array<vk::ImageMemoryBarrier, 1> srcImgBarrier;
+  srcImgBarrier[0]
+    .setSrcAccessMask(GetImageAccess() & srcQueue->GetAccessFlags())
+    .setOldLayout(GetEffectiveImageLayout(srcQueue))
+    .setNewLayout(GetEffectiveImageLayout(dstQueue))
+    .setSrcQueueFamilyIndex(srcQueue->_family)
+    .setDstQueueFamilyIndex(dstQueue->_family)
+    .setImage(_image)
+    .setSubresourceRange(vk::ImageSubresourceRange()
+      .setAspectMask(GetImageAspect())
+      .setBaseArrayLayer(0)
+      .setLayerCount(_arrayLayers)
+      .setBaseMipLevel(0)
+      .setLevelCount(_mipLevels));
+  ASSERT(srcImgBarrier[0].srcAccessMask);
+  auto srcStageFlags = GetImagePipelineStages() & srcQueue->GetPipelineStageFlags();
+  ASSERT(srcStageFlags);
+  srcCommands.pipelineBarrier(srcStageFlags, vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlags(), nullptr, nullptr, srcImgBarrier);
+
+  std::array<vk::ImageMemoryBarrier, 1> dstImgBarrier;
+  dstImgBarrier[0]
+    .setDstAccessMask(GetImageAccess() & dstQueue->GetAccessFlags())
+    .setOldLayout(srcImgBarrier[0].newLayout)
+    .setNewLayout(srcImgBarrier[0].newLayout)
+    .setSrcQueueFamilyIndex(srcQueue->_family)
+    .setDstQueueFamilyIndex(dstQueue->_family)
+    .setImage(_image)
+    .setSubresourceRange(srcImgBarrier[0].subresourceRange);
+  ASSERT(dstImgBarrier[0].dstAccessMask);
+  dstStageFlags = GetImagePipelineStages() & dstQueue->GetPipelineStageFlags();
+  ASSERT(dstStageFlags);
+  dstCommands.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, dstStageFlags, vk::DependencyFlags(), nullptr, nullptr, dstImgBarrier);
+}
+
+vk::ImageLayout ImageVk::GetEffectiveImageLayout(QueueVk *queue) const
+{
+  if (_usage != Usage::Staging && queue->_role == QueueVk::Role::Transfer)
+    return vk::ImageLayout::eTransferDstOptimal;
+  return _layout;
 }
 
 vk::ImageViewType ImageVk::GetImageViewType()
@@ -143,6 +186,44 @@ vk::ImageAspectFlags ImageVk::GetImageAspect(vk::Format format)
     default:
       return vk::ImageAspectFlagBits::eColor;
   }
+}
+
+vk::AccessFlags ImageVk::GetImageAccess(Usage usage)
+{
+  vk::AccessFlags flags;
+  switch (usage) {
+    case Usage::DepthBuffer:
+      flags = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+      break;
+    case Usage::Staging:
+      flags = vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead | vk::AccessFlagBits::eHostWrite;
+      break;
+    case Usage::Texture:
+      flags = vk::AccessFlagBits::eTransferWrite | vk::AccessFlagBits::eShaderRead;
+      break;
+    default:
+      throw GraphicsException("ImageVk::GetImageAccess(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
+  }
+  return flags;
+}
+
+vk::PipelineStageFlags ImageVk::GetImagePipelineStages(Usage usage)
+{
+  vk::PipelineStageFlags flags;
+  switch (usage) {
+    case Usage::DepthBuffer:
+      flags = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+      break;
+    case Usage::Staging:
+      flags = vk::PipelineStageFlagBits::eTransfer;
+      break;
+    case Usage::Texture:
+      flags = vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eVertexShader | vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eComputeShader;
+      break;
+    default:
+      throw GraphicsException("ImageVk::GetImagePipelineStages(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
+  }
+  return flags;
 }
 
 NAMESPACE_END(gr)

@@ -78,20 +78,19 @@ void DeviceVk::InitQueueFamilies(std::vector<vk::DeviceQueueCreateInfo>& queuesI
 void DeviceVk::InitQueues()
 {
   std::unordered_map<int32_t, int32_t> usedQueues;
-
-  auto getQueue = [&](QueueVk &queue, int32_t queueFamily)->void {
+  auto getQueue = [&](QueueVk &queue, int32_t queueFamily, QueueVk::Role role)->void {
     if (queueFamily < 0)
       return;
 
     auto count = usedQueues[queueFamily]++;
-    queue.Init(*this, queueFamily, count);
+    queue.Init(*this, queueFamily, count, role);
   };
 
-  getQueue(_graphicsQueue, _physicalDevice->_graphicsQueueFamily);
-  getQueue(_presentQueue, _physicalDevice->_presentQueueFamily);
-  getQueue(_transferQueue, _physicalDevice->_transferQueueFamily);
-  getQueue(_computeQueue, _physicalDevice->_computeQueueFamily);
-  getQueue(_sparseOpQueue, _physicalDevice->_sparseOpQueueFamily);
+  getQueue(_graphicsQueue, _physicalDevice->_graphicsQueueFamily, QueueVk::Role::Graphics);
+  getQueue(_presentQueue, _physicalDevice->_presentQueueFamily, QueueVk::Role::Present);
+  getQueue(_transferQueue, _physicalDevice->_transferQueueFamily, QueueVk::Role::Transfer);
+  getQueue(_computeQueue, _physicalDevice->_computeQueueFamily, QueueVk::Role::Compute);
+  getQueue(_sparseOpQueue, _physicalDevice->_sparseOpQueueFamily, QueueVk::Role::SparseOp);
 }
 
 vk::UniqueSemaphore DeviceVk::CreateSemaphore()

@@ -1,5 +1,4 @@
 #include "buffer_update_vk.h"
-#include "buffer_vk.h"
 #include "device_vk.h"
 #include "graphics_vk.h"
 #include "util/utl.h"
@@ -22,21 +21,34 @@ void BufferUpdateVk::CreateStagingBuffer(void *data, size_t size)
   _stagingBuffer->Unmap();
 }
 
-void BufferUpdateVk::Prepare()
+void BufferUpdateVk::Prepare(OperationQueue *operationQueue)
 {
   DeviceVk *device = _buffer->_device;
-  _queue = &device->_transferQueue;
-  _semaphoreDone = device->CreateSemaphore();
 
-  _commands = _queue->AllocateCmdBuffer();
+  _transitionToTransfer = std::move(_buffer->GetQueueTransitionTo(&device->_transferQueue));
 
-  vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit, nullptr);
-  _commands->begin(beginInfo);
+  _transferCmds = device->_transferQueue.AllocateCmdBuffer();
+
+  vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  _transferCmds->begin(beginInfo);
 
   std::array<vk::BufferCopy, 1> bufferCopy { { { 0, static_cast<vk::DeviceSize>(_offset), _stagingBuffer->GetSize() } } };
-  _commands->copyBuffer(*_stagingBuffer->_buffer, *_buffer->_buffer, bufferCopy);
+  _transferCmds->copyBuffer(*_stagingBuffer->_buffer, *_buffer->_buffer, bufferCopy);
+}
 
-  _commands->end();
+void BufferUpdateVk::Execute(OperationQueue *operationQueue)
+{
+  if (_transitionToTransfer)
+    _transitionToTransfer->ExecuteQueueTransition(operationQueue);
+  
+  DeviceVk *device = _buffer->_device;
+
+  std::array<vk::SubmitInfo, 1> transferSubmit;
+  transferSubmit[0]
+    .setCommandBufferCount(1)
+    .setPCommandBuffers(&_transferCmds.get());
+
+  device->_transferQueue._queue.submit(transferSubmit, nullptr);
 }
 
 NAMESPACE_END(gr)
