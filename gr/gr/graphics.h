@@ -38,13 +38,13 @@ public:
   virtual std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) = 0;
 
   virtual std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) = 0;
-  virtual std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) = 0;
+  virtual std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::uvec3 size, uint32_t mipLevels, uint32_t arrayLayers) = 0;
   virtual std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) = 0;
 
   template <typename BufferType>
   std::shared_ptr<BufferType> CreateBufferTyped(Buffer::Usage usage, BufferDescPtr &description, size_t size) { return std::static_pointer_cast<BufferType>(CreateBuffer(usage, description, size)); }
   template <typename ImageType>
-  std::shared_ptr<ImageType> CreateImageTyped(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers) { return std::static_pointer_cast<ImageType>(CreateImage(usage, format, size, mipLevels, arrayLayers)); }
+  std::shared_ptr<ImageType> CreateImageTyped(Image::Usage usage, ColorFormat format, glm::uvec3 size, uint32_t mipLevels, uint32_t arrayLayers) { return std::static_pointer_cast<ImageType>(CreateImage(usage, format, size, mipLevels, arrayLayers)); }
 
   virtual std::shared_ptr<Shader> LoadShader(std::string const &name) = 0;
   std::shared_ptr<Image> LoadImage(std::string const &name);

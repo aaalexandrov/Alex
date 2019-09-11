@@ -53,7 +53,7 @@ void QueueVk::CmdCopyImage(vk::CommandBuffer cmds, ImageVk *src, ImageVk *dst)
 {
   uint32_t layers = std::min(src->_arrayLayers, dst->_arrayLayers);
   uint32_t mipLevels = std::min(src->_mipLevels, dst->_mipLevels);
-  glm::uvec3 extent { std::min(src->_size.width, dst->_size.width), std::min(src->_size.height, dst->_size.height), std::min(src->_size.depth, dst->_size.depth) };
+  glm::uvec3 extent { std::min(src->_size.x, dst->_size.x), std::min(src->_size.y, dst->_size.y), std::min(src->_size.z, dst->_size.z) };
   std::vector<vk::ImageCopy> regions;
 
   vk::ImageAspectFlags srcAspect = src->GetImageAspect();

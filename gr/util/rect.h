@@ -54,9 +54,10 @@ public:
 };
 
 
-typedef Box<int32_t, 2> RectI;
-typedef Box<float, 2>   RectF;
+typedef Box<int32_t, 2>  RectI;
+typedef Box<float, 2>    RectF;
 
-typedef Box<float, 3>   BoxF;
+typedef Box<uint32_t, 3> BoxU;
+typedef Box<float, 3>    BoxF;
 
 NAMESPACE_END(util)

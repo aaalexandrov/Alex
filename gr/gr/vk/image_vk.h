@@ -17,12 +17,12 @@ public:
 
   util::TypeInfo *GetType() override;
 
-  ColorFormat GetColorFormat() override { return Vk2ColorFormat(_format); }
-  Usage GetUsage() override { return _usage; }
-  glm::u32vec3 GetSize() override { return glm::u32vec3(_size.width, _size.height, _size.depth); }
+  void UpdateContents(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer) override;
 
   void *Map() override;
   void Unmap() override;
+
+  void CopyContentsDirect(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer);
 
   void CreateView();
 
@@ -30,30 +30,27 @@ public:
 
   vk::ImageLayout GetEffectiveImageLayout(QueueVk *queue) const;
 
+  vk::Format GetVkFormat() const { return ColorFormat2Vk(_format); }
+
   static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return _vkFormat2ColorFormat.ToDst(vkFmt); }
-  static vk::Format ColorFormat2vk(ColorFormat clrFmt) { return _vkFormat2ColorFormat.ToSrc(clrFmt); }
+  static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return _vkFormat2ColorFormat.ToSrc(clrFmt); }
 
   vk::ImageViewType GetImageViewType();
-  static vk::ImageType GetImageType(vk::Extent3D const &size);
+  static vk::ImageType GetImageType(glm::uvec3 const &size);
   static vk::ImageUsageFlags GetImageUsage(Usage usage);
-  vk::ImageAspectFlags GetImageAspect() const { return GetImageAspect(_format); }
+  vk::ImageAspectFlags GetImageAspect() const { return GetImageAspect(GetVkFormat()); }
   static vk::ImageAspectFlags GetImageAspect(vk::Format format);
   vk::AccessFlags GetImageAccess() const { return GetImageAccess(_usage); }
   static vk::AccessFlags GetImageAccess(Usage usage);
   vk::PipelineStageFlags GetImagePipelineStages() const { return GetImagePipelineStages(_usage); }
   static vk::PipelineStageFlags GetImagePipelineStages(Usage usage);
 
-  Usage _usage;
   DeviceVk *_device;
   vk::Image _image;
   vk::UniqueImage _ownImage;
   vk::UniqueImageView _view;
   UniqueVmaAllocation _memory;
   vk::ImageLayout _layout;
-  vk::Format _format;
-  vk::Extent3D _size;
-  uint32_t _mipLevels;
-  uint32_t _arrayLayers;
 
   static util::ValueRemapper<vk::Format, ColorFormat> _vkFormat2ColorFormat;
 };

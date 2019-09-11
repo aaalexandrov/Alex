@@ -36,10 +36,11 @@ std::shared_ptr<Image> Graphics::LoadImage(std::string const &name)
 
   util::AutoFree<stbi_uc*> imgData { stbi_load(path.c_str(), &width, &height, &channels, 4), stbi_image_free };
 
-  auto img = CreateImage(Image::Usage::Staging, ColorFormat::R8G8B8A8, glm::uvec3(width, height, 0), 1, 0);
+  auto img = CreateImage(Image::Usage::Texture, ColorFormat::R8G8B8A8, glm::uvec3(width, height, 0), 1, 0);
+  util::BoxU box { glm::zero<glm::uvec3>(), img->GetSize() };
+  img->UpdateContents(imgData.Get(), box, 0, 0);
 
-
-  return std::shared_ptr<Image>();
+  return img;
 }
 
 void Graphics::SetLoadPath(std::string loadPath)

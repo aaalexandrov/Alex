@@ -46,10 +46,10 @@ std::shared_ptr<Buffer> GraphicsVk::CreateBuffer(Buffer::Usage usage, BufferDesc
   return buffer;
 }
 
-std::shared_ptr<Image> GraphicsVk::CreateImage(Image::Usage usage, ColorFormat format, glm::u32vec3 size, uint32_t mipLevels, uint32_t arrayLayers)
+std::shared_ptr<Image> GraphicsVk::CreateImage(Image::Usage usage, ColorFormat format, glm::uvec3 size, uint32_t mipLevels, uint32_t arrayLayers)
 {
   vk::Extent3D ext { size.x, size.y, size.z };
-  vk::Format vkFormat = ImageVk::ColorFormat2vk(format);
+  vk::Format vkFormat = ImageVk::ColorFormat2Vk(format);
   auto image = std::make_shared<ImageVk>(*_device, vkFormat, ext, mipLevels, arrayLayers, usage);
   return image;
 }

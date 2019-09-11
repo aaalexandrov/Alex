@@ -1,5 +1,6 @@
 #include "image_vk.h"
 
+#include "util/mem.h"
 #include "device_vk.h"
 #include "physical_device_vk.h"
 #include <algorithm>
@@ -13,30 +14,22 @@ util::ValueRemapper<vk::Format, ColorFormat> ImageVk::_vkFormat2ColorFormat { {
 } };
 
 ImageVk::ImageVk(DeviceVk &device, vk::Image image, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage)
-  : _device { &device }
-  , _format { format }
-  , _size { size }
-  , _mipLevels { mipLevels }
-  , _usage { usage }
+  : Image(usage, Vk2ColorFormat(format), glm::uvec3(size.width, size.height, size.depth), mipLevels, arrayLayers)
+  , _device { &device }
   , _layout { vk::ImageLayout::eUndefined }
-  , _arrayLayers { arrayLayers }
   , _image { image }
 {
   CreateView();
 }
 
 ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage)
-  : _device { &device }
-  , _format { format }
-  , _size { size }
-  , _mipLevels { mipLevels }
-  , _usage { usage }
+  : Image(usage, Vk2ColorFormat(format), glm::uvec3(size.width, size.height, size.depth), mipLevels, arrayLayers)
+  , _device { &device }
   , _layout { usage == Usage::Staging ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eUndefined }
-  , _arrayLayers { arrayLayers }
 {
   vk::ImageCreateInfo imgInfo;
   imgInfo
-    .setImageType(GetImageType(size))
+    .setImageType(GetImageType(_size))
     .setExtent({ size.width, std::max(size.height, 1u), std::max(size.depth, 1u) })
     .setFormat(format)
     .setMipLevels(std::max(mipLevels, 1u))
@@ -57,9 +50,47 @@ ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_
   CreateView();
 }
 
-util::TypeInfo * ImageVk::GetType()
+util::TypeInfo *ImageVk::GetType()
 {
   return util::TypeInfo::Get<ImageVk>();
+}
+
+void ImageVk::UpdateContents(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer)
+{
+  if (_usage == Usage::Staging) {
+    CopyContentsDirect(contents, box, mipLevel, arrayLayer);
+    return;
+  }
+
+  std::shared_ptr<ImageVk> staging = _device->GetGraphics()->CreateImageTyped<ImageVk>(Usage::Staging, GetColorFormat(), box.GetSize(), 1, 0);
+  util::BoxU stagingBox { glm::zero<glm::uvec3>(), box.GetSize() };
+  staging->CopyContentsDirect(contents, stagingBox, 0, 0);
+
+
+}
+
+void ImageVk::CopyContentsDirect(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer)
+{
+  ASSERT(_usage == Usage::Staging);
+  vk::ImageSubresource subRes { GetImageAspect(), mipLevel, 0 };
+  vk::SubresourceLayout layout = _device->_device->getImageSubresourceLayout(_image, subRes);
+
+  util::AutoFree<uint8_t*> mem { static_cast<uint8_t*>(Map()), [this](void*) { Unmap(); } };
+
+  uint32_t formatSize = GetColorFormatSize();
+
+  uint8_t *memBase = mem.Get() + layout.offset + arrayLayer * layout.arrayPitch + box._min.x * formatSize;
+
+  uint32_t rowSize = box.GetSize().x * formatSize;
+  uint8_t *src = static_cast<uint8_t*>(contents);
+
+  for (auto z = box._min.z; z <= box._max.z; ++z) {
+    for (auto y = box._min.y; y <= box._max.y; ++y) {
+      uint8_t *dst = memBase + z * layout.depthPitch + y * layout.rowPitch;
+      memcpy(dst, src, rowSize);
+      src += rowSize;
+    }
+  }
 }
 
 void *ImageVk::Map()
@@ -74,11 +105,11 @@ void ImageVk::Unmap()
 
 void ImageVk::CreateView()
 {
-  vk::ImageSubresourceRange range(GetImageAspect(_format), 0, std::max(_mipLevels, 1u), 0, std::max(_arrayLayers, 1u));
+  vk::ImageSubresourceRange range(GetImageAspect(), 0, std::max(_mipLevels, 1u), 0, std::max(_arrayLayers, 1u));
   vk::ImageViewCreateInfo viewInfo;
   viewInfo
     .setImage(_image)
-    .setFormat(_format)
+    .setFormat(GetVkFormat())
     .setViewType(GetImageViewType())
     .setComponents({ vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity, vk::ComponentSwizzle::eIdentity })
     .setSubresourceRange(range);
@@ -105,7 +136,6 @@ void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *s
   ASSERT(srcImgBarrier[0].srcAccessMask);
   auto srcStageFlags = GetImagePipelineStages() & srcQueue->GetPipelineStageFlags();
   ASSERT(srcStageFlags);
-  srcCommands.pipelineBarrier(srcStageFlags, vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlags(), nullptr, nullptr, srcImgBarrier);
 
   std::array<vk::ImageMemoryBarrier, 1> dstImgBarrier;
   dstImgBarrier[0]
@@ -119,6 +149,16 @@ void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *s
   ASSERT(dstImgBarrier[0].dstAccessMask);
   dstStageFlags = GetImagePipelineStages() & dstQueue->GetPipelineStageFlags();
   ASSERT(dstStageFlags);
+
+  // we always try to do the transition on the transfer queue, if there's one
+  // we've scheduled the layout transition to the first queue, swap that in case the second queue is transfer
+  if (dstQueue->_role == QueueVk::Role::Transfer) {
+    std::swap(srcImgBarrier[0].oldLayout, dstImgBarrier[0].oldLayout);
+    std::swap(srcImgBarrier[0].newLayout, dstImgBarrier[0].newLayout);
+  }
+
+  srcCommands.pipelineBarrier(srcStageFlags, vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlags(), nullptr, nullptr, srcImgBarrier);
+
   dstCommands.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, dstStageFlags, vk::DependencyFlags(), nullptr, nullptr, dstImgBarrier);
 }
 
@@ -131,14 +171,14 @@ vk::ImageLayout ImageVk::GetEffectiveImageLayout(QueueVk *queue) const
 
 vk::ImageViewType ImageVk::GetImageViewType()
 {
-  ASSERT(_size.width > 0);
-  if (!_size.height) {
+  ASSERT(_size.x > 0);
+  if (!_size.y) {
     if (_arrayLayers)
       return vk::ImageViewType::e1DArray;
     return vk::ImageViewType::e1D;
   } 
 
-  if (!_size.depth) {
+  if (!_size.z) {
     if (_arrayLayers)
       return vk::ImageViewType::e2DArray;
     return vk::ImageViewType::e2D;
@@ -147,12 +187,12 @@ vk::ImageViewType ImageVk::GetImageViewType()
   return vk::ImageViewType::e3D;
 }
 
-vk::ImageType ImageVk::GetImageType(vk::Extent3D const &size)
+vk::ImageType ImageVk::GetImageType(glm::uvec3 const &size)
 {
-  ASSERT(size.width > 0);
-  if (!size.height)
+  ASSERT(size.x > 0);
+  if (!size.y)
     return vk::ImageType::e1D;
-  if (!size.depth)
+  if (!size.z)
     return vk::ImageType::e2D;
   return vk::ImageType::e3D;
 }
