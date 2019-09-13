@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk.h"
+#include "util/rect.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -24,7 +25,7 @@ struct QueueVk {
   vk::UniqueCommandBuffer AllocateCmdBuffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
   static void CmdSetImageLayout(vk::CommandBuffer cmds, ImageVk *image, vk::ImageLayout layout, vk::AccessFlags priorAccess, vk::AccessFlags followingAccess);
-  static void CmdCopyImage(vk::CommandBuffer cmds, ImageVk *src, ImageVk *dst);
+  static void CmdCopyImage(vk::CommandBuffer cmds, ImageVk *dst, util::BoxWithLayer const &dstRegion, uint32_t dstMinMip, uint32_t dstMaxMip, ImageVk *src, glm::uvec4 srcPos, uint32_t srcMinMip);
 
   vk::PipelineStageFlags GetPipelineStageFlags() const { return GetPipelineStageFlags(_role); }
   static vk::PipelineStageFlags GetPipelineStageFlags(Role role);

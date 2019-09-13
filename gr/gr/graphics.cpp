@@ -34,11 +34,12 @@ std::shared_ptr<Image> Graphics::LoadImage(std::string const &name)
   std::string path = GetResourcePath(name);
   int width, height, channels;
 
-  util::AutoFree<stbi_uc*> imgData { stbi_load(path.c_str(), &width, &height, &channels, 4), stbi_image_free };
+  util::AutoFree<stbi_uc*> imgPixels { stbi_load(path.c_str(), &width, &height, &channels, 4), stbi_image_free };
 
-  auto img = CreateImage(Image::Usage::Texture, ColorFormat::R8G8B8A8, glm::uvec3(width, height, 0), 1, 0);
-  util::BoxU box { glm::zero<glm::uvec3>(), img->GetSize() };
-  img->UpdateContents(imgData.Get(), box, 0, 0);
+  auto img = CreateImage(Image::Usage::Texture, ColorFormat::R8G8B8A8, glm::uvec4(width, height, 0, 0), 1);
+  util::BoxWithLayer region { glm::zero<glm::uvec4>(), img->GetSize() - glm::one<glm::uvec4>() };
+  ImageData imgData { img->GetSize(), ImageData::GetPackedPitch(img->GetSize(), 4), imgPixels.Get() };
+  img->UpdateContents(region, 0, imgData, glm::zero<glm::uvec4>());
 
   return img;
 }

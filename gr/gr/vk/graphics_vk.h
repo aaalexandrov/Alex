@@ -21,7 +21,7 @@ public:
   std::shared_ptr<PresentationSurface> CreatePresentationSurface(PresentationSurfaceCreateData &createData) override;
   
   std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
-  std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::uvec3 size, uint32_t mipLevels, uint32_t arrayLayers) override;
+  std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
   std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) override;
 
   std::shared_ptr<Shader> LoadShader(std::string const &name) override;

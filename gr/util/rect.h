@@ -54,10 +54,12 @@ public:
 };
 
 
-typedef Box<int32_t, 2>  RectI;
-typedef Box<float, 2>    RectF;
+using RectI = Box<int32_t, 2>;
+using RectF = Box<float, 2>;
 
-typedef Box<uint32_t, 3> BoxU;
-typedef Box<float, 3>    BoxF;
+using BoxU = Box<uint32_t, 3>;
+using BoxF = Box<float, 3>;
+
+using BoxWithLayer = util::Box<uint32_t, 4>;
 
 NAMESPACE_END(util)

@@ -3,6 +3,8 @@
 #include "util/mem.h"
 #include "device_vk.h"
 #include "physical_device_vk.h"
+#include "operation_queue_vk.h"
+#include "image_update_vk.h"
 #include <algorithm>
 
 NAMESPACE_BEGIN(gr)
@@ -13,8 +15,8 @@ util::ValueRemapper<vk::Format, ColorFormat> ImageVk::_vkFormat2ColorFormat { {
   { vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
 } };
 
-ImageVk::ImageVk(DeviceVk &device, vk::Image image, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage)
-  : Image(usage, Vk2ColorFormat(format), glm::uvec3(size.width, size.height, size.depth), mipLevels, arrayLayers)
+ImageVk::ImageVk(DeviceVk &device, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels, Usage usage)
+  : Image(usage, Vk2ColorFormat(format), size, mipLevels)
   , _device { &device }
   , _layout { vk::ImageLayout::eUndefined }
   , _image { image }
@@ -22,18 +24,19 @@ ImageVk::ImageVk(DeviceVk &device, vk::Image image, vk::Format format, vk::Exten
   CreateView();
 }
 
-ImageVk::ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage)
-  : Image(usage, Vk2ColorFormat(format), glm::uvec3(size.width, size.height, size.depth), mipLevels, arrayLayers)
+ImageVk::ImageVk(DeviceVk &device, vk::Format format, glm::uvec4 size, uint32_t mipLevels, Usage usage)
+  : Image(usage, Vk2ColorFormat(format), size, mipLevels)
   , _device { &device }
   , _layout { usage == Usage::Staging ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eUndefined }
 {
+  size = GetEffectiveSize(size);
   vk::ImageCreateInfo imgInfo;
   imgInfo
     .setImageType(GetImageType(_size))
-    .setExtent({ size.width, std::max(size.height, 1u), std::max(size.depth, 1u) })
+    .setExtent({ size.x, size.y, size.z })
     .setFormat(format)
     .setMipLevels(std::max(mipLevels, 1u))
-    .setArrayLayers(std::max(arrayLayers, 1u))
+    .setArrayLayers(size.w)
     .setSamples(vk::SampleCountFlagBits::e1)
     .setUsage(GetImageUsage(usage))
     .setTiling(usage == Usage::Staging ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal)
@@ -55,42 +58,35 @@ util::TypeInfo *ImageVk::GetType()
   return util::TypeInfo::Get<ImageVk>();
 }
 
-void ImageVk::UpdateContents(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer)
+void ImageVk::UpdateContents(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos)
 {
   if (_usage == Usage::Staging) {
-    CopyContentsDirect(contents, box, mipLevel, arrayLayer);
+    CopyContentsDirect(region, mipLevel, content, contentPos);
     return;
   }
 
-  std::shared_ptr<ImageVk> staging = _device->GetGraphics()->CreateImageTyped<ImageVk>(Usage::Staging, GetColorFormat(), box.GetSize(), 1, 0);
-  util::BoxU stagingBox { glm::zero<glm::uvec3>(), box.GetSize() };
-  staging->CopyContentsDirect(contents, stagingBox, 0, 0);
+  std::shared_ptr<ImageVk> staging = _device->GetGraphics()->CreateImageTyped<ImageVk>(Usage::Staging, GetColorFormat(), region.GetSize(), 1);
+  util::BoxWithLayer stagingRegion { glm::zero<glm::uvec4>(), region.GetSize() - glm::one<glm::uvec4>() };
+  staging->CopyContentsDirect(stagingRegion, 0, content, contentPos);
 
-
+  OperationQueueVk &opQueue = *_device->GetGraphics()->_operationQueue;
+  auto updateOp = std::make_unique<ImageUpdateVk>(*this, region, mipLevel, mipLevel, *staging, glm::zero<glm::uvec4>(), 0);
+  opQueue.AddOperation(std::move(updateOp));
 }
 
-void ImageVk::CopyContentsDirect(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer)
+void ImageVk::CopyContentsDirect(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos)
 {
+  ASSERT(!region.IsEmpty() && util::VecLess(region._max, GetSize()));
   ASSERT(_usage == Usage::Staging);
+
   vk::ImageSubresource subRes { GetImageAspect(), mipLevel, 0 };
   vk::SubresourceLayout layout = _device->_device->getImageSubresourceLayout(_image, subRes);
 
   util::AutoFree<uint8_t*> mem { static_cast<uint8_t*>(Map()), [this](void*) { Unmap(); } };
 
-  uint32_t formatSize = GetColorFormatSize();
-
-  uint8_t *memBase = mem.Get() + layout.offset + arrayLayer * layout.arrayPitch + box._min.x * formatSize;
-
-  uint32_t rowSize = box.GetSize().x * formatSize;
-  uint8_t *src = static_cast<uint8_t*>(contents);
-
-  for (auto z = box._min.z; z <= box._max.z; ++z) {
-    for (auto y = box._min.y; y <= box._max.y; ++y) {
-      uint8_t *dst = memBase + z * layout.depthPitch + y * layout.rowPitch;
-      memcpy(dst, src, rowSize);
-      src += rowSize;
-    }
-  }
+  glm::uvec4 mappedPitch { GetColorFormatSize(), layout.rowPitch, layout.depthPitch, layout.arrayPitch };
+  ImageData mappedData { GetSize(), mappedPitch, mem.Get() + layout.offset };
+  ImageData::Copy(content, contentPos, mappedData, region._min, region.GetSize());
 }
 
 void *ImageVk::Map()
@@ -105,7 +101,7 @@ void ImageVk::Unmap()
 
 void ImageVk::CreateView()
 {
-  vk::ImageSubresourceRange range(GetImageAspect(), 0, std::max(_mipLevels, 1u), 0, std::max(_arrayLayers, 1u));
+  vk::ImageSubresourceRange range(GetImageAspect(), 0, std::max(_mipLevels, 1u), 0, std::max(_size.w, 1u));
   vk::ImageViewCreateInfo viewInfo;
   viewInfo
     .setImage(_image)
@@ -130,7 +126,7 @@ void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *s
     .setSubresourceRange(vk::ImageSubresourceRange()
       .setAspectMask(GetImageAspect())
       .setBaseArrayLayer(0)
-      .setLayerCount(_arrayLayers)
+      .setLayerCount(std::max(_size.w, 1u))
       .setBaseMipLevel(0)
       .setLevelCount(_mipLevels));
   ASSERT(srcImgBarrier[0].srcAccessMask);
@@ -173,13 +169,13 @@ vk::ImageViewType ImageVk::GetImageViewType()
 {
   ASSERT(_size.x > 0);
   if (!_size.y) {
-    if (_arrayLayers)
+    if (_size.w)
       return vk::ImageViewType::e1DArray;
     return vk::ImageViewType::e1D;
   } 
 
   if (!_size.z) {
-    if (_arrayLayers)
+    if (_size.w)
       return vk::ImageViewType::e2DArray;
     return vk::ImageViewType::e2D;
   }

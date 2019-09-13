@@ -12,17 +12,17 @@ class DeviceVk;
 
 class ImageVk : public Image, public OwnedByQueueVk<ImageVk> {
 public:
-  ImageVk(DeviceVk &device, vk::Image image, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage);
-  ImageVk(DeviceVk &device, vk::Format format, vk::Extent3D size, uint32_t mipLevels, uint32_t arrayLayers, Usage usage);
+  ImageVk(DeviceVk &device, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels, Usage usage);
+  ImageVk(DeviceVk &device, vk::Format format, glm::uvec4 size, uint32_t mipLevels, Usage usage);
 
   util::TypeInfo *GetType() override;
 
-  void UpdateContents(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer) override;
+  void UpdateContents(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos) override;
 
   void *Map() override;
   void Unmap() override;
 
-  void CopyContentsDirect(void *contents, util::BoxU const &box, uint32_t mipLevel, uint32_t arrayLayer);
+  void CopyContentsDirect(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos);
 
   void CreateView();
 

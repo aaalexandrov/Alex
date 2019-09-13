@@ -4,6 +4,7 @@
 #include <limits>
 #include <sstream>
 #include "namespace.h"
+#include "glm/glm.hpp"
 
 NAMESPACE_BEGIN(util)
 
@@ -64,5 +65,97 @@ std::string ToString(V const &v)
   stream << ")";
   return stream.str();
 }
+
+template <typename Val>
+inline Val Min(Val a, Val b)
+{
+  return std::min(a, b);
+}
+
+template <typename Val>
+inline Val Max(Val a, Val b)
+{
+  return std::max(a, b);
+}
+
+
+template <typename Vec>
+struct VecTraits {};
+
+template <int D, typename T, glm::qualifier Q>
+struct VecTraits<glm::vec<D, T, Q>> { 
+  static const int Length = D;
+  static const glm::qualifier Precision = Q; 
+};
+
+template <typename Vec>
+Vec VecApplyOp(Vec v, std::function<typename Vec::value_type(typename Vec::value_type)> op)
+{
+  Vec res;
+  for (int d = 0; d < Vec::length(); ++d) 
+    res[d] = op(v[d]);
+  return res;
+}
+
+template <typename Vec, typename Op>
+Vec VecCombineOp(Vec v0, Vec v1, Op op)
+{
+  Vec res;
+  for (int d = 0; d < Vec::length(); ++d)
+    res[d] = op(v0[d], v1[d]);
+}
+
+template <typename Vec, typename ResElem = typename Vec::value_type>
+glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> VecCombineTypedOp(Vec v0, Vec v1, std::function<ResElem(typename Vec::value_type, typename Vec::value_type)> op)
+{
+  glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> res;
+  for (int d = 0; d < Vec::length(); ++d) 
+    res[d] = op(v0[d], v1[d]);
+  return res;
+}
+
+template <typename Vec>
+bool VecLess(Vec a, Vec b)
+{
+  bool res = a[0] < b[0];
+  for (int d = 1; d < Vec::length(); ++d)
+    res &= a[d] < b[d];
+  return res;
+}
+
+template <typename Vec>
+bool VecLessEq(Vec a, Vec b)
+{
+  bool res = a[0] <= b[0];
+  for (int d = 1; d < Vec::length(); ++d)
+    res &= a[d] <= b[d];
+  return res;
+}
+
+template <typename Vec>
+typename Vec::value_type VecDot(Vec v0, Vec v1)
+{
+  Vec::value_type res = v0[0] * v1[0];
+  for (int d = 1; d < Vec::length(); ++d)
+    res += v0[d] * v1[d];
+  return res;
+}
+
+template <typename Vec>
+Vec VecMin(Vec v0, Vec v1)
+{
+  Vec res;
+  for (int d = 0; d < Vec::length(); ++d)
+    res[d] = std::min(v0[d], v1[d]);
+}
+
+template <typename Vec>
+Vec VecMax(Vec v0, Vec v1)
+{
+  Vec res;
+  for (int d = 0; d < Vec::length(); ++d)
+    res[d] = std::max(v0[d], v1[d]);
+}
+
 
 NAMESPACE_END(util)

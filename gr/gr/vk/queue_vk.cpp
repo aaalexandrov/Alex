@@ -2,6 +2,7 @@
 #include "device_vk.h"
 #include "image_vk.h"
 #include "../graphics_exception.h"
+#include "util/mathutl.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -30,7 +31,7 @@ void QueueVk::CmdSetImageLayout(vk::CommandBuffer cmds, ImageVk *image, vk::Imag
     .setBaseMipLevel(0)
     .setLevelCount(image->_mipLevels)
     .setBaseArrayLayer(0)
-    .setLayerCount(image->_arrayLayers);
+    .setLayerCount(std::max(image->_size.w, 1u));
 
   std::array<vk::ImageMemoryBarrier, 1> imgBarriers;
   imgBarriers[0]
@@ -49,39 +50,59 @@ void QueueVk::CmdSetImageLayout(vk::CommandBuffer cmds, ImageVk *image, vk::Imag
 
 }
 
-void QueueVk::CmdCopyImage(vk::CommandBuffer cmds, ImageVk *src, ImageVk *dst)
+void QueueVk::CmdCopyImage(vk::CommandBuffer cmds, ImageVk *dst, util::BoxWithLayer const &dstRegion, uint32_t dstMinMip, uint32_t dstMaxMip, ImageVk *src, glm::uvec4 srcPos, uint32_t srcMinMip)
 {
-  uint32_t layers = std::min(src->_arrayLayers, dst->_arrayLayers);
-  uint32_t mipLevels = std::min(src->_mipLevels, dst->_mipLevels);
-  glm::uvec3 extent { std::min(src->_size.x, dst->_size.x), std::min(src->_size.y, dst->_size.y), std::min(src->_size.z, dst->_size.z) };
+  ASSERT(dstMinMip <= dstMaxMip);
+  ASSERT(dstMaxMip < dst->_mipLevels);
+  ASSERT(srcMinMip + dstMaxMip - dstMinMip < src->_mipLevels);
+  ASSERT(!dstRegion.IsEmpty());
+  ASSERT(util::VecLess(dstRegion._max, dst->GetEffectiveSize()));
+  ASSERT(util::VecLessEq(srcPos + dstRegion.GetSize(), src->GetEffectiveSize()));
+
+  glm::uvec4 regionSize = dstRegion.GetSize();
   std::vector<vk::ImageCopy> regions;
 
   vk::ImageAspectFlags srcAspect = src->GetImageAspect();
   vk::ImageAspectFlags dstAspect = dst->GetImageAspect();
 
-  for (uint32_t level = 0; level < mipLevels; ++level) {
+  glm::ivec3 srcRegionMin = srcPos;
+  glm::ivec3 dstRegionMin = dstRegion._min;
+  glm::ivec3 dstRegionMax = dstRegion._max;
+
+  srcRegionMin >>= srcMinMip;
+  dstRegionMin >>= dstMinMip;
+  dstRegionMax += (1 << dstMinMip) - 1;
+  dstRegionMax >>= dstMinMip;
+
+  uint32_t mipLevels = dstMaxMip - dstMinMip;
+  for (uint32_t level = 0; level <= mipLevels; ++level) {
     vk::ImageSubresourceLayers srcSubres;
     srcSubres
       .setAspectMask(srcAspect)
-      .setMipLevel(level)
-      .setBaseArrayLayer(0)
-      .setLayerCount(layers);
+      .setMipLevel(srcMinMip + level)
+      .setBaseArrayLayer(srcPos.y)
+      .setLayerCount(regionSize.y);
 
     vk::ImageSubresourceLayers dstSubres;
     dstSubres
       .setAspectMask(dstAspect)
-      .setMipLevel(level)
-      .setBaseArrayLayer(0)
-      .setLayerCount(layers);
+      .setMipLevel(dstMinMip + level)
+      .setBaseArrayLayer(dstRegion._min.y)
+      .setLayerCount(regionSize.y);
+
+    glm::uvec3 extent = dstRegionMax - dstRegionMin + glm::ivec3(1);
 
     regions.emplace_back(vk::ImageCopy()
       .setSrcSubresource(srcSubres)
-      .setSrcOffset({ 0, 0, 0 })
+      .setSrcOffset({ srcRegionMin.x, srcRegionMin.y, srcRegionMin.z })
       .setDstSubresource(dstSubres)
-      .setDstOffset({ 0, 0, 0 })
+      .setDstOffset({ dstRegionMin.x, dstRegionMin.y, dstRegionMin.z })
       .setExtent({ extent.x, extent.y, extent.z }));
 
-    extent /= 2;
+    srcRegionMin >>= 1;
+    dstRegionMin >>= 1;
+    dstRegionMax += 1;
+    dstRegionMax >>= 1;
   }
 
   cmds.copyImage(src->_image, src->_layout, dst->_image, dst->_layout, regions);
