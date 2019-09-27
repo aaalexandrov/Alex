@@ -148,7 +148,7 @@ void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *s
 
   // we always try to do the transition on the transfer queue, if there's one
   // we've scheduled the layout transition to the first queue, swap that in case the second queue is transfer
-  if (dstQueue->_role == QueueVk::Role::Transfer) {
+  if (dstQueue->_role == QueueRole::Transfer) {
     std::swap(srcImgBarrier[0].oldLayout, dstImgBarrier[0].oldLayout);
     std::swap(srcImgBarrier[0].newLayout, dstImgBarrier[0].newLayout);
   }
@@ -160,7 +160,7 @@ void ImageVk::RecordTransitionCommands(vk::CommandBuffer srcCommands, QueueVk *s
 
 vk::ImageLayout ImageVk::GetEffectiveImageLayout(QueueVk *queue) const
 {
-  if (_usage != Usage::Staging && queue->_role == QueueVk::Role::Transfer)
+  if (_usage != Usage::Staging && queue->_role == QueueRole::Transfer)
     return vk::ImageLayout::eTransferDstOptimal;
   return _layout;
 }

@@ -2,6 +2,7 @@
 
 #include "graphics_vk.h"
 #include "physical_device_vk.h"
+#include "util/enumutl.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -42,16 +43,10 @@ DeviceVk::DeviceVk(PhysicalDeviceVk *physicalDevice)
 
 void DeviceVk::InitQueueFamilies(std::vector<vk::DeviceQueueCreateInfo>& queuesInfo, std::vector<float> &queuesPriorities)
 {
-  if (_physicalDevice->_presentQueueFamily < 0)
+  if (_physicalDevice->QueueFamilyIndex(QueueRole::Present) < 0)
     throw GraphicsException("Physical device presentation queue family not initialized, you need to create a surface first!", VK_RESULT_MAX_ENUM);
 
-  std::vector<int32_t> families {
-    _physicalDevice->_graphicsQueueFamily,
-    _physicalDevice->_presentQueueFamily,
-    _physicalDevice->_transferQueueFamily,
-    _physicalDevice->_computeQueueFamily,
-    _physicalDevice->_sparseOpQueueFamily,
-  };
+  std::vector<int32_t> families { _physicalDevice->_queueFamilyIndices.begin(), _physicalDevice->_queueFamilyIndices.end() };
 
   families.erase(std::remove_if(families.begin(), families.end(), [](int32_t f)->bool { return f < 0; }), families.end());
 
@@ -78,7 +73,7 @@ void DeviceVk::InitQueueFamilies(std::vector<vk::DeviceQueueCreateInfo>& queuesI
 void DeviceVk::InitQueues()
 {
   std::unordered_map<int32_t, int32_t> usedQueues;
-  auto getQueue = [&](QueueVk &queue, int32_t queueFamily, QueueVk::Role role)->void {
+  auto getQueue = [&](QueueVk &queue, int32_t queueFamily, QueueRole role)->void {
     if (queueFamily < 0)
       return;
 
@@ -86,16 +81,19 @@ void DeviceVk::InitQueues()
     queue.Init(*this, queueFamily, count, role);
   };
 
-  getQueue(_graphicsQueue, _physicalDevice->_graphicsQueueFamily, QueueVk::Role::Graphics);
-  getQueue(_presentQueue, _physicalDevice->_presentQueueFamily, QueueVk::Role::Present);
-  getQueue(_transferQueue, _physicalDevice->_transferQueueFamily, QueueVk::Role::Transfer);
-  getQueue(_computeQueue, _physicalDevice->_computeQueueFamily, QueueVk::Role::Compute);
-  getQueue(_sparseOpQueue, _physicalDevice->_sparseOpQueueFamily, QueueVk::Role::SparseOp);
+  for (QueueRole role = QueueRole::First; role < QueueRole::Count; role = util::EnumInc(role)) {
+    getQueue(Queue(role), _physicalDevice->QueueFamilyIndex(role), role);
+  }
 }
 
 vk::UniqueSemaphore DeviceVk::CreateSemaphore()
 {
   return _device->createSemaphoreUnique(vk::SemaphoreCreateInfo(), AllocationCallbacks());
+}
+
+vk::UniqueFence DeviceVk::CreateFence(vk::FenceCreateFlags flags)
+{
+  return _device->createFenceUnique(vk::FenceCreateInfo(flags), AllocationCallbacks());
 }
 
 void DeviceVk::RenderInstance(std::shared_ptr<ModelInstance> &modelInst)

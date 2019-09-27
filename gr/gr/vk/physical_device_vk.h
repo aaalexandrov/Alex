@@ -8,6 +8,17 @@ NAMESPACE_BEGIN(gr)
 
 class PresentationSurfaceVk;
 
+enum class QueueRole {
+  First,
+  Graphics = First,
+  Compute,
+  Transfer,
+  SparseOp,
+  Present,
+  Invalid,
+  Count = Invalid,
+};
+
 class PhysicalDeviceVk {
 public:
   PhysicalDeviceVk(GraphicsVk *graphics, vk::PhysicalDevice physicalDevice, PresentationSurfaceVk *initialSurface);
@@ -24,6 +35,8 @@ public:
 
   uint32_t GetMemoryTypeIndex(uint32_t validMemoryTypes, vk::MemoryPropertyFlags memoryFlags);
 
+  int32_t &QueueFamilyIndex(QueueRole role) { return _queueFamilyIndices[static_cast<int>(role)]; }
+
   GraphicsVk *_graphics;
   vk::PhysicalDevice _physicalDevice;
   
@@ -33,11 +46,7 @@ public:
 
   std::vector<vk::QueueFamilyProperties> _queueFamilies;
 
-  int32_t _graphicsQueueFamily;
-  int32_t _computeQueueFamily;
-  int32_t _transferQueueFamily;
-  int32_t _sparseOpQueueFamily;
-  int32_t _presentQueueFamily;
+  std::array<int32_t, static_cast<int>(QueueRole::Count)> _queueFamilyIndices;
 
   vk::Format _depthFormat;
 

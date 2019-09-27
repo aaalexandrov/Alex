@@ -39,4 +39,10 @@ struct ValueRemapper {
   }
 };
 
+template <typename Enum>
+Enum EnumInc(Enum e, std::underlying_type_t<Enum> inc = 1)
+{
+  return static_cast<Enum>(static_cast<std::underlying_type_t<Enum>>(e) + inc);
+}
+
 NAMESPACE_END(util)

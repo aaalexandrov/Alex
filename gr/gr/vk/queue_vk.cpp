@@ -6,7 +6,7 @@
 
 NAMESPACE_BEGIN(gr)
 
-void QueueVk::Init(DeviceVk &device, int32_t family, int32_t queueIndex, Role role)
+void QueueVk::Init(DeviceVk &device, int32_t family, int32_t queueIndex, QueueRole role)
 {
   _family = family;
   _queue = device._device->getQueue(family, queueIndex);
@@ -108,23 +108,23 @@ void QueueVk::CmdCopyImage(vk::CommandBuffer cmds, ImageVk *dst, util::BoxWithLa
   cmds.copyImage(src->_image, src->_layout, dst->_image, dst->_layout, regions);
 }
 
-vk::PipelineStageFlags QueueVk::GetPipelineStageFlags(Role role)
+vk::PipelineStageFlags QueueVk::GetPipelineStageFlags(QueueRole role)
 {
   vk::PipelineStageFlags flags;
   switch (role) {
-    case Role::Graphics:
+    case QueueRole::Graphics:
       flags = vk::PipelineStageFlagBits::eAllGraphics;
       break;
-    case Role::Compute:
+    case QueueRole::Compute:
       flags = vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eDrawIndirect;
       break;
-    case Role::Transfer:
+    case QueueRole::Transfer:
       flags = vk::PipelineStageFlagBits::eTransfer;
       break;
-    case Role::SparseOp:
+    case QueueRole::SparseOp:
       flags = vk::PipelineStageFlagBits::eAllCommands; // ??
       break;
-    case Role::Present:
+    case QueueRole::Present:
       flags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
       break;
     default:
@@ -134,25 +134,25 @@ vk::PipelineStageFlags QueueVk::GetPipelineStageFlags(Role role)
   return flags;
 }
 
-vk::AccessFlags QueueVk::GetAccessFlags(Role role)
+vk::AccessFlags QueueVk::GetAccessFlags(QueueRole role)
 {
   vk::AccessFlags flags;
   switch (role) {
-    case Role::Graphics:
+    case QueueRole::Graphics:
       flags = vk::AccessFlagBits::eIndirectCommandRead | vk::AccessFlagBits::eIndexRead | vk::AccessFlagBits::eVertexAttributeRead | vk::AccessFlagBits::eUniformRead |
         vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eColorAttachmentRead | 
         vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
       break;
-    case Role::Compute:
+    case QueueRole::Compute:
       flags = vk::AccessFlagBits::eIndirectCommandRead | vk::AccessFlagBits::eUniformRead | vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
       break;
-    case Role::Transfer:
+    case QueueRole::Transfer:
       flags = vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eTransferWrite;
       break;
-    case Role::SparseOp:
+    case QueueRole::SparseOp:
       flags = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryRead; // ??
       break;
-    case Role::Present:
+    case QueueRole::Present:
       flags = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
       break;
     default:

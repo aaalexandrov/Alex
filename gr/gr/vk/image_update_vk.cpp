@@ -20,9 +20,9 @@ void ImageUpdateVk::Prepare(OperationQueue *operationQueue)
 {
   DeviceVk *device = _dstImage->_device;
   ASSERT(!_transitionToTransfer);
-  _transitionToTransfer = _dstImage->GetQueueTransitionTo(&device->_transferQueue);
+  _transitionToTransfer = _dstImage->GetQueueTransitionTo(&device->TransferQueue());
 
-  _transferCmds = device->_transferQueue.AllocateCmdBuffer();
+  _transferCmds = device->TransferQueue().AllocateCmdBuffer();
 
   vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   _transferCmds->begin(beginInfo);
@@ -47,7 +47,7 @@ void ImageUpdateVk::Execute(OperationQueue *operationQueue)
     .setCommandBufferCount(1)
     .setPCommandBuffers(&_transferCmds.get());
 
-  device->_transferQueue._queue.submit(transferSubmit, nullptr);
+  device->TransferQueue()._queue.submit(transferSubmit, nullptr);
 }
 
 NAMESPACE_END(gr)

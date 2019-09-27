@@ -23,16 +23,16 @@ PhysicalDeviceVk::PhysicalDeviceVk(GraphicsVk *graphics, vk::PhysicalDevice phys
   _memoryProperties = _physicalDevice.getMemoryProperties();
   _queueFamilies = _physicalDevice.getQueueFamilyProperties();
 
-  _graphicsQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eGraphics);
-  _computeQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eCompute);
-  _transferQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eTransfer);
-  _sparseOpQueueFamily = GetSuitableQueueFamily(vk::QueueFlagBits::eSparseBinding);
-  _presentQueueFamily = GetPresentQueueFamily(initialSurface);
+  QueueFamilyIndex(QueueRole::Graphics) = GetSuitableQueueFamily(vk::QueueFlagBits::eGraphics);
+  QueueFamilyIndex(QueueRole::Compute) = GetSuitableQueueFamily(vk::QueueFlagBits::eCompute);
+  QueueFamilyIndex(QueueRole::Transfer) = GetSuitableQueueFamily(vk::QueueFlagBits::eTransfer);
+  QueueFamilyIndex(QueueRole::SparseOp) = GetSuitableQueueFamily(vk::QueueFlagBits::eSparseBinding);
+  QueueFamilyIndex(QueueRole::Present) = GetPresentQueueFamily(initialSurface);
 
-  if (_graphicsQueueFamily < 0 || _transferQueueFamily < 0)
+  if (QueueFamilyIndex(QueueRole::Graphics) < 0 || QueueFamilyIndex(QueueRole::Transfer) < 0)
     throw GraphicsException("Required queue family support not found", VK_ERROR_FEATURE_NOT_PRESENT);
 
-  if (_presentQueueFamily < 0)
+  if (QueueFamilyIndex(QueueRole::Present) < 0)
     throw GraphicsException("Present queue family for surface not found", VK_ERROR_FEATURE_NOT_PRESENT);
 
   _depthFormat = GetDepthFormat();

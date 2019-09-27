@@ -25,9 +25,9 @@ void BufferUpdateVk::Prepare(OperationQueue *operationQueue)
 {
   DeviceVk *device = _buffer->_device;
 
-  _transitionToTransfer = std::move(_buffer->GetQueueTransitionTo(&device->_transferQueue));
+  _transitionToTransfer = std::move(_buffer->GetQueueTransitionTo(&device->TransferQueue()));
 
-  _transferCmds = device->_transferQueue.AllocateCmdBuffer();
+  _transferCmds = device->TransferQueue().AllocateCmdBuffer();
 
   vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   _transferCmds->begin(beginInfo);
@@ -48,7 +48,7 @@ void BufferUpdateVk::Execute(OperationQueue *operationQueue)
     .setCommandBufferCount(1)
     .setPCommandBuffers(&_transferCmds.get());
 
-  device->_transferQueue._queue.submit(transferSubmit, nullptr);
+  device->TransferQueue()._queue.submit(transferSubmit, nullptr);
 }
 
 NAMESPACE_END(gr)

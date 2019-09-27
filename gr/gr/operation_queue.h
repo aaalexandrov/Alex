@@ -23,6 +23,7 @@ public:
   virtual void PreProcessOperations() {}
   virtual void PostProcessOperations() {}
 
+  virtual void WaitOperationsEnd() = 0;
 
   std::shared_ptr<PresentationSurface> _presentationSurface;
 

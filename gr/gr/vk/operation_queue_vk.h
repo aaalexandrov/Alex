@@ -11,7 +11,7 @@ class PresentationSurfaceVk;
 
 class OperationQueueVk : public OperationQueue {
 public:
-  OperationQueueVk(DeviceVk &device) : _device{&device} {}
+  OperationQueueVk(DeviceVk &device);
   
   GraphicsVk *GetGraphics() const override;
 
@@ -22,8 +22,12 @@ public:
   void PreProcessOperations() override;
   void PostProcessOperations() override;
 
+  void WaitOperationsEnd() override;
+
+  vk::Fence QueueFence(QueueRole role) { return _queueFences[static_cast<int>(role)].get(); }
+
   DeviceVk *_device;
-  std::map<QueueVk*, vk::UniqueFence> _queueFences;
+  std::array<vk::UniqueFence, static_cast<int>(QueueRole::Count)> _queueFences;
 };
 
 NAMESPACE_END(gr)
