@@ -142,11 +142,27 @@ typename Vec::value_type VecDot(Vec v0, Vec v1)
 }
 
 template <typename Vec>
+Vec VecSubClamp0(Vec v0, Vec v1)
+{
+  Vec res;
+  for (int d = 0; d < Vec::length(); ++d)
+    res[d] = v0[d] > v1[d] ? v0[d] - v1[d] : 0;
+  return res;
+}
+
+template <typename Vec>
+Vec VecDecClamp0(Vec v0)
+{
+  return VecSubClamp0(v0, glm::one<Vec>());
+}
+
+template <typename Vec>
 Vec VecMin(Vec v0, Vec v1)
 {
   Vec res;
   for (int d = 0; d < Vec::length(); ++d)
     res[d] = std::min(v0[d], v1[d]);
+  return res;
 }
 
 template <typename Vec>
@@ -155,6 +171,7 @@ Vec VecMax(Vec v0, Vec v1)
   Vec res;
   for (int d = 0; d < Vec::length(); ++d)
     res[d] = std::max(v0[d], v1[d]);
+  return res;
 }
 
 

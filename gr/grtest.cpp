@@ -43,13 +43,8 @@ using namespace glm;
 using namespace platform;
 using namespace gr;
 
-namespace util {
-void Test();
-}
-
 int main()
 {
-  //util::Test();
   auto platform = std::unique_ptr<Platform>(Platform::Create());
 
   cout << "Current execution directory: " << platform->CurrentDirectory() << endl;
@@ -85,28 +80,32 @@ int main()
   graphics->Init(surfaceData);
   graphics->GetOperationQueue()->GetPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
 
-  auto shader = graphics->LoadShader("simple");
+  {
+    auto shader = graphics->LoadShader("simple");
+    auto image = graphics->LoadImage("grid2.png");
 
-  auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::now();
 
-  while (!window->ShouldClose()) {
-    if (window->GetInput().IsJustPressed(Key::Enter)) {
-      auto newStyle = window->GetStyle() == Window::Style::CaptionedResizeable 
-        ? Window::Style::BorderlessFullscreen 
-        : Window::Style::CaptionedResizeable;
+    while (!window->ShouldClose()) {
+      if (window->GetInput().IsJustPressed(Key::Enter)) {
+        auto newStyle = window->GetStyle() == Window::Style::CaptionedResizeable
+          ? Window::Style::BorderlessFullscreen
+          : Window::Style::CaptionedResizeable;
 
-      window->SetStyle(newStyle);
+        window->SetStyle(newStyle);
+      }
+
+      auto text = window->GetInput()._input;
+      if (text.size() > 0) {
+        LOG("Input ", text);
+      }
+
+      graphics->Update();
+      platform->Update();
     }
 
-    auto text = window->GetInput()._input;
-    if (text.size() > 0) {
-      LOG("Input ", text);
-    }
-
-    platform->Update();
+    LOG("Quitting after ", util::ToSeconds(std::chrono::system_clock::now() - start), " seconds");
   }
-
-  LOG("Quitting after ", util::ToSeconds(std::chrono::system_clock::now() - start), " seconds");
 
   return 0;
 }

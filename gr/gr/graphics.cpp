@@ -1,6 +1,8 @@
 #include "graphics.h"
+#include "operation_queue.h"
 #include "stb/stb_image.h"
 #include "util/mem.h"
+#include "util/mathutl.h"
 
 #ifdef GR_VK
 #include "vk/graphics_vk.h"
@@ -37,7 +39,7 @@ std::shared_ptr<Image> Graphics::LoadImage(std::string const &name)
   util::AutoFree<stbi_uc*> imgPixels { stbi_load(path.c_str(), &width, &height, &channels, 4), stbi_image_free };
 
   auto img = CreateImage(Image::Usage::Texture, ColorFormat::R8G8B8A8, glm::uvec4(width, height, 0, 0), 1);
-  util::BoxWithLayer region { glm::zero<glm::uvec4>(), img->GetSize() - glm::one<glm::uvec4>() };
+  util::BoxWithLayer region { glm::zero<glm::uvec4>(), util::VecDecClamp0(img->GetSize()) };
   ImageData imgData { img->GetSize(), ImageData::GetPackedPitch(img->GetSize(), 4), imgPixels.Get() };
   img->UpdateContents(region, 0, imgData, glm::zero<glm::uvec4>());
 
@@ -54,6 +56,14 @@ void Graphics::SetLoadPath(std::string loadPath)
 std::string Graphics::GetResourcePath(std::string name)
 {
   return _loadPath + name;
+}
+
+void Graphics::Update()
+{
+  OperationQueue *opQueue = GetOperationQueue();
+  opQueue->ProcessOperations();
+  opQueue->WaitOperationsEnd();
+  opQueue->ClearOperations();
 }
 
 NAMESPACE_END(gr)

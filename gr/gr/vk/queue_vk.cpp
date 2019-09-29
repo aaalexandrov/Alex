@@ -8,6 +8,7 @@ NAMESPACE_BEGIN(gr)
 
 void QueueVk::Init(DeviceVk &device, int32_t family, int32_t queueIndex, QueueRole role)
 {
+  _device = &device;
   _family = family;
   _queue = device._device->getQueue(family, queueIndex);
   _role = role;

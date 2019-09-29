@@ -54,6 +54,8 @@ public:
 
   virtual OperationQueue *GetOperationQueue() = 0;
 
+  virtual void Update();
+
   BufferDescPtr &GetRawBufferDesc()      { return _rawDescU8; }
   BufferDescPtr &GetIndexBufferDescU16() { return _indexDescU16; }
   BufferDescPtr &GetIndexBufferDescU32() { return _indexDescU32; }

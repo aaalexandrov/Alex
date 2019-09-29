@@ -75,6 +75,7 @@ void OperationQueueVk::WaitOperationsEnd()
     fences[i] = _queueFences[i].get();
   vk::Result res = _device->_device->waitForFences(fences, true, std::numeric_limits<uint64_t>::max());
   ASSERT(res == vk::Result::eSuccess);
+  _device->_device->resetFences(fences);
 }
 
 

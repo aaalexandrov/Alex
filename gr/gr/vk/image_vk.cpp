@@ -65,8 +65,12 @@ void ImageVk::UpdateContents(util::BoxWithLayer const &region, uint32_t mipLevel
     return;
   }
 
-  std::shared_ptr<ImageVk> staging = _device->GetGraphics()->CreateImageTyped<ImageVk>(Usage::Staging, GetColorFormat(), region.GetSize(), 1);
-  util::BoxWithLayer stagingRegion { glm::zero<glm::uvec4>(), region.GetSize() - glm::one<glm::uvec4>() };
+  glm::uvec4 stagingSize = region.GetSize();
+  // vulkan linear images can only be 2d with single layer, to support anything else, use buffers to transport image contents
+  ASSERT(stagingSize.z == 1 && stagingSize.w == 1);
+  stagingSize.z = stagingSize.w = 0;
+  std::shared_ptr<ImageVk> staging = _device->GetGraphics()->CreateImageTyped<ImageVk>(Usage::Staging, GetColorFormat(), stagingSize, 1);
+  util::BoxWithLayer stagingRegion { glm::zero<glm::uvec4>(), util::VecDecClamp0(region.GetSize()) };
   staging->CopyContentsDirect(stagingRegion, 0, content, contentPos);
 
   OperationQueueVk &opQueue = *_device->GetGraphics()->_operationQueue;
@@ -76,7 +80,12 @@ void ImageVk::UpdateContents(util::BoxWithLayer const &region, uint32_t mipLevel
 
 void ImageVk::CopyContentsDirect(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos)
 {
-  ASSERT(!region.IsEmpty() && util::VecLess(region._max, GetSize()));
+  ASSERT(!region.IsEmpty());
+  ASSERT(region._max.x < GetSize().x);
+  ASSERT(region._max.y == 0 && GetSize().y == 0 || region._max.y < GetSize().y);
+  ASSERT(region._max.z == 0 && GetSize().z == 0 || region._max.z < GetSize().z);
+  ASSERT(region._max.w == 0 && GetSize().w == 0 || region._max.w < GetSize().w);
+
   ASSERT(_usage == Usage::Staging);
 
   vk::ImageSubresource subRes { GetImageAspect(), mipLevel, 0 };

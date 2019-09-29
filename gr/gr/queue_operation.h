@@ -10,6 +10,8 @@ class OperationQueue;
 
 class QueueOperation : public std::enable_shared_from_this<QueueOperation> {
 public:
+  virtual ~QueueOperation() {}
+
   virtual void Prepare(OperationQueue *operationQueue) = 0;
   virtual void Execute(OperationQueue *operationQueue) = 0;
 };

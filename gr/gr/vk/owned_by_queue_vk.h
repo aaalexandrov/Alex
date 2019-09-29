@@ -67,6 +67,10 @@ struct OwnedByQueueVk {
 
   std::unique_ptr<QueueTransition> GetQueueTransitionTo(QueueVk *queue)
   {
+    if (!_ownerQueue) {
+      _ownerQueue = queue;
+      return nullptr;
+    }
     if (_ownerQueue->_family == queue->_family)
       return nullptr;
     Resource *resource = AsResource();
@@ -79,7 +83,7 @@ struct OwnedByQueueVk {
 
   Resource *AsResource() { return static_cast<Resource*>(this); }
 
-  QueueVk *_ownerQueue;
+  QueueVk *_ownerQueue = nullptr;
 };
 
 NAMESPACE_END(gr)
