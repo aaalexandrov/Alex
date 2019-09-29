@@ -32,9 +32,5 @@ void GraphicsState::SetDepthWrite(bool depthWrite)
   Invalidate();
 }
 
-void GraphicsState::Invalidate()
-{
-}
-
 NAMESPACE_END(gr)
 

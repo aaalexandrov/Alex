@@ -27,6 +27,7 @@ enum class DepthTest {
 
 class GraphicsState {
 public:
+  virtual ~GraphicsState() {}
 
   FillMode GetFillMode() { return _fillMode; }
   void SetFillMode(FillMode fillMode);
@@ -43,7 +44,7 @@ public:
   bool GetDepthWrite() { return _depthWrite; }
   void SetDepthWrite(bool depthWrite);
 
-  void Invalidate();
+  virtual void Invalidate() {}
 
   FillMode _fillMode = FillMode::Solid;
   BlendMode _blendMode = BlendMode::Opaque;

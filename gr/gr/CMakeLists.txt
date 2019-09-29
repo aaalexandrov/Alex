@@ -64,6 +64,9 @@ if(gr_implementation STREQUAL VK)
 		vk/device_vk.h
 		vk/device_vk.cpp
 
+		vk/graphics_state_vk.h
+		vk/graphics_state_vk.cpp
+		
 		vk/graphics_vk.h
 		vk/graphics_vk.cpp
 
@@ -79,6 +82,12 @@ if(gr_implementation STREQUAL VK)
 		vk/material_vk.h
 		vk/material_vk.cpp
 
+		vk/model_instance_vk.h
+		vk/model_instance_vk.cpp
+		
+		vk/model_vk.h
+		vk/model_vk.cpp
+		
 		vk/operation_queue_vk.h
 		vk/operation_queue_vk.cpp
 

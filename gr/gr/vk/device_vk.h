@@ -21,6 +21,8 @@ public:
 
   vk::UniqueSemaphore CreateSemaphore();
   vk::UniqueFence CreateFence(vk::FenceCreateFlags flags = vk::FenceCreateFlags());
+  vk::UniquePipelineLayout CreatePipelineLayout(vk::PipelineLayoutCreateInfo const &createInfo);
+  vk::UniqueDescriptorSetLayout CreateDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo const &createInfo);
 
   void RenderInstance(std::shared_ptr<ModelInstance> &modelInst);
 

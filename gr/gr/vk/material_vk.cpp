@@ -9,7 +9,7 @@ MaterialVk::MaterialVk(DeviceVk &device, std::shared_ptr<Shader> &shader)
 {
 }
 
-util::TypeInfo * MaterialVk::GetType()
+util::TypeInfo *MaterialVk::GetType()
 {
   return util::TypeInfo::Get<MaterialVk>();
 }

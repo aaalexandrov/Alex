@@ -32,21 +32,32 @@ public:
   std::vector<vk::VertexInputAttributeDescription> GetVertexAttributeDescriptions();
   std::vector<vk::VertexInputBindingDescription> GetVertexBindingDescriptions();
 
+  vk::DescriptorSetLayoutCreateInfo GetDescriptorSetLayoutCreateInfos(std::vector<vk::DescriptorSetLayoutBinding> &layoutBindings);
+  std::vector<vk::DescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings();
+
   static util::TypeInfo *GetTypeInfoFromSpirv(spirv_cross::SPIRType type);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
-  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected);
+  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected, ShaderKind kind);
+  void InitDescriptorSetLayouts();
+  void InitPipelineLayout();
 
 
   DeviceVk *_device;
   std::vector<ModuleInfo> _modules;
+  std::vector<vk::UniqueDescriptorSetLayout> _descriptorSetLayouts;
+  vk::UniquePipelineLayout _pipelineLayout;
 
-  struct ShaderKind {
+  struct ShaderKindInfo {
+    ShaderKind _kind;
     std::string _extention;
     vk::ShaderStageFlagBits _stage;
-    shaderc_shader_kind _kind;
+    shaderc_shader_kind _shadercKind;
   };
 
-  static std::vector<ShaderKind> _shaderKinds;
+  static ShaderKindInfo *GetShaderKindInfo(ShaderKind kind);
+  static vk::ShaderStageFlags GetShaderStageFlags(ShaderKind kindMask);
+
+  static std::vector<ShaderKindInfo> _shaderKinds;
 };
 
 NAMESPACE_END(gr)

@@ -96,6 +96,16 @@ vk::UniqueFence DeviceVk::CreateFence(vk::FenceCreateFlags flags)
   return _device->createFenceUnique(vk::FenceCreateInfo(flags), AllocationCallbacks());
 }
 
+vk::UniquePipelineLayout DeviceVk::CreatePipelineLayout(vk::PipelineLayoutCreateInfo const &createInfo)
+{
+  return _device->createPipelineLayoutUnique(createInfo, AllocationCallbacks());
+}
+
+vk::UniqueDescriptorSetLayout DeviceVk::CreateDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo const &createInfo)
+{
+  return _device->createDescriptorSetLayoutUnique(createInfo, AllocationCallbacks());
+}
+
 void DeviceVk::RenderInstance(std::shared_ptr<ModelInstance> &modelInst)
 {
 }

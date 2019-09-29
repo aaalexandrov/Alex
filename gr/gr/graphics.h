@@ -40,6 +40,8 @@ public:
   virtual std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) = 0;
   virtual std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) = 0;
   virtual std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) = 0;
+  virtual std::shared_ptr<Model> CreateModel() = 0;
+  virtual std::shared_ptr<ModelInstance> CreateModelInstance() = 0;
 
   template <typename BufferType>
   std::shared_ptr<BufferType> CreateBufferTyped(Buffer::Usage usage, BufferDescPtr &description, size_t size) { return std::static_pointer_cast<BufferType>(CreateBuffer(usage, description, size)); }

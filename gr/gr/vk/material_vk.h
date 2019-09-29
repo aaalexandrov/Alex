@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../material.h"
+#include "graphics_state_vk.h"
 
 NAMESPACE_BEGIN(gr)
 
@@ -12,7 +13,10 @@ public:
 
   util::TypeInfo *GetType() override;
 
+  GraphicsStateVk *GetState() override { return &_state; }
+
   DeviceVk *_device;
+  GraphicsStateVk _state;
 };
 
 NAMESPACE_END(gr)

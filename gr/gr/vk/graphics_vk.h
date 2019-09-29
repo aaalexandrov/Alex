@@ -23,6 +23,8 @@ public:
   std::shared_ptr<Buffer> CreateBuffer(Buffer::Usage usage, BufferDescPtr &description, size_t size) override;
   std::shared_ptr<Image> CreateImage(Image::Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
   std::shared_ptr<Material> CreateMaterial(std::shared_ptr<Shader> &shader) override;
+  std::shared_ptr<Model> CreateModel() override;
+  std::shared_ptr<ModelInstance> CreateModelInstance() override;
 
   std::shared_ptr<Shader> LoadShader(std::string const &name) override;
 

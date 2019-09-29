@@ -12,7 +12,8 @@ class Material : public GraphicsResource {
 public:
   Material(std::shared_ptr<Shader> &shader) : _shader(shader) {}
 
-  GraphicsState _state;
+  virtual GraphicsState *GetState() = 0;
+
   std::shared_ptr<Shader> _shader;
 };
 

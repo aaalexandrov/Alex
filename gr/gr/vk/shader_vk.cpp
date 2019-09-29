@@ -7,16 +7,34 @@
 
 NAMESPACE_BEGIN(gr)
 
-std::vector<ShaderVk::ShaderKind> ShaderVk::_shaderKinds = {
-  { ".vert", vk::ShaderStageFlagBits::eVertex, shaderc_shader_kind::shaderc_vertex_shader },
-  { ".frag", vk::ShaderStageFlagBits::eFragment, shaderc_shader_kind::shaderc_fragment_shader },
+std::vector<ShaderVk::ShaderKindInfo> ShaderVk::_shaderKinds = {
+  { ShaderKind::Vertex, ".vert", vk::ShaderStageFlagBits::eVertex, shaderc_shader_kind::shaderc_vertex_shader },
+  { ShaderKind::Fragment, ".frag", vk::ShaderStageFlagBits::eFragment, shaderc_shader_kind::shaderc_fragment_shader },
 };
+
+ShaderVk::ShaderKindInfo *ShaderVk::GetShaderKindInfo(ShaderKind kind)
+{
+  auto found = std::find_if(_shaderKinds.begin(), _shaderKinds.end(), [=](ShaderKindInfo &info) { return info._kind == kind; });
+  return found != _shaderKinds.end() ? &*found : nullptr;
+}
+
+vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind kindMask)
+{
+  vk::ShaderStageFlags stageFlags;
+  for (auto &kindInfo : _shaderKinds)
+    if ((kindMask & kindInfo._kind) != ShaderKind::None)
+      stageFlags |= kindInfo._stage;
+  return stageFlags;
+}
 
 ShaderVk::ShaderVk(DeviceVk &device, std::string const &name)
   : Shader { name }
   , _device { &device }
 {
   LoadModules();
+
+  InitDescriptorSetLayouts();
+  InitPipelineLayout();
 }
 
 util::TypeInfo * ShaderVk::GetType()
@@ -39,7 +57,7 @@ void ShaderVk::LoadModules()
     std::vector<uint8_t> source = util::ReadFile(path);
     
     shaderc::SpvCompilationResult res = 
-      compiler.CompileGlslToSpv(reinterpret_cast<char const *>(source.data()), source.size(), kind._kind, path.c_str(), "main", options);
+      compiler.CompileGlslToSpv(reinterpret_cast<char const *>(source.data()), source.size(), kind._shadercKind, path.c_str(), "main", options);
     if (res.GetCompilationStatus() != shaderc_compilation_status_success)
       throw GraphicsException("Shader " + path + " compilation failed with error : " + res.GetErrorMessage(), VK_RESULT_MAX_ENUM);
 
@@ -53,7 +71,7 @@ void ShaderVk::LoadModules()
       InitVertexDescription(refl);
     }
 
-    InitUniformBufferDescriptions(refl);
+    InitUniformBufferDescriptions(refl, kind._kind);
   }
 }
 
@@ -171,6 +189,35 @@ std::vector<vk::VertexInputBindingDescription> ShaderVk::GetVertexBindingDescrip
   return descriptions;
 }
 
+vk::DescriptorSetLayoutCreateInfo ShaderVk::GetDescriptorSetLayoutCreateInfos(std::vector<vk::DescriptorSetLayoutBinding> &layoutBindings)
+{
+  vk::DescriptorSetLayoutCreateInfo layoutInfo;
+
+  layoutInfo
+    .setBindingCount(static_cast<uint32_t>(layoutBindings.size()))
+    .setPBindings(layoutBindings.data());
+
+  return layoutInfo;
+}
+
+std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBindings()
+{
+  std::vector<vk::DescriptorSetLayoutBinding> bindings;
+  for (auto &bufferInfo : _uniformBuffers) {
+    vk::DescriptorSetLayoutBinding binding;
+    binding
+      .setBinding(bufferInfo._binding)
+      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+      .setDescriptorCount(1)
+      .setStageFlags(GetShaderStageFlags(bufferInfo._kind));
+
+    bindings.emplace_back(std::move(binding));
+  }
+
+  // TODO: add samplers, etc.
+  return bindings;
+}
+
 void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
 {
   ASSERT(_vertexDesc->_elements.size() == 0);
@@ -189,7 +236,7 @@ void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
   }
 }
 
-void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected)
+void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected, ShaderKind kind)
 {
   for (auto u : reflected.get_shader_resources().uniform_buffers) {
     auto &type = reflected.get_type(u.type_id);
@@ -203,11 +250,13 @@ void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflec
     if (found != _uniformBuffers.end()) {
       // uniform buffers with the same name in different shader kinds need to be the same
       ASSERT(found->_uniformDesc->_size == size);
+      found->_kind |= kind;
       continue;
     }
 
     UniformBufferInfo uniformInfo;
     uniformInfo._name = name;
+    uniformInfo._kind = kind;
     uniformInfo._binding = binding;
 
     auto members = type.member_types.size();
@@ -230,6 +279,29 @@ void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflec
   }
 }
 
+void ShaderVk::InitDescriptorSetLayouts()
+{
+  ASSERT(!_descriptorSetLayouts.size());
+
+  auto layoutBindings = GetDescriptorSetLayoutBindings();
+  vk::DescriptorSetLayoutCreateInfo layoutInfo = GetDescriptorSetLayoutCreateInfos(layoutBindings);
+  _descriptorSetLayouts.emplace_back(std::move(_device->CreateDescriptorSetLayout(layoutInfo)));
+}
+
+void ShaderVk::InitPipelineLayout()
+{
+  ASSERT(!_pipelineLayout);
+
+  std::vector<vk::DescriptorSetLayout> setLayouts;
+  for (auto &layout : _descriptorSetLayouts)
+    setLayouts.push_back(layout.get());
+
+  vk::PipelineLayoutCreateInfo pipelineInfo;
+  pipelineInfo
+    .setSetLayoutCount(static_cast<uint32_t>(setLayouts.size()))
+    .setPSetLayouts(setLayouts.data());
+  _pipelineLayout = _device->CreatePipelineLayout(pipelineInfo);
+}
 
 NAMESPACE_END(gr)
 

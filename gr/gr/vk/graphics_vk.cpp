@@ -8,6 +8,8 @@
 #include "image_vk.h"
 #include "buffer_vk.h"
 #include "material_vk.h"
+#include "model_vk.h"
+#include "model_instance_vk.h"
 #include "util/dbg.h"
 
 NAMESPACE_BEGIN(gr)
@@ -56,7 +58,19 @@ std::shared_ptr<Image> GraphicsVk::CreateImage(Image::Usage usage, ColorFormat f
 std::shared_ptr<Material> GraphicsVk::CreateMaterial(std::shared_ptr<Shader> &shader)
 {
   auto material = std::make_shared<MaterialVk>(*_device, shader);
-  return std::shared_ptr<Material>();
+  return material;
+}
+
+std::shared_ptr<Model> GraphicsVk::CreateModel()
+{
+  auto model = std::make_shared<ModelVk>();
+  return model;
+}
+
+std::shared_ptr<ModelInstance> GraphicsVk::CreateModelInstance()
+{
+  auto modelInstance = std::make_shared<ModelInstanceVk>();
+  return modelInstance;
 }
 
 std::shared_ptr<Shader> GraphicsVk::LoadShader(std::string const &name)
