@@ -201,7 +201,7 @@ struct TypeDescription : LayoutDescription {
   {
     auto member = std::make_unique<TypeMemberImpl<Class, MemType>>(name, memPtr);
     ASSERT(_members.find(name) == _members.end());
-    _members.emplace(std::make_pair(name, std::move(member)));
+    _members.emplace(name, std::move(member));
   }
 };
 
@@ -211,7 +211,7 @@ struct BufferDescription : LayoutDescription {
   {
     auto member = std::make_unique<TypeMemberAtOffsetImpl<MemType>>(name, offset);
     ASSERT(_members.find(name) == _members.end());
-    _members.emplace(std::make_pair(name, std::move(member)));
+    _members.emplace(name, std::move(member));
   }
 };
 
