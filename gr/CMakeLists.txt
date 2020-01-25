@@ -29,7 +29,7 @@ target_include_directories(${BINARY} PRIVATE .)
 
 add_subdirectory(util)
 add_subdirectory(platform)
-add_subdirectory(gr)
+add_subdirectory(gr1)
 
 add_definitions(-DGR_${gr_implementation})
 

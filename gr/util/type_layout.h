@@ -5,106 +5,38 @@
 
 NAMESPACE_BEGIN(util)
 
-struct ArgsPack {
-  virtual ~ArgsPack() {}
-};
-
-template<typename... Args>
-struct ArgsPackImpl : public ArgsPack {
-public:
-  ArgsPackImpl(Args... args) : _argsTuple(args...) {}
-
-  template <typename Res>
-  Res Call(std::function<Res(Args...)> function)
-  {
-    return CallExpansion(function, std::index_sequence_for<Args...>{});
-  }
-
-  template <>
-  void Call(std::function<void(Args...)> function)
-  {
-    CallExpansion(function, std::index_sequence_for<Args...>{});
-  }
-
-private:
-  template<typename Res, std::size_t... I>
-  Res CallExpansion(std::function<Res(Args...)> function, std::index_sequence<I...>)
-  {
-    return function(std::get<I>(_argsTuple)...);
-  }
-
-  template<std::size_t... I>
-  void CallExpansion(std::function<void(Args...)> function, std::index_sequence<I...>)
-  {
-    function(std::get<I>(_argsTuple)...);
-  }
-
-  std::tuple<Args...> _argsTuple;
-};
-
-template <typename Res, typename... Args>
-struct FuncImpl;
-
-struct Func {
-  virtual TypeInfo *ResultType() = 0;
-  virtual bool CompatibleArgs(ArgsPack &args) = 0;
-
-  template <typename Res, typename... Args>
-  Res Call(Args... args)
-  {
-    if (!ResultType()->IsAssignableTo(TypeInfo::Get<Res>()))
-      return Res();
-    ArgsPackImpl<Args...> args(args...);
-    if (!CompatibleArgs(args))
-      return Res();
-    auto funcTyped = static_cast<FuncImpl<Res, Args...>*>(this);
-    return args.Call(funcTyped->_func);
-  }
-};
-
-template <typename Res, typename... Args>
-struct FuncImpl : Func {
-  FuncImpl(std::function<Res(Args...)> func) : _func(func) {}
-
-  virtual TypeInfo *ResultType() { return TypeInfo::Get<Res>(); }
-  virtual bool CompatibleArgs(ArgsPack &args) { return dynamic_cast<ArgsPackImpl<Args...>*>(&args); }
-
-  std::function<Res(Args...)> _func;
-};
-
-
 struct TypeMember {
   TypeMember(std::string name) : _name(name) {}
 
   std::string _name;
 
-  virtual TypeInfo *GetContainingType() = 0;
-  virtual TypeInfo *GetType() = 0;
-  virtual size_t GetOffset() = 0;
+  virtual TypeInfo const *GetContainingType() const = 0;
+  virtual TypeInfo const *GetType() const = 0;
+  virtual size_t GetOffset() const = 0;
 
-  virtual Func *Getter() = 0;
-  virtual Func *Setter() = 0;
+  virtual Func const *Getter() const = 0;
+  virtual Func const *Setter() const = 0;
 
   template <typename MemType, typename Class>
-  MemType GetClassValue(Class const &obj)
+  MemType GetClassValue(Class const &obj) const
   {
     return Getter()->Call<MemType>(const_cast<Class*>(&obj));
   }
 
   template <typename MemType, typename Class>
-  void SetClassValue(Class &obj, MemType memValue)
+  void SetClassValue(Class &obj, MemType memValue) const
   {
     Setter()->Call<void>(&obj, memValue);
   }
 
   template <typename MemType>
-  MemType GetBufferValue(void const *obj)
+  MemType GetBufferValue(void const *obj) const
   {
     return Getter()->Call<MemType>(const_cast<void*>(obj));
   }
 
   template <typename MemType>
-  void SetBufferValue(void *obj, MemType memValue)
+  void SetBufferValue(void *obj, MemType memValue) const
   {
     Setter()->Call<void>(obj, memValue);
   }
@@ -125,24 +57,24 @@ struct TypeMemberAtOffsetImpl : TypeMember {
   FuncImpl<MemType, void*> _getter;
   FuncImpl<void, void*, MemType> _setter;
 
-  TypeInfo *GetContainingType() override { return nullptr; }
-  TypeInfo *GetType() override { return TypeInfo::Get<MemType>(); }
-  size_t GetOffset() override { return _offset; }
+  TypeInfo const *GetContainingType() const override { return nullptr; }
+  TypeInfo const *GetType() const override { return TypeInfo::Get<MemType>(); }
+  size_t GetOffset() const override { return _offset; }
 
-  Func *Getter() override { return &_getter; }
-  Func *Setter() override { return &_setter; }
+  Func const *Getter() const override { return &_getter; }
+  Func const *Setter() const override { return &_setter; }
 
-  inline MemType *GetMemberPtr(void *obj)
+  inline MemType *GetMemberPtr(void *obj) const
   {
     return reinterpret_cast<MemType*>(reinterpret_cast<uint8_t*>(obj) + _offset);
   }
 
-  inline MemType GetValue(void *obj)
+  inline MemType GetValue(void *obj) const
   {
     return *GetMemberPtr(obj);
   }
 
-  inline void SetValue(void *obj, MemType memValue)
+  inline void SetValue(void *obj, MemType memValue) const
   {
     *GetMemberPtr(obj) = memValue;
   }
@@ -164,12 +96,12 @@ struct TypeMemberImpl : TypeMember {
   FuncImpl<MemType, Class*> _getter;
   FuncImpl<void, Class*, MemType> _setter;
 
-  TypeInfo *GetContainingType() override { return TypeInfo::Get<Class>(); }
-  TypeInfo *GetType() override { return TypeInfo::Get<MemType>(); }
-  size_t GetOffset() override { return reinterpret_cast<size_t>(&(static_cast<Class*>(nullptr)->*_member)); }
+  TypeInfo const *GetContainingType() const override { return TypeInfo::Get<Class>(); }
+  TypeInfo const *GetType() const override { return TypeInfo::Get<MemType>(); }
+  size_t GetOffset() const override { return reinterpret_cast<size_t>(&(static_cast<Class*>(nullptr)->*_member)); }
 
-  Func *Getter() override { return &_getter; }
-  Func *Setter() override { return &_setter; }
+  Func const *Getter() const override { return &_getter; }
+  Func const *Setter() const override { return &_setter; }
 
   inline MemType GetValue(Class *obj)
   {
@@ -183,7 +115,7 @@ struct TypeMemberImpl : TypeMember {
 };
 
 struct LayoutDescription {
-  TypeMember *GetMember(std::string const &name)
+  TypeMember const *GetMember(std::string const &name) const
   {
     auto found = _members.find(name);
     if (found == _members.end())

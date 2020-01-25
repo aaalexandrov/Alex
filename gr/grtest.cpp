@@ -5,9 +5,8 @@
 #include "util/rect.h"
 #include "util/time.h"
 #include "platform/platform.h"
-#include "gr/graphics.h"
-#include "gr/operation_queue.h"
-#include "gr/shader.h"
+#include "gr1/host.h"
+#include "gr1/device.h"
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 
@@ -34,14 +33,13 @@ static struct DbgInit {
 #endif
 
 #if defined(_WIN32)
-#include "gr/win32/presentation_surface_create_data_win32.h"
+#include "gr1/win32/presentation_surface_create_data_win32.h"
 #include "platform/win32/window_win32.h"
 #endif
 
 using namespace std;
 using namespace glm;
 using namespace platform;
-using namespace gr;
 
 int main()
 {
@@ -53,10 +51,6 @@ int main()
 
   window->SetName("gr test");
 
-  window->SetRectUpdatedFunc([](Window *window, Window::Rect rect) {
-    LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
-  });
-
   auto ri = window->GetRect();
   ri.SetSize(ivec2(300, 300));
   window->SetRect(ri);
@@ -67,23 +61,28 @@ int main()
 
   ri = window->GetRect();
 
-  auto graphics = std::unique_ptr<Graphics>(Graphics::Create());
-  graphics->SetLoadPath("../data");
+	gr1::Host host;
+	std::shared_ptr<gr1::Device> device = host.CreateDevice(0);
+
 
 #if defined(_WIN32)
   auto windowWin32 = dynamic_cast<WindowWin32*>(window);
-  PresentationSurfaceCreateDataWin32 surfaceData;
+  gr1::PresentationSurfaceCreateDataWin32 surfaceData;
   surfaceData._hInstance = windowWin32->GetPlatformWin32()->_hInstance;
   surfaceData._hWnd = windowWin32->_hWnd;
 #endif
 
-  graphics->Init(surfaceData);
-  graphics->GetOperationQueue()->GetPresentationSurface()->Update(ri.GetSize().x, ri.GetSize().y);
+	auto surface = device->CreateResource<gr1::PresentationSurface>();
+	surface->Init(surfaceData);
+	surface->Update(ri.GetSize().x, ri.GetSize().y);
+
+	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
+		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
+		surface->Update(rect.GetSize().x, rect.GetSize().y);
+	});
+
 
   {
-    auto shader = graphics->LoadShader("simple");
-    auto image = graphics->LoadImage("grid2.png");
-
     auto start = std::chrono::system_clock::now();
 
     while (!window->ShouldClose()) {
@@ -100,7 +99,6 @@ int main()
         LOG("Input ", text);
       }
 
-      graphics->Update();
       platform->Update();
     }
 

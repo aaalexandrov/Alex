@@ -75,7 +75,7 @@ struct Creator : CreatorTyped<Class> {
 struct Z {
   int _i;
 
-  virtual TypeInfo *GetType() { return TypeInfo::Get<Z>(); }
+  virtual TypeInfo const *GetType() { return TypeInfo::Get<Z>(); }
 };
 
 struct A : Z {
@@ -84,17 +84,17 @@ struct A : Z {
   A() {}
   A(std::string s) : _s(s) {}
 
-  TypeInfo *GetType() override { return TypeInfo::Get<A>(); }
+  TypeInfo const *GetType() override { return TypeInfo::Get<A>(); }
 };
 
 struct B : A {
   int _b;
 
-  TypeInfo *GetType() override { return TypeInfo::Get<B>(); }
+  TypeInfo const *GetType() override { return TypeInfo::Get<B>(); }
 };
 
 struct C {
-  virtual TypeInfo *GetType() { return TypeInfo::Get<C>(); }
+  virtual TypeInfo const *GetType() { return TypeInfo::Get<C>(); }
 };
 
 

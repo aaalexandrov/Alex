@@ -29,6 +29,9 @@ set(dir_SOURCES
 	time.h
 	time.cpp
 
+	type_factory.h
+	type_factory.cpp
+
 	type_layout.h
 	type_layout.cpp
 	
