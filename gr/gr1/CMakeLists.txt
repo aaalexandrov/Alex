@@ -76,6 +76,9 @@ if(gr_implementation STREQUAL VK)
 		vk/render_pass_vk.h
 		vk/render_pass_vk.cpp
 
+		vk/render_state_vk.h
+		vk/render_state_vk.cpp
+
 		vk/shader_vk.h
 		vk/shader_vk.cpp
 

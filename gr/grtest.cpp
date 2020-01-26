@@ -95,11 +95,13 @@ int main()
 	surface->Init(surfaceData);
 	surface->Update(ri.GetSize().x, ri.GetSize().y);
 
-	auto backBuffer = device->CreateResource<Image>();
-	backBuffer->Init(Image::Usage::RenderTarget, ColorFormat::R8G8B8A8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 0);
+	auto backBuffer = std::static_pointer_cast<Image>(surface->AcquireNextImage()->shared_from_this());
+	auto depthBuffer = device->CreateResource<Image>();
+	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 0);
 
 	auto renderPass = device->CreateResource<RenderPass>();
 	renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
+	renderPass->AddAttachment(ContentTreatment::Clear, depthBuffer, ContentTreatment::Keep, vec4(1, 0, 0, 0));
 	renderPass->Prepare();
 
 	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {

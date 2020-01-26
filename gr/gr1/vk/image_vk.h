@@ -29,8 +29,8 @@ public:
 
   vk::ImageLayout GetEffectiveImageLayout(QueueVk *queue) const;
 
-  static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return _vkFormat2ColorFormat.ToDst(vkFmt); }
-  static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return _vkFormat2ColorFormat.ToSrc(clrFmt); }
+  static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return s_vkFormat2ColorFormat.ToDst(vkFmt); }
+  static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return s_vkFormat2ColorFormat.ToSrc(clrFmt); }
 
   vk::ImageViewType GetImageViewType();
   static vk::ImageType GetImageType(glm::uvec3 const &size);
@@ -48,7 +48,7 @@ public:
   UniqueVmaAllocation _memory;
   vk::ImageLayout _layout;
 
-  static util::ValueRemapper<vk::Format, ColorFormat> _vkFormat2ColorFormat;
+  static util::ValueRemapper<vk::Format, ColorFormat> s_vkFormat2ColorFormat;
 };
 
 NAMESPACE_END(gr1)

@@ -18,6 +18,8 @@ public:
 	void Update(uint32_t width, uint32_t height) override;
 	glm::uvec2 GetSize() override;
 
+	Image *AcquireNextImage() override;
+	Image *GetCurrentImage() override;
 protected:
 	void CreateSwapChain(uint32_t width, uint32_t height);
 
@@ -36,6 +38,8 @@ protected:
 	vk::SurfaceFormatKHR _surfaceFormat;
 	vk::PresentModeKHR _presentMode;
 	vk::UniqueSwapchainKHR _swapchain;
+	uint32_t _currentImageIndex;
+	std::vector<std::shared_ptr<Image>> _images;
 };
 
 NAMESPACE_END(gr1)

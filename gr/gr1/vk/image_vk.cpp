@@ -15,9 +15,10 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(policy::ctor::as_raw_ptr);
 }
 
-util::ValueRemapper<vk::Format, ColorFormat> ImageVk::_vkFormat2ColorFormat { {
+util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
   { vk::Format::eUndefined,          ColorFormat::Invalid    },
-  { vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8   },
+	{ vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8   },
+	{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8   },
   { vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
 } };
 

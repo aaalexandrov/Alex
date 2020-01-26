@@ -16,27 +16,48 @@ inline constexpr ENUMTYPE operator ^ (ENUMTYPE a, ENUMTYPE b) throw() { return E
 inline ENUMTYPE &operator ^= (ENUMTYPE &a, ENUMTYPE b) throw() { return (ENUMTYPE &)(((std::underlying_type<ENUMTYPE>::type &)a) ^= ((std::underlying_type<ENUMTYPE>::type)b)); } \
 inline constexpr bool operator !(ENUMTYPE a) throw() { return !(std::underlying_type<ENUMTYPE>::type)a; }
 
-template <typename SRC, typename DST>
-struct ValueRemapper {
-  std::unordered_map<SRC, DST> _src2dst;
-  std::unordered_map<DST, SRC> _dst2src;
+template<typename SRCARG, typename DSTARG>
+DSTARG CheckBitmask(SRCARG src, std::unordered_map<std::underlying_type_t<SRCARG>, DSTARG> const &src2dst)
+{
+	std::underlying_type_t<DSTARG> dstVal = 0;
+	std::underlying_type_t<SRCARG> srcVal = (std::underlying_type_t<SRCARG>)src;
+	for (auto &pair : src2dst) {
+		if ((pair.first & srcVal) == pair.first) {
+			dstVal |= (std::underlying_type_t<DSTARG>)pair.second;
+		}
+	}
+	return DSTARG(dstVal);
+}
 
-  ValueRemapper(std::vector<std::pair<SRC, DST>> const &pairs) 
+template <typename SRC, typename DST, bool BITMASK = false>
+struct ValueRemapper {
+  std::unordered_map<std::underlying_type_t<SRC>, DST> _src2dst;
+  std::unordered_map<std::underlying_type_t<DST>, SRC> _dst2src;
+
+  ValueRemapper(std::vector<std::pair<SRC, DST>> const &pairs)
   {
     for (auto &pair : pairs) {
-      _src2dst.insert(pair);
-      _dst2src.insert(std::make_pair(pair.second, pair.first));
+      _src2dst.insert(std::make_pair((std::underlying_type_t<SRC>)pair.first, pair.second));
+      _dst2src.insert(std::make_pair((std::underlying_type_t<DST>)pair.second, pair.first));
     }
   }
 
   DST ToDst(SRC src) 
   {
-    return _src2dst.at(src);
+		if (BITMASK) {
+			return CheckBitmask(src, _src2dst);
+		}
+
+    return _src2dst.at((std::underlying_type_t<SRC>)src);
   }
 
   SRC ToSrc(DST dst)
   {
-    return _dst2src.at(dst);
+		if (BITMASK) {
+			return CheckBitmask(dst, _dst2src);
+		}
+
+    return _dst2src.at((std::underlying_type_t<DST>)dst);
   }
 };
 

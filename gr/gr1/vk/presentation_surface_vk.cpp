@@ -1,5 +1,7 @@
 #include "presentation_surface_vk.h"
 #include "device_vk.h"
+#include "image_vk.h"
+#include "../graphics_exception.h"
 #include "util/mathutl.h"
 #include "rttr/registration.h"
 #include "rttr/rttr_cast.h"
@@ -65,6 +67,21 @@ glm::uvec2 PresentationSurfaceVk::GetSize()
 	return glm::uvec2(surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height);
 }
 
+Image *PresentationSurfaceVk::AcquireNextImage()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, 100000, nullptr, nullptr);
+	if (result.result != vk::Result::eSuccess)
+		throw GraphicsException("AcquireNextImage() failed!", (uint32_t)result.result);
+	_currentImageIndex = result.value;
+	return GetCurrentImage();
+}
+
+Image *PresentationSurfaceVk::GetCurrentImage()
+{
+	return _images[_currentImageIndex].get();
+}
+
 void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
@@ -92,10 +109,18 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 		.setPresentMode(_presentMode)
 		.setClipped(true);
 
+	_images.clear();
 	_swapchain.reset();
+
 	_swapchain = deviceVk->_device->createSwapchainKHRUnique(chainInfo, deviceVk->AllocationCallbacks());
 
-	// std::vector<vk::Image> chainImages = deviceVk->_device->getSwapchainImagesKHR(*_swapchain);
+	 std::vector<vk::Image> chainImages = deviceVk->_device->getSwapchainImagesKHR(*_swapchain);
+	 for (auto img : chainImages) {
+		 _images.push_back(deviceVk->CreateResource<Image>());
+		 ImageVk *imageVk = static_cast<ImageVk*>(_images.back().get());
+		 glm::uvec2 size = GetSize();
+		 imageVk->Init(Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(size.x, size.y, 0, 0), 0);
+	 }
 }
 
 vk::SurfaceFormatKHR PresentationSurfaceVk::GetSurfaceFormat()
