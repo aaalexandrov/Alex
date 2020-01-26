@@ -4,9 +4,14 @@
 #include "glm/glm.hpp"
 #include "util/rect.h"
 #include "util/time.h"
+#include "util/file.h"
 #include "platform/platform.h"
 #include "gr1/host.h"
 #include "gr1/device.h"
+#include "gr1/image.h"
+#include "gr1/shader.h"
+#include "gr1/render_pass.h"
+#include <string>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
 
@@ -40,10 +45,21 @@ static struct DbgInit {
 using namespace std;
 using namespace glm;
 using namespace platform;
+using namespace gr1;
+
+shared_ptr<Shader> LoadShader(Device *device, std::string name)
+{
+	vector<uint8_t> contents = util::ReadFile(string("../data/") + name);
+	string ext = name.substr(name.find_last_of('.'));
+	ShaderKind kind = ext == ".vert" ? ShaderKind::Vertex : ShaderKind::Fragment;
+	shared_ptr<Shader> shader = device->CreateResource<Shader>();
+	shader->Init(name, kind, contents);
+	return shader;
+}
 
 int main()
 {
-  auto platform = std::unique_ptr<Platform>(Platform::Create());
+  auto platform = unique_ptr<Platform>(Platform::Create());
 
   cout << "Current execution directory: " << platform->CurrentDirectory() << endl;
 
@@ -61,29 +77,37 @@ int main()
 
   ri = window->GetRect();
 
-	gr1::Host host;
-	std::shared_ptr<gr1::Device> device = host.CreateDevice(0);
+	Host host;
+	shared_ptr<Device> device = host.CreateDevice(0);
 
 
 #if defined(_WIN32)
   auto windowWin32 = dynamic_cast<WindowWin32*>(window);
-  gr1::PresentationSurfaceCreateDataWin32 surfaceData;
+  PresentationSurfaceCreateDataWin32 surfaceData;
   surfaceData._hInstance = windowWin32->GetPlatformWin32()->_hInstance;
   surfaceData._hWnd = windowWin32->_hWnd;
 #endif
 
-	auto surface = device->CreateResource<gr1::PresentationSurface>();
+	auto vertShader = LoadShader(device.get(), "simple.vert");
+	auto fragShader = LoadShader(device.get(), "simple.frag");
+
+	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData);
 	surface->Update(ri.GetSize().x, ri.GetSize().y);
 
+	auto backBuffer = device->CreateResource<Image>();
+	backBuffer->Init(Image::Usage::RenderTarget, ColorFormat::R8G8B8A8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 0);
+
+	auto renderPass = device->CreateResource<RenderPass>();
+	renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
+	renderPass->Prepare();
+
 	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
 		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
-		surface->Update(rect.GetSize().x, rect.GetSize().y);
 	});
 
-
   {
-    auto start = std::chrono::system_clock::now();
+    auto start = chrono::system_clock::now();
 
     while (!window->ShouldClose()) {
       if (window->GetInput().IsJustPressed(Key::Enter)) {
@@ -102,7 +126,7 @@ int main()
       platform->Update();
     }
 
-    LOG("Quitting after ", util::ToSeconds(std::chrono::system_clock::now() - start), " seconds");
+    LOG("Quitting after ", util::ToSeconds(chrono::system_clock::now() - start), " seconds");
   }
 
   return 0;

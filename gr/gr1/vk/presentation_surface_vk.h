@@ -13,10 +13,12 @@ public:
 	PresentationSurfaceVk(Device &device) : PresentationSurface(device) {}
 
 	void Init(PresentationSurfaceCreateData &createData) override;
-	inline bool IsValid() override { return (bool)_surface; }
+	inline bool IsValid() override { return static_cast<bool>(_surface); }
 
 	void Update(uint32_t width, uint32_t height) override;
+	glm::uvec2 GetSize() override;
 
+protected:
 	void CreateSwapChain(uint32_t width, uint32_t height);
 
 #if defined(_WIN32)

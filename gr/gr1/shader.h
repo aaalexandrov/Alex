@@ -24,16 +24,23 @@ class Shader : public Resource {
 public:
   struct UniformBufferInfo {
     std::string _name;
-    ShaderKind _kind;
     uint32_t _binding;
     BufferDescPtr _uniformDesc = BufferDesc::Create();
   };
 
 	Shader(Device &device) : Resource(device) {}
 
-  virtual void Init(std::string const &name);
+  virtual void Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents);
+	virtual void LoadShader(std::vector<uint8_t> const &contents) = 0;
 
-  std::string _name;
+	inline std::string const &GetName() const { return _name; }
+	inline ShaderKind GetShaderKind() const { return _kind; }
+	inline BufferDesc *GetVertexDescription() const { return _vertexDesc.get(); }
+	inline std::vector<UniformBufferInfo> const &GetUniformBuffers() const { return _uniformBuffers; }
+
+protected:
+	std::string _name;
+	ShaderKind _kind;
   BufferDescPtr _vertexDesc = BufferDesc::Create();
   std::vector<UniformBufferInfo> _uniformBuffers;
 };

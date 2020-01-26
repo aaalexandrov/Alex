@@ -15,7 +15,7 @@ class OutputPass : public Resource {
 public:
 	OutputPass(Device &device) : Resource(device) {}
 
-	virtual DependencyType GetDependencyType(Resource *resource) = 0;
+	virtual void GetDependencies(DependencyType dependencyType, std::unordered_set<Resource*> &dependencies) = 0;
 
 	virtual void Prepare() = 0;
 	virtual void Execute() = 0;

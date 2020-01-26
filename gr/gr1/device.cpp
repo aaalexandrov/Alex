@@ -9,7 +9,7 @@ std::shared_ptr<Resource> Device::CreateResource(rttr::type resourceType)
 }
 
 
-void ExecutionQueue::EnqueuePass(std::shared_ptr<OutputPass> pass)
+void ExecutionQueue::EnqueuePass(std::shared_ptr<OutputPass> const &pass)
 {
 	_passes.emplace_back(pass);
 }

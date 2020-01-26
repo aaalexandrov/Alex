@@ -58,6 +58,13 @@ void PresentationSurfaceVk::Update(uint32_t width, uint32_t height)
 	CreateSwapChain(width, height);
 }
 
+glm::uvec2 PresentationSurfaceVk::GetSize()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	vk::SurfaceCapabilitiesKHR surfaceCaps = deviceVk->_physicalDevice.getSurfaceCapabilitiesKHR(*_surface);
+	return glm::uvec2(surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height);
+}
+
 void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
@@ -88,7 +95,7 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 	_swapchain.reset();
 	_swapchain = deviceVk->_device->createSwapchainKHRUnique(chainInfo, deviceVk->AllocationCallbacks());
 
-	std::vector<vk::Image> chainImages = deviceVk->_device->getSwapchainImagesKHR(*_swapchain);
+	// std::vector<vk::Image> chainImages = deviceVk->_device->getSwapchainImagesKHR(*_swapchain);
 }
 
 vk::SurfaceFormatKHR PresentationSurfaceVk::GetSurfaceFormat()

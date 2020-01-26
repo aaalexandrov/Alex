@@ -6,6 +6,12 @@
 
 NAMESPACE_BEGIN(gr1)
 
+enum class ContentTreatment {
+	Keep,
+	Clear,
+	DontCare,
+};
+
 class Device;
 class Resource : public std::enable_shared_from_this<Resource> {
 	RTTR_ENABLE()

@@ -52,6 +52,9 @@ endif()
 
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
+		vk/buffer_vk.h
+		vk/buffer_vk.cpp
+		
 		vk/device_vk.h
 		vk/device_vk.cpp 
 	
@@ -61,11 +64,20 @@ if(gr_implementation STREQUAL VK)
 		vk/host_allocation_tracker_vk.h
 		vk/host_allocation_tracker_vk.cpp
 
+		vk/image_vk.h
+		vk/image_vk.cpp
+		
 		vk/presentation_surface_vk.h
 		vk/presentation_surface_vk.cpp
 
 		vk/queue_vk.h
 		vk/queue_vk.cpp
+
+		vk/render_pass_vk.h
+		vk/render_pass_vk.cpp
+
+		vk/shader_vk.h
+		vk/shader_vk.cpp
 
 		vk/vk.h
 		

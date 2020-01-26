@@ -18,9 +18,7 @@ public:
 
   Buffer(Device &device) : Resource(device) {}
 
-  virtual void Init(BufferDescPtr &bufferDesc) { _bufferDesc = bufferDesc; }
-
-  inline bool IsValid() override { return (bool)_bufferDesc; }
+	virtual void Init(Usage usage, BufferDescPtr &bufferDesc) = 0;
 
   virtual Usage GetUsage() = 0;
   virtual size_t GetSize() = 0;
@@ -28,7 +26,10 @@ public:
   virtual void *Map() = 0;
   virtual void Unmap() = 0;
 
-  BufferDescPtr _bufferDesc;
+	inline BufferDescPtr const &GetBufferDescription() const { return _bufferDesc; }
+
+protected:
+	BufferDescPtr _bufferDesc;
 };
 
 NAMESPACE_END(gr1)

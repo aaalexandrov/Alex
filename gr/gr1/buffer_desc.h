@@ -1,22 +1,14 @@
 #pragma once
 
 #include "util/namespace.h"
-#include "util/rtti.h"
+#include "rttr/rttr_enable.h"
 #include <memory>
 #include "glm/glm.hpp"
-
-RTTI_BIND(glm::vec2)
-RTTI_BIND(glm::vec3)
-RTTI_BIND(glm::vec4)
-
-RTTI_BIND(glm::mat2)
-RTTI_BIND(glm::mat3)
-RTTI_BIND(glm::mat4)
 
 NAMESPACE_BEGIN(gr1)
 
 struct BufferElement {
-  util::TypeInfo const *_type;
+  rttr::type _type;
   size_t _offset;
   uint32_t _arraySize;
   uint32_t _location;
@@ -26,7 +18,7 @@ struct BufferElement {
   template <typename Class>
   Class *GetPointer(void *buffer) const
   {
-    ASSERT(_type == TypeInfo::Get<Class>());
+    ASSERT(_type == rttr::type::get<Class>());
     return reinterpret_cast<Class*>(GetPtr(buffer));
   }
 };
@@ -47,7 +39,7 @@ struct BufferDesc {
 
   void AddElement(std::string name, BufferElement &elem)
   {
-    _size = std::max(_size, elem._offset + elem._type->GetSize());
+    _size = std::max(_size, elem._offset + elem._type.get_sizeof());
     _elements.emplace(name, elem);
   }
 

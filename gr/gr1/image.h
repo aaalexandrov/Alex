@@ -2,6 +2,7 @@
 
 #include "resource.h"
 #include "util/rect.h"
+#include "util/enumutl.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -29,15 +30,11 @@ public:
 
   virtual void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels);
 
-  inline bool IsValid() override { return _format != ColorFormat::Invalid; }
-
   ColorFormat GetColorFormat() const { return _format; }
   Usage GetUsage() const { return _usage; }
   glm::uvec4 GetSize() const { return _size; }
   uint32_t GetMipLevels() const { return _mipLevels; }
   uint32_t GetArrayLayers() const { return _size.w; }
-
-  virtual void UpdateContents(util::BoxWithLayer const &region, uint32_t mipLevel, ImageData const &content, glm::uvec4 contentPos) = 0;
 
   virtual void *Map() = 0;
   virtual void Unmap() = 0;
@@ -66,6 +63,8 @@ struct ImageData {
   static glm::uvec4 GetPackedPitch(glm::uvec4 imgSize, uint32_t elemSize);
   static void Copy(ImageData const &src, glm::uvec4 srcPos, ImageData const &dst, glm::uvec4 dstPos, glm::uvec4 size);
 };
+
+DEFINE_ENUM_BIT_OPERATORS(Image::Usage);
 
 NAMESPACE_END(gr1)
 

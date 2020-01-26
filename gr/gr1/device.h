@@ -41,7 +41,7 @@ public:
 	ExecutionQueue(Device &device) : _device(&device) {}
 	virtual ~ExecutionQueue() {}
 
-	virtual void EnqueuePass(std::shared_ptr<OutputPass> pass);
+	virtual void EnqueuePass(std::shared_ptr<OutputPass> const &pass);
 	virtual void ExecutePasses();
 
 	template<typename DeviceType>
