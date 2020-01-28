@@ -8,6 +8,7 @@
 NAMESPACE_BEGIN(gr1)
 
 class Resource;
+enum class ResourceState;
 class OutputPass;
 class ExecutionQueue;
 
@@ -23,7 +24,7 @@ public:
 	template<typename ResourceType>
 	std::shared_ptr<ResourceType> CreateResource() { return std::static_pointer_cast<ResourceType>(CreateResource(rttr::type::get<ResourceType>())); }
 
-	inline ExecutionQueue *GetExecutionQueue() { return _queue.get(); }
+	inline ExecutionQueue &GetExecutionQueue() { return *_queue.get(); }
 	inline Host::DeviceInfo const &GetDeviceInfo() const { return _deviceInfo; }
 	inline ValidationLevel GetValidationLevel() const { return _validationLevel; }
 
@@ -42,12 +43,13 @@ public:
 	virtual ~ExecutionQueue() {}
 
 	virtual void EnqueuePass(std::shared_ptr<OutputPass> const &pass);
-	virtual void ExecutePasses();
+	virtual void ExecutePasses() = 0;
 
 	template<typename DeviceType>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
 	virtual void WaitExecutionFinished() = 0;
+	virtual std::shared_ptr<OutputPass> CreateTransitionPass(Resource *resource, ResourceState srcState, ResourceState dstState);
 
 	Device *_device;
 	std::vector<std::shared_ptr<OutputPass>> _passes;

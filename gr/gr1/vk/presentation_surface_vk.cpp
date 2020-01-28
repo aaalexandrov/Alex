@@ -67,19 +67,20 @@ glm::uvec2 PresentationSurfaceVk::GetSize()
 	return glm::uvec2(surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height);
 }
 
-Image *PresentationSurfaceVk::AcquireNextImage()
+std::shared_ptr<Image> const &PresentationSurfaceVk::AcquireNextImage(vk::Semaphore signalSemaphore, vk::Fence fence)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, 100000, nullptr, nullptr);
+	uint64_t timeout = signalSemaphore || fence ? std::numeric_limits<uint64_t>::max() : 1000000000;
+	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, timeout, signalSemaphore, fence);
 	if (result.result != vk::Result::eSuccess)
 		throw GraphicsException("AcquireNextImage() failed!", (uint32_t)result.result);
 	_currentImageIndex = result.value;
 	return GetCurrentImage();
 }
 
-Image *PresentationSurfaceVk::GetCurrentImage()
+std::shared_ptr<Image> const &PresentationSurfaceVk::GetCurrentImage()
 {
-	return _images[_currentImageIndex].get();
+	return _images[_currentImageIndex];
 }
 
 void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)

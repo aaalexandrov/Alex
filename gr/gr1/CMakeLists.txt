@@ -64,9 +64,18 @@ if(gr_implementation STREQUAL VK)
 		vk/host_allocation_tracker_vk.h
 		vk/host_allocation_tracker_vk.cpp
 
+		vk/image_transition_pass_vk.h
+		vk/image_transition_pass_vk.cpp
+
 		vk/image_vk.h
 		vk/image_vk.cpp
 		
+		vk/output_pass_vk.h
+		vk/output_pass_vk.cpp
+
+		vk/present_pass_vk.h
+		vk/present_pass_vk.cpp
+
 		vk/presentation_surface_vk.h
 		vk/presentation_surface_vk.cpp
 

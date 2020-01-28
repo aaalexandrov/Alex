@@ -3,15 +3,25 @@
 
 NAMESPACE_BEGIN(gr1)
 
-void RenderPass::GetDependencies(DependencyType dependencyType, std::unordered_set<Resource*> &dependencies)
+glm::uvec2 RenderPass::GetRenderAreaSize()
 {
-	// Attachments are read and write dependencies
+	glm::uvec2 size(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
 	for (auto &attach : _attachments) {
-		dependencies.insert(attach._image.get());
+		size = util::VecMin(size, glm::uvec2(attach._image->GetSize()));
+	}
+	return size;
+}
+
+void RenderPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
+{
+	if (dependencyType == DependencyType::Input) {
+		for (auto &attach : _attachments) {
+			addDependencyFunc(attach._image.get(), ResourceState::RenderWrite);
+		}
 	}
 
 	for (auto &cmd : _commands) {
-		cmd->GetDependencies(dependencyType, dependencies);
+		cmd->GetDependencies(dependencyType, addDependencyFunc);
 	}
 }
 

@@ -77,4 +77,12 @@ vk::AccessFlags QueueVk::GetAccessFlags(QueueRole role)
   return flags;
 }
 
+
+CmdBufferVk::CmdBufferVk(QueueVk &queue, vk::CommandBufferLevel level)
+	: _queue(&queue)
+	, _cmdBuffer(std::move(queue.AllocateCmdBuffer()))
+{
+}
+
 NAMESPACE_END(gr1)
+

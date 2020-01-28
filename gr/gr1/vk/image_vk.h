@@ -17,7 +17,7 @@ public:
 	void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
 	void Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels);
 
-	inline bool IsValid() override { return static_cast<bool>(_image); }
+	inline rttr::type GetStateTransitionPassType() override;
 
   void *Map() override;
   void Unmap() override;

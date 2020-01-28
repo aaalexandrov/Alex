@@ -21,8 +21,8 @@ public:
   virtual void Update(uint32_t width, uint32_t height) = 0;
 	virtual glm::uvec2 GetSize() = 0;
 
-	virtual Image *AcquireNextImage() = 0;
-	virtual Image *GetCurrentImage() = 0;
+	virtual std::shared_ptr<Image> const &AcquireNextImage() = 0;
+	virtual std::shared_ptr<Image> const &GetCurrentImage() = 0;
 };
 
 NAMESPACE_END(gr1)

@@ -13,6 +13,47 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(policy::ctor::as_raw_ptr);
 }
 
+RenderPassVk::RenderPassVk(Device &device) 
+	: RenderPass(device)
+	, PassVk(*static_cast<DeviceVk*>(&device)) 
+{
+}
+
+void RenderPassVk::Prepare(PassData *passData)
+{ 
+	InitRenderPass(); 
+	InitFramebuffer();
+	InitBeginEnd();
+}
+
+void RenderPassVk::Execute(PassData *passData)
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	PassDataVk *passDataVk = static_cast<PassDataVk*>(passData);
+
+	if (passDataVk->_waitFence) {
+		deviceVk->_device->waitForFences(1, &passDataVk->_waitFence, true, std::numeric_limits<uint64_t>::max());
+	}
+
+	vk::PipelineStageFlags waitStageFlags;
+	std::array<vk::SubmitInfo, 1> submits;
+	submits.front()
+		.setCommandBufferCount(1)
+		.setPCommandBuffers(&*_passCmds)
+		.setSignalSemaphoreCount(1)
+		.setPSignalSemaphores(&*_signalSemaphore);
+
+	if (passDataVk->_waitSemaphore) {
+		waitStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eTransfer;
+		submits.front()
+			.setWaitSemaphoreCount(1)
+			.setPWaitSemaphores(&passDataVk->_waitSemaphore)
+			.setPWaitDstStageMask(&waitStageFlags);
+	}
+
+	deviceVk->GraphicsQueue()._queue.submit(submits, *_signalFence);
+}
+
 void RenderPassVk::InitRenderPass()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
@@ -75,8 +116,76 @@ void RenderPassVk::InitRenderPass()
 		.setDependencyCount(static_cast<uint32_t>(subpassDeps.size()))
 		.setPDependencies(subpassDeps.data());
 
+	_renderPass.reset();
 	_renderPass = deviceVk->_device->createRenderPassUnique(passInfo, deviceVk->AllocationCallbacks());
 }
+
+void RenderPassVk::InitFramebuffer()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+
+	std::vector<vk::ImageView> attachmentViews;
+	for (auto &attach : _attachments) {
+		ImageVk *imageVk = static_cast<ImageVk*>(attach._image.get());
+		attachmentViews.push_back(*imageVk->_view);
+	}
+
+	glm::uvec2 size = GetRenderAreaSize();
+
+	vk::FramebufferCreateInfo frameInfo;
+	frameInfo
+		.setRenderPass(*_renderPass)
+		.setAttachmentCount(static_cast<uint32_t>(attachmentViews.size()))
+		.setPAttachments(attachmentViews.data())
+		.setWidth(size.x)
+		.setHeight(size.y)
+		.setLayers(1);
+
+	_framebuffer.reset();
+	_framebuffer = deviceVk->_device->createFramebufferUnique(frameInfo, deviceVk->AllocationCallbacks());
+}
+
+void RenderPassVk::InitBeginEnd()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+
+	if (!_passCmds) {
+		_passCmds = std::move(deviceVk->GraphicsQueue().AllocateCmdBuffer());
+	} else {
+		_passCmds->reset(vk::CommandBufferResetFlags());
+	}
+
+	vk::CommandBufferBeginInfo beginInfo;
+	_passCmds->begin(beginInfo);
+
+	std::vector<vk::ClearValue> clearValues;
+	for (auto &attach : _attachments) {
+		if (attach._image->GetUsage() == Image::Usage::DepthBuffer) {
+			clearValues.emplace_back(vk::ClearDepthStencilValue(attach._clearValue[0], static_cast<uint32_t>(attach._clearValue[1])));
+		} else {
+			std::array<float, 4> color{ attach._clearValue[0], attach._clearValue[1], attach._clearValue[2], attach._clearValue[3] };
+			clearValues.emplace_back(vk::ClearColorValue(color));
+		}
+	}
+
+	glm::uvec2 size = GetRenderAreaSize();
+	vk::RenderPassBeginInfo passBegin;
+	passBegin
+		.setRenderPass(*_renderPass)
+		.setFramebuffer(*_framebuffer)
+		.setRenderArea(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(size.x, size.y)))
+		.setClearValueCount(static_cast<uint32_t>(clearValues.size()))
+		.setPClearValues(clearValues.data());
+
+	_passCmds->beginRenderPass(passBegin, vk::SubpassContents::eInline);
+
+	// record render commands here
+
+	_passCmds->endRenderPass();
+
+	_passCmds->end();
+}
+
 
 vk::AttachmentLoadOp RenderPassVk::GetLoadOpFromContent(ContentTreatment content)
 {
@@ -103,4 +212,3 @@ vk::AttachmentStoreOp RenderPassVk::GetStoreOpFromContent(ContentTreatment conte
 }
 
 NAMESPACE_END(gr1)
-

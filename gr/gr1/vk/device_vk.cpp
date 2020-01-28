@@ -61,6 +61,18 @@ glm::uvec3 DeviceVk::VersionToVector(uint32_t version)
 	return glm::uvec3(VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version), VK_VERSION_PATCH(version));
 }
 
+vk::UniqueSemaphore DeviceVk::CreateSemaphore()
+{
+	vk::SemaphoreCreateInfo semInfo;
+	return _device->createSemaphoreUnique(semInfo, AllocationCallbacks());
+}
+
+vk::UniqueFence DeviceVk::CreateFence(bool createSignaled)
+{
+	vk::FenceCreateInfo fenceInfo(createSignaled ? vk::FenceCreateFlagBits::eSignaled : vk::FenceCreateFlags());
+	return _device->createFenceUnique(fenceInfo, AllocationCallbacks());
+}
+
 void DeviceVk::CreateInstance()
 {
 	auto instanceLayers = vk::enumerateInstanceLayerProperties();

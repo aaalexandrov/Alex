@@ -11,7 +11,6 @@ public:
   ShaderVk(Device &device) : Shader(device) {}
 
 	void LoadShader(std::vector<uint8_t> const &contents) override;
-	inline bool IsValid() override { return _name.length() && static_cast<bool>(_module); }
 
 protected:
 	void LoadModule(std::vector<uint8_t> const &contents);

@@ -13,14 +13,16 @@ public:
 	PresentationSurfaceVk(Device &device) : PresentationSurface(device) {}
 
 	void Init(PresentationSurfaceCreateData &createData) override;
-	inline bool IsValid() override { return static_cast<bool>(_surface); }
+	rttr::type GetStateTransitionPassType() override { throw "Implement it!"; }
 
 	void Update(uint32_t width, uint32_t height) override;
 	glm::uvec2 GetSize() override;
 
-	Image *AcquireNextImage() override;
-	Image *GetCurrentImage() override;
-protected:
+	std::shared_ptr<Image> const &AcquireNextImage() override { return AcquireNextImage(nullptr, nullptr); }
+	std::shared_ptr<Image> const &AcquireNextImage(vk::Semaphore signalSemaphore, vk::Fence fence);
+	std::shared_ptr<Image> const &GetCurrentImage() override;
+
+public:
 	void CreateSwapChain(uint32_t width, uint32_t height);
 
 #if defined(_WIN32)

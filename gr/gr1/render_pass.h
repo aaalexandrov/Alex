@@ -13,7 +13,7 @@ class RenderCommand {
 public:
 	virtual ~RenderCommand() {}
 
-	virtual void GetDependencies(DependencyType dependencyType, std::unordered_set<Resource*> &dependencies) = 0;
+	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
 };
 
 class RenderPass : public OutputPass {
@@ -26,9 +26,9 @@ public:
 	template<typename CmdType>
 	std::shared_ptr<CmdType> CreateCommand() { return std::static_pointer_cast<CmdType>(CreateCommand(rttr::type::get<CmdType>())); }
 
-	inline bool IsValid() override { return _attachments.size(); }
+	virtual glm::uvec2 GetRenderAreaSize();
 
-	void GetDependencies(DependencyType dependencyType, std::unordered_set<Resource*> &dependencies) override;
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 	virtual void ClearAttachments();
 	virtual void AddAttachment(ContentTreatment inputContent, std::shared_ptr<Image> const &img, ContentTreatment outputContent, glm::vec4 clearValue = glm::vec4());

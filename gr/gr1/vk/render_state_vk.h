@@ -11,9 +11,7 @@ public:
 	RenderStateVk(Device &device) : RenderState(device) {}
 
 	void Init() override;
-
-	// TO REMOVE
-	inline bool IsValid() override { return true; }
+	rttr::type GetStateTransitionPassType() override { return rttr::type::get<void>(); }
 
 protected:
 

@@ -14,21 +14,14 @@ void ExecutionQueue::EnqueuePass(std::shared_ptr<OutputPass> const &pass)
 	_passes.emplace_back(pass);
 }
 
-void ExecutionQueue::ExecutePasses()
+std::shared_ptr<OutputPass> ExecutionQueue::CreateTransitionPass(Resource *resource, ResourceState srcState, ResourceState dstState)
 {
-	for (auto &pass : _passes) {
-		pass->Prepare();
-	}
-
-	for (auto &pass : _passes) {
-		pass->Execute();
-	}
-
-	WaitExecutionFinished();
-
-	_passes.clear();
+	rttr::type passType = resource->GetStateTransitionPassType();
+	rttr::variant passVar = passType.create({ *_device });
+	auto pass = passVar.get_value<std::shared_ptr<ResourceStateTransitionPass>>();
+	pass->Init(*resource, srcState, dstState);
+	return pass;
 }
-
 
 NAMESPACE_END(gr1)
 

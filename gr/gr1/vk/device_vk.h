@@ -34,6 +34,9 @@ public:
 	inline QueueVk &ComputeQueue() { return Queue(QueueRole::Compute); }
 	inline QueueVk &SparseOpQueue() { return Queue(QueueRole::SparseOp); }
 
+	vk::UniqueSemaphore CreateSemaphore();
+	vk::UniqueFence CreateFence(bool createSignaled = false);
+
 protected:
 	void CreateInstance();
 	void CreatePhysicalDevice();

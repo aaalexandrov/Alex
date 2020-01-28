@@ -14,7 +14,8 @@ public:
   BufferVk(Device &device) : Buffer(device) {}
 
 	void Init(Usage usage, BufferDescPtr &bufferDesc) override;
-	inline bool IsValid() override { return static_cast<bool>(_buffer); }
+
+	rttr::type GetStateTransitionPassType() override { throw "Unimplemented"; }
 
   inline Usage GetUsage() override { return _usage; }
   inline size_t GetSize() override { return _size; }

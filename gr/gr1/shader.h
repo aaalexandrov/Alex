@@ -31,6 +31,7 @@ public:
 	Shader(Device &device) : Resource(device) {}
 
   virtual void Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents);
+	rttr::type GetStateTransitionPassType() override { return rttr::type::get<void>(); }
 	virtual void LoadShader(std::vector<uint8_t> const &contents) = 0;
 
 	inline std::string const &GetName() const { return _name; }

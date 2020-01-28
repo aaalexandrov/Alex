@@ -1,6 +1,7 @@
 #include "image_vk.h"
 
 #include "device_vk.h"
+#include "image_transition_pass_vk.h"
 #include "../graphics_exception.h"
 #include "util/mem.h"
 #include "rttr/registration.h"
@@ -16,11 +17,11 @@ RTTR_REGISTRATION
 }
 
 util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
-  { vk::Format::eUndefined,          ColorFormat::Invalid    },
-	{ vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8   },
-	{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8   },
-  { vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
-} };
+		{ vk::Format::eUndefined,          ColorFormat::Invalid    },
+		{ vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8   },
+		{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8   },
+		{ vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
+	} };
 
 void ImageVk::Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
 {
@@ -28,6 +29,11 @@ void ImageVk::Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 s
 	_layout = vk::ImageLayout::eUndefined;
 	_image = image;
   CreateView();
+}
+
+inline rttr::type ImageVk::GetStateTransitionPassType()
+{
+	return rttr::type::get<ImageTransitionPassVk>();
 }
 
 void ImageVk::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels)

@@ -12,6 +12,15 @@ enum class ContentTreatment {
 	DontCare,
 };
 
+enum class ResourceState {
+	Initial,
+	ShaderRead,
+	TransferRead,
+	TransferWrite,
+	RenderWrite,
+	PresentRead,
+};
+
 class Device;
 class Resource : public std::enable_shared_from_this<Resource> {
 	RTTR_ENABLE()
@@ -19,12 +28,17 @@ public:
 	Resource(Device &device) : _device(&device) {}
 	virtual ~Resource() {}
 
-	virtual bool IsValid() = 0;
+	inline ResourceState GetResourceState() { return _state; }
+	virtual rttr::type GetStateTransitionPassType() = 0;
 
 	template<typename DeviceType>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
+	friend class ExecutionQueue;
+	inline ResourceState SetResourceState(ResourceState state) { _state = state; }
+
 	Device *_device;
+	ResourceState _state = ResourceState::Initial;
 };
 
 NAMESPACE_END(gr1)
