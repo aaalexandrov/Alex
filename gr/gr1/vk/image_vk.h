@@ -17,7 +17,7 @@ public:
 	void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
 	void Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels);
 
-	inline rttr::type GetStateTransitionPassType() override;
+	std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
   void *Map() override;
   void Unmap() override;

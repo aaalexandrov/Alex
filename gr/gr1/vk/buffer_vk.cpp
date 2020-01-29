@@ -32,7 +32,12 @@ void BufferVk::Init(Usage usage, BufferDescPtr &bufferDesc)
   vmaBindBufferMemory(*deviceVk->_allocator, *_memory, *_buffer);
 }
 
-void * BufferVk::Map()
+std::shared_ptr<ResourceStateTransitionPass> BufferVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
+{
+	throw "Implament it!";
+}
+
+void *BufferVk::Map()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	return VmaMapMemory(*deviceVk->_allocator, *_memory);

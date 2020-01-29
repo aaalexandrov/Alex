@@ -31,9 +31,11 @@ void ImageVk::Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 s
   CreateView();
 }
 
-inline rttr::type ImageVk::GetStateTransitionPassType()
+std::shared_ptr<ResourceStateTransitionPass> ImageVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
 {
-	return rttr::type::get<ImageTransitionPassVk>();
+	auto imgTransition = std::make_shared<ImageTransitionPassVk>(*_device);
+	imgTransition->Init(*this, srcState, dstState);
+	return std::move(imgTransition);
 }
 
 void ImageVk::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels)

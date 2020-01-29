@@ -22,6 +22,7 @@ enum class ResourceState {
 };
 
 class Device;
+class ResourceStateTransitionPass;
 class Resource : public std::enable_shared_from_this<Resource> {
 	RTTR_ENABLE()
 public:
@@ -29,7 +30,7 @@ public:
 	virtual ~Resource() {}
 
 	inline ResourceState GetResourceState() { return _state; }
-	virtual rttr::type GetStateTransitionPassType() = 0;
+	inline virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
 
 	template<typename DeviceType>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }

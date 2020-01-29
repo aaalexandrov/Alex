@@ -55,6 +55,11 @@ void PresentationSurfaceVk::InitSurfaceXlib(PresentationSurfaceCreateData *creat
 
 #endif
 
+std::shared_ptr<ResourceStateTransitionPass> PresentationSurfaceVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
+{
+	throw "Implement it!";
+}
+
 void PresentationSurfaceVk::Update(uint32_t width, uint32_t height)
 {
 	CreateSwapChain(width, height);

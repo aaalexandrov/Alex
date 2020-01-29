@@ -11,7 +11,6 @@ public:
 	RenderStateVk(Device &device) : RenderState(device) {}
 
 	void Init() override;
-	rttr::type GetStateTransitionPassType() override { return rttr::type::get<void>(); }
 
 protected:
 

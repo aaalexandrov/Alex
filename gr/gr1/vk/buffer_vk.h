@@ -14,10 +14,9 @@ public:
   BufferVk(Device &device) : Buffer(device) {}
 
 	void Init(Usage usage, BufferDescPtr &bufferDesc) override;
+	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
-	rttr::type GetStateTransitionPassType() override { throw "Unimplemented"; }
-
-  inline Usage GetUsage() override { return _usage; }
+	inline Usage GetUsage() override { return _usage; }
   inline size_t GetSize() override { return _size; }
 
   void *Map() override;

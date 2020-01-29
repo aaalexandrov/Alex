@@ -23,8 +23,6 @@ class OutputPass : public Resource {
 public:
 	OutputPass(Device &device) : Resource(device) {}
 
-	rttr::type GetStateTransitionPassType() override { return rttr::type::get<void>(); }
-
 	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
 
 	virtual void Prepare(PassData *passData) = 0;

@@ -49,7 +49,6 @@ public:
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
 	virtual void WaitExecutionFinished() = 0;
-	virtual std::shared_ptr<OutputPass> CreateTransitionPass(Resource *resource, ResourceState srcState, ResourceState dstState);
 
 	Device *_device;
 	std::vector<std::shared_ptr<OutputPass>> _passes;

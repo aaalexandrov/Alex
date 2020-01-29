@@ -13,7 +13,7 @@ public:
 	PresentationSurfaceVk(Device &device) : PresentationSurface(device) {}
 
 	void Init(PresentationSurfaceCreateData &createData) override;
-	rttr::type GetStateTransitionPassType() override { throw "Implement it!"; }
+	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
 	void Update(uint32_t width, uint32_t height) override;
 	glm::uvec2 GetSize() override;
