@@ -1,6 +1,7 @@
 #include "render_pass_vk.h"
 #include "device_vk.h"
 #include "image_vk.h"
+#include "execution_queue_vk.h"
 #include "../graphics_exception.h"
 #include "rttr/registration.h"
 
@@ -29,13 +30,11 @@ void RenderPassVk::Prepare(PassData *passData)
 void RenderPassVk::Execute(PassData *passData)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	PassDataVk *passDataVk = static_cast<PassDataVk*>(passData);
 
-	if (passDataVk->_waitFence) {
-		deviceVk->_device->waitForFences(1, &passDataVk->_waitFence, true, std::numeric_limits<uint64_t>::max());
-	}
+	WaitForFences(passData, deviceVk);
 
-	vk::PipelineStageFlags waitStageFlags;
+	std::vector<vk::Semaphore> semaphores;
+	FillWaitSemaphores(passData, semaphores);
 	std::array<vk::SubmitInfo, 1> submits;
 	submits.front()
 		.setCommandBufferCount(1)
@@ -43,12 +42,12 @@ void RenderPassVk::Execute(PassData *passData)
 		.setSignalSemaphoreCount(1)
 		.setPSignalSemaphores(&*_signalSemaphore);
 
-	if (passDataVk->_waitSemaphore) {
-		waitStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eTransfer;
+	if (semaphores.size()) {
+		std::vector<vk::PipelineStageFlags> waitStageFlags(semaphores.size(), vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eTransfer);
 		submits.front()
-			.setWaitSemaphoreCount(1)
-			.setPWaitSemaphores(&passDataVk->_waitSemaphore)
-			.setPWaitDstStageMask(&waitStageFlags);
+			.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
+			.setPWaitSemaphores(semaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data());
 	}
 
 	deviceVk->GraphicsQueue()._queue.submit(submits, *_signalFence);

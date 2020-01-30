@@ -13,7 +13,7 @@ public:
 	void Execute(PassData *passData) override;
 
 public:
-	vk::UniqueCommandBuffer _cmdBarrier;
+	vk::UniqueCommandBuffer _cmdTransition;
 };
 
 NAMESPACE_END(gr1)

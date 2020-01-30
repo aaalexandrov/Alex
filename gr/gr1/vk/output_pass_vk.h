@@ -5,19 +5,18 @@
 
 NAMESPACE_BEGIN(gr1)
 
-class PassDataVk : public PassData {
-	RTTR_ENABLE(PassData)
-public:
-	vk::Semaphore _waitSemaphore;
-	vk::Fence _waitFence;
-};
-
 class DeviceVk;
 class PassVk {
 	RTTR_ENABLE()
 public:
 	PassVk(DeviceVk &deviceVk);
 	
+	void WaitForFences(PassData *passData, DeviceVk *deviceVk);
+	void FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores);
+
+	void AddWaitFence(OutputPass *pass, std::vector<vk::Fence> &fences);
+	void AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore> &semaphores);
+
 	vk::UniqueSemaphore _signalSemaphore;
 	vk::UniqueFence _signalFence;
 };

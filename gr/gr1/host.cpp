@@ -1,5 +1,6 @@
 #include "host.h"
 #include "device.h"
+#include "execution_queue.h"
 
 NAMESPACE_BEGIN(gr1)
 

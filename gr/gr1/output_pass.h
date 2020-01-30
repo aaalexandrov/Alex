@@ -12,12 +12,7 @@ enum class DependencyType {
 
 using DependencyFunc = std::function<void(Resource*, ResourceState)>;
 
-class PassData {
-	RTTR_ENABLE()
-public:
-	virtual ~PassData() {}
-};
-
+class PassData;
 class OutputPass : public Resource {
 	RTTR_ENABLE(Resource)
 public:

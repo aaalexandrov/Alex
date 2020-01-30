@@ -12,6 +12,9 @@ set(dir_SOURCES
 	device.h
 	device.cpp
 
+	execution_queue.h
+	execution_queue.cpp
+
 	graphics_exception.h
 	graphics_exception.cpp
 	

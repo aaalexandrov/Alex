@@ -1,4 +1,5 @@
 #include "render_pass.h"
+#include "execution_queue.h"
 #include "image.h"
 
 NAMESPACE_BEGIN(gr1)

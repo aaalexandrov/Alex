@@ -36,7 +36,7 @@ public:
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
 	friend class ExecutionQueue;
-	inline ResourceState SetResourceState(ResourceState state) { _state = state; }
+	inline void SetResourceState(ResourceState state) { _state = state; }
 
 	Device *_device;
 	ResourceState _state = ResourceState::Initial;

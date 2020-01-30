@@ -8,6 +8,7 @@
 #include "platform/platform.h"
 #include "gr1/host.h"
 #include "gr1/device.h"
+#include "gr1/execution_queue.h"
 #include "gr1/image.h"
 #include "gr1/shader.h"
 #include "gr1/render_pass.h"

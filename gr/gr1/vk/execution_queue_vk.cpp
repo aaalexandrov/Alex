@@ -10,20 +10,6 @@ ExecutionQueueVk::ExecutionQueueVk(DeviceVk &deviceVk)
 
 }
 
-void ExecutionQueueVk::ExecutePasses()
-{
-	PreparePassData();
-
-	Prepare();
-
-	Execute();
-
-	WaitExecutionFinished();
-
-	_passes.clear();
-	_passData.clear();
-}
-
 void ExecutionQueueVk::WaitExecutionFinished()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
@@ -33,30 +19,25 @@ void ExecutionQueueVk::WaitExecutionFinished()
 		throw GraphicsException("WaitExecutionFinished() failed!", (uint32_t)result);
 }
 
-void ExecutionQueueVk::PreparePassData()
-{
-	ASSERT(!_passData.size());
-	for (uint32_t i = 0; i < _passes.size(); ++i) {
-		_passData.emplace_back();
-		if (i > 0) {
-			PassVk *prevPassVk = rttr::rttr_cast<PassVk*>(_passes[i - 1].get());
-			_passData.back()._waitSemaphore = *prevPassVk->_signalSemaphore;
-			_passData.back()._waitFence = *prevPassVk->_signalFence;
-		}
-	}
-}
-
 void ExecutionQueueVk::Prepare()
 {
 	for (uint32_t i = 0; i < _passes.size(); ++i) {
-		_passes[i]->Prepare(&_passData[i]);
+		for (auto &transition : _passes[i]->_transitionPasses) {
+			transition->_pass->Prepare(transition.get());
+		}
+
+		_passes[i]->_pass->Prepare(_passes[i].get());
 	}
 }
 
 void ExecutionQueueVk::Execute()
 {
 	for (uint32_t i = 0; i < _passes.size(); ++i) {
-		_passes[i]->Execute(&_passData[i]);
+		for (auto &transition : _passes[i]->_transitionPasses) {
+			transition->_pass->Execute(transition.get());
+		}
+
+		_passes[i]->_pass->Execute(_passes[i].get());
 	}
 }
 

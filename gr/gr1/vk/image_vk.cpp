@@ -2,6 +2,7 @@
 
 #include "device_vk.h"
 #include "image_transition_pass_vk.h"
+#include "../execution_queue.h"
 #include "../graphics_exception.h"
 #include "util/mem.h"
 #include "rttr/registration.h"

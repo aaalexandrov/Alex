@@ -36,23 +36,5 @@ protected:
 	RttrFactory _resourceFactory;
 };
 
-class ExecutionQueue {
-	RTTR_ENABLE()
-public:
-	ExecutionQueue(Device &device) : _device(&device) {}
-	virtual ~ExecutionQueue() {}
-
-	virtual void EnqueuePass(std::shared_ptr<OutputPass> const &pass);
-	virtual void ExecutePasses() = 0;
-
-	template<typename DeviceType>
-	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
-protected:
-	virtual void WaitExecutionFinished() = 0;
-
-	Device *_device;
-	std::vector<std::shared_ptr<OutputPass>> _passes;
-};
-
 NAMESPACE_END(gr1)
 

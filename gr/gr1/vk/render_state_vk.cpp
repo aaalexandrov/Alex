@@ -1,5 +1,6 @@
 #include "render_state_vk.h"
 #include "device_vk.h"
+#include "../execution_queue.h"
 #include "rttr/registration.h"
 
 NAMESPACE_BEGIN(gr1)

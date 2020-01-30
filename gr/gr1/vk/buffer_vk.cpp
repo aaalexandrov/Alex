@@ -1,5 +1,6 @@
 #include "buffer_vk.h"
 #include "device_vk.h"
+#include "../execution_queue.h"
 #include "../graphics_exception.h"
 #include "../rttr_factory.h"
 #include "rttr/registration.h"

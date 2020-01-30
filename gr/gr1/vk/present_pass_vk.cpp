@@ -1,6 +1,7 @@
 #include "present_pass_vk.h"
 #include "presentation_surface_vk.h"
 #include "device_vk.h"
+#include "execution_queue_vk.h"
 #include "../graphics_exception.h"
 #include "rttr/registration.h"
 
@@ -27,9 +28,10 @@ void PresentPassVk::Prepare(PassData *passData)
 void PresentPassVk::Execute(PassData *passData)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	PassDataVk *passDataVk = static_cast<PassDataVk*>(passData);
 	PresentationSurfaceVk *surfaceVk = static_cast<PresentationSurfaceVk*>(_surface.get());
-	
+
+	std::vector<vk::Semaphore> semaphores;
+	FillWaitSemaphores(passData, semaphores);
 	vk::PresentInfoKHR presentInfo;
 	presentInfo
 		.setSwapchainCount(1)
@@ -37,11 +39,9 @@ void PresentPassVk::Execute(PassData *passData)
 		.setPImageIndices(&surfaceVk->_currentImageIndex)
 		.setPResults(&_presentResult);
 
-	if (passDataVk->_waitSemaphore) {
-		presentInfo
-			.setWaitSemaphoreCount(1)
-			.setPWaitSemaphores(&passDataVk->_waitSemaphore);
-	}
+	presentInfo
+		.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
+		.setPWaitSemaphores(semaphores.data());
 
 	vk::Result result = deviceVk->PresentQueue()._queue.presentKHR(presentInfo);
 	if (result != vk::Result::eSuccess)

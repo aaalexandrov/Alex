@@ -1,6 +1,7 @@
 #include "presentation_surface_vk.h"
 #include "device_vk.h"
 #include "image_vk.h"
+#include "../execution_queue.h"
 #include "../graphics_exception.h"
 #include "util/mathutl.h"
 #include "rttr/registration.h"
