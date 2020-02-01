@@ -1,5 +1,6 @@
 #include "output_pass.h"
 #include "buffer.h"
+#include "image.h"
 #include "presentation_surface.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -40,7 +41,7 @@ void PresentPass::Init(std::shared_ptr<PresentationSurface> const &presentSurfac
 void PresentPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
 	if (dependencyType == DependencyType::Input) {
-		addDependencyFunc(_surface.get(), ResourceState::PresentRead);
+		addDependencyFunc(_surface->GetCurrentImage().get(), ResourceState::PresentRead);
 	}
 }
 

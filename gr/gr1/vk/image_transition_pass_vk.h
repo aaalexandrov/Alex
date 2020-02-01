@@ -4,6 +4,9 @@
 
 NAMESPACE_BEGIN(gr1)
 
+enum class QueueRole;
+struct QueueVk;
+
 class ImageTransitionPassVk : public ResourceStateTransitionPass, public PassVk {
 	RTTR_ENABLE(ResourceStateTransitionPass, PassVk)
 public:
@@ -13,7 +16,10 @@ public:
 	void Execute(PassData *passData) override;
 
 public:
-	vk::UniqueCommandBuffer _cmdTransition;
+	bool GetTransitionQueueInfo(QueueRole srcRole, QueueRole dstRole, QueueVk *&srcQueue, QueueVk *&dstQueue);
+
+	vk::UniqueCommandBuffer _srcCmds, _dstCmds;
+	vk::UniqueSemaphore _queueTransitionSemaphore;
 };
 
 NAMESPACE_END(gr1)

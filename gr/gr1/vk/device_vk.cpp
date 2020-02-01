@@ -219,7 +219,7 @@ void DeviceVk::InitQueues()
 		queue.Init(*this, queueFamily, count, role);
 	};
 
-	for (QueueRole role = QueueRole::First; role < QueueRole::Count; role = util::EnumInc(role)) {
+	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
 		getQueue(Queue(role), QueueFamilyIndex(role), role);
 	}
 }

@@ -1,4 +1,5 @@
 #include "queue_vk.h"
+#include "../execution_queue.h"
 #include "device_vk.h"
 #include "../graphics_exception.h"
 #include "util/mathutl.h"

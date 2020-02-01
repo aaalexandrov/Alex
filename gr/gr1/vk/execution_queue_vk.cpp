@@ -13,7 +13,7 @@ ExecutionQueueVk::ExecutionQueueVk(DeviceVk &deviceVk)
 void ExecutionQueueVk::WaitExecutionFinished()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	PassVk *lastPassVk = rttr::rttr_cast<PassVk*>(_passes.back().get());
+	PassVk *lastPassVk = rttr::rttr_cast<PassVk*>(_passes.back()->_pass.get());
 	vk::Result result = deviceVk->_device->waitForFences(1, &*lastPassVk->_signalFence, true, std::numeric_limits<uint64_t>::max());
 	if (result != vk::Result::eSuccess)
 		throw GraphicsException("WaitExecutionFinished() failed!", (uint32_t)result);

@@ -20,11 +20,11 @@ class Image : public Resource {
 	RTTR_ENABLE(Resource)
 public:
   enum class Usage {
-    Invalid,
-    Texture,
-    Staging,
-    DepthBuffer,
-    RenderTarget = 0x1000,
+    Invalid = 0,
+    Texture = 1,
+    Staging = 2,
+    DepthBuffer = 4,
+    RenderTarget = 8,
   };
 
   Image(Device &device) : Resource(device) {}

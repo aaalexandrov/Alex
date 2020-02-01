@@ -69,10 +69,10 @@ public:
 	using UniqueDebugReportCallbackEXT = vk::UniqueHandle<vk::DebugReportCallbackEXT, vk::DispatchLoaderDynamic>;
 	UniqueDebugReportCallbackEXT _debugReportCallback;
 
-	std::array<int32_t, static_cast<int>(QueueRole::Count)> _queueFamilyIndices;
+	std::array<int32_t, static_cast<int>(QueueRole::Last)> _queueFamilyIndices;
 	vk::UniqueDevice _device;
 	UniqueVmaAllocator _allocator;
-	std::array<QueueVk, static_cast<int>(QueueRole::Count)> _queues;
+	std::array<QueueVk, static_cast<int>(QueueRole::Last)> _queues;
 };
 
 NAMESPACE_END(gr1)

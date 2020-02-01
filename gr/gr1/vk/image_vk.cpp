@@ -27,7 +27,6 @@ util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
 void ImageVk::Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
 {
 	Image::Init(usage, Vk2ColorFormat(format), size, mipLevels);
-	_layout = vk::ImageLayout::eUndefined;
 	_image = image;
   CreateView();
 }
@@ -42,7 +41,8 @@ std::shared_ptr<ResourceStateTransitionPass> ImageVk::CreateTransitionPass(Resou
 void ImageVk::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels)
 {
 	Image::Init(usage, format, size, mipLevels);
-	_layout = usage == Usage::Staging ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eUndefined;
+
+	StateInfo stateInfo = GetStateInfo(_state);
 
   size = GetEffectiveSize(size);
   vk::ImageCreateInfo imgInfo;
@@ -56,7 +56,7 @@ void ImageVk::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mi
     .setUsage(GetImageUsage(usage))
     .setTiling(usage == Usage::Staging ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal)
     .setSharingMode(vk::SharingMode::eExclusive)
-    .setInitialLayout(_layout);
+    .setInitialLayout(stateInfo._layout);
 
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_ownImage = deviceVk->_device->createImageUnique(imgInfo, deviceVk->AllocationCallbacks());
@@ -94,13 +94,6 @@ void ImageVk::CreateView()
 
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_view = deviceVk->_device->createImageViewUnique(viewInfo, deviceVk->AllocationCallbacks());
-}
-
-vk::ImageLayout ImageVk::GetEffectiveImageLayout(QueueVk *queue) const
-{
-  if (_usage != Usage::Staging && queue->_role == QueueRole::Transfer)
-    return vk::ImageLayout::eTransferDstOptimal;
-  return _layout;
 }
 
 vk::ImageViewType ImageVk::GetImageViewType()
@@ -167,42 +160,68 @@ vk::ImageAspectFlags ImageVk::GetImageAspect(vk::Format format)
   }
 }
 
-vk::AccessFlags ImageVk::GetImageAccess(Usage usage)
+ImageVk::StateInfo ImageVk::GetStateInfo(ResourceState state, Usage usage)
 {
-  vk::AccessFlags flags;
-  switch (usage) {
-    case Usage::DepthBuffer:
-      flags = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-      break;
-    case Usage::Staging:
-      flags = vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead | vk::AccessFlagBits::eHostWrite;
-      break;
-    case Usage::Texture:
-      flags = vk::AccessFlagBits::eTransferWrite | vk::AccessFlagBits::eShaderRead;
-      break;
-    default:
-      throw GraphicsException("ImageVk::GetImageAccess(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
-  }
-  return flags;
-}
-
-vk::PipelineStageFlags ImageVk::GetImagePipelineStages(Usage usage)
-{
-  vk::PipelineStageFlags flags;
-  switch (usage) {
-    case Usage::DepthBuffer:
-      flags = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-      break;
-    case Usage::Staging:
-      flags = vk::PipelineStageFlagBits::eTransfer;
-      break;
-    case Usage::Texture:
-      flags = vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eVertexShader | vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eComputeShader;
-      break;
-    default:
-      throw GraphicsException("ImageVk::GetImagePipelineStages(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
-  }
-  return flags;
+	StateInfo info;
+	switch (state) {
+		case ResourceState::Initial:
+			if (!!(usage & Usage::Staging)) {
+				info._access = vk::AccessFlagBits::eHostRead | vk::AccessFlagBits::eHostWrite;
+				info._layout = vk::ImageLayout::ePreinitialized;
+				info._stages = vk::PipelineStageFlagBits::eHost;
+				info._queueRole = QueueRole::Any;
+			} else {
+				info._access = vk::AccessFlags();
+				info._layout = vk::ImageLayout::eUndefined;
+				info._stages = vk::PipelineStageFlags();
+				info._queueRole = QueueRole::Any;
+			}
+			break;
+		case ResourceState::ShaderRead:
+			if (!!(usage & Usage::Texture)) {
+				info._access = vk::AccessFlagBits::eShaderRead;
+				info._layout = vk::ImageLayout::eShaderReadOnlyOptimal;
+				info._stages = vk::PipelineStageFlagBits::eVertexShader | vk::PipelineStageFlagBits::eFragmentShader;
+				info._queueRole = QueueRole::Graphics;
+			}
+			break;
+		case ResourceState::RenderWrite:
+			if (!!(usage & Usage::RenderTarget)) {
+				info._access = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+				info._layout = vk::ImageLayout::eColorAttachmentOptimal;
+				info._stages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+				info._queueRole = QueueRole::Graphics;
+			} else if (!!(usage & Usage::DepthBuffer)) {
+				info._access = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+				info._layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+				info._stages = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+				info._queueRole = QueueRole::Graphics;
+			}
+			break;
+		case ResourceState::PresentRead:
+			if (!!(usage & Usage::RenderTarget)) {
+				info._access = vk::AccessFlagBits::eMemoryRead;
+				info._layout = vk::ImageLayout::ePresentSrcKHR;
+				info._stages = vk::PipelineStageFlagBits::eBottomOfPipe;
+				info._queueRole = QueueRole::Present;
+			}
+			break;
+		case ResourceState::TransferRead:
+			info._access = vk::AccessFlagBits::eTransferRead;
+			info._layout = vk::ImageLayout::eTransferSrcOptimal;
+			info._stages = vk::PipelineStageFlagBits::eTransfer;
+			info._queueRole = QueueRole::Transfer;
+			break;
+		case ResourceState::TransferWrite:
+			info._access = vk::AccessFlagBits::eTransferWrite;
+			info._layout = vk::ImageLayout::eTransferDstOptimal;
+			info._stages = vk::PipelineStageFlagBits::eTransfer;
+			info._queueRole = QueueRole::Transfer;
+			break;
+	}
+	if (!info.IsValid())
+		throw GraphicsException("ImageVk::GetStateAccess(): Unsupported state and usage combination", VK_RESULT_MAX_ENUM);
+	return info;
 }
 
 NAMESPACE_END(gr1)

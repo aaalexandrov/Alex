@@ -12,8 +12,9 @@ enum class QueueRole {
 	Transfer,
 	SparseOp,
 	Present,
+	Last,
+	Any = Last,
 	Invalid,
-	Count = Invalid,
 };
 
 class DeviceVk;

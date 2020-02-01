@@ -23,6 +23,7 @@ PresentPassVk::PresentPassVk(Device &device)
 
 void PresentPassVk::Prepare(PassData *passData)
 {
+	_signalSemaphoreStages = vk::PipelineStageFlagBits::eTransfer;
 }
 
 void PresentPassVk::Execute(PassData *passData)
@@ -31,7 +32,8 @@ void PresentPassVk::Execute(PassData *passData)
 	PresentationSurfaceVk *surfaceVk = static_cast<PresentationSurfaceVk*>(_surface.get());
 
 	std::vector<vk::Semaphore> semaphores;
-	FillWaitSemaphores(passData, semaphores);
+	std::vector<vk::PipelineStageFlags> semWaitStages;
+	FillWaitSemaphores(passData, semaphores, semWaitStages);
 	vk::PresentInfoKHR presentInfo;
 	presentInfo
 		.setSwapchainCount(1)

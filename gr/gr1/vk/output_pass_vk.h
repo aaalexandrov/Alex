@@ -12,12 +12,13 @@ public:
 	PassVk(DeviceVk &deviceVk);
 	
 	void WaitForFences(PassData *passData, DeviceVk *deviceVk);
-	void FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores);
+	void FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages);
 
 	void AddWaitFence(OutputPass *pass, std::vector<vk::Fence> &fences);
-	void AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore> &semaphores);
+	void AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages);
 
 	vk::UniqueSemaphore _signalSemaphore;
+	vk::PipelineStageFlags _signalSemaphoreStages;
 	vk::UniqueFence _signalFence;
 };
 

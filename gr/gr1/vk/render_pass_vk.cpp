@@ -25,25 +25,24 @@ void RenderPassVk::Prepare(PassData *passData)
 	InitRenderPass(); 
 	InitFramebuffer();
 	InitBeginEnd();
+	_signalSemaphoreStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 }
 
 void RenderPassVk::Execute(PassData *passData)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
-	WaitForFences(passData, deviceVk);
-
 	std::vector<vk::Semaphore> semaphores;
-	FillWaitSemaphores(passData, semaphores);
+	std::vector<vk::PipelineStageFlags> waitStageFlags;
+	FillWaitSemaphores(passData, semaphores, waitStageFlags);
 	std::array<vk::SubmitInfo, 1> submits;
-	submits.front()
+
+	submits[0]
 		.setCommandBufferCount(1)
 		.setPCommandBuffers(&*_passCmds)
 		.setSignalSemaphoreCount(1)
 		.setPSignalSemaphores(&*_signalSemaphore);
-
 	if (semaphores.size()) {
-		std::vector<vk::PipelineStageFlags> waitStageFlags(semaphores.size(), vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eTransfer);
 		submits.front()
 			.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
 			.setPWaitSemaphores(semaphores.data())
@@ -60,6 +59,7 @@ void RenderPassVk::InitRenderPass()
 	std::vector<vk::AttachmentDescription> attachmentDescs;
 	for (auto &attach : _attachments) {
 		ImageVk *img = attach.GetImage<ImageVk>();
+		ImageVk::StateInfo stateInfo = img->GetStateInfo(ResourceState::RenderWrite);
 		vk::AttachmentDescription attachDesc;
 		attachDesc
 			.setFormat(img->GetVkFormat())
@@ -67,8 +67,8 @@ void RenderPassVk::InitRenderPass()
 			.setStencilLoadOp(attachDesc.loadOp)
 			.setStoreOp(GetStoreOpFromContent(attach._outputContent))
 			.setStencilStoreOp(attachDesc.storeOp)
-			.setInitialLayout(img->_layout)
-			.setFinalLayout(img->_layout);
+			.setInitialLayout(stateInfo._layout)
+			.setFinalLayout(stateInfo._layout);
 
 		attachmentDescs.push_back(std::move(attachDesc));
 	}
@@ -79,13 +79,14 @@ void RenderPassVk::InitRenderPass()
 	for (uint32_t i = 0; i < _attachments.size(); ++i) {
 		auto &attach = _attachments[i];
 		ImageVk *img = attach.GetImage<ImageVk>();
+		ImageVk::StateInfo stateInfo = img->GetStateInfo(ResourceState::RenderWrite);
 		if (img->GetUsage() == Image::Usage::DepthBuffer) {
 			ASSERT(!subpassDesc.pDepthStencilAttachment);
 			depthRef.attachment = i;
-			depthRef.layout = img->_layout;
+			depthRef.layout = stateInfo._layout;
 			subpassDesc.setPDepthStencilAttachment(&depthRef);
 		} else {
-			colorRefs.emplace_back(i, img->_layout);
+			colorRefs.emplace_back(i, stateInfo._layout);
 		}
 	}
 	subpassDesc

@@ -30,7 +30,7 @@ public:
 	virtual ~Resource() {}
 
 	inline ResourceState GetResourceState() { return _state; }
-	inline virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
+	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
 
 	template<typename DeviceType>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }

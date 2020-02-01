@@ -100,17 +100,6 @@ int main()
 	auto depthBuffer = device->CreateResource<Image>();
 	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 0);
 
-	auto renderPass = device->CreateResource<RenderPass>();
-	renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
-	renderPass->AddAttachment(ContentTreatment::Clear, depthBuffer, ContentTreatment::Keep, vec4(1, 0, 0, 0));
-
-	auto presentPass = device->CreateResource<PresentPass>();
-	presentPass->Init(surface);
-
-	device->GetExecutionQueue().EnqueuePass(renderPass);
-	device->GetExecutionQueue().EnqueuePass(presentPass);
-	device->GetExecutionQueue().ExecutePasses();
-
 	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
 		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
 	});
@@ -131,6 +120,18 @@ int main()
       if (text.size() > 0) {
         LOG("Input ", text);
       }
+
+			backBuffer = surface->GetCurrentImage();
+			auto renderPass = device->CreateResource<RenderPass>();
+			renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
+			renderPass->AddAttachment(ContentTreatment::Clear, depthBuffer, ContentTreatment::Keep, vec4(1, 0, 0, 0));
+
+			auto presentPass = device->CreateResource<PresentPass>();
+			presentPass->Init(surface);
+
+			device->GetExecutionQueue().EnqueuePass(renderPass);
+			device->GetExecutionQueue().EnqueuePass(presentPass);
+			device->GetExecutionQueue().ExecutePasses();
 
       platform->Update();
     }

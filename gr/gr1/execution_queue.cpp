@@ -47,13 +47,11 @@ void ExecutionQueue::ProcessStateTransitions()
 		DependencyFunc addInputDependency = [&](Resource *resource, ResourceState state) {
 			ResourceState &recordedState = GetResourceState(resource);
 			if (recordedState != state) {
-				std::shared_ptr<ResourceStateTransitionPass> transition = _passes[i]->_pass->CreateTransitionPass(recordedState, state);
-				if (transition) {
-					std::unique_ptr<PassData> transitionPassData = CreatePassData(transition);
-					transitionPassData->_previousPassData = _passes[i]->_previousPassData;
-					_passes[i]->_transitionPasses.push_back(std::move(transitionPassData));
-					recordedState = state;
-				}
+				std::shared_ptr<ResourceStateTransitionPass> transition = resource->CreateTransitionPass(recordedState, state);
+				std::unique_ptr<PassData> transitionPassData = CreatePassData(transition);
+				transitionPassData->_previousPassData = _passes[i]->_previousPassData;
+				_passes[i]->_transitionPasses.push_back(std::move(transitionPassData));
+				recordedState = state;
 			}
 		};
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../image.h"
-#include "vk.h"
+#include "queue_vk.h"
 #include "util/enumutl.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -27,8 +27,6 @@ public:
 public:
 	void CreateView();
 
-  vk::ImageLayout GetEffectiveImageLayout(QueueVk *queue) const;
-
   static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return s_vkFormat2ColorFormat.ToDst(vkFmt); }
   static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return s_vkFormat2ColorFormat.ToSrc(clrFmt); }
 
@@ -37,16 +35,23 @@ public:
   static vk::ImageUsageFlags GetImageUsage(Usage usage);
   inline vk::ImageAspectFlags GetImageAspect() const { return GetImageAspect(GetVkFormat()); }
   static vk::ImageAspectFlags GetImageAspect(vk::Format format);
-  inline vk::AccessFlags GetImageAccess() const { return GetImageAccess(_usage); }
-  static vk::AccessFlags GetImageAccess(Usage usage);
-  inline vk::PipelineStageFlags GetImagePipelineStages() const { return GetImagePipelineStages(_usage); }
-  static vk::PipelineStageFlags GetImagePipelineStages(Usage usage);
+
+	struct StateInfo {
+		vk::AccessFlags _access;
+		vk::ImageLayout _layout;
+		vk::PipelineStageFlags _stages;
+		QueueRole _queueRole = QueueRole::Invalid;
+
+		bool IsValid() { return _queueRole != QueueRole::Invalid; }
+	};
+
+	inline StateInfo GetStateInfo(ResourceState state) { return GetStateInfo(state, _usage); }
+	static StateInfo GetStateInfo(ResourceState state, Usage usage);
 
   vk::Image _image;
   vk::UniqueImage _ownImage;
   vk::UniqueImageView _view;
   UniqueVmaAllocation _memory;
-  vk::ImageLayout _layout;
 
   static util::ValueRemapper<vk::Format, ColorFormat> s_vkFormat2ColorFormat;
 };
