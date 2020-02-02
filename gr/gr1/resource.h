@@ -19,6 +19,7 @@ enum class ResourceState {
 	TransferWrite,
 	RenderWrite,
 	PresentRead,
+	PresentAcquired,
 };
 
 class Device;
@@ -30,13 +31,12 @@ public:
 	virtual ~Resource() {}
 
 	inline ResourceState GetResourceState() { return _state; }
+	inline void SetResourceState(ResourceState state) { _state = state; }
 	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
 
 	template<typename DeviceType>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
-	friend class ExecutionQueue;
-	inline void SetResourceState(ResourceState state) { _state = state; }
 
 	Device *_device;
 	ResourceState _state = ResourceState::Initial;

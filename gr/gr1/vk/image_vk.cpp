@@ -24,10 +24,11 @@ util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
 		{ vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
 	} };
 
-void ImageVk::Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
+void ImageVk::Init(Resource *owner, Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
 {
 	Image::Init(usage, Vk2ColorFormat(format), size, mipLevels);
 	_image = image;
+	_owner = owner;
   CreateView();
 }
 
@@ -173,7 +174,7 @@ ImageVk::StateInfo ImageVk::GetStateInfo(ResourceState state, Usage usage)
 			} else {
 				info._access = vk::AccessFlags();
 				info._layout = vk::ImageLayout::eUndefined;
-				info._stages = vk::PipelineStageFlags();
+				info._stages = vk::PipelineStageFlagBits::eTopOfPipe;
 				info._queueRole = QueueRole::Any;
 			}
 			break;
@@ -204,6 +205,14 @@ ImageVk::StateInfo ImageVk::GetStateInfo(ResourceState state, Usage usage)
 				info._layout = vk::ImageLayout::ePresentSrcKHR;
 				info._stages = vk::PipelineStageFlagBits::eBottomOfPipe;
 				info._queueRole = QueueRole::Present;
+			}
+			break;
+		case ResourceState::PresentAcquired:
+			if (!!(usage & Usage::RenderTarget)) {
+				info._access = vk::AccessFlagBits();
+				info._layout = vk::ImageLayout::eUndefined;
+				info._stages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+				info._queueRole = QueueRole::Any;
 			}
 			break;
 		case ResourceState::TransferRead:

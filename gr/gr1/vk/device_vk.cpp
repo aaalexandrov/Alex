@@ -83,6 +83,7 @@ void DeviceVk::CreateInstance()
 
 	if (_validationLevel > ValidationLevel::None) {
 		AppendLayer(layerNames, instanceLayers, "VK_LAYER_LUNARG_standard_validation");
+		AppendLayer(layerNames, instanceLayers, "VK_LAYER_KHRONOS_validation");
 		AppendExtension(extensionNames, instanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
 
@@ -113,7 +114,7 @@ void DeviceVk::CreateInstance()
 
 	_instance = vk::createInstanceUnique(instanceInfo);
 
-	_dynamicDispatch.init(*_instance);
+	_dynamicDispatch.init(*_instance, vkGetInstanceProcAddr);
 
 	if (_validationLevel > ValidationLevel::None) {
 		_debugReportCallback = _instance->createDebugReportCallbackEXTUnique(debugCBInfo, AllocationCallbacks(), _dynamicDispatch);

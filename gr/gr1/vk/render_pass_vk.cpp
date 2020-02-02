@@ -98,11 +98,15 @@ void RenderPassVk::InitRenderPass()
 		.setSrcSubpass(VK_SUBPASS_EXTERNAL)
 		.setDstSubpass(0)
 		.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
-		.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+		.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+		.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+		.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
 
 	subpassDeps[1]
 		.setSrcSubpass(0)
 		.setDstSubpass(VK_SUBPASS_EXTERNAL)
+		.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+		.setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite)
 		.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
 		.setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead);
 

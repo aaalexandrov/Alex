@@ -6,6 +6,7 @@ NAMESPACE_BEGIN(gr1)
 
 void Image::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels)
 {
+	ASSERT(mipLevels > 0);
 	_usage = usage;
 	_format = format;
 	_size = size;

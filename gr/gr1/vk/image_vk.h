@@ -15,7 +15,7 @@ public:
 	ImageVk(Device &device) : Image(device) {}
 
 	void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
-	void Init(Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels);
+	void Init(Resource *owner, Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels);
 
 	std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
@@ -52,6 +52,7 @@ public:
   vk::UniqueImage _ownImage;
   vk::UniqueImageView _view;
   UniqueVmaAllocation _memory;
+	Resource *_owner = nullptr;
 
   static util::ValueRemapper<vk::Format, ColorFormat> s_vkFormat2ColorFormat;
 };

@@ -24,17 +24,23 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(rttr::policy::ctor::as_raw_ptr);
 }
 
-void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData)
+void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData, PresentMode presentMode)
 {
+	PresentationSurface::Init(createData, presentMode);
 #if defined(_WIN32)
 	InitSurfaceWin32(&createData);
 #elif defined(linux)
 	InitSurfaceXlib(&createData);
 #endif
 
-	_surfaceFormat = GetSurfaceFormat();
-	_presentMode = GetPresentMode();
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	bool surfaceSupported = deviceVk->_physicalDevice.getSurfaceSupportKHR(deviceVk->PresentQueue()._family, *_surface);
+	if (!surfaceSupported)
+		throw GraphicsException("CreateSwapChain() failed, surface not supported for presentation on this device!", VK_ERROR_INITIALIZATION_FAILED);
 
+	_acquireSemaphore = deviceVk->CreateSemaphore();
+
+	_surfaceFormat = GetSurfaceFormat();
 }
 
 #if defined(_WIN32)
@@ -56,11 +62,6 @@ void PresentationSurfaceVk::InitSurfaceXlib(PresentationSurfaceCreateData *creat
 
 #endif
 
-std::shared_ptr<ResourceStateTransitionPass> PresentationSurfaceVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
-{
-	throw "Implement it!";
-}
-
 void PresentationSurfaceVk::Update(uint32_t width, uint32_t height)
 {
 	CreateSwapChain(width, height);
@@ -73,20 +74,16 @@ glm::uvec2 PresentationSurfaceVk::GetSize()
 	return glm::uvec2(surfaceCaps.currentExtent.width, surfaceCaps.currentExtent.height);
 }
 
-std::shared_ptr<Image> const &PresentationSurfaceVk::AcquireNextImage(vk::Semaphore signalSemaphore, vk::Fence fence)
+std::shared_ptr<Image> const &PresentationSurfaceVk::AcquireNextImage()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	uint64_t timeout = signalSemaphore || fence ? std::numeric_limits<uint64_t>::max() : 1000000000;
-	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, timeout, signalSemaphore, fence);
+	uint64_t timeout = std::numeric_limits<uint64_t>::max();
+	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, timeout, *_acquireSemaphore, nullptr);
 	if (result.result != vk::Result::eSuccess)
 		throw GraphicsException("AcquireNextImage() failed!", (uint32_t)result.result);
-	_currentImageIndex = result.value;
-	return GetCurrentImage();
-}
-
-std::shared_ptr<Image> const &PresentationSurfaceVk::GetCurrentImage()
-{
-	return _images[_currentImageIndex];
+	uint32_t imageIndex = result.value;
+	_images[imageIndex]->SetResourceState(ResourceState::PresentAcquired);
+	return _images[imageIndex];
 }
 
 void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
@@ -113,7 +110,7 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 			? vk::SurfaceTransformFlagBitsKHR::eIdentity
 			: surfaceCaps.currentTransform)
 		.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-		.setPresentMode(_presentMode)
+		.setPresentMode(GetVkPresentMode())
 		.setClipped(true);
 
 	_images.clear();
@@ -126,7 +123,7 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 		 _images.push_back(deviceVk->CreateResource<Image>());
 		 ImageVk *imageVk = static_cast<ImageVk*>(_images.back().get());
 		 glm::uvec2 size = GetSize();
-		 imageVk->Init(Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(size.x, size.y, 0, 0), 0);
+		 imageVk->Init(this, Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(size.x, size.y, 0, 0), 1);
 	 }
 }
 
@@ -140,18 +137,33 @@ vk::SurfaceFormatKHR PresentationSurfaceVk::GetSurfaceFormat()
 	return format;
 }
 
-vk::PresentModeKHR PresentationSurfaceVk::GetPresentMode()
+util::ValueRemapper<vk::PresentModeKHR, PresentMode> PresentationSurfaceVk::s_vk2PresentMode{ {
+		{vk::PresentModeKHR::eImmediate, PresentMode::Immediate },
+		{vk::PresentModeKHR::eMailbox, PresentMode::Mailbox },
+		{vk::PresentModeKHR::eFifo, PresentMode::Fifo },
+		{vk::PresentModeKHR::eFifoRelaxed, PresentMode::FifoRelaxed },
+	} };
+
+vk::PresentModeKHR PresentationSurfaceVk::GetVkPresentMode()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	vk::PresentModeKHR mode = vk::PresentModeKHR::eFifo;
+	vk::PresentModeKHR mode = s_vk2PresentMode.ToSrc(_presentMode);
 	std::vector<vk::PresentModeKHR> modes = deviceVk->_physicalDevice.getSurfacePresentModesKHR(*_surface);
 	if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
-		ASSERT(!"Fifo present mode should always be available!");
+		ASSERT(!"Requested present mode not found, defaulting to first available!");
 		mode = modes[0];
 	}
 	return mode;
 }
 
+uint32_t PresentationSurfaceVk::GetImageIndex(std::shared_ptr<Image> const &image)
+{
+	for (uint32_t i = 0; i < _images.size(); ++i) {
+		if (image == _images[i])
+			return i;
+	}
+	return ~0;
+}
 
 vk::Extent2D PresentationSurfaceVk::GetExtent(vk::SurfaceCapabilitiesKHR const &surfaceCaps, uint32_t width, uint32_t height)
 {

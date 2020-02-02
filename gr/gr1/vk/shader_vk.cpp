@@ -55,7 +55,10 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
   if (res.GetCompilationStatus() != shaderc_compilation_status_success)
     throw GraphicsException("Shader " + _name + " compilation failed with error : " + res.GetErrorMessage(), VK_RESULT_MAX_ENUM);
 
-  vk::ShaderModuleCreateInfo moduleInfo(vk::ShaderModuleCreateFlags(), res.cend() - res.cbegin(), res.cbegin());
+	vk::ShaderModuleCreateInfo moduleInfo;
+	moduleInfo
+		.setCodeSize((res.cend() - res.cbegin()) * sizeof(uint32_t))
+		.setPCode(res.cbegin());
   _module = deviceVk->_device->createShaderModuleUnique(moduleInfo, deviceVk->AllocationCallbacks());
 	_stageFlags = kind->_stage;
 

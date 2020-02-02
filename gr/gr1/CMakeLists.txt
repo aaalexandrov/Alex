@@ -112,7 +112,7 @@ if(gr_implementation STREQUAL VK)
 
 	set_target_properties(shaderc_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-	target_include_directories(${BINARY} PRIVATE $ENV{VK_SDK_PATH}/include)
+	target_include_directories(${BINARY} PRIVATE $ENV{VK_SDK_PATH}/Include)
 
 	set(vk_LIBS
 		vulkan-1

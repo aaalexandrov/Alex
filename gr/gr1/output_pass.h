@@ -57,16 +57,18 @@ protected:
 };
 
 class PresentationSurface;
+class Image;
 class PresentPass : public OutputPass {
 	RTTR_ENABLE()
 public:
 	PresentPass(Device &device) : OutputPass(device) {}
 
-	virtual void Init(std::shared_ptr<PresentationSurface> const &presentSurface);
+	virtual void Init(std::shared_ptr<PresentationSurface> const &presentSurface, std::shared_ptr<Image> const &surfaceImage);
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 protected:
 	std::shared_ptr<PresentationSurface> _surface;
+	std::shared_ptr<Image> _surfaceImage;
 };
 
 NAMESPACE_END(gr1)

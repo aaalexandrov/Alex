@@ -2,6 +2,8 @@
 #include "device_vk.h"
 #include "image_vk.h"
 #include "execution_queue_vk.h"
+#include "presentation_surface_vk.h"
+#include "rttr/rttr_cast.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -32,7 +34,7 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 		.setBaseMipLevel(0)
 		.setLevelCount(img->GetMipLevels())
 		.setBaseArrayLayer(0)
-		.setLayerCount(img->GetArrayLayers());
+		.setLayerCount(std::max(img->GetArrayLayers(), 1u));
 	std::array<vk::ImageMemoryBarrier, 1> imgBarrier;
 	imgBarrier[0]
 		.setSrcAccessMask(srcState._access)
@@ -49,7 +51,7 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 	_srcCmds->end();
 
 	if (queueTransition) {
-		_queueTransitionSemaphore = deviceVk->_device->createSemaphoreUnique(vk::SemaphoreCreateInfo(), deviceVk->AllocationCallbacks());
+		_queueTransitionSemaphore = deviceVk->CreateSemaphore();
 
 		_dstCmds = dstQueue->AllocateCmdBuffer();
 
@@ -58,13 +60,13 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 		imgBarrier[0]
 			.setSrcAccessMask(vk::AccessFlags())
 			.setDstAccessMask(dstState._access)
-			.setOldLayout(srcState._layout)
+			.setOldLayout(dstState._layout)
 			.setNewLayout(dstState._layout)
 			.setSrcQueueFamilyIndex(srcQueue->_family)
 			.setDstQueueFamilyIndex(dstQueue->_family)
 			.setImage(img->_image)
 			.setSubresourceRange(fullImage);
-		_srcCmds->pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, dstState._stages,
+		_dstCmds->pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, dstState._stages,
 			vk::DependencyFlags(), nullptr, nullptr, imgBarrier);
 		
 		_dstCmds->end();
@@ -88,6 +90,12 @@ void ImageTransitionPassVk::Execute(PassData *passData)
 	std::vector<vk::PipelineStageFlags> waitStageFlags;
 	FillWaitSemaphores(passData, semaphores, waitStageFlags);
 	std::array<vk::SubmitInfo, 1> srcSubmit, dstSubmit;
+
+	if (_srcState == ResourceState::PresentAcquired) {
+		PresentationSurfaceVk *surfaceOwner = rttr::rttr_cast<PresentationSurfaceVk*>(img->_owner);
+		semaphores.push_back(*surfaceOwner->_acquireSemaphore);
+		waitStageFlags.push_back(srcState._stages);
+	}
 
 	if (queueTransition) {
 

@@ -14,6 +14,8 @@ public:
 
 protected:
 	vk::Result _presentResult;
+	vk::UniqueCommandBuffer _cmdSignal;
+	vk::UniqueSemaphore _beforePresent;
 };
 
 NAMESPACE_END(gr1)

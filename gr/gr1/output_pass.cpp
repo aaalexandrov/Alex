@@ -33,15 +33,16 @@ void CopyBufferPass::GetDependencies(DependencyType dependencyType, DependencyFu
 }
 
 
-void PresentPass::Init(std::shared_ptr<PresentationSurface> const &presentSurface)
+void PresentPass::Init(std::shared_ptr<PresentationSurface> const &presentSurface, std::shared_ptr<Image> const &surfaceImage)
 {
 	_surface = presentSurface;
+	_surfaceImage = surfaceImage;
 }
 
 void PresentPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
 	if (dependencyType == DependencyType::Input) {
-		addDependencyFunc(_surface->GetCurrentImage().get(), ResourceState::PresentRead);
+		addDependencyFunc(_surfaceImage.get(), ResourceState::PresentRead);
 	}
 }
 

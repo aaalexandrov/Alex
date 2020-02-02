@@ -93,12 +93,11 @@ int main()
 	auto fragShader = LoadShader(device.get(), "simple.frag");
 
 	auto surface = device->CreateResource<PresentationSurface>();
-	surface->Init(surfaceData);
+	surface->Init(surfaceData, PresentMode::Immediate);
 	surface->Update(ri.GetSize().x, ri.GetSize().y);
 
-	auto backBuffer = surface->AcquireNextImage();
 	auto depthBuffer = device->CreateResource<Image>();
-	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 0);
+	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 1);
 
 	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
 		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
@@ -106,6 +105,7 @@ int main()
 
   {
     auto start = chrono::system_clock::now();
+		uint32_t frameNumber = 0;
 
     while (!window->ShouldClose()) {
       if (window->GetInput().IsJustPressed(Key::Enter)) {
@@ -121,22 +121,31 @@ int main()
         LOG("Input ", text);
       }
 
-			backBuffer = surface->GetCurrentImage();
+			if (surface->GetSize() != glm::uvec2(depthBuffer->GetSize())) {
+				auto size = surface->GetSize();
+				surface->Update(size.x, size.y);
+				depthBuffer = device->CreateResource<Image>();
+				depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
+			}
+
+			auto backBuffer = surface->AcquireNextImage();
 			auto renderPass = device->CreateResource<RenderPass>();
 			renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
 			renderPass->AddAttachment(ContentTreatment::Clear, depthBuffer, ContentTreatment::Keep, vec4(1, 0, 0, 0));
 
 			auto presentPass = device->CreateResource<PresentPass>();
-			presentPass->Init(surface);
+			presentPass->Init(surface, backBuffer);
 
 			device->GetExecutionQueue().EnqueuePass(renderPass);
 			device->GetExecutionQueue().EnqueuePass(presentPass);
 			device->GetExecutionQueue().ExecutePasses();
 
       platform->Update();
+			++frameNumber;
     }
 
-    LOG("Quitting after ", util::ToSeconds(chrono::system_clock::now() - start), " seconds");
+		float seconds = util::ToSeconds(chrono::system_clock::now() - start);
+		cout << "Quitting after " << seconds << " seconds and " << frameNumber << " frames for " << frameNumber / seconds << " FPS" << endl;
   }
 
   return 0;
