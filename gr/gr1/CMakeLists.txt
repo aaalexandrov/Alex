@@ -55,6 +55,9 @@ endif()
 
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
+		vk/buffer_transition_pass_vk.h
+		vk/buffer_transition_pass_vk.cpp
+
 		vk/buffer_vk.h
 		vk/buffer_vk.cpp
 		

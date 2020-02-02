@@ -31,15 +31,21 @@ void RenderPass::ClearAttachments()
 	_attachments.clear();
 }
 
-void RenderPass::AddAttachment(ContentTreatment inputContent, std::shared_ptr<Image> const &img, ContentTreatment outputContent, glm::vec4 clearValue)
+int RenderPass::AddAttachment(ContentTreatment inputContent, ContentTreatment outputContent, glm::vec4 clearValue)
 {
 	ASSERT(outputContent != ContentTreatment::Clear);
-	AttachmentData attach;
-	attach._image = img;
-	attach._inputContent = inputContent;
-	attach._outputContent = outputContent;
-	attach._clearValue = clearValue;
-	_attachments.push_back(std::move(attach));
+	_attachments.emplace_back();
+
+	_attachments.back()._inputContent = inputContent;
+	_attachments.back()._outputContent = outputContent;
+	_attachments.back()._clearValue = clearValue;
+
+	return static_cast<int>(_attachments.size() - 1);
+}
+
+void RenderPass::SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image> const &image)
+{
+	_attachments[attachmentIndex]._image = image;
 }
 
 void RenderPass::ClearCommands()

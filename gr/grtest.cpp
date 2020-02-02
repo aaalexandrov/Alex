@@ -99,8 +99,24 @@ int main()
 	auto depthBuffer = device->CreateResource<Image>();
 	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 1);
 
+	auto renderPass = device->CreateResource<RenderPass>();
+	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(0, 0, 1, 1));
+	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(1, 0, 0, 0));
+	renderPass->SetAttachmentImage(1, depthBuffer);
+
+	auto presentPass = device->CreateResource<PresentPass>();
+	presentPass->Init(surface);
+
+
 	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
 		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
+		auto size = surface->GetSize();
+		if (size.x > 0 && size.y > 0) {
+			surface->Update(size.x, size.y);
+			depthBuffer = device->CreateResource<Image>();
+			depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
+			renderPass->SetAttachmentImage(1, depthBuffer);
+		}
 	});
 
   {
@@ -121,24 +137,17 @@ int main()
         LOG("Input ", text);
       }
 
-			if (surface->GetSize() != glm::uvec2(depthBuffer->GetSize())) {
-				auto size = surface->GetSize();
-				surface->Update(size.x, size.y);
-				depthBuffer = device->CreateResource<Image>();
-				depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
+			auto size = surface->GetSize();
+			if (size.x > 0 && size.y > 0) {
+				auto backBuffer = surface->AcquireNextImage();
+				renderPass->SetAttachmentImage(0, backBuffer);
+
+				presentPass->SetImageToPresent(backBuffer);
+
+				device->GetExecutionQueue().EnqueuePass(renderPass);
+				device->GetExecutionQueue().EnqueuePass(presentPass);
+				device->GetExecutionQueue().ExecutePasses();
 			}
-
-			auto backBuffer = surface->AcquireNextImage();
-			auto renderPass = device->CreateResource<RenderPass>();
-			renderPass->AddAttachment(ContentTreatment::Clear, backBuffer, ContentTreatment::Keep, vec4(0, 0, 1, 1));
-			renderPass->AddAttachment(ContentTreatment::Clear, depthBuffer, ContentTreatment::Keep, vec4(1, 0, 0, 0));
-
-			auto presentPass = device->CreateResource<PresentPass>();
-			presentPass->Init(surface, backBuffer);
-
-			device->GetExecutionQueue().EnqueuePass(renderPass);
-			device->GetExecutionQueue().EnqueuePass(presentPass);
-			device->GetExecutionQueue().ExecutePasses();
 
       platform->Update();
 			++frameNumber;

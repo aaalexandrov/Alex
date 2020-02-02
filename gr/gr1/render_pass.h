@@ -31,7 +31,8 @@ public:
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 	virtual void ClearAttachments();
-	virtual void AddAttachment(ContentTreatment inputContent, std::shared_ptr<Image> const &img, ContentTreatment outputContent, glm::vec4 clearValue = glm::vec4());
+	virtual int AddAttachment(ContentTreatment inputContent, ContentTreatment outputContent, glm::vec4 clearValue = glm::vec4());
+	virtual void SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image> const &img);
 
 	virtual void ClearCommands();
 	virtual void AddCommand(std::shared_ptr<RenderCommand> const &cmd);

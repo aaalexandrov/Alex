@@ -19,10 +19,6 @@ PresentPassVk::PresentPassVk(Device &device)
 	: PresentPass(device)
 	, PassVk(*static_cast<DeviceVk*>(&device))
 {
-}
-
-void PresentPassVk::Prepare(PassData *passData)
-{
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_beforePresent = deviceVk->CreateSemaphore();
 
@@ -31,6 +27,10 @@ void PresentPassVk::Prepare(PassData *passData)
 	_cmdSignal->end();
 
 	_signalSemaphoreStages = vk::PipelineStageFlagBits::eTransfer;
+}
+
+void PresentPassVk::Prepare(PassData *passData)
+{
 }
 
 void PresentPassVk::Execute(PassData *passData)
@@ -52,7 +52,7 @@ void PresentPassVk::Execute(PassData *passData)
 		.setPCommandBuffers(&*_cmdSignal)
 		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSems.size()))
 		.setPSignalSemaphores(signalSems.data());
-	deviceVk->PresentQueue()._queue.submit(submit, *_signalFence);
+	deviceVk->PresentQueue()._queue.submit(submit, nullptr);
 
 	uint32_t imageIndex = surfaceVk->GetImageIndex(_surfaceImage);
 	ASSERT(imageIndex != ~0);

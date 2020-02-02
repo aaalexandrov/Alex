@@ -54,6 +54,7 @@ DeviceVk::DeviceVk(Host::DeviceInfo const &deviceInfo, ValidationLevel validatio
 
 DeviceVk::~DeviceVk()
 {
+	_queue.reset();
 }
 
 glm::uvec3 DeviceVk::VersionToVector(uint32_t version)

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../buffer.h"
+#include "queue_vk.h"
 #include "rttr/registration.h"
-#include "vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -16,21 +16,22 @@ public:
 	void Init(Usage usage, BufferDescPtr &bufferDesc) override;
 	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
-	inline Usage GetUsage() override { return _usage; }
-  inline size_t GetSize() override { return _size; }
-
   void *Map() override;
   void Unmap() override;
 
-protected:
-  static vk::BufferUsageFlags Usage2Flags(Usage usage);
-  vk::AccessFlags GetBufferAccess() const { return GetBufferAccess(_usage); }
-  static vk::AccessFlags GetBufferAccess(Usage usage);
-  vk::PipelineStageFlags GetBufferPipelineStage() const { return GetBufferPipelineStage(_usage); }
-  static vk::PipelineStageFlags GetBufferPipelineStage(Usage usage);
+public:
+  static vk::BufferUsageFlags GetBufferUsage(Usage usage);
 
-  Usage _usage;
-  size_t _size;
+	struct StateInfo {
+		vk::AccessFlags _access;
+		vk::PipelineStageFlags _stages;
+		QueueRole _queueRole = QueueRole::Invalid;
+
+		bool IsValid() { return _stages && _queueRole != QueueRole::Invalid; }
+	};
+
+	inline StateInfo GetStateInfo(ResourceState state) { return GetStateInfo(state, _usage); }
+	static StateInfo GetStateInfo(ResourceState state, Usage usage);
 
   vk::UniqueBuffer _buffer;
   UniqueVmaAllocation _memory;

@@ -1,13 +1,12 @@
-#include "image_transition_pass_vk.h"
+#include "buffer_transition_pass_vk.h"
 #include "device_vk.h"
-#include "image_vk.h"
+#include "buffer_vk.h"
 #include "execution_queue_vk.h"
-#include "presentation_surface_vk.h"
 #include "rttr/rttr_cast.h"
 
 NAMESPACE_BEGIN(gr1)
 
-ImageTransitionPassVk::ImageTransitionPassVk(Device &device)
+BufferTransitionPassVk::BufferTransitionPassVk(Device &device)
 	: ResourceStateTransitionPass(device)
 	, PassVk(*static_cast<DeviceVk*>(&device))
 {
@@ -16,13 +15,13 @@ ImageTransitionPassVk::ImageTransitionPassVk(Device &device)
 	_queueTransitionSemaphore = deviceVk->CreateSemaphore();
 }
 
-void ImageTransitionPassVk::Prepare(PassData *passData)
+void BufferTransitionPassVk::Prepare(PassData *passData)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource);
+	BufferVk *buf = static_cast<BufferVk*>(_resource);
 
-	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
-	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
+	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
+	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
 
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
@@ -31,25 +30,17 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 
 	_srcCmds->begin(vk::CommandBufferBeginInfo());
 
-	vk::ImageSubresourceRange fullImage;
-	fullImage
-		.setAspectMask(img->GetImageAspect())
-		.setBaseMipLevel(0)
-		.setLevelCount(img->GetMipLevels())
-		.setBaseArrayLayer(0)
-		.setLayerCount(std::max(img->GetArrayLayers(), 1u));
-	std::array<vk::ImageMemoryBarrier, 1> imgBarrier;
-	imgBarrier[0]
+	std::array<vk::BufferMemoryBarrier, 1> bufBarrier;
+	bufBarrier[0]
 		.setSrcAccessMask(srcState._access)
 		.setDstAccessMask(queueTransition ? vk::AccessFlags() : dstState._access)
-		.setOldLayout(srcState._layout)
-		.setNewLayout(dstState._layout)
 		.setSrcQueueFamilyIndex(queueTransition ? srcQueue->_family : VK_QUEUE_FAMILY_IGNORED)
 		.setDstQueueFamilyIndex(queueTransition ? dstQueue->_family : VK_QUEUE_FAMILY_IGNORED)
-		.setImage(img->_image)
-		.setSubresourceRange(fullImage);
+		.setBuffer(*buf->_buffer)
+		.setOffset(0)
+		.setSize(buf->GetSize());
 	_srcCmds->pipelineBarrier(srcState._stages, queueTransition ? vk::PipelineStageFlagBits::eBottomOfPipe : dstState._stages,
-		vk::DependencyFlags(), nullptr, nullptr, imgBarrier);
+		vk::DependencyFlags(), nullptr, bufBarrier, nullptr);
 
 	_srcCmds->end();
 
@@ -59,31 +50,30 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 
 		_dstCmds->begin(vk::CommandBufferBeginInfo());
 
-		imgBarrier[0]
+		bufBarrier[0]
 			.setSrcAccessMask(vk::AccessFlags())
 			.setDstAccessMask(dstState._access)
-			.setOldLayout(dstState._layout)
-			.setNewLayout(dstState._layout)
 			.setSrcQueueFamilyIndex(srcQueue->_family)
 			.setDstQueueFamilyIndex(dstQueue->_family)
-			.setImage(img->_image)
-			.setSubresourceRange(fullImage);
+			.setBuffer(*buf->_buffer)
+			.setOffset(0)
+			.setSize(buf->GetSize());
 		_dstCmds->pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, dstState._stages,
-			vk::DependencyFlags(), nullptr, nullptr, imgBarrier);
-		
+			vk::DependencyFlags(), nullptr, bufBarrier, nullptr);
+
 		_dstCmds->end();
 	}
 
 	_signalSemaphoreStages = dstState._stages;
 }
 
-void ImageTransitionPassVk::Execute(PassData *passData)
+void BufferTransitionPassVk::Execute(PassData *passData)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource);
+	BufferVk *buf = static_cast<BufferVk*>(_resource);
 
-	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
-	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
+	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
+	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
 
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
@@ -92,12 +82,6 @@ void ImageTransitionPassVk::Execute(PassData *passData)
 	std::vector<vk::PipelineStageFlags> waitStageFlags;
 	FillWaitSemaphores(passData, semaphores, waitStageFlags);
 	std::array<vk::SubmitInfo, 1> srcSubmit, dstSubmit;
-
-	if (_srcState == ResourceState::PresentAcquired) {
-		PresentationSurfaceVk *surfaceOwner = rttr::rttr_cast<PresentationSurfaceVk*>(img->_owner);
-		semaphores.push_back(*surfaceOwner->_acquireSemaphore);
-		waitStageFlags.push_back(srcState._stages);
-	}
 
 	if (queueTransition) {
 
@@ -147,7 +131,6 @@ void ImageTransitionPassVk::Execute(PassData *passData)
 
 	}
 }
-
 
 NAMESPACE_END(gr1)
 

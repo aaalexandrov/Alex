@@ -18,14 +18,41 @@ RenderPassVk::RenderPassVk(Device &device)
 	: RenderPass(device)
 	, PassVk(*static_cast<DeviceVk*>(&device)) 
 {
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	_passCmds = deviceVk->GraphicsQueue().AllocateCmdBuffer();
+
+	_signalSemaphoreStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+}
+
+void RenderPassVk::ClearAttachments()
+{
+	_renderPass.reset();
+	_framebuffer.reset();
+	RenderPass::ClearAttachments();
+}
+
+int RenderPassVk::AddAttachment(ContentTreatment inputContent, ContentTreatment outputContent, glm::vec4 clearValue)
+{
+	_renderPass.reset();
+	_framebuffer.reset();
+	return RenderPass::AddAttachment(inputContent, outputContent, clearValue);
+}
+
+void RenderPassVk::SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image> const &img)
+{
+	_framebuffer.reset();
+	RenderPass::SetAttachmentImage(attachmentIndex, img);
 }
 
 void RenderPassVk::Prepare(PassData *passData)
 { 
-	InitRenderPass(); 
-	InitFramebuffer();
-	InitBeginEnd();
-	_signalSemaphoreStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+
+	if (!_renderPass)
+		InitRenderPass(); 
+	if (!_framebuffer)
+		InitFramebuffer();
+	RecordPassCommands();
 }
 
 void RenderPassVk::Execute(PassData *passData)
@@ -49,7 +76,7 @@ void RenderPassVk::Execute(PassData *passData)
 			.setPWaitDstStageMask(waitStageFlags.data());
 	}
 
-	deviceVk->GraphicsQueue()._queue.submit(submits, *_signalFence);
+	deviceVk->GraphicsQueue()._queue.submit(submits, nullptr);
 }
 
 void RenderPassVk::InitRenderPass()
@@ -149,15 +176,11 @@ void RenderPassVk::InitFramebuffer()
 	_framebuffer = deviceVk->_device->createFramebufferUnique(frameInfo, deviceVk->AllocationCallbacks());
 }
 
-void RenderPassVk::InitBeginEnd()
+void RenderPassVk::RecordPassCommands()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
-	if (!_passCmds) {
-		_passCmds = std::move(deviceVk->GraphicsQueue().AllocateCmdBuffer());
-	} else {
-		_passCmds->reset(vk::CommandBufferResetFlags());
-	}
+	_passCmds->reset(vk::CommandBufferResetFlags());
 
 	vk::CommandBufferBeginInfo beginInfo;
 	_passCmds->begin(beginInfo);
@@ -183,11 +206,15 @@ void RenderPassVk::InitBeginEnd()
 
 	_passCmds->beginRenderPass(passBegin, vk::SubpassContents::eInline);
 
-	// record render commands here
+	RecordRenderCommands();
 
 	_passCmds->endRenderPass();
 
 	_passCmds->end();
+}
+
+void RenderPassVk::RecordRenderCommands()
+{
 }
 
 

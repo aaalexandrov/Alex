@@ -128,19 +128,17 @@ vk::ImageType ImageVk::GetImageType(glm::uvec3 const &size)
 vk::ImageUsageFlags ImageVk::GetImageUsage(Usage usage)
 {
 	vk::ImageUsageFlags imgUsage;
-	if ((usage & Usage::RenderTarget) == Usage::RenderTarget)
+	if (!!(usage & Usage::RenderTarget))
 		imgUsage |= vk::ImageUsageFlagBits::eColorAttachment;
-  switch (usage & ~(Usage::RenderTarget)) {
-    case Usage::DepthBuffer:
-      imgUsage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-    case Usage::Staging:
-      imgUsage |= vk::ImageUsageFlagBits::eTransferSrc;
-    case Usage::Texture:
-      imgUsage |= vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
-  }
-	if (imgUsage)
-		return imgUsage;
-  throw GraphicsException("ImageVk::GetImageUsage(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
+	if (!!(usage & Usage::DepthBuffer))
+		imgUsage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+	if (!!(usage & Usage::Staging))
+		imgUsage |= vk::ImageUsageFlagBits::eTransferSrc;
+	if (!!(usage & Usage::Texture))
+		imgUsage |= vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst;
+	if (!imgUsage)
+	  throw GraphicsException("ImageVk::GetImageUsage(): Unsupported usage value " + static_cast<uint32_t>(usage), VK_RESULT_MAX_ENUM);
+	return imgUsage;
 }
 
 vk::ImageAspectFlags ImageVk::GetImageAspect(vk::Format format)
@@ -229,7 +227,7 @@ ImageVk::StateInfo ImageVk::GetStateInfo(ResourceState state, Usage usage)
 			break;
 	}
 	if (!info.IsValid())
-		throw GraphicsException("ImageVk::GetStateAccess(): Unsupported state and usage combination", VK_RESULT_MAX_ENUM);
+		throw GraphicsException("ImageVk::GetStateInfo(): Unsupported state and usage combination", VK_RESULT_MAX_ENUM);
 	return info;
 }
 

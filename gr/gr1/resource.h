@@ -13,13 +13,13 @@ enum class ContentTreatment {
 };
 
 enum class ResourceState {
-	Initial,
-	ShaderRead,
-	TransferRead,
-	TransferWrite,
-	RenderWrite,
-	PresentRead,
-	PresentAcquired,
+	Initial = 1 << 0,
+	ShaderRead = 1 << 1,
+	TransferRead = 1 << 2,
+	TransferWrite = 1 << 3,
+	RenderWrite = 1 << 4,
+	PresentRead = 1 << 5,
+	PresentAcquired = 1 << 6,
 };
 
 class Device;

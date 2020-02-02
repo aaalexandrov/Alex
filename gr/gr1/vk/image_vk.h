@@ -7,7 +7,6 @@
 NAMESPACE_BEGIN(gr1)
 
 class DeviceVk;
-struct QueueVk;
 
 class ImageVk : public Image {
 	RTTR_ENABLE(Image)
@@ -42,7 +41,7 @@ public:
 		vk::PipelineStageFlags _stages;
 		QueueRole _queueRole = QueueRole::Invalid;
 
-		bool IsValid() { return _queueRole != QueueRole::Invalid; }
+		bool IsValid() { return _stages && _queueRole != QueueRole::Invalid; }
 	};
 
 	inline StateInfo GetStateInfo(ResourceState state) { return GetStateInfo(state, _usage); }

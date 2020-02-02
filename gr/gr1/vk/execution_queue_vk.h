@@ -16,6 +16,9 @@ protected:
 
 	void Prepare() override;
 	void Execute() override;
+
+	vk::UniqueFence _passesFinished;
+	vk::UniqueCommandBuffer _cmdFinish;
 };
 
 NAMESPACE_END(gr1)

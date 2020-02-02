@@ -44,7 +44,7 @@ public:
   static uint32_t GetColorFormatSize(ColorFormat format);
 
   glm::uvec4 GetEffectiveSize() const { return GetEffectiveSize(_size); }
-  static glm::uvec4 GetEffectiveSize(glm::uvec4 s) { return glm::uvec4(s.x, std::max(s.y, 1u), std::max(s.z, 1u), std::max(s.w, 1u)); }
+  static glm::uvec4 GetEffectiveSize(glm::uvec4 s) { return util::VecMax(s, glm::uvec4(1, 1, 1, 1)); }
 
   Usage _usage = Usage::Invalid;
   ColorFormat _format = ColorFormat::Invalid;

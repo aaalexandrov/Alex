@@ -7,26 +7,7 @@ NAMESPACE_BEGIN(gr1)
 
 PassVk::PassVk(DeviceVk &deviceVk)
 	: _signalSemaphore(std::move(deviceVk.CreateSemaphore()))
-	, _signalFence(std::move(deviceVk.CreateFence()))
 {
-}
-
-void PassVk::WaitForFences(PassData *passData, DeviceVk *deviceVk)
-{
-	std::vector<vk::Fence> fences;
-	if (passData->_transitionPasses.size()) {
-		for (auto &transition : passData->_transitionPasses) {
-			ASSERT(!transition->_transitionPasses.size());
-			AddWaitFence(transition->_pass.get(), fences);
-		}
-	} else {
-		if (passData->_previousPassData) {
-			AddWaitFence(passData->_previousPassData->_pass.get(), fences);
-		}
-	}
-	if (fences.size()) {
-		deviceVk->_device->waitForFences(fences, true, std::numeric_limits<uint64_t>::max());
-	}
 }
 
 void PassVk::FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages)
@@ -44,14 +25,6 @@ void PassVk::FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &
 	}
 }
 
-void PassVk::AddWaitFence(OutputPass *pass, std::vector<vk::Fence>& fences)
-{
-	PassVk *passVk = rttr::rttr_cast<PassVk *>(pass);
-	if (passVk->_signalFence) {
-		fences.push_back(*passVk->_signalFence);
-	}
-}
-
 void PassVk::AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore>& semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages)
 {
 	PassVk *passVk = rttr::rttr_cast<PassVk *>(pass);
@@ -60,6 +33,24 @@ void PassVk::AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore>& sema
 		semaphoreWaitStages.push_back(passVk->_signalSemaphoreStages);
 	}
 }
+
+bool PassVk::GetTransitionQueueInfo(DeviceVk *deviceVk, QueueRole srcRole, QueueRole dstRole, QueueVk *&srcQueue, QueueVk *&dstQueue)
+{
+	ASSERT(srcRole != QueueRole::Invalid && dstRole != QueueRole::Invalid);
+	ASSERT(!(srcRole == QueueRole::Any && dstRole == QueueRole::Any));
+	bool queueTransition = srcRole != dstRole && srcRole != QueueRole::Any && dstRole != QueueRole::Any;
+
+	if (queueTransition) {
+		srcQueue = &deviceVk->Queue(srcRole);
+		dstQueue = &deviceVk->Queue(dstRole);
+	} else {
+		srcQueue = &deviceVk->Queue(srcRole != QueueRole::Any ? srcRole : dstRole);
+		dstQueue = srcQueue;
+	}
+
+	return queueTransition;
+}
+
 
 NAMESPACE_END(gr1)
 

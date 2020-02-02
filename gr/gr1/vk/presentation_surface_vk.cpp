@@ -122,8 +122,7 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 	 for (auto img : chainImages) {
 		 _images.push_back(deviceVk->CreateResource<Image>());
 		 ImageVk *imageVk = static_cast<ImageVk*>(_images.back().get());
-		 glm::uvec2 size = GetSize();
-		 imageVk->Init(this, Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(size.x, size.y, 0, 0), 1);
+		 imageVk->Init(this, Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(width, height, 0, 0), 1);
 	 }
 }
 
