@@ -6,9 +6,6 @@ set(dir_SOURCES
 	buffer.h
 	buffer.cpp
 
-	buffer_desc.h
-	buffer_desc.cpp
-
 	device.h
 	device.cpp
 
@@ -55,6 +52,9 @@ endif()
 
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
+		vk/buffer_copy_pass_vk.h
+		vk/buffer_copy_pass_vk.cpp
+
 		vk/buffer_transition_pass_vk.h
 		vk/buffer_transition_pass_vk.cpp
 

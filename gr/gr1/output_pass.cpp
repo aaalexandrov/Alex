@@ -13,22 +13,23 @@ void ResourceStateTransitionPass::Init(Resource &resource, ResourceState srcStat
 }
 
 
-void CopyBufferPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t offset, uint32_t size)
+void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t srcOffset, uint32_t dstOffset, uint32_t size)
 {
 	_src = srcBuffer;
 	_dst = dstBuffer;
-	_offset = offset;
+	_srcOffset = srcOffset;
+	_dstOffset = dstOffset;
 	_size = _size;
 
-	ASSERT(_src->GetSize() >= _offset + _size);
-	ASSERT(_dst->GetSize() >= _offset + _size);
+	ASSERT(_src->GetSize() >= _srcOffset + _size);
+	ASSERT(_dst->GetSize() >= _dstOffset + _size);
 }
 
-void CopyBufferPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
+void BufferCopyPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
 	if (dependencyType == DependencyType::Input) {
-		addDependencyFunc(_src.get(), ResourceState::TransferRead);
-		addDependencyFunc(_dst.get(), ResourceState::TransferWrite);
+		addDependencyFunc(_src.get(), !(_src->GetUsage() & Buffer::Usage::Staging) ? ResourceState::TransferRead : ResourceState::Initial);
+		addDependencyFunc(_dst.get(), !(_dst->GetUsage() & Buffer::Usage::Staging) ? ResourceState::TransferWrite : ResourceState::Initial);
 	}
 }
 
@@ -38,7 +39,7 @@ void PresentPass::Init(std::shared_ptr<PresentationSurface> const &presentSurfac
 	_surface = presentSurface;
 }
 
-void PresentPass::SetImageToPresent(std::shared_ptr<Image> const & surfaceImage)
+void PresentPass::SetImageToPresent(std::shared_ptr<Image> const &surfaceImage)
 {
 	_surfaceImage = surfaceImage;
 }

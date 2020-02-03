@@ -26,9 +26,10 @@ protected:
   vk::DescriptorSetLayoutCreateInfo GetDescriptorSetLayoutCreateInfos(std::vector<vk::DescriptorSetLayoutBinding> &layoutBindings);
   std::vector<vk::DescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings();
 
-  static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType type);
+  static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType const &type);
+	static std::shared_ptr<util::LayoutElement> GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize = 0);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
-  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected, ShaderKind kind);
+  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected);
   void InitDescriptorSetLayouts();
   void InitPipelineLayout();
 

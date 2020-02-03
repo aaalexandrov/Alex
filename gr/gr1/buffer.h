@@ -1,8 +1,8 @@
 #pragma once
 
-#include "buffer_desc.h"
 #include "resource.h"
 #include "util/enumutl.h"
+#include "util/layout.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -19,19 +19,19 @@ public:
 
   Buffer(Device &device) : Resource(device) {}
 
-	virtual void Init(Usage usage, BufferDescPtr &bufferDesc);
+	virtual void Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout);
 
 	Usage GetUsage() const { return _usage; }
-	size_t GetSize() const { return _bufferDesc->_size; }
+	size_t GetSize() const { return _layout->GetSize(); }
 
   virtual void *Map() = 0;
   virtual void Unmap() = 0;
 
-	inline BufferDescPtr const &GetBufferDescription() const { return _bufferDesc; }
+	inline std::shared_ptr<util::LayoutElement> const &GetBufferLayout() const { return _layout; }
 
 protected:
 	Usage _usage = Usage::Invalid;
-	BufferDescPtr _bufferDesc;
+	std::shared_ptr<util::LayoutElement> _layout;
 };
 
 DEFINE_ENUM_BIT_OPERATORS(Buffer::Usage);

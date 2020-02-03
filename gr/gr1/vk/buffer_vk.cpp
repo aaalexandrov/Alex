@@ -15,9 +15,9 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(policy::ctor::as_raw_ptr);
 }
 
-void BufferVk::Init(Usage usage, BufferDescPtr &bufferDesc)
+void BufferVk::Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout)
 {
-	Buffer::Init(usage, bufferDesc);
+	Buffer::Init(usage, layout);
 
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
   vk::BufferCreateInfo bufInfo;

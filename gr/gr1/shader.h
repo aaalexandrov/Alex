@@ -1,9 +1,8 @@
 #pragma once
 
-#include "util/namespace.h"
-#include "util/enumutl.h"
-#include "buffer_desc.h"
 #include "resource.h"
+#include "util/enumutl.h"
+#include "util/layout.h"
 #include <string>
 #include <memory>
 
@@ -25,7 +24,7 @@ public:
   struct UniformBufferInfo {
     std::string _name;
     uint32_t _binding;
-    BufferDescPtr _uniformDesc = BufferDesc::Create();
+		std::shared_ptr<util::LayoutElement> _layout;
   };
 
 	Shader(Device &device) : Resource(device) {}
@@ -35,13 +34,13 @@ public:
 
 	inline std::string const &GetName() const { return _name; }
 	inline ShaderKind GetShaderKind() const { return _kind; }
-	inline BufferDesc *GetVertexDescription() const { return _vertexDesc.get(); }
+	inline std::shared_ptr<util::LayoutElement> const &GetVertexLayout() const { return _vertexLayout; }
 	inline std::vector<UniformBufferInfo> const &GetUniformBuffers() const { return _uniformBuffers; }
 
 protected:
 	std::string _name;
 	ShaderKind _kind;
-  BufferDescPtr _vertexDesc = BufferDesc::Create();
+	std::shared_ptr<util::LayoutElement> _vertexLayout;
   std::vector<UniformBufferInfo> _uniformBuffers;
 };
 

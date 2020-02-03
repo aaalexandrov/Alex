@@ -1,10 +1,18 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+struct myStruct {
+	vec3 vv[2];
+};
+
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+	
+	
+	//float tt[3][4];
+	//myStruct ss[3];
 } ubo;
 
 layout(location = 0) in vec3 inPosition;

@@ -43,17 +43,17 @@ public:
 };
 
 class Buffer;
-class CopyBufferPass : public OutputPass {
+class BufferCopyPass : public OutputPass {
 	RTTR_ENABLE(OutputPass)
 public:
-	CopyBufferPass(Device &device) : OutputPass(device) {}
+	BufferCopyPass(Device &device) : OutputPass(device) {}
 
-	virtual void Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t offset, uint32_t size);
+	virtual void Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t srcOffset, uint32_t dstOffset, uint32_t size);
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 protected:
 	std::shared_ptr<Buffer> _src, _dst;
-	uint32_t _offset, _size;
+	uint32_t _srcOffset, _dstOffset, _size;
 };
 
 class PresentationSurface;

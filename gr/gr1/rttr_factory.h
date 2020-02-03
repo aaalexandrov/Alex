@@ -12,7 +12,7 @@ struct RttrFactory {
 	rttr::type GetDescendantType(rttr::type baseType);
 
 	template<typename BaseType, typename... Args>
-	BaseType *CreateInstance(rttr::type baseType, Args... args)
+	BaseType *CreateInstance(rttr::type baseType, Args&&... args)
 	{
 		rttr::type createdType = GetDescendantType(baseType);
 		if (createdType == rttr::type::get<void>())
@@ -22,7 +22,7 @@ struct RttrFactory {
 	}
 
 	template<typename BaseType, typename... Args>
-	std::shared_ptr<BaseType> CreateInstanceShared(rttr::type baseType, Args... args)
+	std::shared_ptr<BaseType> CreateInstanceShared(rttr::type baseType, Args&&... args)
 	{
 		return std::shared_ptr<BaseType>(CreateInstance<BaseType, Args...>(baseType, std::forward<Args>(args)...));
 	}

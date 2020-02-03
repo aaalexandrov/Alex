@@ -68,7 +68,7 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
     InitVertexDescription(refl);
   }
 
-  InitUniformBufferDescriptions(refl, _kind);
+  InitUniformBufferDescriptions(refl);
 }
 
 std::vector<vk::PipelineShaderStageCreateInfo> ShaderVk::GetPipelineShaderStageCreateInfos()
@@ -148,10 +148,47 @@ static std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
   { rttr::type::get<glm::vec4>(), vk::Format::eR32G32B32A32Sfloat },
 };
 
-rttr::type ShaderVk::GetTypeFromSpirv(spirv_cross::SPIRType type)
+rttr::type ShaderVk::GetTypeFromSpirv(spirv_cross::SPIRType const &type)
 {
   rttr::type typeInfo = SPIRType2TypeInfo.at(SPIRTypeInfo(type));
   return typeInfo;
+}
+
+std::shared_ptr<util::LayoutElement> ShaderVk::GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize)
+{
+	size_t arrayElements = 1;
+	for (auto dim : type.array) {
+		arrayElements *= dim;
+	}
+
+	std::shared_ptr<util::LayoutElement> elem;
+	if (type.basetype == spirv_cross::SPIRType::Struct) {
+		std::vector<std::pair<std::shared_ptr<util::LayoutElement>, std::string>> members;
+		size_t structSize = reflected.get_declared_struct_size(type);
+		for (uint32_t i = 0; i < type.member_types.size(); ++i) {
+			auto &memberType = reflected.get_type(type.member_types[i]);
+			auto &memberName = reflected.get_member_name(type.self, i);
+			size_t memberSize = reflected.get_declared_struct_member_size(type, i);
+			size_t memberOffset = reflected.type_struct_member_offset(type, i);
+			size_t effectiveSize = i < type.member_types.size() - 1 ? reflected.type_struct_member_offset(type, i + 1) : structSize;
+			effectiveSize -= memberOffset;
+			ASSERT(effectiveSize == memberSize);
+			std::shared_ptr<util::LayoutElement> memberLayout = GetLayoutFromSpirv(reflected, memberType, memberSize);
+			members.emplace_back(std::move(memberLayout), memberName);
+		}
+		ASSERT(typeSize == structSize * arrayElements);
+		elem = std::make_shared<util::LayoutStruct>(members, structSize);
+	} else {
+		elem = std::make_shared<util::LayoutValue>(GetTypeFromSpirv(type), typeSize / arrayElements);
+	}
+
+	for (size_t i = 0; i < type.array.size(); ++i) {
+		ASSERT(type.array_size_literal[i] && "Arrays with specialization constants not supported");
+		std::shared_ptr<util::LayoutElement> arr = std::make_shared<util::LayoutArray>(elem, type.array[i], typeSize);
+		elem = std::move(arr);
+	}
+
+	return elem;
 }
 
 std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDescriptions()
@@ -159,16 +196,20 @@ std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDes
   std::vector<vk::VertexInputAttributeDescription> descriptions;
   uint32_t binding = 0;
 
-  for (auto &nameElem : _vertexDesc->_elements) {
-    descriptions.emplace_back(
-      nameElem.second._location, 
-      binding,
-      Type2VkFormat.at(nameElem.second._type), 
-      static_cast<uint32_t>(nameElem.second._offset));
-  }
+	ASSERT(_vertexLayout->GetKind() == util::LayoutElement::Kind::Struct);
+	for (uint32_t i = 0; i < _vertexLayout->GetStructFieldCount(); ++i) {
+		util::LayoutElement *attrElem = _vertexLayout->GetStructFieldElement(i);
 
-  std::sort(descriptions.begin(), descriptions.end(), 
-    [](vk::VertexInputAttributeDescription const &d1, vk::VertexInputAttributeDescription const &d2) { return d1.offset < d2.offset; });
+		uint32_t location = static_cast<uint32_t>(attrElem->_userData);
+		uint32_t offset = static_cast<uint32_t>(_vertexLayout->GetStructFieldOffset(i));
+		vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
+
+		descriptions.emplace_back(
+			location,
+			binding,
+			format,
+			offset);
+	}
 
   return descriptions;
 }
@@ -178,7 +219,7 @@ std::vector<vk::VertexInputBindingDescription> ShaderVk::GetVertexBindingDescrip
   std::vector<vk::VertexInputBindingDescription> descriptions;
   uint32_t binding = 0;
 
-  descriptions.emplace_back(binding, static_cast<uint32_t>(_vertexDesc->_size), vk::VertexInputRate::eVertex);
+  descriptions.emplace_back(binding, static_cast<uint32_t>(_vertexLayout->GetSize()), vk::VertexInputRate::eVertex);
 
   return descriptions;
 }
@@ -214,23 +255,28 @@ std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBind
 
 void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
 {
-  ASSERT(_vertexDesc->_elements.size() == 0);
+  ASSERT(!_vertexLayout);
 
-  size_t offset = 0;
+	std::vector<std::pair<std::shared_ptr<util::LayoutElement>, std::string>> attributes;
   for (auto s : reflected.get_shader_resources().stage_inputs) {
     auto &type = reflected.get_type(s.type_id);
 
-    rttr::type typeInfo = GetTypeFromSpirv(type);
-
-    uint32_t location = reflected.get_decoration(s.id, spv::Decoration::DecorationLocation);
-
-    BufferElement elem { typeInfo, offset, location };
-    _vertexDesc->AddElement(s.name, std::move(elem));
-    offset += typeInfo.get_sizeof();
+		std::shared_ptr<util::LayoutElement> attrLayout = GetLayoutFromSpirv(reflected, type);
+		attributes.emplace_back(attrLayout, s.name);
   }
+
+	_vertexLayout = std::make_shared<util::LayoutStruct>(attributes);
+
+	for (uint32_t i = 0; i < reflected.get_shader_resources().stage_inputs.size(); ++i) {
+		auto &s = reflected.get_shader_resources().stage_inputs[i];
+		auto &type = reflected.get_type(s.type_id);
+
+		uint32_t location = reflected.get_decoration(s.id, spv::Decoration::DecorationLocation);
+		_vertexLayout->GetStructFieldElement(i)->_userData = location;
+	}
 }
 
-void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected, ShaderKind kind)
+void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected)
 {
   for (auto u : reflected.get_shader_resources().uniform_buffers) {
     auto &type = reflected.get_type(u.type_id);
@@ -242,23 +288,7 @@ void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflec
     UniformBufferInfo uniformInfo;
     uniformInfo._name = name;
     uniformInfo._binding = binding;
-
-    auto members = type.member_types.size();
-    for (auto i = 0; i < members; ++i) {
-      auto &memberType = reflected.get_type(type.member_types[i]);
-      std::string const &memberName = reflected.get_member_name(type.self, i);
-      size_t memberSize = reflected.get_declared_struct_member_size(type, i);
-      size_t memberOffset = reflected.type_struct_member_offset(type, i);
-
-      rttr::type elemType = GetTypeFromSpirv(memberType);
-      ASSERT(memberSize == elemType.get_sizeof());
-      BufferElement elem { elemType, memberOffset };
-
-      uniformInfo._uniformDesc->AddElement(memberName, std::move(elem));
-    }
-
-    ASSERT(uniformInfo._uniformDesc->_size <= size);
-    uniformInfo._uniformDesc->_size = size;
+		uniformInfo._layout = GetLayoutFromSpirv(reflected, type, size);
     _uniformBuffers.push_back(std::move(uniformInfo));
   }
 }

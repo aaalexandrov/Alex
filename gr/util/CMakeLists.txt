@@ -9,6 +9,9 @@ set(dir_SOURCES
 	file.h
 	file.cpp
 
+	layout.h
+	layout.cpp
+
 	mathutl.h
 	mathutl.cpp
 

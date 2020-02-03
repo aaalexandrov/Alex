@@ -2,10 +2,10 @@
 
 NAMESPACE_BEGIN(gr1)
 
-void Buffer::Init(Usage usage, BufferDescPtr & bufferDesc)
+void Buffer::Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout)
 {
 	_usage = usage;
-	_bufferDesc = bufferDesc;
+	_layout = layout;
 }
 
 NAMESPACE_END(gr1)
