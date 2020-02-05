@@ -22,7 +22,7 @@ public:
 	virtual void Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout);
 
 	Usage GetUsage() const { return _usage; }
-	size_t GetSize() const { return _layout->GetSize(); }
+	uint32_t GetSize() const { return static_cast<uint32_t>(_layout->GetSize()); }
 
   virtual void *Map() = 0;
   virtual void Unmap() = 0;

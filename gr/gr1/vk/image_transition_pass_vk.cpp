@@ -9,17 +9,16 @@ NAMESPACE_BEGIN(gr1)
 
 ImageTransitionPassVk::ImageTransitionPassVk(Device &device)
 	: ResourceStateTransitionPass(device)
-	, PassVk(*static_cast<DeviceVk*>(&device))
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
 	_queueTransitionSemaphore = deviceVk->CreateSemaphore();
 }
 
-void ImageTransitionPassVk::Prepare(PassData *passData)
+void ImageTransitionPassVk::Prepare()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource);
+	ImageVk *img = static_cast<ImageVk*>(_resource.get());
 
 	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
@@ -73,14 +72,12 @@ void ImageTransitionPassVk::Prepare(PassData *passData)
 		
 		_dstCmds->end();
 	}
-
-	_signalSemaphoreStages = dstState._stages;
 }
 
-void ImageTransitionPassVk::Execute(PassData *passData)
+void ImageTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource);
+	ImageVk *img = static_cast<ImageVk*>(_resource.get());
 
 	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
@@ -88,64 +85,68 @@ void ImageTransitionPassVk::Execute(PassData *passData)
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
 
-	std::vector<vk::Semaphore> semaphores;
+	std::vector<vk::Semaphore> waitSemaphores;
 	std::vector<vk::PipelineStageFlags> waitStageFlags;
-	FillWaitSemaphores(passData, semaphores, waitStageFlags);
-	std::array<vk::SubmitInfo, 1> srcSubmit, dstSubmit;
+	FillDependencySemaphores(dependencies, DependencyType::Input, waitSemaphores, &waitStageFlags);
+	std::vector<vk::Semaphore> signalSemaphores;
+	FillDependencySemaphores(dependencies, DependencyType::Output, signalSemaphores);
+
+	std::array<vk::SubmitInfo, 1> srcSubmit, dstSubmit; 
 
 	if (_srcState == ResourceState::PresentAcquired) {
 		PresentationSurfaceVk *surfaceOwner = rttr::rttr_cast<PresentationSurfaceVk*>(img->_owner);
-		semaphores.push_back(*surfaceOwner->_acquireSemaphore);
+		waitSemaphores.push_back(*surfaceOwner->_acquireSemaphore);
 		waitStageFlags.push_back(srcState._stages);
 	}
 
 	if (queueTransition) {
 
 		srcSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_srcCmds)
 			.setSignalSemaphoreCount(1)
 			.setPSignalSemaphores(&*_queueTransitionSemaphore);
-		if (semaphores.size()) {
-			srcSubmit[0]
-				.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
-				.setPWaitSemaphores(semaphores.data())
-				.setPWaitDstStageMask(waitStageFlags.data());
-		}
 		srcQueue->_queue.submit(srcSubmit, nullptr);
 
 
-		semaphores.clear();
+		waitSemaphores.clear();
 		waitStageFlags.clear();
-		semaphores.push_back(*_queueTransitionSemaphore);
+		waitSemaphores.push_back(*_queueTransitionSemaphore);
 		waitStageFlags.push_back(srcState._stages);
 
 		dstSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_dstCmds)
-			.setSignalSemaphoreCount(1)
-			.setPSignalSemaphores(&*_signalSemaphore)
-			.setWaitSemaphoreCount(1)
-			.setPWaitSemaphores(semaphores.data())
-			.setPWaitDstStageMask(waitStageFlags.data());
+			.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+			.setPSignalSemaphores(signalSemaphores.data());
 		dstQueue->_queue.submit(dstSubmit, nullptr);
 
 	} else {
 
 		srcSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_srcCmds)
-			.setSignalSemaphoreCount(1)
-			.setPSignalSemaphores(&*_signalSemaphore);
-		if (semaphores.size()) {
-			srcSubmit[0]
-				.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
-				.setPWaitSemaphores(semaphores.data())
-				.setPWaitDstStageMask(waitStageFlags.data());
-		}
+			.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+			.setPSignalSemaphores(signalSemaphores.data());
 		srcQueue->_queue.submit(srcSubmit, nullptr);
 
 	}
+}
+
+vk::PipelineStageFlags ImageTransitionPassVk::GetPassDstStages()
+{
+	ImageVk *img = static_cast<ImageVk*>(_resource.get());
+	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
+	return dstState._stages;
 }
 
 

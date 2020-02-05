@@ -30,6 +30,7 @@ LayoutStruct::LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>,
 		offset += _fields.back()._element->GetSize();
 		_nameIndices.insert(std::make_pair(_fields.back()._name, i));
 	}
+	ASSERT(!size || size >= GetSize());
 	_padding = size ? size - GetSize() : 0;
 }
 

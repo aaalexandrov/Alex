@@ -67,6 +67,9 @@ if(gr_implementation STREQUAL VK)
 		vk/execution_queue_vk.h
 		vk/execution_queue_vk.cpp
 
+		vk/final_pass_vk.h
+		vk/final_pass_vk.cpp
+
 		vk/host_allocation_tracker_vk.h
 		vk/host_allocation_tracker_vk.cpp
 

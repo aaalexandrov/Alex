@@ -9,8 +9,10 @@ class BufferTransitionPassVk : public ResourceStateTransitionPass, public PassVk
 public:
 	BufferTransitionPassVk(Device &device);
 
-	void Prepare(PassData *passData) override;
-	void Execute(PassData *passData) override;
+	void Prepare() override;
+	void Execute(PassDependencyTracker &dependencies) override;
+
+	vk::PipelineStageFlags GetPassDstStages() override;
 
 public:
 

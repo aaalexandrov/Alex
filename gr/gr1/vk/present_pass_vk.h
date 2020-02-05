@@ -9,9 +9,10 @@ class PresentPassVk : public PresentPass, public PassVk {
 public:
 	PresentPassVk(Device &device);
 
-	void Prepare(PassData *passData) override;
-	void Execute(PassData *passData) override;
+	void Prepare() override;
+	void Execute(PassDependencyTracker &dependencies) override;
 
+	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eTransfer;	}
 protected:
 	vk::Result _presentResult;
 	vk::UniqueCommandBuffer _cmdSignal;

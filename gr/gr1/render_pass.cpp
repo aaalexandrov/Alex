@@ -15,10 +15,8 @@ glm::uvec2 RenderPass::GetRenderAreaSize()
 
 void RenderPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
-	if (dependencyType == DependencyType::Input) {
-		for (auto &attach : _attachments) {
-			addDependencyFunc(attach._image.get(), ResourceState::RenderWrite);
-		}
+	for (auto &attach : _attachments) {
+		addDependencyFunc(attach._image.get(), ResourceState::RenderWrite);
 	}
 
 	for (auto &cmd : _commands) {

@@ -65,7 +65,8 @@ glm::uvec3 DeviceVk::VersionToVector(uint32_t version)
 vk::UniqueSemaphore DeviceVk::CreateSemaphore()
 {
 	vk::SemaphoreCreateInfo semInfo;
-	return _device->createSemaphoreUnique(semInfo, AllocationCallbacks());
+	auto semaphore = _device->createSemaphoreUnique(semInfo, AllocationCallbacks());
+	return std::move(semaphore);
 }
 
 vk::UniqueFence DeviceVk::CreateFence(bool createSignaled)

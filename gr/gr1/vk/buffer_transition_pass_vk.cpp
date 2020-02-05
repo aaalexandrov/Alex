@@ -8,17 +8,16 @@ NAMESPACE_BEGIN(gr1)
 
 BufferTransitionPassVk::BufferTransitionPassVk(Device &device)
 	: ResourceStateTransitionPass(device)
-	, PassVk(*static_cast<DeviceVk*>(&device))
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
 	_queueTransitionSemaphore = deviceVk->CreateSemaphore();
 }
 
-void BufferTransitionPassVk::Prepare(PassData *passData)
+void BufferTransitionPassVk::Prepare()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	BufferVk *buf = static_cast<BufferVk*>(_resource);
+	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
 
 	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
@@ -63,14 +62,12 @@ void BufferTransitionPassVk::Prepare(PassData *passData)
 
 		_dstCmds->end();
 	}
-
-	_signalSemaphoreStages = dstState._stages;
 }
 
-void BufferTransitionPassVk::Execute(PassData *passData)
+void BufferTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	BufferVk *buf = static_cast<BufferVk*>(_resource);
+	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
 
 	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
@@ -78,58 +75,62 @@ void BufferTransitionPassVk::Execute(PassData *passData)
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
 
-	std::vector<vk::Semaphore> semaphores;
+	std::vector<vk::Semaphore> waitSemaphores;
 	std::vector<vk::PipelineStageFlags> waitStageFlags;
-	FillWaitSemaphores(passData, semaphores, waitStageFlags);
+	FillDependencySemaphores(dependencies, DependencyType::Input, waitSemaphores, &waitStageFlags);
+	std::vector<vk::Semaphore> signalSemaphores;
+	FillDependencySemaphores(dependencies, DependencyType::Output, signalSemaphores);
+
 	std::array<vk::SubmitInfo, 1> srcSubmit, dstSubmit;
 
 	if (queueTransition) {
 
 		srcSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_srcCmds)
 			.setSignalSemaphoreCount(1)
 			.setPSignalSemaphores(&*_queueTransitionSemaphore);
-		if (semaphores.size()) {
-			srcSubmit[0]
-				.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
-				.setPWaitSemaphores(semaphores.data())
-				.setPWaitDstStageMask(waitStageFlags.data());
-		}
 		srcQueue->_queue.submit(srcSubmit, nullptr);
 
 
-		semaphores.clear();
+		waitSemaphores.clear();
 		waitStageFlags.clear();
-		semaphores.push_back(*_queueTransitionSemaphore);
+		waitSemaphores.push_back(*_queueTransitionSemaphore);
 		waitStageFlags.push_back(srcState._stages);
 
 		dstSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_dstCmds)
-			.setSignalSemaphoreCount(1)
-			.setPSignalSemaphores(&*_signalSemaphore)
-			.setWaitSemaphoreCount(1)
-			.setPWaitSemaphores(semaphores.data())
-			.setPWaitDstStageMask(waitStageFlags.data());
+			.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+			.setPSignalSemaphores(signalSemaphores.data());
 		dstQueue->_queue.submit(dstSubmit, nullptr);
 
 	} else {
 
 		srcSubmit[0]
+			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+			.setPWaitSemaphores(waitSemaphores.data())
+			.setPWaitDstStageMask(waitStageFlags.data())
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&*_srcCmds)
-			.setSignalSemaphoreCount(1)
-			.setPSignalSemaphores(&*_signalSemaphore);
-		if (semaphores.size()) {
-			srcSubmit[0]
-				.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
-				.setPWaitSemaphores(semaphores.data())
-				.setPWaitDstStageMask(waitStageFlags.data());
-		}
+			.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+			.setPSignalSemaphores(signalSemaphores.data());
 		srcQueue->_queue.submit(srcSubmit, nullptr);
 
 	}
+}
+
+vk::PipelineStageFlags BufferTransitionPassVk::GetPassDstStages()
+{
+	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
+	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
+	return dstState._stages;
 }
 
 NAMESPACE_END(gr1)

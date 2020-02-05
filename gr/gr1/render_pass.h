@@ -6,7 +6,10 @@
 
 NAMESPACE_BEGIN(gr1)
 
+class Buffer;
 class Image;
+class Shader;
+class RenderState;
 
 class RenderCommand {
 	RTTR_ENABLE()
@@ -14,6 +17,22 @@ public:
 	virtual ~RenderCommand() {}
 
 	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
+};
+
+class RenderDrawCommand : public RenderCommand {
+	RTTR_ENABLE(RenderCommand)
+public:
+
+
+public:
+	struct BufferData {
+		std::shared_ptr<Buffer> _buffer;
+		int _binding;
+	};
+
+	std::vector<std::shared_ptr<Shader>> _shaders;
+	std::shared_ptr<RenderState> _renderState;
+	std::vector<BufferData> _buffers;
 };
 
 class RenderPass : public OutputPass {

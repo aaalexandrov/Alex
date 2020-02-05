@@ -17,7 +17,6 @@ RTTR_REGISTRATION
 
 PresentPassVk::PresentPassVk(Device &device)
 	: PresentPass(device)
-	, PassVk(*static_cast<DeviceVk*>(&device))
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_beforePresent = deviceVk->CreateSemaphore();
@@ -25,45 +24,45 @@ PresentPassVk::PresentPassVk(Device &device)
 	_cmdSignal = deviceVk->PresentQueue().AllocateCmdBuffer();
 	_cmdSignal->begin(vk::CommandBufferBeginInfo());
 	_cmdSignal->end();
-
-	_signalSemaphoreStages = vk::PipelineStageFlagBits::eTransfer;
 }
 
-void PresentPassVk::Prepare(PassData *passData)
+void PresentPassVk::Prepare()
 {
 }
 
-void PresentPassVk::Execute(PassData *passData)
+void PresentPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	PresentationSurfaceVk *surfaceVk = static_cast<PresentationSurfaceVk*>(_surface.get());
 
-	std::vector<vk::Semaphore> waitSems;
-	std::vector<vk::PipelineStageFlags> semWaitStages;
-	FillWaitSemaphores(passData, waitSems, semWaitStages);
+	std::vector<vk::Semaphore> waitSemaphores;
+	std::vector<vk::PipelineStageFlags> waitStageFlags;
+	FillDependencySemaphores(dependencies, DependencyType::Input, waitSemaphores, &waitStageFlags);
+	std::vector<vk::Semaphore> signalSemaphores;
+	FillDependencySemaphores(dependencies, DependencyType::Output, signalSemaphores);
+	signalSemaphores.push_back(*_beforePresent);
 
-	std::array<vk::Semaphore, 2> signalSems{ *_beforePresent, *_signalSemaphore };
 	std::array<vk::SubmitInfo, 1> submit;
 	submit[0]
-		.setWaitSemaphoreCount(static_cast<uint32_t>(waitSems.size()))
-		.setPWaitSemaphores(waitSems.data())
-		.setPWaitDstStageMask(semWaitStages.data())
+		.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+		.setPWaitSemaphores(waitSemaphores.data())
+		.setPWaitDstStageMask(waitStageFlags.data())
 		.setCommandBufferCount(1)
 		.setPCommandBuffers(&*_cmdSignal)
-		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSems.size()))
-		.setPSignalSemaphores(signalSems.data());
+		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+		.setPSignalSemaphores(signalSemaphores.data());
 	deviceVk->PresentQueue()._queue.submit(submit, nullptr);
 
 	uint32_t imageIndex = surfaceVk->GetImageIndex(_surfaceImage);
 	ASSERT(imageIndex != ~0);
 	vk::PresentInfoKHR presentInfo;
 	presentInfo
+		.setWaitSemaphoreCount(1)
+		.setPWaitSemaphores(&*_beforePresent)
 		.setSwapchainCount(1)
 		.setPSwapchains(&*surfaceVk->_swapchain)
 		.setPImageIndices(&imageIndex)
-		.setPResults(&_presentResult)
-		.setWaitSemaphoreCount(static_cast<uint32_t>(1))
-		.setPWaitSemaphores(&*_beforePresent);
+		.setPResults(&_presentResult);
 	vk::Result result = deviceVk->PresentQueue()._queue.presentKHR(presentInfo);
 	if (result != vk::Result::eSuccess)
 		throw GraphicsException("PresentPassVk::Execute() failed!", (uint32_t)result);

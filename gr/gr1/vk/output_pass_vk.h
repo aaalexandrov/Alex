@@ -12,16 +12,14 @@ struct QueueVk;
 class PassVk {
 	RTTR_ENABLE()
 public:
-	PassVk(DeviceVk &deviceVk);
-	
-	void FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages);
+	virtual vk::PipelineStageFlags GetPassDstStages() = 0;
 
-	void AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages);
+	void FillDependencySemaphores(PassDependencyTracker &dependencies, DependencyType depType, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> *semaphoreWaitStages = nullptr);
 
 	static bool GetTransitionQueueInfo(DeviceVk *deviceVk, QueueRole srcRole, QueueRole dstRole, QueueVk *&srcQueue, QueueVk *&dstQueue);
 
+private:
 	vk::UniqueSemaphore _signalSemaphore;
-	vk::PipelineStageFlags _signalSemaphoreStages;
 };
 
 NAMESPACE_END(gr1)

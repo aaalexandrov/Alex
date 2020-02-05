@@ -9,9 +9,10 @@ class ImageTransitionPassVk : public ResourceStateTransitionPass, public PassVk 
 public:
 	ImageTransitionPassVk(Device &device);
 
-	void Prepare(PassData *passData) override;
-	void Execute(PassData *passData) override;
+	void Prepare() override;
+	void Execute(PassDependencyTracker &dependencies) override;
 
+	vk::PipelineStageFlags GetPassDstStages() override;
 public:
 
 	vk::UniqueCommandBuffer _srcCmds, _dstCmds;

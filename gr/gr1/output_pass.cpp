@@ -5,9 +5,9 @@
 
 NAMESPACE_BEGIN(gr1)
 
-void ResourceStateTransitionPass::Init(Resource &resource, ResourceState srcState, ResourceState dstState)
+void ResourceStateTransitionPass::Init(std::shared_ptr<Resource> const &resource, ResourceState srcState, ResourceState dstState)
 {
-	_resource = &resource;
+	_resource = resource;
 	_srcState = srcState;
 	_dstState = dstState;
 }
@@ -19,7 +19,7 @@ void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_
 	_dst = dstBuffer;
 	_srcOffset = srcOffset;
 	_dstOffset = dstOffset;
-	_size = _size;
+	_size = size;
 
 	ASSERT(_src->GetSize() >= _srcOffset + _size);
 	ASSERT(_dst->GetSize() >= _dstOffset + _size);
@@ -28,8 +28,8 @@ void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_
 void BufferCopyPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
 	if (dependencyType == DependencyType::Input) {
-		addDependencyFunc(_src.get(), !(_src->GetUsage() & Buffer::Usage::Staging) ? ResourceState::TransferRead : ResourceState::Initial);
-		addDependencyFunc(_dst.get(), !(_dst->GetUsage() & Buffer::Usage::Staging) ? ResourceState::TransferWrite : ResourceState::Initial);
+		addDependencyFunc(_src.get(), ResourceState::TransferRead);
+		addDependencyFunc(_dst.get(), ResourceState::TransferWrite);
 	}
 }
 

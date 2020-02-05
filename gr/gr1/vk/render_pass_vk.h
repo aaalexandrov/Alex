@@ -15,8 +15,10 @@ public:
 	int AddAttachment(ContentTreatment inputContent, ContentTreatment outputContent, glm::vec4 clearValue = glm::vec4()) override;
 	void SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image> const &img) override;
 
-	void Prepare(PassData *passData) override;
-	void Execute(PassData *passData) override;
+	void Prepare() override;
+	void Execute(PassDependencyTracker &dependencies) override;
+
+	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eColorAttachmentOutput; }
 protected:
 	void InitRenderPass();
 	void InitFramebuffer();

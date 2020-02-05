@@ -16,12 +16,9 @@ RTTR_REGISTRATION
 
 RenderPassVk::RenderPassVk(Device &device) 
 	: RenderPass(device)
-	, PassVk(*static_cast<DeviceVk*>(&device)) 
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_passCmds = deviceVk->GraphicsQueue().AllocateCmdBuffer();
-
-	_signalSemaphoreStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 }
 
 void RenderPassVk::ClearAttachments()
@@ -44,7 +41,7 @@ void RenderPassVk::SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image
 	RenderPass::SetAttachmentImage(attachmentIndex, img);
 }
 
-void RenderPassVk::Prepare(PassData *passData)
+void RenderPassVk::Prepare()
 { 
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
@@ -55,27 +52,26 @@ void RenderPassVk::Prepare(PassData *passData)
 	RecordPassCommands();
 }
 
-void RenderPassVk::Execute(PassData *passData)
+void RenderPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
-	std::vector<vk::Semaphore> semaphores;
+	std::vector<vk::Semaphore> waitSemaphores;
 	std::vector<vk::PipelineStageFlags> waitStageFlags;
-	FillWaitSemaphores(passData, semaphores, waitStageFlags);
+	FillDependencySemaphores(dependencies, DependencyType::Input, waitSemaphores, &waitStageFlags);
+	std::vector<vk::Semaphore> signalSemaphores;
+	FillDependencySemaphores(dependencies, DependencyType::Output, signalSemaphores);
+
 	std::array<vk::SubmitInfo, 1> submits;
 
 	submits[0]
+		.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+		.setPWaitSemaphores(waitSemaphores.data())
+		.setPWaitDstStageMask(waitStageFlags.data())
 		.setCommandBufferCount(1)
 		.setPCommandBuffers(&*_passCmds)
-		.setSignalSemaphoreCount(1)
-		.setPSignalSemaphores(&*_signalSemaphore);
-	if (semaphores.size()) {
-		submits.front()
-			.setWaitSemaphoreCount(static_cast<uint32_t>(semaphores.size()))
-			.setPWaitSemaphores(semaphores.data())
-			.setPWaitDstStageMask(waitStageFlags.data());
-	}
-
+		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+		.setPSignalSemaphores(signalSemaphores.data());
 	deviceVk->GraphicsQueue()._queue.submit(submits, nullptr);
 }
 

@@ -33,18 +33,27 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	LayoutElement *GetElement(std::string name) { return GetElement(GetStructFieldIndex(name)); }
 	size_t GetOffset(std::vector<rttr::variant> const &indices);
 
-	size_t GetMemberOffset() { return 0; }
+	std::pair<LayoutElement*, size_t> GetMemberElementAndOffset() { return std::make_pair(this, 0); }
 	template<typename First, typename... Rest>
-	size_t GetMemberOffset(First first, Rest... rest)
+	std::pair<LayoutElement*, size_t> GetMemberElementAndOffset(First first, Rest... rest)
 	{
 		LayoutElement *element = GetElement(first);
 		if (!element)
-			return ~0ull;
-		size_t restOffs = element->GetMemberOffset(rest...);
-		if (restOffs == ~0ull)
-			return ~0ull;
+			return std::pair<LayoutElement*, size_t>(nullptr, ~0ull);
+		std::pair<LayoutElement*, size_t> restElemOffs = element->GetMemberElementAndOffset(rest...);
+		if (!restElemOffs.first)
+			return restElemOffs;
 		size_t firstOffs = GetOffset(first);
-		return firstOffs + restOffs;
+		return std::make_pair(restElemOffs.first, firstOffs + restElemOffs.second);
+	}
+
+	template<typename DataType, typename... Indices>
+	DataType *GetMemberPtr(void *buffer, Indices... indices)
+	{
+		std::pair<LayoutElement*, size_t> elemOffs = GetMemberElementAndOffset(indices...);
+		if (!elemOffs.first || elemOffs.first->GetValueType() != rttr::type::get<DataType>())
+			return nullptr;
+		return reinterpret_cast<DataType*>(reinterpret_cast<uint8_t*>(buffer) + elemOffs.second);
 	}
 
 public:

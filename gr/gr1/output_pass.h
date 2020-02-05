@@ -12,7 +12,7 @@ enum class DependencyType {
 
 using DependencyFunc = std::function<void(Resource*, ResourceState)>;
 
-class PassData;
+struct PassDependencyTracker;
 class OutputPass : public Resource {
 	RTTR_ENABLE(Resource)
 public:
@@ -20,8 +20,8 @@ public:
 
 	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
 
-	virtual void Prepare(PassData *passData) = 0;
-	virtual void Execute(PassData *passData) = 0;
+	virtual void Prepare() = 0;
+	virtual void Execute(PassDependencyTracker &dependencies) = 0;
 };
 
 class ResourceStateTransitionPass : public OutputPass {
@@ -29,16 +29,15 @@ class ResourceStateTransitionPass : public OutputPass {
 public:
 	ResourceStateTransitionPass(Device &device) : OutputPass(device) {}
 		 
-	virtual void Init(Resource &resource, ResourceState srcState, ResourceState dstState);
+	virtual void Init(std::shared_ptr<Resource> const &resource, ResourceState srcState, ResourceState dstState);
 
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override { ASSERT(!"This shouldn't be called"); }
 
 	template<typename ResourceType>
-	ResourceType GetResource() { return static_cast<ResourceType*>(_resource); }
+	ResourceType GetResource() { return static_cast<ResourceType*>(_resource).get(); }
 
 public:
-	// Resource isn't owned because this pass is solely intended to be created by execution queue with resources that are already owned by other passes
-	Resource *_resource;
+	std::shared_ptr<Resource> _resource;
 	ResourceState _srcState, _dstState;
 };
 
@@ -59,7 +58,7 @@ protected:
 class PresentationSurface;
 class Image;
 class PresentPass : public OutputPass {
-	RTTR_ENABLE()
+	RTTR_ENABLE(OutputPass)
 public:
 	PresentPass(Device &device) : OutputPass(device) {}
 
@@ -71,6 +70,17 @@ public:
 protected:
 	std::shared_ptr<PresentationSurface> _surface;
 	std::shared_ptr<Image> _surfaceImage;
+};
+
+class FinalPass : public OutputPass {
+	RTTR_ENABLE(OutputPass)
+public:
+	FinalPass(Device &device) : OutputPass(device) {}
+
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override {}
+
+	virtual bool IsFinished() = 0;
+	virtual void WaitToFinish() = 0;
 };
 
 NAMESPACE_END(gr1)

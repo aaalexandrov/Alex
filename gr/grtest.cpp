@@ -11,6 +11,7 @@
 #include "gr1/execution_queue.h"
 #include "gr1/image.h"
 #include "gr1/shader.h"
+#include "gr1/buffer.h"
 #include "gr1/render_pass.h"
 #include <string>
 
@@ -58,6 +59,16 @@ shared_ptr<Shader> LoadShader(Device *device, std::string name)
 	return shader;
 }
 
+void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
+{
+	util::LayoutElement *layout = buffer->GetBufferLayout().get();
+	void *mapped = buffer->Map();
+	*layout->GetMemberPtr<glm::mat4>(mapped, "model") = model;
+	*layout->GetMemberPtr<glm::mat4>(mapped, "view") = view;
+	*layout->GetMemberPtr<glm::mat4>(mapped, "proj") = proj;
+	buffer->Unmap();
+}
+
 int main()
 {
   auto platform = unique_ptr<Platform>(Platform::Create());
@@ -91,6 +102,17 @@ int main()
 
 	auto vertShader = LoadShader(device.get(), "simple.vert");
 	auto fragShader = LoadShader(device.get(), "simple.frag");
+
+	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
+
+	auto uboShader = device->CreateResource<Buffer>();
+	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
+
+	auto uboStaging = device->CreateResource<Buffer>();
+	uboStaging->Init(Buffer::Usage::Staging, uboShader->GetBufferLayout());
+
+	auto uboUpdatePass = device->CreateResource<BufferCopyPass>();
+	uboUpdatePass->Init(uboStaging, uboShader, 0, 0, uboStaging->GetSize());
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);
@@ -144,6 +166,9 @@ int main()
 
 				presentPass->SetImageToPresent(backBuffer);
 
+				UpdateTransforms(uboStaging, model, view, proj);
+
+				device->GetExecutionQueue().EnqueuePass(uboUpdatePass);
 				device->GetExecutionQueue().EnqueuePass(renderPass);
 				device->GetExecutionQueue().EnqueuePass(presentPass);
 				device->GetExecutionQueue().ExecutePasses();

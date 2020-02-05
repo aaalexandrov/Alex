@@ -35,7 +35,7 @@ void BufferVk::Init(Usage usage, std::shared_ptr<util::LayoutElement> const &lay
 std::shared_ptr<ResourceStateTransitionPass> BufferVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
 {
 	auto transition = std::make_shared<BufferTransitionPassVk>(*_device);
-	transition->Init(*this, srcState, dstState);
+	transition->Init(shared_from_this(), srcState, dstState);
 	return std::move(transition);
 }
 

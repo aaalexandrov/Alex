@@ -1,37 +1,34 @@
 #include "output_pass_vk.h"
 #include "device_vk.h"
-#include "../execution_queue.h"
+#include "execution_queue_vk.h"
 #include "rttr/rttr_cast.h"
 
 NAMESPACE_BEGIN(gr1)
 
-PassVk::PassVk(DeviceVk &deviceVk)
-	: _signalSemaphore(std::move(deviceVk.CreateSemaphore()))
+void PassVk::FillDependencySemaphores(PassDependencyTracker &dependencies, DependencyType depType, 
+	std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> *semaphoreWaitStages)
 {
-}
+	ASSERT(depType == DependencyType::Input || depType == DependencyType::Output);
+	ASSERT((depType == DependencyType::Input) == (bool)semaphoreWaitStages);
+	ASSERT(!semaphoreWaitStages || semaphores.size() == semaphoreWaitStages->size());
 
-void PassVk::FillWaitSemaphores(PassData *passData, std::vector<vk::Semaphore> &semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages)
-{
-	ASSERT(semaphores.size() == semaphoreWaitStages.size());
-	if (passData->_transitionPasses.size()) {
-		for (auto &transition : passData->_transitionPasses) {
-			ASSERT(!transition->_transitionPasses.size());
-			AddWaitSemaphore(transition->_pass.get(), semaphores, semaphoreWaitStages);
-		}
-	} else {
-		if (passData->_previousPassData) {
-			AddWaitSemaphore(passData->_previousPassData->_pass.get(), semaphores, semaphoreWaitStages);
-		}
-	}
-}
+	OutputPass *thisPass = rttr::rttr_cast<OutputPass*>(this);
+	ASSERT(thisPass);
 
-void PassVk::AddWaitSemaphore(OutputPass *pass, std::vector<vk::Semaphore>& semaphores, std::vector<vk::PipelineStageFlags> &semaphoreWaitStages)
-{
-	PassVk *passVk = rttr::rttr_cast<PassVk *>(pass);
-	if (passVk->_signalSemaphore) {
-		semaphores.push_back(*passVk->_signalSemaphore);
-		semaphoreWaitStages.push_back(passVk->_signalSemaphoreStages);
-	}
+	auto enumDependencies = [&](PassDependency *dependency) 
+	{
+		PassDependencyVk *depVk = static_cast<PassDependencyVk*>(dependency);
+		semaphores.push_back(*depVk->_semaphore);
+		if (depType == DependencyType::Input) {
+			ASSERT(dependency->_dstPass == thisPass);
+			PassVk *passVk = rttr::rttr_cast<PassVk *>(dependency->_srcPass);
+			semaphoreWaitStages->push_back(passVk->GetPassDstStages());
+		} else {
+			ASSERT(dependency->_srcPass == thisPass);
+		}
+	};
+
+	dependencies.ForDependencies(thisPass, depType, enumDependencies);
 }
 
 bool PassVk::GetTransitionQueueInfo(DeviceVk *deviceVk, QueueRole srcRole, QueueRole dstRole, QueueVk *&srcQueue, QueueVk *&dstQueue)

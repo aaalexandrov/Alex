@@ -8,6 +8,15 @@ NAMESPACE_BEGIN(gr1)
 class BufferCopyPassVk : public BufferCopyPass, public PassVk {
 	RTTR_ENABLE(BufferCopyPass, PassVk)
 public:
+	BufferCopyPassVk(Device &device);
+
+	void Prepare() override;
+	void Execute(PassDependencyTracker &dependencies) override;
+
+	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eTransfer; }
+
+protected:
+	vk::UniqueCommandBuffer _cmdCopy;
 };
 
 NAMESPACE_END(gr1)
