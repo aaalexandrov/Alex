@@ -7,7 +7,7 @@
 
 NAMESPACE_BEGIN(gr1)
 
-class Resource;
+class ResourceBase;
 enum class ResourceState;
 class OutputPass;
 class ExecutionQueue;
@@ -19,7 +19,7 @@ public:
 		: _deviceInfo(deviceInfo), _validationLevel(validation), _resourceFactory(RttrDiscriminator::Tag, thisType) {}
 	virtual ~Device() {}
 
-	virtual std::shared_ptr<Resource> CreateResource(rttr::type resourceType);
+	virtual std::shared_ptr<ResourceBase> CreateResource(rttr::type resourceType);
 
 	template<typename ResourceType>
 	std::shared_ptr<ResourceType> CreateResource() { return std::static_pointer_cast<ResourceType>(CreateResource(rttr::type::get<ResourceType>())); }

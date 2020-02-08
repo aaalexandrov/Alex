@@ -93,7 +93,6 @@ void ExecutionQueue::Execute()
 	}
 }
 
-
 void ExecutionQueue::WaitExecutionFinished()
 {
 	_finalPass->WaitToFinish();
@@ -136,13 +135,12 @@ void ExecutionQueue::ProcessPassDependencies()
 
 					_dependencyPasses.push_back(std::move(transition));
 				} else {
-					if (recordedData._outputOfPass && !(i == _passes.size() - 1 && recordedData._wasInput)) {
+					if (recordedData._outputOfPass) {
 						_dependencyTracker.AddDependency(recordedData._outputOfPass, pass.get());
 					}
 				}
 
 				recordedData._state = state;
-				recordedData._wasInput = true;
 			}
 		};
 
@@ -152,7 +150,6 @@ void ExecutionQueue::ProcessPassDependencies()
 			ResourceStateData &recordedData = GetResourceStateData(resource);
 			recordedData._state = state;
 			recordedData._outputOfPass = pass.get();
-			recordedData._wasInput = false;
 		};
 
 		_passes[i]->GetDependencies(DependencyType::Output, addOutputDependency);
@@ -161,8 +158,9 @@ void ExecutionQueue::ProcessPassDependencies()
 	}
 
 	// all passes that don't have follow-up passes need to be added as input dependencies of the final pass so it waits for them to finish
-	for (int i = 0; i < _scheduledPasses.size() - 1; ++i) {
-		auto &pass = _scheduledPasses[i];
+	// we only traverse user passes because transition passes always have a follow-up
+	for (int i = 0; i < _passes.size() - 1; ++i) {
+		auto pass = _passes[i].get();
 		if (_dependencyTracker.HasDependencies(pass, DependencyType::Output))
 			continue;
 		_dependencyTracker.AddDependency(pass, _finalPass.get());

@@ -19,6 +19,8 @@ public:
   void *Map() override;
   void Unmap() override;
 
+	vk::IndexType GetVkIndexType();
+
 public:
   static vk::BufferUsageFlags GetBufferUsage(Usage usage);
 

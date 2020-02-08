@@ -23,22 +23,33 @@ enum class ResourceState {
 };
 
 class Device;
-class ResourceStateTransitionPass;
-class Resource : public std::enable_shared_from_this<Resource> {
+
+class ResourceBase : public std::enable_shared_from_this<ResourceBase> {
 	RTTR_ENABLE()
 public:
-	Resource(Device &device) : _device(&device) {}
-	virtual ~Resource() {}
+	ResourceBase(Device &device) : _device(&device) {}
+	virtual ~ResourceBase() {}
+
+	template<typename ResourceType>
+	std::shared_ptr<ResourceType> AsSharedPtr() { return std::static_pointer_cast<ResourceType>(shared_from_this()); }
+
+	template<typename DeviceType>
+	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
+protected:
+	Device *_device;
+};
+
+class ResourceStateTransitionPass;
+class Resource : public ResourceBase {
+	RTTR_ENABLE(ResourceBase)
+public:
+	Resource(Device &device) : ResourceBase(device) {}
 
 	inline ResourceState GetResourceState() { return _state; }
 	inline void SetResourceState(ResourceState state) { _state = state; }
 	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
 
-	template<typename DeviceType>
-	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
-
-	Device *_device;
 	ResourceState _state = ResourceState::Initial;
 };
 

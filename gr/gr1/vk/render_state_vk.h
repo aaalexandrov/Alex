@@ -12,7 +12,7 @@ public:
 
 	void Init() override;
 
-protected:
+public:
 
 	void FillViewportState(vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors);
 	void FillRasterizationState(vk::PipelineRasterizationStateCreateInfo &rasterState);
@@ -22,6 +22,7 @@ protected:
 	void FillDynamicState(vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates);
 
 	void FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst);
+	void FillViewports(std::vector<vk::Viewport> &viewports);
 
 	static util::ValueRemapper<RenderState::FrontFaceMode, vk::FrontFace> s_frontFace2Vk;
 	static util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> s_cullMask2Vk;

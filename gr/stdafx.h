@@ -15,7 +15,23 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
 
+#include "rttr/rttr_enable.h"
+#include "rttr/rttr_cast.h"
+#include "rttr/registration.h"
+
 #include "util/namespace.h"
 #include "util/dbg.h"
 #include "util/rtti.h"
+
+#define VK_USE_PLATFORM_WIN32_KHR
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
+#include "vulkan/vulkan.hpp"
+
+#undef CreateWindow
+#undef CreateSemaphore
+#undef LoadImage
+
+
 

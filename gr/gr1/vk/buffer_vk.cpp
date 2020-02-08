@@ -35,7 +35,7 @@ void BufferVk::Init(Usage usage, std::shared_ptr<util::LayoutElement> const &lay
 std::shared_ptr<ResourceStateTransitionPass> BufferVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
 {
 	auto transition = std::make_shared<BufferTransitionPassVk>(*_device);
-	transition->Init(shared_from_this(), srcState, dstState);
+	transition->Init(AsSharedPtr<Resource>(), srcState, dstState);
 	return std::move(transition);
 }
 
@@ -49,6 +49,17 @@ void BufferVk::Unmap()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
   vmaUnmapMemory(*deviceVk->_allocator, *_memory);
+}
+
+vk::IndexType BufferVk::GetVkIndexType()
+{
+	ASSERT(_usage & Usage::Index);
+	rttr::type elemType = _layout->GetArrayElement()->GetValueType();
+	if (elemType == rttr::type::get<uint16_t>())
+		return vk::IndexType::eUint16;
+	if (elemType == rttr::type::get<uint32_t>())
+		return vk::IndexType::eUint32;
+	throw GraphicsException("Invalid index buffer content type!", VK_ERROR_FORMAT_NOT_SUPPORTED);
 }
 
 vk::BufferUsageFlags BufferVk::GetBufferUsage(Usage usage)

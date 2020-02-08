@@ -86,21 +86,14 @@ util::ValueRemapper<RenderState::ColorComponentMask, vk::ColorComponentFlagBits,
 
 void RenderStateVk::Init()
 {
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	_state = ResourceState::ShaderRead;
 }
 
 void RenderStateVk::FillViewportState(vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors)
 {
-	viewports.resize(viewports.size() + 1);
-	viewports.back()
-		.setX(_viewport._rect._min.x)
-		.setY(_viewport._rect._min.y)
-		.setWidth(_viewport._rect.GetSize().x)
-		.setHeight(_viewport._rect.GetSize().y)
-		.setMinDepth(_viewport._minDepth)
-		.setMaxDepth(_viewport._maxDepth);
+	FillViewports(viewports);
 
-	scissors.resize(scissors.size() + 1);
+	scissors.emplace_back();
 	scissors.back()
 		.setOffset(vk::Offset2D(_scissor._min.x, _scissor._min.y))
 		.setExtent(vk::Extent2D(_scissor.GetSize().x, _scissor.GetSize().y));
@@ -165,7 +158,11 @@ void RenderStateVk::FillBlendState(vk::PipelineColorBlendStateCreateInfo &blendS
 
 void RenderStateVk::FillDynamicState(vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates)
 {
-	// no dynamic states for now
+	dynamicStates.push_back(vk::DynamicState::eViewport);
+	
+	dynamicState
+		.setDynamicStateCount(static_cast<uint32_t>(dynamicStates.size()))
+		.setPDynamicStates(dynamicStates.data());
 }
 
 void RenderStateVk::FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst)
@@ -180,6 +177,17 @@ void RenderStateVk::FillStencilOpState(StencilFuncState const &src, vk::StencilO
 		.setCompareMask(src._compareMask);
 }
 
+void RenderStateVk::FillViewports(std::vector<vk::Viewport> &viewports)
+{
+	viewports.emplace_back();
+	viewports.back()
+		.setX(_viewport._rect._min.x)
+		.setY(_viewport._rect._min.y)
+		.setWidth(_viewport._rect.GetSize().x)
+		.setHeight(_viewport._rect.GetSize().y)
+		.setMinDepth(_viewport._minDepth)
+		.setMaxDepth(_viewport._maxDepth);
+}
 
 NAMESPACE_END(gr1)
 

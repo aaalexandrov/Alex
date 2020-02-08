@@ -1,6 +1,9 @@
 #include "device_vk.h"
 #include "../graphics_exception.h"
+#include "../render_pass.h"
 #include "execution_queue_vk.h"
+#include "shader_vk.h"
+#include "render_state_vk.h"
 #include "rttr/registration.h"
 #include "util/mathutl.h"
 #include "util/enumutl.h"
@@ -42,6 +45,132 @@ std::shared_ptr<Device> HostPlatformVk::CreateDevice(Host::DeviceInfo const & de
 	return std::make_shared<DeviceVk>(deviceInfo, validation);
 }
 
+util::ValueRemapper<PrimitiveKind, vk::PrimitiveTopology> s_PrimitiveKind2Topology = { {
+		{ PrimitiveKind::TriangleList, vk::PrimitiveTopology::eTriangleList },
+		{ PrimitiveKind::TriangleStrip, vk::PrimitiveTopology::eTriangleStrip },
+	} };
+
+vk::UniquePipeline PipelineStore::CreatePipeline(PipelineInfo &pipelineInfo)
+{
+	std::vector<vk::PipelineShaderStageCreateInfo> shaderStageInfos;
+	std::vector<vk::VertexInputAttributeDescription> vertexInputAttribDescs;
+	std::vector<vk::VertexInputBindingDescription> vertexInputBindingDescs;
+	for (auto shader : pipelineInfo._shaders) {
+		auto shaderVk = static_cast<ShaderVk*>(shader);
+
+		shaderStageInfos.push_back(shaderVk->GetPipelineShaderStageCreateInfo());
+		if (shaderVk->GetShaderKind() == ShaderKind::Vertex) {
+			util::LayoutElement *shaderVertLayout = shaderVk->GetVertexLayout().get();
+
+			ASSERT(shaderVertLayout->GetKind() == util::LayoutElement::Kind::Struct);
+			for (uint32_t i = 0; i < shaderVertLayout->GetStructFieldCount(); ++i) {
+				util::LayoutElement *attrElem = shaderVertLayout->GetStructFieldElement(i);
+
+				int bufIndex = GetVertexLayoutIndex(shaderVertLayout->GetStructFieldName(i), attrElem, pipelineInfo._vertexBufferLayouts);
+				if (bufIndex < 0) {
+					ASSERT(!"Shader vertex attribute missing from supplied buffers!");
+					continue;
+				}
+
+				uint32_t binding = pipelineInfo._vertexBufferLayouts[bufIndex]._binding;
+				uint32_t location = static_cast<uint32_t>(attrElem->_userData);
+				uint32_t offset = static_cast<uint32_t>(shaderVertLayout->GetStructFieldOffset(i));
+				vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
+
+				vertexInputAttribDescs.emplace_back();
+				vertexInputAttribDescs.back()
+					.setLocation(location)
+					.setBinding(binding)
+					.setFormat(format)
+					.setOffset(offset);
+			}
+
+			for (int i = 0; i < pipelineInfo._vertexBufferLayouts.size(); ++i) {
+				auto bufLayout = pipelineInfo._vertexBufferLayouts[i];
+
+				vertexInputBindingDescs.emplace_back();
+				vertexInputBindingDescs.back()
+					.setStride(static_cast<uint32_t>(bufLayout._bufferLayout->GetSize()))
+					.setBinding(bufLayout._binding)
+					.setInputRate(bufLayout._frequencyInstance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex);
+			}
+		}
+	}
+
+	vk::PipelineVertexInputStateCreateInfo vertexInputStateInfo;
+	vertexInputStateInfo
+		.setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertexInputAttribDescs.size()))
+		.setPVertexAttributeDescriptions(vertexInputAttribDescs.data())
+		.setVertexBindingDescriptionCount(static_cast<uint32_t>(vertexInputBindingDescs.size()))
+		.setPVertexBindingDescriptions(vertexInputBindingDescs.data());
+
+	vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+	inputAssemblyInfo
+		.setTopology(s_PrimitiveKind2Topology.ToDst(pipelineInfo._primitiveKind));
+
+	RenderStateVk *renderStateVk = static_cast<RenderStateVk *>(pipelineInfo._renderState);
+
+	std::vector<vk::Viewport> viewports;
+	std::vector<vk::Rect2D> scissors;
+	vk::PipelineViewportStateCreateInfo viewportState;
+	renderStateVk->FillViewportState(viewportState, viewports, scissors);
+
+	vk::PipelineRasterizationStateCreateInfo rasterizationState;
+	renderStateVk->FillRasterizationState(rasterizationState);
+
+	std::vector<uint32_t> sampleMask;
+	vk::PipelineMultisampleStateCreateInfo multisampleState;
+	renderStateVk->FillMultisampleState(multisampleState, sampleMask);
+
+	vk::PipelineDepthStencilStateCreateInfo depthStencilState;
+	renderStateVk->FillDepthStencilState(depthStencilState);
+
+	std::vector<vk::PipelineColorBlendAttachmentState> attachmentBlends;
+	vk::PipelineColorBlendStateCreateInfo blendState;
+	renderStateVk->FillBlendState(blendState, attachmentBlends);
+
+	std::vector<vk::DynamicState> dynamicStates;
+	vk::PipelineDynamicStateCreateInfo dynamicState;
+	renderStateVk->FillDynamicState(dynamicState, dynamicStates);
+
+	vk::GraphicsPipelineCreateInfo pipeCreateInfo;
+	pipeCreateInfo
+		.setStageCount(static_cast<uint32_t>(shaderStageInfos.size()))
+		.setPStages(shaderStageInfos.data())
+		.setPVertexInputState(&vertexInputStateInfo)
+		.setPInputAssemblyState(&inputAssemblyInfo)
+		.setPViewportState(&viewportState)
+		.setPRasterizationState(&rasterizationState)
+		.setPMultisampleState(&multisampleState)
+		.setPDepthStencilState(&depthStencilState)
+		.setPColorBlendState(&blendState)
+		.setPDynamicState(&dynamicState)
+		.setLayout(pipelineInfo._pipelineLayout)
+		.setRenderPass(pipelineInfo._renderPass)
+		.setSubpass(pipelineInfo._subpass)
+		.setBasePipelineIndex(-1);
+
+	return _deviceVk->_device->createGraphicsPipelineUnique(nullptr, pipeCreateInfo, _deviceVk->AllocationCallbacks());
+}
+
+int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElement *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts)
+{
+	for (int i = 0; i < bufferLayouts.size(); ++i) {
+		auto &bufLayout = bufferLayouts[i];
+
+		util::LayoutElement *vertDesc = bufLayout._bufferLayout->GetKind() == util::LayoutElement::Kind::Array
+			? bufLayout._bufferLayout->GetArrayElement()
+			: bufLayout._bufferLayout;
+		ASSERT(vertDesc->GetKind() == util::LayoutElement::Kind::Struct);
+		util::LayoutElement *bufElem = vertDesc->GetElement(attribName);
+		if (!bufElem || *bufElem != *attribLayout)
+			continue;
+		return i;
+	}
+	return -1;
+}
+
+
 DeviceVk::DeviceVk(Host::DeviceInfo const &deviceInfo, ValidationLevel validation)
 	: Device(deviceInfo, validation, rttr::type::get<DeviceVk>())
 {
@@ -49,6 +178,7 @@ DeviceVk::DeviceVk(Host::DeviceInfo const &deviceInfo, ValidationLevel validatio
 	CreatePhysicalDevice();
 	CreateDevice();
 
+	_pipelineStore.Init(*this);
 	_queue = std::make_unique<ExecutionQueueVk>(*this);
 }
 

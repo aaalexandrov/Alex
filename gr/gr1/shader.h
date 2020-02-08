@@ -9,14 +9,24 @@
 NAMESPACE_BEGIN(gr1)
 
 enum class ShaderKind {
-  None = 0,
-  Vertex = 1,
-  Fragment = 2,
+  Vertex,
+  Fragment,
+	Invalid,
 
-  Count = Fragment
+  Count = Invalid
 };
 
-DEFINE_ENUM_BIT_OPERATORS(ShaderKind)
+enum class ShaderKindBits {
+	None = 0,
+	Vertex = 1 << static_cast<size_t>(ShaderKind::Vertex),
+	Fragment = 1 << static_cast<size_t>(ShaderKind::Fragment),
+};
+
+DEFINE_ENUM_BIT_OPERATORS(gr1::ShaderKindBits)
+
+class Shader;
+template <typename Data>
+using ShaderKindsArray = std::array<Data, static_cast<int>(ShaderKind::Count)>;
 
 class Shader : public Resource {
 	RTTR_ENABLE(Resource)
@@ -45,3 +55,4 @@ protected:
 };
 
 NAMESPACE_END(gr1)
+

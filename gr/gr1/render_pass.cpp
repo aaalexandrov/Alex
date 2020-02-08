@@ -1,8 +1,39 @@
 #include "render_pass.h"
 #include "execution_queue.h"
 #include "image.h"
+#include "shader.h"
+#include "buffer.h"
+#include "render_state.h"
 
 NAMESPACE_BEGIN(gr1)
+
+void RenderDrawCommand::Clear()
+{
+	std::fill(_shaders.begin(), _shaders.end(), nullptr);
+	_buffers.clear();
+	_renderState.reset();
+}
+
+int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding) 
+{ 
+	_buffers.push_back(BufferData{ buffer, shaderKinds, binding }); 
+	return static_cast<int>(_buffers.size() - 1);
+}
+
+void RenderDrawCommand::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
+{
+	if (dependencyType == DependencyType::Input) {
+		for (auto &shader : _shaders) {
+			if (shader) {
+				addDependencyFunc(shader.get(), ResourceState::ShaderRead);
+			}
+		}
+		for (auto &bufData : _buffers) {
+			addDependencyFunc(bufData._buffer.get(), ResourceState::ShaderRead);
+		}
+		addDependencyFunc(_renderState.get(), ResourceState::ShaderRead);
+	}
+}
 
 glm::uvec2 RenderPass::GetRenderAreaSize()
 {

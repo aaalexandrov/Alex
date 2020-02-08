@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../shader.h"
+#include "descriptor_set_store.h"
 #include "vk.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -12,32 +13,28 @@ public:
 
 	void LoadShader(std::vector<uint8_t> const &contents) override;
 
+	vk::DescriptorSetLayout GetDescriptorSetLayout() { return _descriptorSetLayout.get(); }
+
+	vk::PipelineShaderStageCreateInfo GetPipelineShaderStageCreateInfo();
+
+	vk::UniqueDescriptorSet AllocateDescriptorSet();
+
 protected:
 	void LoadModule(std::vector<uint8_t> const &contents);
 
-  std::vector<vk::PipelineShaderStageCreateInfo> GetPipelineShaderStageCreateInfos();
-  vk::PipelineVertexInputStateCreateInfo GetPipelineVertexInputStateCreateInfos(
-    std::vector<vk::VertexInputAttributeDescription> &vertexAttribs, 
-    std::vector<vk::VertexInputBindingDescription> &vertexBinds);
-
-  std::vector<vk::VertexInputAttributeDescription> GetVertexAttributeDescriptions();
-  std::vector<vk::VertexInputBindingDescription> GetVertexBindingDescriptions();
-
-  vk::DescriptorSetLayoutCreateInfo GetDescriptorSetLayoutCreateInfos(std::vector<vk::DescriptorSetLayoutBinding> &layoutBindings);
   std::vector<vk::DescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings();
 
   static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType const &type);
 	static std::shared_ptr<util::LayoutElement> GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize = 0);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
   void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected);
-  void InitDescriptorSetLayouts();
-  void InitPipelineLayout();
+  void InitDescriptorSetLayoutAndStore();
 
 
 	vk::UniqueShaderModule _module;
 	vk::ShaderStageFlagBits _stageFlags;
-  std::vector<vk::UniqueDescriptorSetLayout> _descriptorSetLayouts;
-  vk::UniquePipelineLayout _pipelineLayout;
+  vk::UniqueDescriptorSetLayout _descriptorSetLayout;
+	DescriptorSetStore _descSetStore;
 
   struct ShaderKindInfo {
     ShaderKind _kind;
@@ -50,5 +47,7 @@ protected:
 
   static std::vector<ShaderKindInfo> _shaderKinds;
 };
+
+extern std::unordered_map<rttr::type, vk::Format> Type2VkFormat;
 
 NAMESPACE_END(gr1)

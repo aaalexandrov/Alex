@@ -13,6 +13,7 @@
 #include "gr1/shader.h"
 #include "gr1/buffer.h"
 #include "gr1/render_pass.h"
+#include "gr1/render_state.h"
 #include <string>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -59,6 +60,31 @@ shared_ptr<Shader> LoadShader(Device *device, std::string name)
 	return shader;
 }
 
+void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexBuffer)
+{
+	auto vertexStaging = device->CreateResource<Buffer>();
+	vertexStaging->Init(Buffer::Usage::Staging, vertexBuffer->GetBufferLayout());
+
+	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
+	void *mapped = vertexStaging->Map();
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
+
+	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
+
+	vertexStaging->Unmap();
+
+	auto copyPass = device->CreateResource<BufferCopyPass>();
+	copyPass->Init(vertexStaging, vertexBuffer, 0, 0, vertexBuffer->GetSize());
+
+	device->GetExecutionQueue().EnqueuePass(copyPass);
+	device->GetExecutionQueue().ExecutePasses();
+}
+
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
 {
 	util::LayoutElement *layout = buffer->GetBufferLayout().get();
@@ -103,6 +129,15 @@ int main()
 	auto vertShader = LoadShader(device.get(), "simple.vert");
 	auto fragShader = LoadShader(device.get(), "simple.frag");
 
+	auto vbLayout = std::make_shared<util::LayoutArray>(vertShader->GetVertexLayout(), 3);
+	auto vertexBuffer = device->CreateResource<Buffer>();
+	vertexBuffer->Init(Buffer::Usage::Vertex, vbLayout);
+
+	InitTriangleVertices(device.get(), vertexBuffer);
+
+	auto renderState = device->CreateResource<RenderState>();
+	renderState->Init();
+
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
 
 	auto uboShader = device->CreateResource<Buffer>();
@@ -113,6 +148,13 @@ int main()
 
 	auto uboUpdatePass = device->CreateResource<BufferCopyPass>();
 	uboUpdatePass->Init(uboStaging, uboShader, 0, 0, uboStaging->GetSize());
+
+	auto renderTriangle = device->CreateResource<RenderDrawCommand>();
+	renderTriangle->SetShader(vertShader);
+	renderTriangle->SetShader(fragShader);
+	renderTriangle->SetRenderState(renderState);
+	renderTriangle->AddBuffer(vertexBuffer, ShaderKindBits::Vertex);
+	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);
@@ -125,6 +167,8 @@ int main()
 	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(0, 0, 1, 1));
 	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(1, 0, 0, 0));
 	renderPass->SetAttachmentImage(1, depthBuffer);
+
+	renderPass->AddCommand(renderTriangle);
 
 	auto presentPass = device->CreateResource<PresentPass>();
 	presentPass->Init(surface);

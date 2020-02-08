@@ -7,7 +7,7 @@
 NAMESPACE_BEGIN(gr1)
 
 class RenderState : public Resource {
-	RTTR_ENABLE(Resource);
+	RTTR_ENABLE(Resource)
 public:
 	struct Viewport {
 		util::RectF _rect;

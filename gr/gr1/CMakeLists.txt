@@ -60,7 +60,10 @@ if(gr_implementation STREQUAL VK)
 
 		vk/buffer_vk.h
 		vk/buffer_vk.cpp
-		
+	
+		vk/descriptor_set_store.h
+		vk/descriptor_set_store.cpp
+
 		vk/device_vk.h
 		vk/device_vk.cpp 
 	

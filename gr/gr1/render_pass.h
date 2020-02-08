@@ -2,48 +2,81 @@
 
 #include "output_pass.h"
 #include "device.h"
-#include "rttr_factory.h"
+#include "shader.h"
 
 NAMESPACE_BEGIN(gr1)
 
 class Buffer;
 class Image;
-class Shader;
 class RenderState;
+class RenderPass;
 
-class RenderCommand {
+class CommandPrepareInfo {
 	RTTR_ENABLE()
 public:
-	virtual ~RenderCommand() {}
+};
+
+class CommandRecordInfo {
+	RTTR_ENABLE()
+public:
+};
+
+class RenderCommand : public ResourceBase {
+	RTTR_ENABLE(ResourceBase)
+public:
+	RenderCommand(Device &device) : ResourceBase(device) {}
 
 	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
+
+	virtual void PrepareToRecord(CommandPrepareInfo &prepareInfo) = 0;
+	virtual void Record(CommandRecordInfo &recordInfo) = 0;
+};
+
+enum class PrimitiveKind {
+	TriangleList,
+	TriangleStrip,
 };
 
 class RenderDrawCommand : public RenderCommand {
 	RTTR_ENABLE(RenderCommand)
 public:
-
-
-public:
 	struct BufferData {
 		std::shared_ptr<Buffer> _buffer;
+		ShaderKindBits _shaderKinds;
 		int _binding;
+		bool _frequencyInstance;
 	};
 
-	std::vector<std::shared_ptr<Shader>> _shaders;
+	RenderDrawCommand(Device &device) : RenderCommand(device) {}
+
+	virtual void Clear();
+
+	virtual void SetRenderState(std::shared_ptr<RenderState> const &renderState) { _renderState = renderState; }
+	std::shared_ptr<RenderState> const &GetRenderState() { return _renderState; }
+
+	virtual void SetShader(std::shared_ptr<Shader> const &shader) { _shaders[static_cast<int>(shader->GetShaderKind())] = shader; }
+	virtual void RemoveShader(ShaderKind kind) { _shaders[static_cast<int>(kind)].reset(); }
+	std::shared_ptr<Shader> const &GetShader(ShaderKind kind) { return _shaders[static_cast<int>(kind)]; }
+
+	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0);
+	virtual void RemoveBuffer(int bufferIndex) { _buffers.erase(_buffers.begin() + bufferIndex); }
+	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
+	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
+
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
+
+public:
+	ShaderKindsArray<std::shared_ptr<Shader>> _shaders;
 	std::shared_ptr<RenderState> _renderState;
 	std::vector<BufferData> _buffers;
+	PrimitiveKind _primitiveKind = PrimitiveKind::TriangleList;
+	uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
 };
 
 class RenderPass : public OutputPass {
 	RTTR_ENABLE(OutputPass)
 public:
-	RenderPass(Device &device) : OutputPass(device), _cmdFactory(RttrDiscriminator::Tag, device.GetResourceDiscriminatorType()) {}
-
-	virtual std::shared_ptr<RenderCommand> CreateCommand(rttr::type cmdType) { return _cmdFactory.CreateInstanceShared<RenderCommand>(cmdType); }
-	
-	template<typename CmdType>
-	std::shared_ptr<CmdType> CreateCommand() { return std::static_pointer_cast<CmdType>(CreateCommand(rttr::type::get<CmdType>())); }
+	RenderPass(Device &device) : OutputPass(device) {}
 
 	virtual glm::uvec2 GetRenderAreaSize();
 
@@ -68,7 +101,6 @@ protected:
 
 	std::vector<AttachmentData> _attachments;
 
-	RttrFactory _cmdFactory;
 	std::vector<std::shared_ptr<RenderCommand>> _commands;
 };
 

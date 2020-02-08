@@ -60,7 +60,6 @@ protected:
 	struct ResourceStateData {
 		ResourceState _state;
 		OutputPass *_outputOfPass = nullptr;
-		bool _wasInput = false;
 	};
 
 	ResourceStateData &GetResourceStateData(Resource* resource);

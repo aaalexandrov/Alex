@@ -2,9 +2,12 @@
 
 #include "../device.h"
 #include "../host.h"
+#include "../shader.h"
+#include "../render_pass.h"
 #include "host_allocation_tracker_vk.h"
-#include "vk.h"
 #include "queue_vk.h"
+#include "descriptor_set_store.h"
+#include "util/layout.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -14,6 +17,36 @@ public:
 	~HostPlatformVk() override;
 	void GetSupportedDevices(std::vector<Host::DeviceInfo> &deviceInfos) override;
 	std::shared_ptr<Device> CreateDevice(Host::DeviceInfo const &deviceInfo, ValidationLevel validation) override;
+};
+
+class DeviceVk;
+class RenderState;
+class PipelineStore {
+	RTTR_ENABLE()
+public:
+	struct VertexBufferLayout {
+		util::LayoutElement *_bufferLayout;
+		uint32_t _binding = 0;
+		bool _frequencyInstance = false;
+	};
+
+	struct PipelineInfo {
+		std::vector<Shader*> _shaders;
+		std::vector<VertexBufferLayout> _vertexBufferLayouts;
+		RenderState *_renderState;
+		PrimitiveKind _primitiveKind;
+		vk::PipelineLayout _pipelineLayout;
+		vk::RenderPass _renderPass;
+		uint32_t _subpass;
+	};
+
+	void Init(DeviceVk &deviceVk) { _deviceVk = &deviceVk; }
+
+	vk::UniquePipeline CreatePipeline(PipelineInfo &pipelineInfo);
+protected:
+	int GetVertexLayoutIndex(std::string attribName, util::LayoutElement *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts);
+
+	DeviceVk *_deviceVk = nullptr;
 };
 
 class DeviceVk : public Device {
@@ -73,6 +106,7 @@ public:
 	vk::UniqueDevice _device;
 	UniqueVmaAllocator _allocator;
 	std::array<QueueVk, static_cast<int>(QueueRole::Last)> _queues;
+	PipelineStore _pipelineStore;
 };
 
 NAMESPACE_END(gr1)

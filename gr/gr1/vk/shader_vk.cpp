@@ -26,12 +26,9 @@ ShaderVk::ShaderKindInfo *ShaderVk::GetShaderKindInfo(ShaderKind kind)
   return found != _shaderKinds.end() ? &*found : nullptr;
 }
 
-vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind kindMask)
+vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind kind)
 {
-  vk::ShaderStageFlags stageFlags;
-  for (auto &kindInfo : _shaderKinds)
-    if ((kindMask & kindInfo._kind) != ShaderKind::None)
-      stageFlags |= kindInfo._stage;
+  vk::ShaderStageFlags stageFlags = GetShaderKindInfo(kind)->_stage;
   return stageFlags;
 }
 
@@ -39,8 +36,9 @@ void ShaderVk::LoadShader(std::vector<uint8_t> const &contents)
 {
   LoadModule(contents);
 
-  InitDescriptorSetLayouts();
-  InitPipelineLayout();
+  InitDescriptorSetLayoutAndStore();
+
+	_state = ResourceState::ShaderRead;
 }
 
 void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
@@ -71,26 +69,21 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
   InitUniformBufferDescriptions(refl);
 }
 
-std::vector<vk::PipelineShaderStageCreateInfo> ShaderVk::GetPipelineShaderStageCreateInfos()
+vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()
 {
-  std::vector<vk::PipelineShaderStageCreateInfo> infos;
-  infos.emplace_back(vk::PipelineShaderStageCreateFlags(), _stageFlags, *_module, "main");
-  return infos;
+	vk::PipelineShaderStageCreateInfo info;
+	info
+		.setStage(_stageFlags)
+		.setModule(*_module)
+		.setPName("main");
+	return info;
 }
 
-vk::PipelineVertexInputStateCreateInfo ShaderVk::GetPipelineVertexInputStateCreateInfos(
-  std::vector<vk::VertexInputAttributeDescription> &vertexAttribs,
-  std::vector<vk::VertexInputBindingDescription> &vertexBinds)
+vk::UniqueDescriptorSet ShaderVk::AllocateDescriptorSet()
 {
-  vertexAttribs = GetVertexAttributeDescriptions();
-  vertexBinds = GetVertexBindingDescriptions();
-  vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
-  vertexInputInfo
-    .setVertexBindingDescriptionCount(static_cast<uint32_t>(vertexBinds.size()))
-    .setPVertexBindingDescriptions(vertexBinds.data())
-    .setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertexAttribs.size()))
-    .setPVertexAttributeDescriptions(vertexAttribs.data());
-  return vertexInputInfo;
+	if (!_descSetStore.IsValid())
+		return vk::UniqueDescriptorSet();
+	return _descSetStore.AllocateDescriptorSet(*_descriptorSetLayout);
 }
 
 struct SPIRTypeInfo {
@@ -141,7 +134,7 @@ static std::unordered_map<SPIRTypeInfo, rttr::type, SPIRTypeInfoHasher> SPIRType
   { SPIRTypeInfo(spirv_cross::SPIRType::Float, 4, 4), rttr::type::get<glm::mat4>() },
 };
 
-static std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
+std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
   { rttr::type::get<float>()    , vk::Format::eR32Sfloat          },
   { rttr::type::get<glm::vec2>(), vk::Format::eR32G32Sfloat       },
   { rttr::type::get<glm::vec3>(), vk::Format::eR32G32B32Sfloat    },
@@ -189,50 +182,6 @@ std::shared_ptr<util::LayoutElement> ShaderVk::GetLayoutFromSpirv(spirv_cross::C
 	}
 
 	return elem;
-}
-
-std::vector<vk::VertexInputAttributeDescription> ShaderVk::GetVertexAttributeDescriptions()
-{
-  std::vector<vk::VertexInputAttributeDescription> descriptions;
-  uint32_t binding = 0;
-
-	ASSERT(_vertexLayout->GetKind() == util::LayoutElement::Kind::Struct);
-	for (uint32_t i = 0; i < _vertexLayout->GetStructFieldCount(); ++i) {
-		util::LayoutElement *attrElem = _vertexLayout->GetStructFieldElement(i);
-
-		uint32_t location = static_cast<uint32_t>(attrElem->_userData);
-		uint32_t offset = static_cast<uint32_t>(_vertexLayout->GetStructFieldOffset(i));
-		vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
-
-		descriptions.emplace_back(
-			location,
-			binding,
-			format,
-			offset);
-	}
-
-  return descriptions;
-}
-
-std::vector<vk::VertexInputBindingDescription> ShaderVk::GetVertexBindingDescriptions()
-{
-  std::vector<vk::VertexInputBindingDescription> descriptions;
-  uint32_t binding = 0;
-
-  descriptions.emplace_back(binding, static_cast<uint32_t>(_vertexLayout->GetSize()), vk::VertexInputRate::eVertex);
-
-  return descriptions;
-}
-
-vk::DescriptorSetLayoutCreateInfo ShaderVk::GetDescriptorSetLayoutCreateInfos(std::vector<vk::DescriptorSetLayoutBinding> &layoutBindings)
-{
-  vk::DescriptorSetLayoutCreateInfo layoutInfo;
-
-  layoutInfo
-    .setBindingCount(static_cast<uint32_t>(layoutBindings.size()))
-    .setPBindings(layoutBindings.data());
-
-  return layoutInfo;
 }
 
 std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBindings()
@@ -293,30 +242,33 @@ void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflec
   }
 }
 
-void ShaderVk::InitDescriptorSetLayouts()
+void ShaderVk::InitDescriptorSetLayoutAndStore()
 {
-  ASSERT(!_descriptorSetLayouts.size());
+  ASSERT(!_descriptorSetLayout);
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	
-  auto layoutBindings = GetDescriptorSetLayoutBindings();
-  vk::DescriptorSetLayoutCreateInfo layoutInfo = GetDescriptorSetLayoutCreateInfos(layoutBindings);
-  _descriptorSetLayouts.emplace_back(std::move(deviceVk->_device->createDescriptorSetLayoutUnique(layoutInfo, deviceVk->AllocationCallbacks())));
-}
+	auto layoutBindings = GetDescriptorSetLayoutBindings();
+	vk::DescriptorSetLayoutCreateInfo layoutInfo;
+	layoutInfo
+		.setBindingCount(static_cast<uint32_t>(layoutBindings.size()))
+		.setPBindings(layoutBindings.data());
+  _descriptorSetLayout = deviceVk->_device->createDescriptorSetLayoutUnique(layoutInfo, deviceVk->AllocationCallbacks());
 
-void ShaderVk::InitPipelineLayout()
-{
-  ASSERT(!_pipelineLayout);
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	
-  std::vector<vk::DescriptorSetLayout> setLayouts;
-  for (auto &layout : _descriptorSetLayouts)
-    setLayouts.push_back(layout.get());
-
-  vk::PipelineLayoutCreateInfo pipelineInfo;
-  pipelineInfo
-    .setSetLayoutCount(static_cast<uint32_t>(setLayouts.size()))
-    .setPSetLayouts(setLayouts.data());
-  _pipelineLayout = deviceVk->_device->createPipelineLayoutUnique(pipelineInfo, deviceVk->AllocationCallbacks());
+	if (layoutBindings.size()) {
+		uint32_t const descriptorsPerPool = 256;
+		std::vector<vk::DescriptorPoolSize> poolSizes;
+		for (auto &binding : layoutBindings) {
+			auto it = std::find_if(poolSizes.begin(), poolSizes.end(), [&](auto &poolSize) {
+				return poolSize.type == binding.descriptorType;
+			});
+			if (it == poolSizes.end()) {
+				poolSizes.emplace_back(binding.descriptorType);
+				it = poolSizes.end() - 1;
+			}
+			it->setDescriptorCount(it->descriptorCount + descriptorsPerPool);
+		}
+		_descSetStore.Init(*deviceVk, poolSizes, descriptorsPerPool);
+	}
 }
 
 NAMESPACE_END(gr1)

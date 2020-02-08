@@ -4,9 +4,9 @@
 
 NAMESPACE_BEGIN(gr1)
 
-std::shared_ptr<Resource> Device::CreateResource(rttr::type resourceType)
+std::shared_ptr<ResourceBase> Device::CreateResource(rttr::type resourceType)
 {
-	return _resourceFactory.CreateInstanceShared<Resource, Device&>(resourceType, *this);
+	return _resourceFactory.CreateInstanceShared<ResourceBase, Device&>(resourceType, *this);
 }
 
 NAMESPACE_END(gr1)

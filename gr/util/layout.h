@@ -56,6 +56,10 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 		return reinterpret_cast<DataType*>(reinterpret_cast<uint8_t*>(buffer) + elemOffs.second);
 	}
 
+	virtual bool IsEqualToSameKind(LayoutElement &other) = 0;
+
+	bool operator==(LayoutElement &other);
+	bool operator!=(LayoutElement &other) { return !(*this == other); }
 public:
 	size_t _padding = 0;
 	intptr_t _userData = 0;
@@ -71,6 +75,7 @@ struct LayoutValue : public LayoutElement {
 
 	rttr::type GetValueType() override { return _type; }
 
+	bool IsEqualToSameKind(LayoutElement &other) override { return GetValueType() == other.GetValueType(); }
 public:
 	rttr::type _type;
 };
@@ -87,6 +92,7 @@ struct LayoutArray : public LayoutElement {
 	LayoutElement *GetArrayElement() override { return _element.get(); }
 	size_t GetArrayCount() override { return _arrayCount; }
 
+	bool IsEqualToSameKind(LayoutElement &other) override { return GetArrayCount() == other.GetArrayCount() && *GetArrayElement() == *other.GetArrayElement(); }
 public:
 	std::shared_ptr<LayoutElement> _element;
 	size_t _arrayCount = 0;
@@ -106,6 +112,7 @@ struct LayoutStruct : public LayoutElement {
 	size_t GetStructFieldOffset(size_t fieldIndex) override { return _fields[fieldIndex]._offset; }
 	size_t GetStructFieldIndex(std::string name) override;
 
+	bool IsEqualToSameKind(LayoutElement &other) override;
 public:
 	struct Field { 
 		std::shared_ptr<LayoutElement> _element;

@@ -35,7 +35,7 @@ void ImageVk::Init(Resource *owner, Usage usage, vk::Image image, vk::Format for
 std::shared_ptr<ResourceStateTransitionPass> ImageVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)
 {
 	auto imgTransition = std::make_shared<ImageTransitionPassVk>(*_device);
-	imgTransition->Init(shared_from_this(), srcState, dstState);
+	imgTransition->Init(AsSharedPtr<Resource>(), srcState, dstState);
 	return std::move(imgTransition);
 }
 
