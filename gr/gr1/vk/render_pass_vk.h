@@ -24,21 +24,31 @@ class RenderDrawCommandVk : public RenderDrawCommand {
 public:
 	RenderDrawCommandVk(Device &device);
 
+	void Clear() override;
+	void SetRenderState(std::shared_ptr<RenderState> const &renderState) override;
+	void SetShader(std::shared_ptr<Shader> const &shader) override;
+	void RemoveShader(ShaderKind kind) override;
+	int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0, size_t offset = 0, bool frequencyInstance = false) override;
+	void RemoveBuffer(int bufferIndex) override;
+	void SetPrimitiveKind(PrimitiveKind primitiveKind) override;
+	void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0) override;
+
 	void PrepareToRecord(CommandPrepareInfo &prepareInfo) override;
 	void Record(CommandRecordInfo &recordInfo) override;
 
-public:
+protected:
 	void PreparePipelineLayout();
 	void PreparePipeline(vk::RenderPass renderPass, uint32_t subpass);
-	void PrepareDescriptorSets();
+	ShaderKindBits PrepareDescriptorSets();
 
-	void UpdateDescriptorSets();
+	void UpdateDescriptorSets(ShaderKindBits updateKinds);
 	void SetDynamicState(CommandPrepareInfoVk &prepareInfo);
 
 	vk::UniqueCommandBuffer _cmdDraw;
 	vk::UniquePipelineLayout _pipelineLayout;
 	vk::UniquePipeline _pipeline;
 	ShaderKindsArray<vk::UniqueDescriptorSet> _descriptorSets;
+	vk::Viewport _recordedViewport{};
 };
 
 class RenderPassVk : public RenderPass, public PassVk {

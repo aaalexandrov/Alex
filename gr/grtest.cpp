@@ -67,13 +67,13 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 
 	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
 	void *mapped = vertexStaging->Map();
-	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.5f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
 
 	vertexStaging->Unmap();
@@ -142,6 +142,8 @@ int main()
 	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
 
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
+	view = glm::translate(view, glm::vec3(0, 0, 1.5f));
+	proj = glm::perspectiveLH<float>(3.14f / 2, 1, 0.1f, 100.0f);
 
 	auto uboShader = device->CreateResource<Buffer>();
 	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
@@ -158,7 +160,7 @@ int main()
 	renderTriangle->SetRenderState(renderState);
 	renderTriangle->AddBuffer(vertexBuffer, ShaderKindBits::Vertex);
 	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
-	renderTriangle->_indexCount = static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount());
+	renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);
@@ -214,6 +216,8 @@ int main()
 
 				presentPass->SetImageToPresent(backBuffer);
 
+				auto time = util::ToSeconds(chrono::system_clock::now() - start);
+				model = glm::rotate(glm::identity<glm::mat4>(), time, glm::vec3(0, 1, 0));
 				UpdateTransforms(uboStaging, model, view, proj);
 
 				device->GetExecutionQueue().EnqueuePass(uboUpdatePass);

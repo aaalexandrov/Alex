@@ -12,12 +12,29 @@ void RenderDrawCommand::Clear()
 	std::fill(_shaders.begin(), _shaders.end(), nullptr);
 	_buffers.clear();
 	_renderState.reset();
+	_primitiveKind = PrimitiveKind::TriangleList;
+	_drawCounts = DrawCounts();
 }
 
 int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding, size_t offset, bool frequencyInstance)
 { 
-	_buffers.push_back(BufferData{ buffer, shaderKinds, offset, binding, frequencyInstance });
+	BufferData bufData;
+	bufData._buffer = buffer;
+	bufData._shaderKinds = shaderKinds;
+	bufData._binding = binding;
+	bufData._offset = offset;
+	bufData._frequencyInstance = frequencyInstance;
+	_buffers.push_back(std::move(bufData));
 	return static_cast<int>(_buffers.size() - 1);
+}
+
+void RenderDrawCommand::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex, uint32_t instanceCount, uint32_t firstInstance, uint32_t vertexOffset)
+{
+	_drawCounts._indexCount = indexCount;
+	_drawCounts._firstIndex = firstIndex;
+	_drawCounts._instanceCount = instanceCount;
+	_drawCounts._firstInstance = firstInstance;
+	_drawCounts._vertexOffset = vertexOffset;
 }
 
 void RenderDrawCommand::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)

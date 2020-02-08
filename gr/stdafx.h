@@ -14,6 +14,10 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/matrix_projection.hpp"
 
 #include "rttr/rttr_enable.h"
 #include "rttr/rttr_cast.h"

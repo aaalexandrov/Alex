@@ -22,21 +22,102 @@ RTTR_REGISTRATION
 RenderDrawCommandVk::RenderDrawCommandVk(Device &device) 
 	: RenderDrawCommand(device) 
 {
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	
-	_cmdDraw = deviceVk->GraphicsQueue().AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
+}
+
+void RenderDrawCommandVk::Clear()
+{
+	_cmdDraw.reset();
+	for (int k = 0; k < static_cast<int>(ShaderKind::Count); ++k) {
+		_descriptorSets[k].reset();
+	}
+	_pipeline.reset();
+	_pipelineLayout.reset();
+	RenderDrawCommand::Clear();
+}
+
+void RenderDrawCommandVk::SetRenderState(std::shared_ptr<RenderState> const &renderState)
+{
+	_cmdDraw.reset();
+	_pipeline.reset();
+	RenderDrawCommand::SetRenderState(renderState);
+}
+
+void RenderDrawCommandVk::SetShader(std::shared_ptr<Shader> const &shader)
+{
+	_cmdDraw.reset();
+	_descriptorSets[static_cast<int>(shader->GetShaderKind())].reset();
+	_pipeline.reset();
+	_pipelineLayout.reset();
+	RenderDrawCommand::SetShader(shader);
+}
+
+void RenderDrawCommandVk::RemoveShader(ShaderKind kind)
+{
+	_cmdDraw.reset();
+	_descriptorSets[static_cast<int>(kind)].reset();
+	_pipeline.reset();
+	_pipelineLayout.reset();
+	RenderDrawCommand::RemoveShader(kind);
+}
+
+int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding, size_t offset, bool frequencyInstance)
+{
+	_cmdDraw.reset();
+	for (int k = 0; k < static_cast<int>(ShaderKind::Count); ++k) {
+		if (!(shaderKinds & static_cast<ShaderKindBits>(1 << k)))
+			continue;
+		_descriptorSets[k].reset();
+	}
+	if (!!(buffer->GetUsage() & (Buffer::Usage::Vertex | Buffer::Usage::Index))) {
+		_pipeline.reset();
+	}
+	return RenderDrawCommand::AddBuffer(buffer, shaderKinds, binding, offset, frequencyInstance);
+}
+
+void RenderDrawCommandVk::RemoveBuffer(int bufferIndex)
+{
+	_cmdDraw.reset();
+	for (int k = 0; k < static_cast<int>(ShaderKind::Count); ++k) {
+		if (!(_buffers[bufferIndex]._shaderKinds & static_cast<ShaderKindBits>(1 << k)))
+			continue;
+		_descriptorSets[k].reset();
+	}
+	if (!!(_buffers[bufferIndex]._buffer->GetUsage() & (Buffer::Usage::Vertex | Buffer::Usage::Index))) {
+		_pipeline.reset();
+	}
+	RenderDrawCommand::RemoveBuffer(bufferIndex);
+}
+
+void RenderDrawCommandVk::SetPrimitiveKind(PrimitiveKind primitiveKind)
+{
+	if (primitiveKind != _primitiveKind) {
+		_cmdDraw.reset();
+		_pipeline.reset();
+	}
+	RenderDrawCommand::SetPrimitiveKind(primitiveKind);
+}
+
+void RenderDrawCommandVk::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex, uint32_t instanceCount, uint32_t firstInstance, uint32_t vertexOffset)
+{
+	_cmdDraw.reset();
+	RenderDrawCommand::SetDrawCounts(indexCount, firstIndex, instanceCount, firstInstance, vertexOffset);
 }
 
 void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 {
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	CommandPrepareInfoVk *prepInfoVk = static_cast<CommandPrepareInfoVk*>(&prepareInfo);
+
+	if (_cmdDraw && _recordedViewport == prepInfoVk->_viewport)
+		return;
+
 	PreparePipelineLayout();
 	PreparePipeline(prepInfoVk->_cmdInheritInfo.renderPass, prepInfoVk->_cmdInheritInfo.subpass);
-	PrepareDescriptorSets();
+	ShaderKindBits updatedDescriptorSets = PrepareDescriptorSets();
 
-	UpdateDescriptorSets();
+	UpdateDescriptorSets(updatedDescriptorSets);
 
-	_cmdDraw->reset(vk::CommandBufferResetFlags());
+	_cmdDraw = deviceVk->GraphicsQueue().AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo
@@ -47,6 +128,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, *_pipeline);
 
 	SetDynamicState(*prepInfoVk);
+	_recordedViewport = prepInfoVk->_viewport;
 
 	std::vector<vk::DescriptorSet> descriptorSets;
 	for (auto &desc : _descriptorSets) {
@@ -80,9 +162,9 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	if (indexBuffer) {
 		_cmdDraw->bindIndexBuffer(indexBuffer, indexOffset, indexType);
 
-		_cmdDraw->drawIndexed(_indexCount, _instanceCount, _firstIndex, _vertexOffset, _instanceCount);
+		_cmdDraw->drawIndexed(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._vertexOffset, _drawCounts._instanceCount);
 	} else {
-		_cmdDraw->draw(_indexCount, _instanceCount, _firstIndex, _firstInstance);
+		_cmdDraw->draw(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._firstInstance);
 	}
 
 	_cmdDraw->end();
@@ -97,6 +179,9 @@ void RenderDrawCommandVk::Record(CommandRecordInfo &recordInfo)
 
 void RenderDrawCommandVk::PreparePipelineLayout()
 {
+	if (_pipelineLayout)
+		return;
+
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
 	std::vector<vk::DescriptorSetLayout> setLayouts;
@@ -114,6 +199,9 @@ void RenderDrawCommandVk::PreparePipelineLayout()
 
 void RenderDrawCommandVk::PreparePipeline(vk::RenderPass renderPass, uint32_t subpass)
 {
+	if (_pipeline)
+		return;
+
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
 	PipelineStore::PipelineInfo pipeInfo;
@@ -143,17 +231,22 @@ void RenderDrawCommandVk::PreparePipeline(vk::RenderPass renderPass, uint32_t su
 	_pipeline = deviceVk->_pipelineStore.CreatePipeline(pipeInfo);
 }
 
-void RenderDrawCommandVk::PrepareDescriptorSets()
+ShaderKindBits RenderDrawCommandVk::PrepareDescriptorSets()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
+	ShaderKindBits updatedKinds = ShaderKindBits::None;
 	for (int i = 0; i < _shaders.size(); ++i) {
+		if (_descriptorSets[i])
+			continue;
 		auto shaderVk = static_cast<ShaderVk*>(_shaders[i].get());
 		_descriptorSets[i] = std::move(shaderVk ? shaderVk->AllocateDescriptorSet() : vk::UniqueDescriptorSet());
+		updatedKinds |= shaderVk ? static_cast<ShaderKindBits>(1 << i) : ShaderKindBits::None;
 	}
+	return updatedKinds;
 }
 
-void RenderDrawCommandVk::UpdateDescriptorSets()
+void RenderDrawCommandVk::UpdateDescriptorSets(ShaderKindBits updateKinds)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
@@ -164,7 +257,7 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 	for (auto &bufData : _buffers) {
 		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Uniform)) {
 			for (uint32_t k = 0; k < static_cast<uint32_t>(ShaderKind::Count); ++k) {
-				if (!(bufData._shaderKinds & static_cast<ShaderKindBits>(1 << k)))
+				if (!(bufData._shaderKinds & updateKinds & static_cast<ShaderKindBits>(1 << k)))
 					continue;
 
 				BufferVk *bufferVk = static_cast<BufferVk*>(bufData._buffer.get());
@@ -186,7 +279,8 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 		}
 	}
 	
-	deviceVk->_device->updateDescriptorSets(setWrites, nullptr);
+	if (setWrites.size())
+		deviceVk->_device->updateDescriptorSets(setWrites, nullptr);
 }
 
 void RenderDrawCommandVk::SetDynamicState(CommandPrepareInfoVk &prepareInfo)
@@ -408,8 +502,8 @@ void RenderPassVk::PrepareToRecordRenderCommands()
 	CommandPrepareInfoVk prepInfo;
 	prepInfo._cmdInheritInfo
 		.setRenderPass(*_renderPass)
-		.setSubpass(GetSubpass())
-		.setFramebuffer(*_framebuffer);
+		.setSubpass(GetSubpass());
+		//.setFramebuffer(*_framebuffer);
 
 	glm::uvec2 size = GetRenderAreaSize();
 	prepInfo._viewport

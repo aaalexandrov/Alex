@@ -42,10 +42,14 @@ class RenderDrawCommand : public RenderCommand {
 public:
 	struct BufferData {
 		std::shared_ptr<Buffer> _buffer;
-		ShaderKindBits _shaderKinds = {};
 		size_t _offset = 0;
+		ShaderKindBits _shaderKinds = {};
 		int _binding = 0;
 		bool _frequencyInstance = false;
+	};
+
+	struct DrawCounts {
+		uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
 	};
 
 	RenderDrawCommand(Device &device) : RenderCommand(device) {}
@@ -64,14 +68,20 @@ public:
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
 
+	virtual void SetPrimitiveKind(PrimitiveKind primitiveKind) { _primitiveKind = primitiveKind; }
+	PrimitiveKind GetPrimitiveKind() { return _primitiveKind; }
+
+	virtual void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0);
+	DrawCounts const &GetDrawCounts() { return _drawCounts; }
+
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
-public:
+protected:
 	ShaderKindsArray<std::shared_ptr<Shader>> _shaders;
 	std::shared_ptr<RenderState> _renderState;
 	std::vector<BufferData> _buffers;
 	PrimitiveKind _primitiveKind = PrimitiveKind::TriangleList;
-	uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
+	DrawCounts _drawCounts;
 };
 
 class RenderPass : public OutputPass {
