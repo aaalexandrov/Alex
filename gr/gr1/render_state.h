@@ -52,10 +52,10 @@ public:
 	struct DepthState {
 		bool _depthTestEnable = false;
 		bool _depthWriteEnable = false;
-		CompareFunc _depthCompareFunc = CompareFunc::Never;
+		CompareFunc _depthCompareFunc = CompareFunc::Less;
 		bool _depthBoundsTestEnable = false;
-		float _minDepthBounds = 0;
-		float _maxDepthBounds = 0;
+		float _minDepthBounds = 0.0f;
+		float _maxDepthBounds = 1.0f;
 	};
 
 	enum class StencilFunc {
@@ -118,17 +118,18 @@ public:
 		G = 2,
 		B = 4,
 		A = 8,
+		RGBA = 15,
 	};
 
 	struct BlendFuncState {
 		bool _blendEnable = false;
-		BlendFactor _srcColorBlendFactor = BlendFactor::Zero;
-		BlendFactor _dstColorBlendFactor = BlendFactor::Zero;
+		BlendFactor _srcColorBlendFactor = BlendFactor::SrcAlpha;
+		BlendFactor _dstColorBlendFactor = BlendFactor::OneMinusSrcAlpha;
 		BlendFunc _colorBlendFunc = BlendFunc::Add;
-		BlendFactor _srcAlphaBlendFactor = BlendFactor::Zero;
-		BlendFactor _dstAlphaBlendFactor = BlendFactor::Zero;
+		BlendFactor _srcAlphaBlendFactor = BlendFactor::SrcAlpha;
+		BlendFactor _dstAlphaBlendFactor = BlendFactor::OneMinusSrcAlpha;
 		BlendFunc _alphaBlendFunc = BlendFunc::Add;
-		ColorComponentMask _colorWriteMask = ColorComponentMask::None;
+		ColorComponentMask _colorWriteMask = ColorComponentMask::RGBA;
 	};
 
 	RenderState(Device &device);
@@ -178,8 +179,8 @@ public:
 	DepthState _depthState;
 	bool _stencilEnable = false;
 	std::array<StencilFuncState, 2> _stencilState;
-	std::vector<BlendFuncState> _blendStates;
-	glm::vec4 _blendColor;
+	std::vector<BlendFuncState> _blendStates{BlendFuncState()};
+	glm::vec4 _blendColor{};
 };
 
 DEFINE_ENUM_BIT_OPERATORS(RenderState::ColorComponentMask)

@@ -21,27 +21,26 @@ vk::UniqueDescriptorSet DescriptorSetStore::AllocateDescriptorSet(vk::Descriptor
 		.setDescriptorSetCount(1)
 		.setPSetLayouts(&layout);
 
-	VkResult result;
-	VkDescriptorSet set;
-
 	uint32_t startIndex = _descPoolIndex;
+	bool allocatedPool = false;
+
 	while (true) {
 		setsInfo.setDescriptorPool(_descPools[_descPoolIndex].get());
-		result = vkAllocateDescriptorSets(*_deviceVk->_device, reinterpret_cast<const VkDescriptorSetAllocateInfo*>(&setsInfo), &set);
-		if (result == VK_SUCCESS)
-			break;
+
+		try {
+			return std::move(_deviceVk->_device->allocateDescriptorSetsUnique(setsInfo)[0]);
+		} catch (vk::SystemError &e) {
+			if (allocatedPool) {
+				throw GraphicsException("Failed to allocate a descriptor set!", e.code().value());
+			}
+		}
+
 		_descPoolIndex = (_descPoolIndex + 1) % _descPools.size();
 		if (_descPoolIndex == startIndex) {
 			AllocateDescriptorPool();
-			setsInfo.setDescriptorPool(_descPools[_descPoolIndex].get());
-			result = vkAllocateDescriptorSets(*_deviceVk->_device, reinterpret_cast<const VkDescriptorSetAllocateInfo*>(&setsInfo), &set);
-			break;
+			allocatedPool = true;
 		}
 	}
-	if (result != VK_SUCCESS)
-		throw GraphicsException("Failed to allocate a descriptor set!", result);
-
-	return vk::UniqueDescriptorSet(set);
 }
 
 void DescriptorSetStore::AllocateDescriptorPool()

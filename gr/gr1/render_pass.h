@@ -42,9 +42,10 @@ class RenderDrawCommand : public RenderCommand {
 public:
 	struct BufferData {
 		std::shared_ptr<Buffer> _buffer;
-		ShaderKindBits _shaderKinds;
-		int _binding;
-		bool _frequencyInstance;
+		ShaderKindBits _shaderKinds = {};
+		size_t _offset = 0;
+		int _binding = 0;
+		bool _frequencyInstance = false;
 	};
 
 	RenderDrawCommand(Device &device) : RenderCommand(device) {}
@@ -58,7 +59,7 @@ public:
 	virtual void RemoveShader(ShaderKind kind) { _shaders[static_cast<int>(kind)].reset(); }
 	std::shared_ptr<Shader> const &GetShader(ShaderKind kind) { return _shaders[static_cast<int>(kind)]; }
 
-	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0);
+	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0, size_t offset = 0, bool frequencyInstance = false);
 	virtual void RemoveBuffer(int bufferIndex) { _buffers.erase(_buffers.begin() + bufferIndex); }
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }

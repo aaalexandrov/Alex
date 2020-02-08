@@ -90,7 +90,7 @@ vk::UniquePipeline PipelineStore::CreatePipeline(PipelineInfo &pipelineInfo)
 
 				vertexInputBindingDescs.emplace_back();
 				vertexInputBindingDescs.back()
-					.setStride(static_cast<uint32_t>(bufLayout._bufferLayout->GetSize()))
+					.setStride(static_cast<uint32_t>(bufLayout._bufferLayout->GetArrayElement()->GetSize()))
 					.setBinding(bufLayout._binding)
 					.setInputRate(bufLayout._frequencyInstance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex);
 			}

@@ -14,9 +14,9 @@ void RenderDrawCommand::Clear()
 	_renderState.reset();
 }
 
-int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding) 
+int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding, size_t offset, bool frequencyInstance)
 { 
-	_buffers.push_back(BufferData{ buffer, shaderKinds, binding }); 
+	_buffers.push_back(BufferData{ buffer, shaderKinds, offset, binding, frequencyInstance });
 	return static_cast<int>(_buffers.size() - 1);
 }
 

@@ -137,6 +137,9 @@ int main()
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
+	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::None);
+	//renderState->SetDepthState(true, true, RenderState::CompareFunc::Always);
+	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
 
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
 
@@ -155,6 +158,7 @@ int main()
 	renderTriangle->SetRenderState(renderState);
 	renderTriangle->AddBuffer(vertexBuffer, ShaderKindBits::Vertex);
 	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
+	renderTriangle->_indexCount = static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount());
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);

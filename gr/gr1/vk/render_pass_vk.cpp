@@ -40,8 +40,8 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo
+		.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue)
 		.setPInheritanceInfo(&prepInfoVk->_cmdInheritInfo);
-	beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
 	_cmdDraw->begin(beginInfo);
 
 	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, *_pipeline);
@@ -58,22 +58,27 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 
 	vk::Buffer indexBuffer;
 	vk::IndexType indexType;
+	size_t indexOffset;
 	std::vector<vk::Buffer> vertBuffers;
+	std::vector<size_t> vertBufferOffsets;
 	for (auto &bufData : _buffers) {
 		BufferVk *bufferVk = static_cast<BufferVk*>(bufData._buffer.get());
 		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Vertex)) {
 			vertBuffers.resize(std::max<size_t>(vertBuffers.size(), bufData._binding + 1));
 			ASSERT(!vertBuffers[bufData._binding]);
 			vertBuffers[bufData._binding] = *bufferVk->_buffer;
+			vertBufferOffsets.resize(vertBuffers.size());
+			vertBufferOffsets[bufData._binding] = bufData._offset;
 		} else if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Index)) {
 			ASSERT(!indexBuffer);
 			indexBuffer = *bufferVk->_buffer;
 			indexType = bufferVk->GetVkIndexType();
+			indexOffset = bufData._offset;
 		}
 	}
-	_cmdDraw->bindVertexBuffers(0, vertBuffers, nullptr);
+	_cmdDraw->bindVertexBuffers(0, vertBuffers, vertBufferOffsets);
 	if (indexBuffer) {
-		_cmdDraw->bindIndexBuffer(indexBuffer, 0, indexType);
+		_cmdDraw->bindIndexBuffer(indexBuffer, indexOffset, indexType);
 
 		_cmdDraw->drawIndexed(_indexCount, _instanceCount, _firstIndex, _vertexOffset, _instanceCount);
 	} else {
@@ -144,7 +149,7 @@ void RenderDrawCommandVk::PrepareDescriptorSets()
 
 	for (int i = 0; i < _shaders.size(); ++i) {
 		auto shaderVk = static_cast<ShaderVk*>(_shaders[i].get());
-		_descriptorSets[i] = shaderVk ? shaderVk->AllocateDescriptorSet() : vk::UniqueDescriptorSet();
+		_descriptorSets[i] = std::move(shaderVk ? shaderVk->AllocateDescriptorSet() : vk::UniqueDescriptorSet());
 	}
 }
 
@@ -190,7 +195,7 @@ void RenderDrawCommandVk::SetDynamicState(CommandPrepareInfoVk &prepareInfo)
 	std::vector<vk::Viewport> viewports;
 
 	RenderState::Viewport const &viewport = renderStateVk->GetViewport();
-	if (viewport._rect.GetSize() != glm::vec2(0, 0)) {
+	if (!viewport._rect.IsEmpty()) {
 		renderStateVk->FillViewports(viewports);
 	} else {
 		viewports.push_back(prepareInfo._viewport);
@@ -405,6 +410,15 @@ void RenderPassVk::PrepareToRecordRenderCommands()
 		.setRenderPass(*_renderPass)
 		.setSubpass(GetSubpass())
 		.setFramebuffer(*_framebuffer);
+
+	glm::uvec2 size = GetRenderAreaSize();
+	prepInfo._viewport
+		.setX(0)
+		.setY(0)
+		.setWidth(static_cast<float>(size.x))
+		.setHeight(static_cast<float>(size.y))
+		.setMinDepth(0.0f)
+		.setMaxDepth(1.0f);
 
 	for (auto &renderCmd : _commands) {
 		renderCmd->PrepareToRecord(prepInfo);

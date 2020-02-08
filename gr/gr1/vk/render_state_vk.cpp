@@ -86,6 +86,10 @@ util::ValueRemapper<RenderState::ColorComponentMask, vk::ColorComponentFlagBits,
 
 void RenderStateVk::Init()
 {
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	vk::PhysicalDeviceProperties props =	deviceVk->_physicalDevice.getProperties();
+	_scissor._min = glm::ivec2(0, 0);
+	_scissor.SetSize(glm::ivec2(props.limits.maxViewportDimensions[0], props.limits.maxViewportDimensions[1]));
 	_state = ResourceState::ShaderRead;
 }
 
@@ -113,12 +117,14 @@ void RenderStateVk::FillRasterizationState(vk::PipelineRasterizationStateCreateI
 		.setDepthBiasEnable(_depthBias._enable)
 		.setDepthBiasConstantFactor(_depthBias._constantFactor)
 		.setDepthBiasClamp(_depthBias._clamp)
-		.setDepthBiasSlopeFactor(_depthBias._slopeFactor);
+		.setDepthBiasSlopeFactor(_depthBias._slopeFactor)
+		.setLineWidth(1.0f);
 }
 
 void RenderStateVk::FillMultisampleState(vk::PipelineMultisampleStateCreateInfo &multisampleState, std::vector<uint32_t> &sampleMask)
 {
-	// leave it default
+	multisampleState
+		.setMinSampleShading(1.0f);
 }
 
 void RenderStateVk::FillDepthStencilState(vk::PipelineDepthStencilStateCreateInfo &depthState)
