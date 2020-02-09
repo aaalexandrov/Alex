@@ -204,10 +204,12 @@ public:
 	virtual glm::vec4 const &GetBlendConstant() { return _data._blendColor; }
 
 	StateData const &GetStateData() { return _data; }
+	uint32_t GetStateDataVersion() const { return _dataVersion; }
 public:
 	void SetStencil(StencilFuncState &stencil, StencilFunc failFunc, StencilFunc passFunc, StencilFunc depthFailFunc, CompareFunc compareFunc, uint32_t compareMask, uint32_t writeMask, uint32_t reference);
 
 	StateData _data;
+	uint32_t _dataVersion = 1;
 };
 
 DEFINE_ENUM_BIT_OPERATORS(RenderState::ColorComponentMask)

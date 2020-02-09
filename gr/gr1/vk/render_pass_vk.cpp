@@ -110,6 +110,11 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	CommandPrepareInfoVk *prepInfoVk = static_cast<CommandPrepareInfoVk*>(&prepareInfo);
 
+	if (_pipelineRenderStateVersion != _renderState->GetStateDataVersion()) {
+		_cmdDraw.reset();
+		_pipeline.reset();
+	}
+
 	if (_cmdDraw && _recordedViewport == prepInfoVk->_viewport)
 		return;
 
@@ -207,6 +212,7 @@ void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t sub
 	pipeInfo._subpass = subpass;
 	
 	_pipeline = deviceVk->_pipelineStore.GetPipeline(pipeInfo);
+	_pipelineRenderStateVersion = _renderState->GetStateDataVersion();
 }
 
 ShaderKindBits RenderDrawCommandVk::PrepareDescriptorSets()

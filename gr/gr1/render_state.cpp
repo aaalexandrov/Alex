@@ -153,17 +153,20 @@ void RenderState::SetViewport(util::RectF rect, float minDepth, float maxDepth)
 	_data._viewport._rect = rect;
 	_data._viewport._minDepth = minDepth;
 	_data._viewport._maxDepth = maxDepth;
+	++_dataVersion;
 }
 
 void RenderState::SetScissor(util::RectI rect)
 {
 	_data._scissor = rect;
+	++_dataVersion;
 }
 
 void RenderState::SetCullState(FrontFaceMode front, CullMask cull)
 {
 	_data._cullState._front = front;
 	_data._cullState._cullMask = cull;
+	++_dataVersion;
 }
 
 void RenderState::SetDepthBias(bool enable, float constantFactor, float clamp, float slopeFactor)
@@ -172,6 +175,7 @@ void RenderState::SetDepthBias(bool enable, float constantFactor, float clamp, f
 	_data._depthBias._constantFactor = constantFactor;
 	_data._depthBias._clamp = clamp;
 	_data._depthBias._slopeFactor = slopeFactor;
+	++_dataVersion;
 }
 
 void RenderState::SetDepthState(bool testEnable, bool writeEnable, CompareFunc compareFunc, bool boundsTestEnable, float minBounds, float maxBounds)
@@ -182,11 +186,13 @@ void RenderState::SetDepthState(bool testEnable, bool writeEnable, CompareFunc c
 	_data._depthState._depthBoundsTestEnable = boundsTestEnable;
 	_data._depthState._minDepthBounds = minBounds;
 	_data._depthState._maxDepthBounds = maxBounds;
+	++_dataVersion;
 }
 
 void RenderState::SetStencilEnable(bool enable)
 {
 	_data._stencilEnable = enable;
+	++_dataVersion;
 }
 
 void RenderState::SetFrontStencil(StencilFunc failFunc, StencilFunc passFunc, StencilFunc depthFailFunc, CompareFunc compareFunc, uint32_t compareMask, uint32_t writeMask, uint32_t reference)
@@ -211,11 +217,13 @@ void RenderState::SetAttachmentBlendState(uint32_t attachmentIndex, bool blendEn
 	_data._blendStates[attachmentIndex]._dstAlphaBlendFactor = dstAlphaFactor;
 	_data._blendStates[attachmentIndex]._alphaBlendFunc = alphaBlendFunc;
 	_data._blendStates[attachmentIndex]._colorWriteMask = colorWriteMask;
+	++_dataVersion;
 }
 
 void RenderState::SetBlendConstant(glm::vec4 color)
 {
 	_data._blendColor = color;
+	++_dataVersion;
 }
 
 void RenderState::SetStencil(StencilFuncState &stencil, StencilFunc failFunc, StencilFunc passFunc, StencilFunc depthFailFunc, CompareFunc compareFunc, uint32_t compareMask, uint32_t writeMask, uint32_t reference)
@@ -227,6 +235,7 @@ void RenderState::SetStencil(StencilFuncState &stencil, StencilFunc failFunc, St
 	stencil._compareMask = compareMask;
 	stencil._writeMask = writeMask;
 	stencil._reference = reference;
+	++_dataVersion;
 }
 
 NAMESPACE_END(gr1)

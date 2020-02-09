@@ -48,6 +48,7 @@ protected:
 
 	vk::UniqueCommandBuffer _cmdDraw;
 	std::shared_ptr<PipelineVk> _pipeline;
+	uint32_t _pipelineRenderStateVersion;
 	ShaderKindsArray<vk::UniqueDescriptorSet> _descriptorSets;
 	vk::Viewport _recordedViewport{};
 };
