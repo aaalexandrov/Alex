@@ -14,6 +14,9 @@ class RenderPass;
 class CommandPrepareInfo {
 	RTTR_ENABLE()
 public:
+	CommandPrepareInfo(RenderPass *renderPass) : _renderPass(renderPass) {}
+
+	RenderPass *_renderPass;
 };
 
 class CommandRecordInfo {
@@ -63,7 +66,7 @@ public:
 	virtual void RemoveShader(ShaderKind kind) { _shaders[static_cast<int>(kind)].reset(); }
 	std::shared_ptr<Shader> const &GetShader(ShaderKind kind) { return _shaders[static_cast<int>(kind)]; }
 
-	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0, size_t offset = 0, bool frequencyInstance = false);
+	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0, size_t offset = 0, bool frequencyInstance = false);
 	virtual void RemoveBuffer(int bufferIndex) { _buffers.erase(_buffers.begin() + bufferIndex); }
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }

@@ -47,7 +47,7 @@ class BufferCopyPass : public OutputPass {
 public:
 	BufferCopyPass(Device &device) : OutputPass(device) {}
 
-	virtual void Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t srcOffset, uint32_t dstOffset, uint32_t size);
+	virtual void Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t size = ~0, uint32_t srcOffset = 0, uint32_t dstOffset = 0);
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 protected:

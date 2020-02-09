@@ -221,7 +221,7 @@ void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
 		auto &type = reflected.get_type(s.type_id);
 
 		uint32_t location = reflected.get_decoration(s.id, spv::Decoration::DecorationLocation);
-		_vertexLayout->GetStructFieldElement(i)->_userData = location;
+		_vertexLayout->GetStructFieldElement(i)->SetUserData(location);
 	}
 }
 

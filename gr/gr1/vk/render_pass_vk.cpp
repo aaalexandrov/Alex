@@ -19,6 +19,11 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(policy::ctor::as_raw_ptr);
 }
 
+CommandPrepareInfoVk::CommandPrepareInfoVk(RenderPassVk *renderPassVk)
+	: CommandPrepareInfo(renderPassVk)
+{
+}
+
 RenderDrawCommandVk::RenderDrawCommandVk(Device &device) 
 	: RenderDrawCommand(device) 
 {
@@ -31,7 +36,6 @@ void RenderDrawCommandVk::Clear()
 		_descriptorSets[k].reset();
 	}
 	_pipeline.reset();
-	_pipelineLayout.reset();
 	RenderDrawCommand::Clear();
 }
 
@@ -47,7 +51,6 @@ void RenderDrawCommandVk::SetShader(std::shared_ptr<Shader> const &shader)
 	_cmdDraw.reset();
 	_descriptorSets[static_cast<int>(shader->GetShaderKind())].reset();
 	_pipeline.reset();
-	_pipelineLayout.reset();
 	RenderDrawCommand::SetShader(shader);
 }
 
@@ -56,7 +59,6 @@ void RenderDrawCommandVk::RemoveShader(ShaderKind kind)
 	_cmdDraw.reset();
 	_descriptorSets[static_cast<int>(kind)].reset();
 	_pipeline.reset();
-	_pipelineLayout.reset();
 	RenderDrawCommand::RemoveShader(kind);
 }
 
@@ -111,8 +113,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	if (_cmdDraw && _recordedViewport == prepInfoVk->_viewport)
 		return;
 
-	PreparePipelineLayout();
-	PreparePipeline(prepInfoVk->_cmdInheritInfo.renderPass, prepInfoVk->_cmdInheritInfo.subpass);
+	PreparePipeline(static_cast<RenderPassVk*>(prepInfoVk->_renderPass), prepInfoVk->_cmdInheritInfo.subpass);
 	ShaderKindBits updatedDescriptorSets = PrepareDescriptorSets();
 
 	UpdateDescriptorSets(updatedDescriptorSets);
@@ -125,7 +126,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 		.setPInheritanceInfo(&prepInfoVk->_cmdInheritInfo);
 	_cmdDraw->begin(beginInfo);
 
-	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, *_pipeline);
+	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline->Get());
 
 	SetDynamicState(*prepInfoVk);
 	_recordedViewport = prepInfoVk->_viewport;
@@ -136,7 +137,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 			continue;
 		descriptorSets.push_back(*desc);
 	}
-	_cmdDraw->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *_pipelineLayout, 0, descriptorSets, nullptr);
+	_cmdDraw->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, _pipeline->_pipelineLayout->Get(), 0, descriptorSets, nullptr);
 
 	vk::Buffer indexBuffer;
 	vk::IndexType indexType;
@@ -177,58 +178,35 @@ void RenderDrawCommandVk::Record(CommandRecordInfo &recordInfo)
 	recInfoVk->_secondaryCmds->push_back(_cmdDraw.get());
 }
 
-void RenderDrawCommandVk::PreparePipelineLayout()
-{
-	if (_pipelineLayout)
-		return;
-
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-
-	std::vector<vk::DescriptorSetLayout> setLayouts;
-	for (auto &shader : _shaders) {
-		auto shaderVk = std::static_pointer_cast<ShaderVk>(shader);
-		setLayouts.push_back(shaderVk->GetDescriptorSetLayout());
-	}
-
-	vk::PipelineLayoutCreateInfo pipelineInfo;
-	pipelineInfo
-		.setSetLayoutCount(static_cast<uint32_t>(setLayouts.size()))
-		.setPSetLayouts(setLayouts.data());
-	_pipelineLayout = deviceVk->_device->createPipelineLayoutUnique(pipelineInfo, deviceVk->AllocationCallbacks());
-}
-
-void RenderDrawCommandVk::PreparePipeline(vk::RenderPass renderPass, uint32_t subpass)
+void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t subpass)
 {
 	if (_pipeline)
 		return;
 
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
-	PipelineStore::PipelineInfo pipeInfo;
+	PipelineInfo pipeInfo;
 	for (int i = 0; i < _shaders.size(); ++i) {
-		if (!_shaders[i])
-			continue;
-		pipeInfo._shaders.push_back(_shaders[i].get());
+		pipeInfo._shaders[i] = static_cast<ShaderVk*>(_shaders[i].get());
 	}
 
 	for (int i = 0; i < _buffers.size(); ++i) {
 		if (!(_buffers[i]._buffer->GetUsage() & Buffer::Usage::Vertex))
 			continue;
 
-		PipelineStore::VertexBufferLayout bufLayout;
-		bufLayout._bufferLayout = _buffers[i]._buffer->GetBufferLayout().get();
+		VertexBufferLayout bufLayout;
+		bufLayout._bufferLayout = _buffers[i]._buffer->GetBufferLayout();
 		bufLayout._binding = _buffers[i]._binding;
 		bufLayout._frequencyInstance = _buffers[i]._frequencyInstance;
 		pipeInfo._vertexBufferLayouts.push_back(bufLayout);
 	}
 
-	pipeInfo._renderState = _renderState.get();
+	pipeInfo._renderStateData = &_renderState->GetStateData();
 	pipeInfo._primitiveKind = _primitiveKind;
-	pipeInfo._pipelineLayout = *_pipelineLayout;
 	pipeInfo._renderPass = renderPass;
 	pipeInfo._subpass = subpass;
 	
-	_pipeline = deviceVk->_pipelineStore.CreatePipeline(pipeInfo);
+	_pipeline = deviceVk->_pipelineStore.GetPipeline(pipeInfo);
 }
 
 ShaderKindBits RenderDrawCommandVk::PrepareDescriptorSets()
@@ -285,12 +263,11 @@ void RenderDrawCommandVk::UpdateDescriptorSets(ShaderKindBits updateKinds)
 
 void RenderDrawCommandVk::SetDynamicState(CommandPrepareInfoVk &prepareInfo)
 {
-	RenderStateVk *renderStateVk = static_cast<RenderStateVk*>(_renderState.get());
 	std::vector<vk::Viewport> viewports;
 
-	RenderState::Viewport const &viewport = renderStateVk->GetViewport();
+	RenderState::Viewport const &viewport = _renderState->GetViewport();
 	if (!viewport._rect.IsEmpty()) {
-		renderStateVk->FillViewports(viewports);
+		RenderStateVk::FillViewports(_renderState->GetStateData(), viewports);
 	} else {
 		viewports.push_back(prepareInfo._viewport);
 	}
@@ -499,7 +476,7 @@ void RenderPassVk::RecordPassCommands()
 
 void RenderPassVk::PrepareToRecordRenderCommands()
 {
-	CommandPrepareInfoVk prepInfo;
+	CommandPrepareInfoVk prepInfo(this);
 	prepInfo._cmdInheritInfo
 		.setRenderPass(*_renderPass)
 		.setSubpass(GetSubpass());

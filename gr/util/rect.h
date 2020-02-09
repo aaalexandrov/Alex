@@ -42,12 +42,12 @@ public:
     return false; 
   }
 
-  bool operator==(Box const &other)
+  bool operator==(Box const &other) const
   {
     return _min == other._min && _max == other._max;
   }
 
-  bool operator!=(Box const &other)
+  bool operator!=(Box const &other) const
   {
     return !operator==(other);
   }
@@ -63,3 +63,33 @@ using BoxF = Box<float, 3>;
 using BoxWithLayer = util::Box<uint32_t, 4>;
 
 NAMESPACE_END(util)
+
+NAMESPACE_BEGIN(std)
+
+template <int Dim, typename Num, glm::precision Prec>
+struct hash<glm::vec<Dim, Num, Prec>> {
+	using VecType = glm::vec<Dim, Num, Prec>;
+	size_t operator()(VecType const &v) const
+	{
+		size_t hash = 0;
+		std::hash<Num> hasher;
+		for (int d = 0; d < Dim; ++d) {
+			hash = 31 * hash + hasher(v[d]);
+		}
+		return hash;
+	}
+};
+
+template <int Dim, typename Num>
+struct hash<util::Box<Num, Dim>> {
+	using BoxType = util::Box<Num, Dim>;
+	size_t operator()(BoxType const &b) const 
+	{
+		hash<BoxType::Vec> hasher;
+		size_t hash = hasher(b._min);
+		hash = 31 * hash + hasher(b._max);
+		return hash;
+	}
+};
+
+NAMESPACE_END(std)

@@ -2,10 +2,10 @@
 
 NAMESPACE_BEGIN(util)
 
-size_t LayoutElement::GetOffset(std::vector<rttr::variant> const &indices)
+size_t LayoutElement::GetOffset(std::vector<rttr::variant> const &indices) const
 {
 	size_t offset = 0;
-	LayoutElement *elem = this;
+	LayoutElement const *elem = this;
 	for (size_t i = 0; i < indices.size(); ++i) {
 		size_t indexOffs = ~0ull;
 		if (indices[i].can_convert<std::string>()) {
@@ -22,7 +22,7 @@ size_t LayoutElement::GetOffset(std::vector<rttr::variant> const &indices)
 	return offset;
 }
 
-bool LayoutElement::operator==(LayoutElement &other)
+bool LayoutElement::operator==(LayoutElement const &other) const
 {
 	if (this == &other)
 		return true;
@@ -43,15 +43,15 @@ LayoutStruct::LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>,
 	_padding = size ? size - GetSize() : 0;
 }
 
-size_t LayoutStruct::GetStructFieldIndex(std::string name)
+size_t LayoutStruct::GetStructFieldIndex(std::string name) const
 {
 	auto it = _nameIndices.find(name);
 	return it != _nameIndices.end() ? it->second : ~0ull;
 }
 
-bool LayoutStruct::IsEqualToSameKind(LayoutElement &other)
+bool LayoutStruct::IsEqualToSameKind(LayoutElement const &other) const
 {
-	if (_fields.size() != other.GetStructFieldCount())
+	if (_fields.size() != other.GetStructFieldCount() || _padding != other.GetPadding())
 		return false;
 	for (size_t i = 0; i < _fields.size(); ++i) {
 		if (_fields[i]._name != other.GetStructFieldName(i))
@@ -61,6 +61,17 @@ bool LayoutStruct::IsEqualToSameKind(LayoutElement &other)
 		ASSERT(_fields[i]._offset == other.GetStructFieldOffset(i));
 	}
 	return true;
+}
+
+size_t LayoutStruct::GetHash() const
+{
+	size_t hash = _padding;
+	std::hash<std::string> strHasher;
+	for (size_t i = 0; i < _fields.size(); ++i) {
+		hash = 31 * hash + strHasher(_fields[i]._name);
+		hash = 31 * hash + _fields[i]._element->GetHash();
+	}
+	return hash;
 }
 
 NAMESPACE_END(util)

@@ -13,34 +13,38 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 		Struct,
 	};
 
-	virtual Kind GetKind() = 0;
-	virtual size_t GetSize() = 0;
+	virtual Kind GetKind() const = 0;
+	virtual size_t GetSize() const = 0;
 
-	virtual rttr::type GetValueType() { return rttr::type::get<void>(); }
+	virtual rttr::type GetValueType() const { return rttr::type::get<void>(); }
 
-	virtual LayoutElement *GetArrayElement() { return nullptr; }
-	virtual size_t GetArrayCount() { return 0; }
+	virtual LayoutElement const *GetArrayElement() const { return nullptr; }
+	virtual size_t GetArrayCount() const { return 0; }
 
-	virtual size_t GetStructFieldCount() { return 0; }
-	virtual LayoutElement *GetStructFieldElement(size_t fieldIndex) { return nullptr; }
-	virtual std::string GetStructFieldName(size_t fieldIndex) { return {}; }
-	virtual size_t GetStructFieldOffset(size_t fieldIndex) { return ~0ull; }
-	virtual size_t GetStructFieldIndex(std::string name) { return ~0ull; }
+	virtual size_t GetStructFieldCount() const { return 0; }
+	virtual LayoutElement const *GetStructFieldElement(size_t fieldIndex) const { return nullptr; }
+	virtual std::string GetStructFieldName(size_t fieldIndex) const { return {}; }
+	virtual size_t GetStructFieldOffset(size_t fieldIndex) const { return ~0ull; }
+	virtual size_t GetStructFieldIndex(std::string name) const { return ~0ull; }
 
-	virtual size_t GetOffset(size_t index) = 0;
-	size_t GetOffset(std::string name) { return GetOffset(GetStructFieldIndex(name)); }
-	virtual LayoutElement *GetElement(size_t index) = 0;
-	LayoutElement *GetElement(std::string name) { return GetElement(GetStructFieldIndex(name)); }
-	size_t GetOffset(std::vector<rttr::variant> const &indices);
+	size_t GetPadding() const { return _padding; }
+	intptr_t GetUserData() const { return _userData; }
+	void SetUserData(intptr_t userData) const { _userData = userData; }
 
-	std::pair<LayoutElement*, size_t> GetMemberElementAndOffset() { return std::make_pair(this, 0); }
+	virtual size_t GetOffset(size_t index) const = 0;
+	size_t GetOffset(std::string name) const { return GetOffset(GetStructFieldIndex(name)); }
+	virtual LayoutElement const *GetElement(size_t index) const = 0;
+	LayoutElement const *GetElement(std::string name) const { return GetElement(GetStructFieldIndex(name)); }
+	size_t GetOffset(std::vector<rttr::variant> const &indices) const;
+
+	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset() const { return std::make_pair(this, 0); }
 	template<typename First, typename... Rest>
-	std::pair<LayoutElement*, size_t> GetMemberElementAndOffset(First first, Rest... rest)
+	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset(First first, Rest... rest) const
 	{
-		LayoutElement *element = GetElement(first);
+		LayoutElement const *element = GetElement(first);
 		if (!element)
-			return std::pair<LayoutElement*, size_t>(nullptr, ~0ull);
-		std::pair<LayoutElement*, size_t> restElemOffs = element->GetMemberElementAndOffset(rest...);
+			return std::pair<LayoutElement const*, size_t>(nullptr, ~0ull);
+		std::pair<LayoutElement const*, size_t> restElemOffs = element->GetMemberElementAndOffset(rest...);
 		if (!restElemOffs.first)
 			return restElemOffs;
 		size_t firstOffs = GetOffset(first);
@@ -48,35 +52,37 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	}
 
 	template<typename DataType, typename... Indices>
-	DataType *GetMemberPtr(void *buffer, Indices... indices)
+	DataType *GetMemberPtr(void *buffer, Indices... indices) const
 	{
-		std::pair<LayoutElement*, size_t> elemOffs = GetMemberElementAndOffset(indices...);
+		std::pair<LayoutElement const*, size_t> elemOffs = GetMemberElementAndOffset(indices...);
 		if (!elemOffs.first || elemOffs.first->GetValueType() != rttr::type::get<DataType>())
 			return nullptr;
 		return reinterpret_cast<DataType*>(reinterpret_cast<uint8_t*>(buffer) + elemOffs.second);
 	}
 
-	virtual bool IsEqualToSameKind(LayoutElement &other) = 0;
+	virtual bool IsEqualToSameKind(LayoutElement const &other) const = 0;
+	virtual size_t GetHash() const = 0;
 
-	bool operator==(LayoutElement &other);
-	bool operator!=(LayoutElement &other) { return !(*this == other); }
-public:
+	bool operator==(LayoutElement const &other) const;
+	bool operator!=(LayoutElement const &other) const { return !(*this == other); }
+protected:
 	size_t _padding = 0;
-	intptr_t _userData = 0;
+	mutable intptr_t _userData = 0;
 };
 
 struct LayoutValue : public LayoutElement {
 	LayoutValue(rttr::type type, size_t size = 0) : _type(type) { _padding = size ? size - GetSize() : 0; }
 
-	Kind GetKind() override { return Kind::Value; }
-	size_t GetSize() override { return _type.get_sizeof() + _padding; }
-	size_t GetOffset(size_t index) override { return ~0ull; }
-	LayoutElement *GetElement(size_t index) override { return nullptr; }
+	Kind GetKind() const override { return Kind::Value; }
+	size_t GetSize() const override { return _type.get_sizeof() + _padding; }
+	size_t GetOffset(size_t index) const override { return ~0ull; }
+	LayoutElement const *GetElement(size_t index) const override { return nullptr; }
 
-	rttr::type GetValueType() override { return _type; }
+	rttr::type GetValueType() const override { return _type; }
 
-	bool IsEqualToSameKind(LayoutElement &other) override { return GetValueType() == other.GetValueType(); }
-public:
+	bool IsEqualToSameKind(LayoutElement const &other) const override { return GetValueType() == other.GetValueType() && _padding == other.GetPadding(); }
+	size_t GetHash() const override { return 31 * _type.get_id() + _padding; }
+protected:
 	rttr::type _type;
 };
 
@@ -84,16 +90,17 @@ struct LayoutArray : public LayoutElement {
 	LayoutArray(std::shared_ptr<LayoutElement> element, size_t arrayCount, size_t size = 0) 
 		: _element(element), _arrayCount(arrayCount) { _padding = size ? size - GetSize() : 0; }
 
-	Kind GetKind() override { return Kind::Array; }
-	size_t GetSize() override { return _element->GetSize() * _arrayCount + _padding; }
-	size_t GetOffset(size_t index) override { return index < _arrayCount ? _element->GetSize() * index : ~0ull; }
-	LayoutElement *GetElement(size_t index) override { return index < _arrayCount ? _element.get() : nullptr; }
+	Kind GetKind() const override { return Kind::Array; }
+	size_t GetSize() const override { return _element->GetSize() * _arrayCount + _padding; }
+	size_t GetOffset(size_t index) const override { return index < _arrayCount ? _element->GetSize() * index : ~0ull; }
+	LayoutElement const *GetElement(size_t index) const override { return index < _arrayCount ? _element.get() : nullptr; }
 
-	LayoutElement *GetArrayElement() override { return _element.get(); }
-	size_t GetArrayCount() override { return _arrayCount; }
+	LayoutElement const *GetArrayElement() const override { return _element.get(); }
+	size_t GetArrayCount() const override { return _arrayCount; }
 
-	bool IsEqualToSameKind(LayoutElement &other) override { return GetArrayCount() == other.GetArrayCount() && *GetArrayElement() == *other.GetArrayElement(); }
-public:
+	bool IsEqualToSameKind(LayoutElement const &other) const override { return GetArrayCount() == other.GetArrayCount() && *GetArrayElement() == *other.GetArrayElement() && _padding == other.GetPadding(); }
+	size_t GetHash() const override { return 31 * (GetArrayCount() + 31 * GetArrayElement()->GetHash()) + _padding; }
+protected:
 	std::shared_ptr<LayoutElement> _element;
 	size_t _arrayCount = 0;
 };
@@ -101,19 +108,20 @@ public:
 struct LayoutStruct : public LayoutElement {
 	LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> fields, size_t size = 0);
 
-	Kind GetKind() override { return Kind::Struct; }
-	size_t GetSize() override { return _fields.back()._offset + _fields.back()._element->GetSize() + _padding; }
-	size_t GetOffset(size_t index) override { return index < _fields.size() ? _fields[index]._offset : ~0ull; }
-	LayoutElement *GetElement(size_t index) override { return index < _fields.size() ? _fields[index]._element.get() : nullptr; }
+	Kind GetKind() const override { return Kind::Struct; }
+	size_t GetSize() const override { return _fields.back()._offset + _fields.back()._element->GetSize() + _padding; }
+	size_t GetOffset(size_t index) const override { return index < _fields.size() ? _fields[index]._offset : ~0ull; }
+	LayoutElement const *GetElement(size_t index) const override { return index < _fields.size() ? _fields[index]._element.get() : nullptr; }
 
-	size_t GetStructFieldCount() override { return _fields.size(); }
-	LayoutElement *GetStructFieldElement(size_t fieldIndex) override { return _fields[fieldIndex]._element.get(); }
-	std::string GetStructFieldName(size_t fieldIndex) override { return _fields[fieldIndex]._name; }
-	size_t GetStructFieldOffset(size_t fieldIndex) override { return _fields[fieldIndex]._offset; }
-	size_t GetStructFieldIndex(std::string name) override;
+	size_t GetStructFieldCount() const override { return _fields.size(); }
+	LayoutElement const *GetStructFieldElement(size_t fieldIndex) const override { return _fields[fieldIndex]._element.get(); }
+	std::string GetStructFieldName(size_t fieldIndex) const override { return _fields[fieldIndex]._name; }
+	size_t GetStructFieldOffset(size_t fieldIndex) const override { return _fields[fieldIndex]._offset; }
+	size_t GetStructFieldIndex(std::string name) const override;
 
-	bool IsEqualToSameKind(LayoutElement &other) override;
-public:
+	bool IsEqualToSameKind(LayoutElement const &other) const override;
+	size_t GetHash() const override;
+protected:
 	struct Field { 
 		std::shared_ptr<LayoutElement> _element;
 		std::string _name;

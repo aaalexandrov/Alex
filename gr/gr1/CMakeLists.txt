@@ -85,6 +85,9 @@ if(gr_implementation STREQUAL VK)
 		vk/output_pass_vk.h
 		vk/output_pass_vk.cpp
 
+		vk/pipeline_store.h
+		vk/pipeline_store.cpp
+
 		vk/present_pass_vk.h
 		vk/present_pass_vk.cpp
 

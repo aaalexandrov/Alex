@@ -13,13 +13,13 @@ void ResourceStateTransitionPass::Init(std::shared_ptr<Resource> const &resource
 }
 
 
-void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t srcOffset, uint32_t dstOffset, uint32_t size)
+void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t size, uint32_t srcOffset, uint32_t dstOffset)
 {
 	_src = srcBuffer;
 	_dst = dstBuffer;
 	_srcOffset = srcOffset;
 	_dstOffset = dstOffset;
-	_size = size;
+	_size = std::min(size, std::min(srcBuffer->GetSize() - _srcOffset, dstBuffer->GetSize() - _dstOffset));
 
 	ASSERT(_src->GetSize() >= _srcOffset + _size);
 	ASSERT(_dst->GetSize() >= _dstOffset + _size);

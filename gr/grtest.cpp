@@ -67,6 +67,7 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 
 	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
 	void *mapped = vertexStaging->Map();
+
 	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
 
@@ -79,10 +80,32 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 	vertexStaging->Unmap();
 
 	auto copyPass = device->CreateResource<BufferCopyPass>();
-	copyPass->Init(vertexStaging, vertexBuffer, 0, 0, vertexBuffer->GetSize());
+	copyPass->Init(vertexStaging, vertexBuffer);
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 	device->GetExecutionQueue().ExecutePasses();
+}
+
+void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuffer)
+{
+	auto indexStaging = device->CreateResource<Buffer>();
+	indexStaging->Init(Buffer::Usage::Staging, indexBuffer->GetBufferLayout());
+
+	util::LayoutElement *layout = indexStaging->GetBufferLayout().get();
+	void *mapped = indexStaging->Map();
+
+	*layout->GetMemberPtr<uint16_t>(mapped, 0) = 0;
+	*layout->GetMemberPtr<uint16_t>(mapped, 1) = 2;
+	*layout->GetMemberPtr<uint16_t>(mapped, 2) = 1;
+
+	indexStaging->Unmap();
+
+	auto copyPass = device->CreateResource<BufferCopyPass>();
+	copyPass->Init(indexStaging, indexBuffer);
+
+	device->GetExecutionQueue().EnqueuePass(copyPass);
+	device->GetExecutionQueue().ExecutePasses();
+
 }
 
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
@@ -135,6 +158,12 @@ int main()
 
 	InitTriangleVertices(device.get(), vertexBuffer);
 
+	auto ibLayout = std::make_shared<util::LayoutArray>(std::make_shared<util::LayoutValue>(rttr::type::get<uint16_t>()), 3);
+	auto indexBuffer = device->CreateResource<Buffer>();
+	indexBuffer->Init(Buffer::Usage::Index, ibLayout);
+
+	InitTriangleIndices(device.get(), indexBuffer);
+
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
 	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::None);
@@ -143,7 +172,6 @@ int main()
 
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
 	view = glm::translate(view, glm::vec3(0, 0, 1.5f));
-	proj = glm::perspectiveLH<float>(3.14f / 2, 1, 0.1f, 100.0f);
 
 	auto uboShader = device->CreateResource<Buffer>();
 	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
@@ -152,19 +180,22 @@ int main()
 	uboStaging->Init(Buffer::Usage::Staging, uboShader->GetBufferLayout());
 
 	auto uboUpdatePass = device->CreateResource<BufferCopyPass>();
-	uboUpdatePass->Init(uboStaging, uboShader, 0, 0, uboStaging->GetSize());
+	uboUpdatePass->Init(uboStaging, uboShader);
 
 	auto renderTriangle = device->CreateResource<RenderDrawCommand>();
 	renderTriangle->SetShader(vertShader);
 	renderTriangle->SetShader(fragShader);
 	renderTriangle->SetRenderState(renderState);
-	renderTriangle->AddBuffer(vertexBuffer, ShaderKindBits::Vertex);
+	renderTriangle->AddBuffer(vertexBuffer);
+	renderTriangle->AddBuffer(indexBuffer);
 	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
 	renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);
 	surface->Update(ri.GetSize().x, ri.GetSize().y);
+	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(ri.GetSize().x) / ri.GetSize().y, 0.1f, 100.0f);
+
 
 	auto depthBuffer = device->CreateResource<Image>();
 	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 1);
@@ -185,6 +216,7 @@ int main()
 		auto size = surface->GetSize();
 		if (size.x > 0 && size.y > 0) {
 			surface->Update(size.x, size.y);
+			proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
 			depthBuffer = device->CreateResource<Image>();
 			depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
 			renderPass->SetAttachmentImage(1, depthBuffer);

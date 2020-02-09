@@ -2,6 +2,7 @@
 
 #include "../render_pass.h"
 #include "output_pass_vk.h"
+#include "pipeline_store.h"
 #include "vk.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -9,6 +10,8 @@ NAMESPACE_BEGIN(gr1)
 class CommandPrepareInfoVk : public CommandPrepareInfo {
 	RTTR_ENABLE()
 public:
+	CommandPrepareInfoVk(RenderPassVk *renderPassVk);
+
 	vk::CommandBufferInheritanceInfo _cmdInheritInfo;
 	vk::Viewport _viewport;
 };
@@ -28,7 +31,7 @@ public:
 	void SetRenderState(std::shared_ptr<RenderState> const &renderState) override;
 	void SetShader(std::shared_ptr<Shader> const &shader) override;
 	void RemoveShader(ShaderKind kind) override;
-	int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding = 0, size_t offset = 0, bool frequencyInstance = false) override;
+	int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0, size_t offset = 0, bool frequencyInstance = false) override;
 	void RemoveBuffer(int bufferIndex) override;
 	void SetPrimitiveKind(PrimitiveKind primitiveKind) override;
 	void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0) override;
@@ -37,16 +40,14 @@ public:
 	void Record(CommandRecordInfo &recordInfo) override;
 
 protected:
-	void PreparePipelineLayout();
-	void PreparePipeline(vk::RenderPass renderPass, uint32_t subpass);
+	void PreparePipeline(RenderPassVk *renderPass, uint32_t subpass);
 	ShaderKindBits PrepareDescriptorSets();
 
 	void UpdateDescriptorSets(ShaderKindBits updateKinds);
 	void SetDynamicState(CommandPrepareInfoVk &prepareInfo);
 
 	vk::UniqueCommandBuffer _cmdDraw;
-	vk::UniquePipelineLayout _pipelineLayout;
-	vk::UniquePipeline _pipeline;
+	std::shared_ptr<PipelineVk> _pipeline;
 	ShaderKindsArray<vk::UniqueDescriptorSet> _descriptorSets;
 	vk::Viewport _recordedViewport{};
 };

@@ -88,19 +88,19 @@ void RenderStateVk::Init()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	vk::PhysicalDeviceProperties props =	deviceVk->_physicalDevice.getProperties();
-	_scissor._min = glm::ivec2(0, 0);
-	_scissor.SetSize(glm::ivec2(props.limits.maxViewportDimensions[0], props.limits.maxViewportDimensions[1]));
+	_data._scissor._min = glm::ivec2(0, 0);
+	_data._scissor.SetSize(glm::ivec2(props.limits.maxViewportDimensions[0], props.limits.maxViewportDimensions[1]));
 	_state = ResourceState::ShaderRead;
 }
 
-void RenderStateVk::FillViewportState(vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors)
+void RenderStateVk::FillViewportState(StateData const &data, vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors)
 {
-	FillViewports(viewports);
+	FillViewports(data, viewports);
 
 	scissors.emplace_back();
 	scissors.back()
-		.setOffset(vk::Offset2D(_scissor._min.x, _scissor._min.y))
-		.setExtent(vk::Extent2D(_scissor.GetSize().x, _scissor.GetSize().y));
+		.setOffset(vk::Offset2D(data._scissor._min.x, data._scissor._min.y))
+		.setExtent(vk::Extent2D(data._scissor.GetSize().x, data._scissor.GetSize().y));
 
 	viewportState
 		.setViewportCount(1)
@@ -109,41 +109,41 @@ void RenderStateVk::FillViewportState(vk::PipelineViewportStateCreateInfo &viewp
 		.setPScissors(&scissors.back());
 }
 
-void RenderStateVk::FillRasterizationState(vk::PipelineRasterizationStateCreateInfo &rasterState)
+void RenderStateVk::FillRasterizationState(StateData const &data, vk::PipelineRasterizationStateCreateInfo &rasterState)
 {
 	rasterState
-		.setCullMode(s_cullMask2Vk.ToDst(_cullState._cullMask))
-		.setFrontFace(s_frontFace2Vk.ToDst(_cullState._front))
-		.setDepthBiasEnable(_depthBias._enable)
-		.setDepthBiasConstantFactor(_depthBias._constantFactor)
-		.setDepthBiasClamp(_depthBias._clamp)
-		.setDepthBiasSlopeFactor(_depthBias._slopeFactor)
+		.setCullMode(s_cullMask2Vk.ToDst(data._cullState._cullMask))
+		.setFrontFace(s_frontFace2Vk.ToDst(data._cullState._front))
+		.setDepthBiasEnable(data._depthBias._enable)
+		.setDepthBiasConstantFactor(data._depthBias._constantFactor)
+		.setDepthBiasClamp(data._depthBias._clamp)
+		.setDepthBiasSlopeFactor(data._depthBias._slopeFactor)
 		.setLineWidth(1.0f);
 }
 
-void RenderStateVk::FillMultisampleState(vk::PipelineMultisampleStateCreateInfo &multisampleState, std::vector<uint32_t> &sampleMask)
+void RenderStateVk::FillMultisampleState(StateData const &data, vk::PipelineMultisampleStateCreateInfo &multisampleState, std::vector<uint32_t> &sampleMask)
 {
 	multisampleState
 		.setMinSampleShading(1.0f);
 }
 
-void RenderStateVk::FillDepthStencilState(vk::PipelineDepthStencilStateCreateInfo &depthState)
+void RenderStateVk::FillDepthStencilState(StateData const &data, vk::PipelineDepthStencilStateCreateInfo &depthState)
 {
 	depthState
-		.setDepthTestEnable(_depthState._depthTestEnable)
-		.setDepthWriteEnable(_depthState._depthWriteEnable)
-		.setDepthCompareOp(s_compareFunc2Vk.ToDst(_depthState._depthCompareFunc))
-		.setDepthBoundsTestEnable(_depthState._depthBoundsTestEnable)
-		.setMinDepthBounds(_depthState._minDepthBounds)
-		.setMaxDepthBounds(_depthState._maxDepthBounds)
-		.setStencilTestEnable(_stencilEnable);
-	FillStencilOpState(_stencilState[0], depthState.front);
-	FillStencilOpState(_stencilState[1], depthState.back);
+		.setDepthTestEnable(data._depthState._depthTestEnable)
+		.setDepthWriteEnable(data._depthState._depthWriteEnable)
+		.setDepthCompareOp(s_compareFunc2Vk.ToDst(data._depthState._depthCompareFunc))
+		.setDepthBoundsTestEnable(data._depthState._depthBoundsTestEnable)
+		.setMinDepthBounds(data._depthState._minDepthBounds)
+		.setMaxDepthBounds(data._depthState._maxDepthBounds)
+		.setStencilTestEnable(data._stencilEnable);
+	FillStencilOpState(data._stencilState[0], depthState.front);
+	FillStencilOpState(data._stencilState[1], depthState.back);
 }
 
-void RenderStateVk::FillBlendState(vk::PipelineColorBlendStateCreateInfo &blendState, std::vector<vk::PipelineColorBlendAttachmentState> &attachmentBlends)
+void RenderStateVk::FillBlendState(StateData const &data, vk::PipelineColorBlendStateCreateInfo &blendState, std::vector<vk::PipelineColorBlendAttachmentState> &attachmentBlends)
 {
-	for (auto &blend : _blendStates) {
+	for (auto &blend : data._blendStates) {
 		attachmentBlends.resize(attachmentBlends.size() + 1);
 		attachmentBlends.back()
 			.setBlendEnable(blend._blendEnable)
@@ -159,16 +159,28 @@ void RenderStateVk::FillBlendState(vk::PipelineColorBlendStateCreateInfo &blendS
 	blendState
 		.setAttachmentCount(static_cast<uint32_t>(attachmentBlends.size()))
 		.setPAttachments(attachmentBlends.data())
-		.setBlendConstants({_blendColor[0], _blendColor[1], _blendColor[2], _blendColor[3]});
+		.setBlendConstants({ data._blendColor[0], data._blendColor[1], data._blendColor[2], data._blendColor[3]});
 }
 
-void RenderStateVk::FillDynamicState(vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates)
+void RenderStateVk::FillDynamicState(StateData const &data, vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates)
 {
 	dynamicStates.push_back(vk::DynamicState::eViewport);
 	
 	dynamicState
 		.setDynamicStateCount(static_cast<uint32_t>(dynamicStates.size()))
 		.setPDynamicStates(dynamicStates.data());
+}
+
+void RenderStateVk::FillViewports(StateData const &data, std::vector<vk::Viewport> &viewports)
+{
+	viewports.emplace_back();
+	viewports.back()
+		.setX(data._viewport._rect._min.x)
+		.setY(data._viewport._rect._min.y)
+		.setWidth(data._viewport._rect.GetSize().x)
+		.setHeight(data._viewport._rect.GetSize().y)
+		.setMinDepth(data._viewport._minDepth)
+		.setMaxDepth(data._viewport._maxDepth);
 }
 
 void RenderStateVk::FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst)
@@ -181,18 +193,6 @@ void RenderStateVk::FillStencilOpState(StencilFuncState const &src, vk::StencilO
 		.setWriteMask(src._writeMask)
 		.setReference(src._reference)
 		.setCompareMask(src._compareMask);
-}
-
-void RenderStateVk::FillViewports(std::vector<vk::Viewport> &viewports)
-{
-	viewports.emplace_back();
-	viewports.back()
-		.setX(_viewport._rect._min.x)
-		.setY(_viewport._rect._min.y)
-		.setWidth(_viewport._rect.GetSize().x)
-		.setHeight(_viewport._rect.GetSize().y)
-		.setMinDepth(_viewport._minDepth)
-		.setMaxDepth(_viewport._maxDepth);
 }
 
 NAMESPACE_END(gr1)

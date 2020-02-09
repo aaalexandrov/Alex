@@ -14,15 +14,15 @@ public:
 
 public:
 
-	void FillViewportState(vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors);
-	void FillRasterizationState(vk::PipelineRasterizationStateCreateInfo &rasterState);
-	void FillMultisampleState(vk::PipelineMultisampleStateCreateInfo &multisampleState, std::vector<uint32_t> &sampleMask);
-	void FillDepthStencilState(vk::PipelineDepthStencilStateCreateInfo &depthState);
-	void FillBlendState(vk::PipelineColorBlendStateCreateInfo &blendState, std::vector<vk::PipelineColorBlendAttachmentState> &attachmentBlends);
-	void FillDynamicState(vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates);
+	static void FillViewportState(StateData const &data, vk::PipelineViewportStateCreateInfo &viewportState, std::vector<vk::Viewport> &viewports, std::vector<vk::Rect2D> &scissors);
+	static void FillRasterizationState(StateData const &data, vk::PipelineRasterizationStateCreateInfo &rasterState);
+	static void FillMultisampleState(StateData const &data, vk::PipelineMultisampleStateCreateInfo &multisampleState, std::vector<uint32_t> &sampleMask);
+	static void FillDepthStencilState(StateData const &data, vk::PipelineDepthStencilStateCreateInfo &depthState);
+	static void FillBlendState(StateData const &data, vk::PipelineColorBlendStateCreateInfo &blendState, std::vector<vk::PipelineColorBlendAttachmentState> &attachmentBlends);
+	static void FillDynamicState(StateData const &data, vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates);
 
-	void FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst);
-	void FillViewports(std::vector<vk::Viewport> &viewports);
+	static void FillViewports(StateData const &data, std::vector<vk::Viewport> &viewports);
+	static void FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst);
 
 	static util::ValueRemapper<RenderState::FrontFaceMode, vk::FrontFace> s_frontFace2Vk;
 	static util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> s_cullMask2Vk;
