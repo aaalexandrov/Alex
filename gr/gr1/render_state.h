@@ -6,6 +6,17 @@
 
 NAMESPACE_BEGIN(gr1)
 
+enum class CompareFunc {
+	Never,
+	Less,
+	Equal,
+	LessOrEqual,
+	Greater,
+	NotEqual,
+	GreaterOrEqual,
+	Always,
+};
+
 class RenderState : public Resource {
 	RTTR_ENABLE(Resource)
 public:
@@ -45,17 +56,6 @@ public:
 
 		size_t GetHash() const;
 		bool operator==(DepthBias const &other) const;
-	};
-
-	enum class CompareFunc {
-		Never,
-		Less,
-		Equal,
-		LessOrEqual,
-		Greater,
-		NotEqual,
-		GreaterOrEqual,
-		Always,
 	};
 
 	struct DepthState {

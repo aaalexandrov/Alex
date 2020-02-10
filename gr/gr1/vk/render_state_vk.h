@@ -26,11 +26,12 @@ public:
 
 	static util::ValueRemapper<RenderState::FrontFaceMode, vk::FrontFace> s_frontFace2Vk;
 	static util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> s_cullMask2Vk;
-	static util::ValueRemapper<RenderState::CompareFunc, vk::CompareOp> s_compareFunc2Vk;
 	static util::ValueRemapper<RenderState::StencilFunc, vk::StencilOp> s_stencilFunc2Vk;
 	static util::ValueRemapper<RenderState::BlendFunc, vk::BlendOp> s_blendFunc2Vk;
 	static util::ValueRemapper<RenderState::BlendFactor, vk::BlendFactor> s_blendFactor2Vk;
 	static util::ValueRemapper<RenderState::ColorComponentMask, vk::ColorComponentFlagBits, true> s_colorComponentMask2Vk;
 };
+
+extern util::ValueRemapper<CompareFunc, vk::CompareOp> s_compareFunc2Vk;
 
 NAMESPACE_END(gr1)

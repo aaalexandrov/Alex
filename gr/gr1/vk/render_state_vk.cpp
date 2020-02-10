@@ -25,7 +25,7 @@ util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> RenderStateVk::
 		{CullMask::FrontAndBack, vk::CullModeFlagBits::eFrontAndBack},
 	} };
 
-util::ValueRemapper<RenderState::CompareFunc, vk::CompareOp> RenderStateVk::s_compareFunc2Vk{ {
+util::ValueRemapper<CompareFunc, vk::CompareOp> s_compareFunc2Vk{ {
 		{CompareFunc::Never, vk::CompareOp::eNever},
 		{CompareFunc::Less, vk::CompareOp::eLess},
 		{CompareFunc::Equal, vk::CompareOp::eEqual},

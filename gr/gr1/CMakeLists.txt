@@ -39,6 +39,9 @@ set(dir_SOURCES
 	rttr_factory.h
 	rttr_factory.cpp
 
+	sampler.h
+	sampler.cpp
+
 	shader.h
 	shader.cpp
 )
@@ -102,6 +105,9 @@ if(gr_implementation STREQUAL VK)
 
 		vk/render_state_vk.h
 		vk/render_state_vk.cpp
+
+		vk/sampler_vk.h
+		vk/sampler_vk.cpp
 
 		vk/shader_vk.h
 		vk/shader_vk.cpp
