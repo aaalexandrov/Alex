@@ -66,7 +66,8 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
     InitVertexDescription(refl);
   }
 
-  InitUniformBufferDescriptions(refl);
+	_uniformBuffers = GetUniformDescriptions(refl, refl.get_shader_resources().uniform_buffers);
+	_samplers = GetUniformDescriptions(refl, refl.get_shader_resources().sampled_images);
 }
 
 vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()
@@ -141,9 +142,22 @@ std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
   { rttr::type::get<glm::vec4>(), vk::Format::eR32G32B32A32Sfloat },
 };
 
+static std::unordered_map<spv::Dim, rttr::type> s_spirvDim2Type{ {
+	{ spv::Dim::Dim1D, rttr::type::get<TextureKind<TextureDimension::Dim1D>>() },
+	{ spv::Dim::Dim2D, rttr::type::get<TextureKind<TextureDimension::Dim2D>>() },
+	{ spv::Dim::Dim3D, rttr::type::get<TextureKind<TextureDimension::Dim3D>>() },
+	{ spv::Dim::DimCube, rttr::type::get<TextureKind<TextureDimension::Cube>>() },
+} };
+
 rttr::type ShaderVk::GetTypeFromSpirv(spirv_cross::SPIRType const &type)
 {
-  rttr::type typeInfo = SPIRType2TypeInfo.at(SPIRTypeInfo(type));
+	rttr::type typeInfo = rttr::type::get<void>();
+	if (type.basetype == spirv_cross::SPIRType::SampledImage) {
+		ASSERT(!type.image.arrayed && "Sampler arrays not currently supported");
+		typeInfo = s_spirvDim2Type.at(type.image.dim);
+	} else {
+		typeInfo = SPIRType2TypeInfo.at(SPIRTypeInfo(type));
+	}
   return typeInfo;
 }
 
@@ -225,21 +239,25 @@ void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
 	}
 }
 
-void ShaderVk::InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected)
+std::vector<ShaderVk::UniformInfo> ShaderVk::GetUniformDescriptions(spirv_cross::Compiler const &reflected, 
+	spirv_cross::SmallVector<spirv_cross::Resource> const &resources)
 {
-  for (auto u : reflected.get_shader_resources().uniform_buffers) {
+	std::vector<UniformInfo> uniforms;
+  for (auto u : resources) {
     auto &type = reflected.get_type(u.type_id);
 
     uint32_t binding = reflected.get_decoration(u.id, spv::Decoration::DecorationBinding);
     std::string const &name = reflected.get_name(u.id);
-    size_t size = reflected.get_declared_struct_size(type);
+		size_t size = type.basetype == spirv_cross::SPIRType::Struct
+			? reflected.get_declared_struct_size(type) : 0;
 
-    UniformBufferInfo uniformInfo;
+    UniformInfo uniformInfo;
     uniformInfo._name = name;
     uniformInfo._binding = binding;
 		uniformInfo._layout = GetLayoutFromSpirv(reflected, type, size);
-    _uniformBuffers.push_back(std::move(uniformInfo));
+    uniforms.push_back(std::move(uniformInfo));
   }
+	return uniforms;
 }
 
 void ShaderVk::InitDescriptorSetLayoutAndStore()

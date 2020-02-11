@@ -27,7 +27,7 @@ protected:
   static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType const &type);
 	static std::shared_ptr<util::LayoutElement> GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize = 0);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
-  void InitUniformBufferDescriptions(spirv_cross::Compiler const &reflected);
+  std::vector<UniformInfo> GetUniformDescriptions(spirv_cross::Compiler const &reflected, spirv_cross::SmallVector<spirv_cross::Resource> const &resources);
   void InitDescriptorSetLayoutAndStore();
 
 

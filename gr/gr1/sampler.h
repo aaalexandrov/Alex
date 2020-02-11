@@ -39,10 +39,8 @@ public:
 		MipMapMode _mipMapMode = MipMapMode::Linear;
 		std::array<AddressMode, 3> _addressModes{ AddressMode::Repeat, AddressMode::Repeat, AddressMode::Repeat };
 		float _mipLodBias = 0;
-		bool _anisotropic = false;
-		float _maxAnisotropy = 16;
-		bool _compareEnable = false;
-		CompareFunc _compareFunc = CompareFunc::Always;
+		float _maxAnisotropy = 1;
+		CompareFunc _compareFunc = CompareFunc::Invalid;
 		float _minLod = 0, _maxLod = 1;
 		BorderColor _borderColor = BorderColor::TransparentBlackFloat;
 		bool _normalizedCoordinates = true;

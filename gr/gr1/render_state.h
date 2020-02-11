@@ -15,6 +15,9 @@ enum class CompareFunc {
 	NotEqual,
 	GreaterOrEqual,
 	Always,
+
+	Last = Always,
+	Invalid,
 };
 
 class RenderState : public Resource {
