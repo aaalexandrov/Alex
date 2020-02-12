@@ -22,6 +22,26 @@ size_t LayoutElement::GetOffset(std::vector<rttr::variant> const &indices) const
 	return offset;
 }
 
+size_t LayoutElement::GetMultidimensionalArrayCount() const
+{
+	size_t count = 1;
+	LayoutElement const *elem = this;
+	while (elem->GetKind() == Kind::Array) {
+		count *= elem->GetArrayCount();
+		elem = elem->GetArrayElement();
+	}
+	return count;
+}
+
+LayoutElement const *LayoutElement::GetMultidimensionalArrayElement() const
+{
+	LayoutElement const *elem = this;
+	while (elem->GetKind() == Kind::Array) {
+		elem = elem->GetArrayElement();
+	}
+	return elem;
+}
+
 bool LayoutElement::operator==(LayoutElement const &other) const
 {
 	if (this == &other)

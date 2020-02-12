@@ -61,7 +61,7 @@ void ImageTransitionPassVk::Prepare()
 		imgBarrier[0]
 			.setSrcAccessMask(vk::AccessFlags())
 			.setDstAccessMask(dstState._access)
-			.setOldLayout(dstState._layout)
+			.setOldLayout(srcState._layout)
 			.setNewLayout(dstState._layout)
 			.setSrcQueueFamilyIndex(srcQueue->_family)
 			.setDstQueueFamilyIndex(dstQueue->_family)

@@ -33,7 +33,7 @@ add_subdirectory(gr1)
 
 add_definitions(-DGR_${gr_implementation})
 
-add_precompiled_header(${BINARY} stdafx.h FORCEINCLUDE)
+add_precompiled_header(${BINARY} stdafx.h FORCEINCLUDE SOURCE_CXX stdafx.cpp)
 
 get_target_property(binary_SOURCES ${BINARY} SOURCES)
 

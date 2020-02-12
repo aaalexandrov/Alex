@@ -55,8 +55,43 @@ protected:
 	uint32_t _srcOffset, _dstOffset, _size;
 };
 
-class PresentationSurface;
 class Image;
+class ImageBufferCopyPass : public OutputPass {
+	RTTR_ENABLE(OutputPass)
+public:
+	enum class CopyDirection {
+		BufferToImage,
+		ImageToBuffer,
+	};
+
+	ImageBufferCopyPass(Device &device) : OutputPass(device) {}
+
+	virtual void Init(
+		std::shared_ptr<Buffer> const &buffer, 
+		std::shared_ptr<Image> const &image, 
+		CopyDirection direction = CopyDirection::BufferToImage,
+		ImageData const *bufferImageData = nullptr, 
+		glm::uvec4 bufferOffset = glm::zero<glm::uvec4>(), 
+		glm::uvec4 imageOffset = glm::zero<glm::uvec4>(), 
+		glm::uvec4 size = glm::zero<glm::uvec4>(),
+		uint32_t imageMipLevel = 0);
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
+
+protected:
+	ResourceState GetBufferState() { return _direction == CopyDirection::BufferToImage ? ResourceState::TransferRead : ResourceState::TransferWrite; }
+	ResourceState GetImageState() { return _direction == CopyDirection::BufferToImage ? ResourceState::TransferWrite : ResourceState::TransferRead; }
+
+	CopyDirection _direction;
+	std::shared_ptr<Buffer> _buffer;
+	ImageData _bufferImageData;
+	std::shared_ptr<Image> _image;
+	glm::uvec4 _bufferOffset;
+	glm::uvec4 _imageOffset;
+	glm::uvec4 _size;
+	uint32_t _imageMipLevel;
+};
+
+class PresentationSurface;
 class PresentPass : public OutputPass {
 	RTTR_ENABLE(OutputPass)
 public:

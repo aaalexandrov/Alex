@@ -35,9 +35,9 @@ bool PassVk::GetTransitionQueueInfo(DeviceVk *deviceVk, QueueRole srcRole, Queue
 {
 	ASSERT(srcRole != QueueRole::Invalid && dstRole != QueueRole::Invalid);
 	ASSERT(!(srcRole == QueueRole::Any && dstRole == QueueRole::Any));
-	bool queueTransition = srcRole != dstRole && srcRole != QueueRole::Any && dstRole != QueueRole::Any;
+	bool roleTransition = srcRole != dstRole && srcRole != QueueRole::Any && dstRole != QueueRole::Any;
 
-	if (queueTransition) {
+	if (roleTransition) {
 		srcQueue = &deviceVk->Queue(srcRole);
 		dstQueue = &deviceVk->Queue(dstRole);
 	} else {
@@ -45,7 +45,7 @@ bool PassVk::GetTransitionQueueInfo(DeviceVk *deviceVk, QueueRole srcRole, Queue
 		dstQueue = srcQueue;
 	}
 
-	return queueTransition;
+	return srcQueue->_family != dstQueue->_family;
 }
 
 

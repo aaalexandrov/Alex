@@ -6,6 +6,9 @@ set(dir_SOURCES
 	buffer.h
 	buffer.cpp
 
+	definitions.h
+	definitions.cpp
+
 	device.h
 	device.cpp
 
@@ -78,6 +81,9 @@ if(gr_implementation STREQUAL VK)
 
 		vk/host_allocation_tracker_vk.h
 		vk/host_allocation_tracker_vk.cpp
+
+		vk/image_buffer_copy_pass_vk.h
+		vk/image_buffer_copy_pass_vk.cpp
 
 		vk/image_transition_pass_vk.h
 		vk/image_transition_pass_vk.cpp

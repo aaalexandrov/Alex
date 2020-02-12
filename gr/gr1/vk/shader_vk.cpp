@@ -206,13 +206,23 @@ std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBind
     binding
       .setBinding(bufferInfo._binding)
       .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-      .setDescriptorCount(1)
+      .setDescriptorCount(static_cast<uint32_t>(bufferInfo._layout->GetMultidimensionalArrayCount()))
       .setStageFlags(GetShaderStageFlags(_kind));
 
-    bindings.emplace_back(std::move(binding));
+    bindings.push_back(binding);
   }
 
-  // TODO: add samplers, etc.
+	for (auto &samplerInfo : _samplers) {
+		vk::DescriptorSetLayoutBinding binding;
+		binding
+			.setBinding(samplerInfo._binding)
+			.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+			.setDescriptorCount(static_cast<uint32_t>(samplerInfo._layout->GetMultidimensionalArrayCount()))
+			.setStageFlags(GetShaderStageFlags(_kind));
+
+		bindings.push_back(binding);
+	}
+
   return bindings;
 }
 
@@ -283,7 +293,7 @@ void ShaderVk::InitDescriptorSetLayoutAndStore()
 				poolSizes.emplace_back(binding.descriptorType);
 				it = poolSizes.end() - 1;
 			}
-			it->setDescriptorCount(it->descriptorCount + descriptorsPerPool);
+			it->setDescriptorCount(it->descriptorCount + descriptorsPerPool * binding.descriptorCount);
 		}
 		_descSetStore.Init(*deviceVk, poolSizes, descriptorsPerPool);
 	}

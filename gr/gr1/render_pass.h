@@ -8,6 +8,7 @@ NAMESPACE_BEGIN(gr1)
 
 class Buffer;
 class Image;
+class Sampler;
 class RenderState;
 class RenderPass;
 
@@ -51,6 +52,13 @@ public:
 		bool _frequencyInstance = false;
 	};
 
+	struct SamplerData {
+		std::shared_ptr<Sampler> _sampler;
+		std::shared_ptr<Image> _image;
+		ShaderKindBits _shaderKinds = {};
+		int _binding = 0;
+	};
+
 	struct DrawCounts {
 		uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
 	};
@@ -71,6 +79,11 @@ public:
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
 
+	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0);
+	virtual void RemoveSampler(int samplerIndex) { _samplers.erase(_samplers.begin() + samplerIndex); }
+	int GetSamplerCount() { return static_cast<int>(_samplers.size()); }
+	SamplerData const &GetSamplerData(int samplerIndex) { return _samplers[samplerIndex]; }
+
 	virtual void SetPrimitiveKind(PrimitiveKind primitiveKind) { _primitiveKind = primitiveKind; }
 	PrimitiveKind GetPrimitiveKind() { return _primitiveKind; }
 
@@ -83,6 +96,7 @@ protected:
 	ShaderKindsArray<std::shared_ptr<Shader>> _shaders;
 	std::shared_ptr<RenderState> _renderState;
 	std::vector<BufferData> _buffers;
+	std::vector<SamplerData> _samplers;
 	PrimitiveKind _primitiveKind = PrimitiveKind::TriangleList;
 	DrawCounts _drawCounts;
 };

@@ -45,7 +45,7 @@ void ImageVk::Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mi
 
 	StateInfo stateInfo = GetStateInfo(_state);
 
-  size = GetEffectiveSize(size);
+  size = ImageData::GetEffectiveSize(size);
   vk::ImageCreateInfo imgInfo;
   imgInfo
     .setImageType(GetImageType(_size))

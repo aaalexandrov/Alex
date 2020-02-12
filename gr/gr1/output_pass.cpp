@@ -34,6 +34,50 @@ void BufferCopyPass::GetDependencies(DependencyType dependencyType, DependencyFu
 }
 
 
+void ImageBufferCopyPass::Init(
+	std::shared_ptr<Buffer> const &buffer,
+	std::shared_ptr<Image> const &image,
+	CopyDirection direction,
+	ImageData const *bufferImageData,
+	glm::uvec4 bufferOffset,
+	glm::uvec4 imageOffset,
+	glm::uvec4 size,
+	uint32_t imageMipLevel)
+{
+	_direction = direction;
+	_buffer = buffer;
+	_image = image;
+	if (bufferImageData) {
+		_bufferImageData = *bufferImageData;
+	} else {
+		_bufferImageData._size = _image->GetSize();
+		_bufferImageData._pitch = ImageData::GetPackedPitch(_image->GetSize(), _image->GetColorFormatSize());
+		_bufferImageData._data = nullptr;
+	}
+	_bufferOffset = bufferOffset;
+	_imageOffset = imageOffset;
+	if (size != glm::zero<glm::uvec4>()) {
+		_size = size;
+	} else {
+		_size = util::VecMin(_image->GetSize() - _imageOffset, _bufferImageData._size - _bufferOffset);
+	}
+	_imageMipLevel = imageMipLevel;
+
+	ASSERT(_direction == CopyDirection::ImageToBuffer || _direction == CopyDirection::BufferToImage);
+	ASSERT(util::VecLess(_bufferOffset + _size, _bufferImageData._size));
+	ASSERT(util::VecLess(_imageOffset + _size, _image->GetSize()));
+	ASSERT(_imageMipLevel < _image->GetMipLevels());
+}
+
+void ImageBufferCopyPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
+{
+	if (dependencyType == DependencyType::Input) {
+		addDependencyFunc(_buffer.get(), GetBufferState());
+		addDependencyFunc(_image.get(), GetImageState());
+	}
+}
+
+
 void PresentPass::Init(std::shared_ptr<PresentationSurface> const &presentSurface)
 {
 	_surface = presentSurface;

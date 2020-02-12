@@ -1,26 +1,12 @@
 #pragma once
 
+#include "definitions.h"
 #include <memory>
 #include "util/namespace.h"
 #include "rttr/rttr_enable.h"
 
 NAMESPACE_BEGIN(gr1)
 
-enum class ContentTreatment {
-	Keep,
-	Clear,
-	DontCare,
-};
-
-enum class ResourceState {
-	Initial = 1 << 0,
-	ShaderRead = 1 << 1,
-	TransferRead = 1 << 2,
-	TransferWrite = 1 << 3,
-	RenderWrite = 1 << 4,
-	PresentRead = 1 << 5,
-	PresentAcquired = 1 << 6,
-};
 
 class Device;
 

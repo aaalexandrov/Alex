@@ -37,6 +37,9 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	LayoutElement const *GetElement(std::string name) const { return GetElement(GetStructFieldIndex(name)); }
 	size_t GetOffset(std::vector<rttr::variant> const &indices) const;
 
+	size_t GetMultidimensionalArrayCount() const;
+	LayoutElement const *GetMultidimensionalArrayElement() const;
+
 	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset() const { return std::make_pair(this, 0); }
 	template<typename First, typename... Rest>
 	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset(First first, Rest... rest) const

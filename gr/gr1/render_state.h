@@ -6,20 +6,6 @@
 
 NAMESPACE_BEGIN(gr1)
 
-enum class CompareFunc {
-	Never,
-	Less,
-	Equal,
-	LessOrEqual,
-	Greater,
-	NotEqual,
-	GreaterOrEqual,
-	Always,
-
-	Last = Always,
-	Invalid,
-};
-
 class RenderState : public Resource {
 	RTTR_ENABLE(Resource)
 public:

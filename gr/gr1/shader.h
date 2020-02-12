@@ -1,43 +1,13 @@
 #pragma once
 
+#include "definitions.h"
 #include "resource.h"
-#include "util/enumutl.h"
 #include "util/layout.h"
 #include <string>
 #include <memory>
 
 NAMESPACE_BEGIN(gr1)
 
-enum class ShaderKind {
-  Vertex,
-  Fragment,
-	Invalid,
-
-  Count = Invalid
-};
-
-enum class ShaderKindBits {
-	None = 0,
-	Vertex = 1 << static_cast<size_t>(ShaderKind::Vertex),
-	Fragment = 1 << static_cast<size_t>(ShaderKind::Fragment),
-};
-
-DEFINE_ENUM_BIT_OPERATORS(gr1::ShaderKindBits)
-
-enum class TextureDimension {
-	None,
-	Dim1D,
-	Dim2D,
-	Dim3D,
-	Cube,
-};
-
-template <TextureDimension Dim>
-struct TextureKind {};
-
-class Shader;
-template <typename Data>
-using ShaderKindsArray = std::array<Data, static_cast<int>(ShaderKind::Count)>;
 
 class Shader : public Resource {
 	RTTR_ENABLE(Resource)

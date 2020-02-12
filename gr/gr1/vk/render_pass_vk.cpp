@@ -3,6 +3,7 @@
 #include "image_vk.h"
 #include "shader_vk.h"
 #include "buffer_vk.h"
+#include "sampler_vk.h"
 #include "execution_queue_vk.h"
 #include "render_state_vk.h"
 #include "../graphics_exception.h"
@@ -103,6 +104,28 @@ void RenderDrawCommandVk::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex
 {
 	_cmdDraw.reset();
 	RenderDrawCommand::SetDrawCounts(indexCount, firstIndex, instanceCount, firstInstance, vertexOffset);
+}
+
+int RenderDrawCommandVk::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds, int binding)
+{
+	_cmdDraw.reset();
+	for (int k = 0; k < static_cast<int>(ShaderKind::Count); ++k) {
+		if (!(shaderKinds & static_cast<ShaderKindBits>(1 << k)))
+			continue;
+		_descriptorSets[k].reset();
+	}
+	return RenderDrawCommand::AddSampler(sampler, image, shaderKinds, binding);
+}
+
+void RenderDrawCommandVk::RemoveSampler(int samplerIndex)
+{
+	_cmdDraw.reset();
+	for (int k = 0; k < static_cast<int>(ShaderKind::Count); ++k) {
+		if (!(_samplers[samplerIndex]._shaderKinds & static_cast<ShaderKindBits>(1 << k)))
+			continue;
+		_descriptorSets[k].reset();
+	}
+	RenderDrawCommand::RemoveSampler(samplerIndex);
 }
 
 void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
@@ -230,14 +253,31 @@ ShaderKindBits RenderDrawCommandVk::PrepareDescriptorSets()
 	return updatedKinds;
 }
 
+uint32_t RenderDrawCommandVk::GetBuffersDescriptorCount()
+{
+	uint32_t count = 0;
+	for (auto &bufData : _buffers) {
+		if (!(bufData._buffer->GetUsage() & Buffer::Usage::Uniform))
+			continue;
+		++count;
+	}
+	return count;
+}
+
+uint32_t RenderDrawCommandVk::GetSamplersDescriptorCount()
+{
+	return static_cast<uint32_t>(_samplers.size());
+}
+
 void RenderDrawCommandVk::UpdateDescriptorSets(ShaderKindBits updateKinds)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 
+	std::vector<vk::WriteDescriptorSet> setWrites;
+
 	std::vector<vk::DescriptorBufferInfo> bufferInfos;
 	// reserve enough elements so that the array won't be reallocated, we're storing addresses of elements below
-	bufferInfos.reserve(_buffers.size() * static_cast<uint32_t>(ShaderKind::Count));
-	std::vector<vk::WriteDescriptorSet> setWrites;
+	bufferInfos.reserve(GetBuffersDescriptorCount());
 	for (auto &bufData : _buffers) {
 		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Uniform)) {
 			for (uint32_t k = 0; k < static_cast<uint32_t>(ShaderKind::Count); ++k) {
@@ -248,8 +288,8 @@ void RenderDrawCommandVk::UpdateDescriptorSets(ShaderKindBits updateKinds)
 				bufferInfos.emplace_back();
 				bufferInfos.back()
 					.setBuffer(*bufferVk->_buffer)
-					.setOffset(0)
-					.setRange(bufferVk->GetSize());
+					.setOffset(bufData._offset)
+					.setRange(bufferVk->GetSize() - bufData._offset);
 
 				setWrites.emplace_back();
 				setWrites.back()
@@ -263,6 +303,32 @@ void RenderDrawCommandVk::UpdateDescriptorSets(ShaderKindBits updateKinds)
 		}
 	}
 	
+	std::vector<vk::DescriptorImageInfo> samplerInfos;
+	samplerInfos.reserve(GetSamplersDescriptorCount());
+	for (auto &samplerData : _samplers) {
+		for (uint32_t k = 0; k < static_cast<uint32_t>(ShaderKind::Count); ++k) {
+			if (!(samplerData._shaderKinds & updateKinds & static_cast<ShaderKindBits>(1 << k)))
+				continue;
+
+			SamplerVk *samplerVk = static_cast<SamplerVk*>(samplerData._sampler.get());
+			ImageVk *imageVk = static_cast<ImageVk*>(samplerData._image.get());
+			samplerInfos.emplace_back();
+			samplerInfos.back()
+				.setSampler(*samplerVk->_sampler)
+				.setImageView(*imageVk->_view)
+				.setImageLayout(imageVk->GetStateInfo(ResourceState::ShaderRead)._layout);
+
+			setWrites.emplace_back();
+			setWrites.back()
+				.setDstSet(*_descriptorSets[k])
+				.setDstBinding(samplerData._binding)
+				.setDstArrayElement(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+				.setPImageInfo(&samplerInfos.back());
+		}
+	}
+
 	if (setWrites.size())
 		deviceVk->_device->updateDescriptorSets(setWrites, nullptr);
 }
