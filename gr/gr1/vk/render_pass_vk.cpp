@@ -294,6 +294,8 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 
 	if (setWrites.size())
 		deviceVk->_device->updateDescriptorSets(setWrites, nullptr);
+
+	_descriptorSetValid = true;
 }
 
 void RenderDrawCommandVk::SetDynamicState(CommandPrepareInfoVk &prepareInfo)

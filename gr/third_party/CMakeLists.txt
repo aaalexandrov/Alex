@@ -7,6 +7,7 @@ set_target_properties(glm_shared glm_static PROPERTIES
 
 add_subdirectory(vma)
 add_subdirectory(stb)
+add_subdirectory(tinygltf)
 
 set(BUILD_RTTR_DYNAMIC OFF)
 set(BUILD_STATIC ON)
