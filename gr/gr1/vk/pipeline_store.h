@@ -4,20 +4,24 @@
 #include "../shader.h"
 #include "../render_pass.h"
 #include "../render_state.h"
+#include "descriptor_set_store.h"
 #include "util/utl.h"
 #include "vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
 class ShaderVk;
+class DeviceVk;
 
 struct PipelineLayoutVk {
-	PipelineLayoutVk(ShaderKindsArray<ShaderVk*> &shaders, vk::UniquePipelineLayout &&layout);
+	void Init(DeviceVk &deviceVk, ShaderKindsArray<ShaderVk*> &shaders);
 
 	vk::PipelineLayout &Get() { return *_pipelineLayout; }
 
 	ShaderKindsArray<std::weak_ptr<ShaderVk>> _shaders;
+	vk::UniqueDescriptorSetLayout _descriptorSetLayout;
 	vk::UniquePipelineLayout _pipelineLayout;
+	DescriptorSetStore _descriptorSetStore;
 };
 
 struct PipelineVk {
@@ -25,6 +29,8 @@ struct PipelineVk {
 		: _pipelineLayout(std::move(layout)), _pipeline(std::move(pipeline)) {}
 
 	vk::Pipeline &Get() { return *_pipeline; }
+
+	vk::UniqueDescriptorSet AllocateDescriptorSet();
 
 	std::shared_ptr<PipelineLayoutVk> _pipelineLayout;
 	vk::UniquePipeline _pipeline;
@@ -84,7 +90,6 @@ NAMESPACE_END(std)
 
 NAMESPACE_BEGIN(gr1)
 
-class DeviceVk;
 class PipelineStore {
 	RTTR_ENABLE()
 public:
@@ -100,8 +105,6 @@ protected:
 	int GetVertexLayoutIndex(std::string attribName, util::LayoutElement const *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts);
 
 	std::shared_ptr<PipelineVk> AllocatePipeline(std::shared_ptr<PipelineLayoutVk> const &pipelineLayout, PipelineInfo &pipelineInfo);
-
-	vk::UniquePipelineLayout AllocatePipelineLayout(ShaderKindsArray<ShaderVk*> &shaders);
 
 	PipelineLayoutsMap::iterator GetExistingPipelineLayout(ShaderKindsArray<ShaderVk*> &shaders);
 	std::shared_ptr<PipelineLayoutVk> AddPipelineLayout(ShaderKindsArray<ShaderVk*> &shaders);

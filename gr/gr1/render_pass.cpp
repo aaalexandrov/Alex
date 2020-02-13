@@ -3,6 +3,7 @@
 #include "image.h"
 #include "shader.h"
 #include "buffer.h"
+#include "sampler.h"
 #include "render_state.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -58,6 +59,10 @@ void RenderDrawCommand::GetDependencies(DependencyType dependencyType, Dependenc
 		}
 		for (auto &bufData : _buffers) {
 			addDependencyFunc(bufData._buffer.get(), ResourceState::ShaderRead);
+		}
+		for (auto &samplerData : _samplers) {
+			//addDependencyFunc(samplerData._sampler.get(), ResourceState::ShaderRead);
+			addDependencyFunc(samplerData._image.get(), ResourceState::ShaderRead);
 		}
 		addDependencyFunc(_renderState.get(), ResourceState::ShaderRead);
 	}

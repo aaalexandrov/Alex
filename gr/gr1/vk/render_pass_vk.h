@@ -34,24 +34,25 @@ public:
 	int AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0, size_t offset = 0, bool frequencyInstance = false) override;
 	void RemoveBuffer(int bufferIndex) override;	void SetPrimitiveKind(PrimitiveKind primitiveKind) override;
 	void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0) override;
-	int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0) override;
+	int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds = ShaderKindBits::Fragment, int binding = 0) override;
 	void RemoveSampler(int samplerIndex) override;
 	void PrepareToRecord(CommandPrepareInfo &prepareInfo) override;
 	void Record(CommandRecordInfo &recordInfo) override;
 
 protected:
 	void PreparePipeline(RenderPassVk *renderPass, uint32_t subpass);
-	ShaderKindBits PrepareDescriptorSets();
+	void PrepareDescriptorSets();
 
 	uint32_t GetBuffersDescriptorCount();
 	uint32_t GetSamplersDescriptorCount();
-	void UpdateDescriptorSets(ShaderKindBits updateKinds);
+	void UpdateDescriptorSets();
 	void SetDynamicState(CommandPrepareInfoVk &prepareInfo);
 
 	vk::UniqueCommandBuffer _cmdDraw;
 	std::shared_ptr<PipelineVk> _pipeline;
 	uint32_t _pipelineRenderStateVersion;
-	ShaderKindsArray<vk::UniqueDescriptorSet> _descriptorSets;
+	vk::UniqueDescriptorSet _descriptorSet;
+	bool _descriptorSetValid;
 	vk::Viewport _recordedViewport{};
 };
 

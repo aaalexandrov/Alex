@@ -79,7 +79,7 @@ public:
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
 
-	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds = ShaderKindBits::None, int binding = 0);
+	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds = ShaderKindBits::Fragment, int binding = 0);
 	virtual void RemoveSampler(int samplerIndex) { _samplers.erase(_samplers.begin() + samplerIndex); }
 	int GetSamplerCount() { return static_cast<int>(_samplers.size()); }
 	SamplerData const &GetSamplerData(int samplerIndex) { return _samplers[samplerIndex]; }

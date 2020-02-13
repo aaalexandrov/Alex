@@ -21,14 +21,29 @@ bool VertexBufferLayout::operator==(VertexBufferLayout const &other) const
 		&& _frequencyInstance == other._frequencyInstance;
 }
 
-PipelineLayoutVk::PipelineLayoutVk(ShaderKindsArray<ShaderVk*> &shaders, vk::UniquePipelineLayout &&layout)
-	: _pipelineLayout(std::move(layout))
+void PipelineLayoutVk::Init(DeviceVk &deviceVk, ShaderKindsArray<ShaderVk*> &shaders)
 {
+	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
 	for (int i = 0; i < shaders.size(); ++i) {
-		if (shaders[i]) {
-			_shaders[i] = shaders[i]->AsSharedPtr<ShaderVk>();
-		}
+		if (!shaders[i])
+			continue;
+		_shaders[i] = shaders[i]->AsSharedPtr<ShaderVk>();
+		shaders[i]->FillDescriptorSetLayoutBindings(layoutBindings);
 	}
+
+	vk::DescriptorSetLayoutCreateInfo setInfo;
+	setInfo
+		.setBindingCount(static_cast<uint32_t>(layoutBindings.size()))
+		.setPBindings(layoutBindings.data());
+	_descriptorSetLayout = deviceVk._device->createDescriptorSetLayoutUnique(setInfo, deviceVk.AllocationCallbacks());
+
+	_descriptorSetStore.Init(deviceVk, layoutBindings, 256);
+
+	vk::PipelineLayoutCreateInfo pipeInfo;
+	pipeInfo
+		.setSetLayoutCount(1)
+		.setPSetLayouts(&*_descriptorSetLayout);
+	_pipelineLayout = deviceVk._device->createPipelineLayoutUnique(pipeInfo, deviceVk.AllocationCallbacks());
 }
 
 size_t PipelineInfo::GetHash()
@@ -235,20 +250,6 @@ int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElem
 	return -1;
 }
 
-vk::UniquePipelineLayout PipelineStore::AllocatePipelineLayout(ShaderKindsArray<ShaderVk*> &shaders)
-{
-	std::vector<vk::DescriptorSetLayout> setLayouts;
-	for (auto &shader : shaders) {
-		setLayouts.push_back(shader->GetDescriptorSetLayout());
-	}
-
-	vk::PipelineLayoutCreateInfo pipelineInfo;
-	pipelineInfo
-		.setSetLayoutCount(static_cast<uint32_t>(setLayouts.size()))
-		.setPSetLayouts(setLayouts.data());
-	return _deviceVk->_device->createPipelineLayoutUnique(pipelineInfo, _deviceVk->AllocationCallbacks());
-}
-
 PipelineStore::PipelineLayoutsMap::iterator PipelineStore::GetExistingPipelineLayout(ShaderKindsArray<ShaderVk*> &shaders)
 {
 	auto it = _pipelineLayouts.find(shaders);
@@ -273,11 +274,16 @@ PipelineStore::PipelineLayoutsMap::iterator PipelineStore::GetExistingPipelineLa
 
 std::shared_ptr<PipelineLayoutVk> PipelineStore::AddPipelineLayout(ShaderKindsArray<ShaderVk*> &shaders)
 {
-	vk::UniquePipelineLayout layout = AllocatePipelineLayout(shaders);
-	auto layoutVk = std::make_shared<PipelineLayoutVk>(shaders, std::move(layout));
+	auto layoutVk = std::make_shared<PipelineLayoutVk>();
+	layoutVk->Init(*_deviceVk, shaders);
 	auto it = _pipelineLayouts.insert(std::make_pair(shaders, std::move(layoutVk))).first;
 
 	return it->second;
+}
+
+vk::UniqueDescriptorSet PipelineVk::AllocateDescriptorSet()
+{
+	return _pipelineLayout->_descriptorSetStore.AllocateDescriptorSet(*_pipelineLayout->_descriptorSetLayout);
 }
 
 NAMESPACE_END(gr1)

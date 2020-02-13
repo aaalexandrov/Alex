@@ -5,6 +5,11 @@
 
 NAMESPACE_BEGIN(gr1)
 
+void DescriptorSetStore::Init(DeviceVk &deviceVk, std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool)
+{
+	Init(deviceVk, GetPoolSizes(layoutBindings, maxDescriptorsInPool), maxDescriptorsInPool);
+}
+
 void DescriptorSetStore::Init(DeviceVk &deviceVk, std::vector<vk::DescriptorPoolSize> const &poolSizes, uint32_t maxDescriptorsInPool)
 {
 	_deviceVk = &deviceVk;
@@ -41,6 +46,23 @@ vk::UniqueDescriptorSet DescriptorSetStore::AllocateDescriptorSet(vk::Descriptor
 			allocatedPool = true;
 		}
 	}
+}
+
+std::vector<vk::DescriptorPoolSize> DescriptorSetStore::GetPoolSizes(
+	std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool)
+{
+	std::vector<vk::DescriptorPoolSize> poolSizes;
+	for (auto &binding : layoutBindings) {
+		auto it = std::find_if(poolSizes.begin(), poolSizes.end(), [&](auto &poolSize) {
+			return poolSize.type == binding.descriptorType;
+		});
+		if (it == poolSizes.end()) {
+			poolSizes.emplace_back(binding.descriptorType);
+			it = poolSizes.end() - 1;
+		}
+		it->setDescriptorCount(it->descriptorCount + maxDescriptorsInPool * binding.descriptorCount);
+	}
+	return poolSizes;
 }
 
 void DescriptorSetStore::AllocateDescriptorPool()

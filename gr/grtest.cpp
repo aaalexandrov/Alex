@@ -2,6 +2,7 @@
 #include <chrono>
 #include <filesystem>
 #include "glm/glm.hpp"
+#include "stb/stb_image.h"
 #include "util/rect.h"
 #include "util/time.h"
 #include "util/file.h"
@@ -12,6 +13,7 @@
 #include "gr1/image.h"
 #include "gr1/shader.h"
 #include "gr1/buffer.h"
+#include "gr1/sampler.h"
 #include "gr1/render_pass.h"
 #include "gr1/render_state.h"
 #include <string>
@@ -60,6 +62,35 @@ shared_ptr<Shader> LoadShader(Device *device, std::string name)
 	return shader;
 }
 
+shared_ptr<Image> LoadImage(Device *device, std::string name)
+{
+	std::string path = string("../data/") + name;
+	int width, height, channels;
+	uint8_t *data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+	ASSERT(channels == 4);
+
+	auto image = device->CreateResource<Image>();
+	image->Init(Image::Usage::Texture, ColorFormat::R8G8B8A8, glm::uvec4(width, height, 0, 0), 1);
+
+	auto stagingFormat = util::CreateLayoutArray(rttr::type::get<uint8_t>(), height, width, 4);
+	auto staging = device->CreateResource<Buffer>();
+	staging->Init(Buffer::Usage::Staging, stagingFormat);
+
+	void *mapped = staging->Map();
+	memcpy(mapped, data, stagingFormat->GetSize());
+	staging->Unmap();
+
+	stbi_image_free(data);
+
+	auto copyPass = device->CreateResource<ImageBufferCopyPass>();
+	copyPass->Init(staging, image);
+
+	device->GetExecutionQueue().EnqueuePass(copyPass);
+	device->GetExecutionQueue().ExecutePasses();
+
+	return image;
+}
+
 void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexBuffer)
 {
 	auto vertexStaging = device->CreateResource<Buffer>();
@@ -70,12 +101,15 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 
 	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 0, "inTexCoord") = glm::vec2(1.0f, 1.0f);
 
 	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 1, "inTexCoord") = glm::vec2(1.0f, 0.0f);
 
 	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.0f);
 	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 2, "inTexCoord") = glm::vec2(0.0f, 1.0f);
 
 	vertexStaging->Unmap();
 
@@ -98,6 +132,10 @@ void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuf
 	*layout->GetMemberPtr<uint16_t>(mapped, 1) = 2;
 	*layout->GetMemberPtr<uint16_t>(mapped, 2) = 1;
 
+	*layout->GetMemberPtr<uint16_t>(mapped, 3) = 0;
+	*layout->GetMemberPtr<uint16_t>(mapped, 4) = 1;
+	*layout->GetMemberPtr<uint16_t>(mapped, 5) = 2;
+
 	indexStaging->Unmap();
 
 	auto copyPass = device->CreateResource<BufferCopyPass>();
@@ -105,7 +143,6 @@ void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuf
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 	device->GetExecutionQueue().ExecutePasses();
-
 }
 
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
@@ -152,13 +189,15 @@ int main()
 	auto vertShader = LoadShader(device.get(), "simple.vert");
 	auto fragShader = LoadShader(device.get(), "simple.frag");
 
+	auto texture = LoadImage(device.get(), "grid2.png");
+
 	auto vbLayout = std::make_shared<util::LayoutArray>(vertShader->GetVertexLayout(), 3);
 	auto vertexBuffer = device->CreateResource<Buffer>();
 	vertexBuffer->Init(Buffer::Usage::Vertex, vbLayout);
 
 	InitTriangleVertices(device.get(), vertexBuffer);
 
-	auto ibLayout = std::make_shared<util::LayoutArray>(std::make_shared<util::LayoutValue>(rttr::type::get<uint16_t>()), 3);
+	auto ibLayout = std::make_shared<util::LayoutArray>(std::make_shared<util::LayoutValue>(rttr::type::get<uint16_t>()), 6);
 	auto indexBuffer = device->CreateResource<Buffer>();
 	indexBuffer->Init(Buffer::Usage::Index, ibLayout);
 
@@ -166,9 +205,12 @@ int main()
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
-	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::None);
+	//renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::None);
 	//renderState->SetDepthState(true, true, RenderState::CompareFunc::Always);
 	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
+
+	auto sampler = device->CreateResource<Sampler>();
+	sampler->Init();
 
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
 	view = glm::translate(view, glm::vec3(0, 0, 1.5f));
@@ -189,6 +231,7 @@ int main()
 	renderTriangle->AddBuffer(vertexBuffer);
 	renderTriangle->AddBuffer(indexBuffer);
 	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
+	renderTriangle->AddSampler(sampler, texture, ShaderKindBits::Fragment, 1);
 	renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();

@@ -10,11 +10,14 @@ class DeviceVk;
 class DescriptorSetStore {
 	RTTR_ENABLE()
 public:
+	void Init(DeviceVk &deviceVk, std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool);
 	void Init(DeviceVk &deviceVk, std::vector<vk::DescriptorPoolSize> const &poolSizes, uint32_t maxDescriptorsInPool);
 
 	bool IsValid() { return _deviceVk && _poolSizes.size() && _maxDescriptorsInPool; }
 
 	vk::UniqueDescriptorSet AllocateDescriptorSet(vk::DescriptorSetLayout layout);
+
+	static std::vector<vk::DescriptorPoolSize> GetPoolSizes(std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool);
 
 protected:
 	void AllocateDescriptorPool();

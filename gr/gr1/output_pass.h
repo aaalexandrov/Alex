@@ -70,8 +70,8 @@ public:
 		std::shared_ptr<Buffer> const &buffer, 
 		std::shared_ptr<Image> const &image, 
 		CopyDirection direction = CopyDirection::BufferToImage,
-		ImageData const *bufferImageData = nullptr, 
 		glm::uvec4 bufferOffset = glm::zero<glm::uvec4>(), 
+		glm::uvec4 bufferSize = glm::zero<glm::uvec4>(),
 		glm::uvec4 imageOffset = glm::zero<glm::uvec4>(), 
 		glm::uvec4 size = glm::zero<glm::uvec4>(),
 		uint32_t imageMipLevel = 0);

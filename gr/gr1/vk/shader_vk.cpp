@@ -36,8 +36,6 @@ void ShaderVk::LoadShader(std::vector<uint8_t> const &contents)
 {
   LoadModule(contents);
 
-  InitDescriptorSetLayoutAndStore();
-
 	_state = ResourceState::ShaderRead;
 }
 
@@ -78,13 +76,6 @@ vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()
 		.setModule(*_module)
 		.setPName("main");
 	return info;
-}
-
-vk::UniqueDescriptorSet ShaderVk::AllocateDescriptorSet()
-{
-	if (!_descSetStore.IsValid())
-		return vk::UniqueDescriptorSet();
-	return _descSetStore.AllocateDescriptorSet(*_descriptorSetLayout);
 }
 
 struct SPIRTypeInfo {
@@ -198,9 +189,20 @@ std::shared_ptr<util::LayoutElement> ShaderVk::GetLayoutFromSpirv(spirv_cross::C
 	return elem;
 }
 
-std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBindings()
+static void AddSetLayoutBinding(std::vector<vk::DescriptorSetLayoutBinding> &bindings, vk::DescriptorSetLayoutBinding const &binding)
 {
-  std::vector<vk::DescriptorSetLayoutBinding> bindings;
+	auto it = std::find_if(bindings.begin(), bindings.end(), [&](auto &b) { return b.binding == binding.binding; });
+	if (it == bindings.end()) {
+		bindings.push_back(binding);
+		return;
+	}
+	if (binding.descriptorType != it->descriptorType || binding.descriptorCount != it->descriptorCount)
+		throw GraphicsException("Shaders have the same binding with different parameters!", VK_RESULT_MAX_ENUM);
+	it->stageFlags |= binding.stageFlags;
+}
+
+void ShaderVk::FillDescriptorSetLayoutBindings(std::vector<vk::DescriptorSetLayoutBinding> &bindings)
+{
   for (auto &bufferInfo : _uniformBuffers) {
     vk::DescriptorSetLayoutBinding binding;
     binding
@@ -209,7 +211,7 @@ std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBind
       .setDescriptorCount(static_cast<uint32_t>(bufferInfo._layout->GetMultidimensionalArrayCount()))
       .setStageFlags(GetShaderStageFlags(_kind));
 
-    bindings.push_back(binding);
+    AddSetLayoutBinding(bindings, binding);
   }
 
 	for (auto &samplerInfo : _samplers) {
@@ -220,10 +222,8 @@ std::vector<vk::DescriptorSetLayoutBinding> ShaderVk::GetDescriptorSetLayoutBind
 			.setDescriptorCount(static_cast<uint32_t>(samplerInfo._layout->GetMultidimensionalArrayCount()))
 			.setStageFlags(GetShaderStageFlags(_kind));
 
-		bindings.push_back(binding);
+		AddSetLayoutBinding(bindings, binding);
 	}
-
-  return bindings;
 }
 
 void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
@@ -268,35 +268,6 @@ std::vector<ShaderVk::UniformInfo> ShaderVk::GetUniformDescriptions(spirv_cross:
     uniforms.push_back(std::move(uniformInfo));
   }
 	return uniforms;
-}
-
-void ShaderVk::InitDescriptorSetLayoutAndStore()
-{
-  ASSERT(!_descriptorSetLayout);
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	
-	auto layoutBindings = GetDescriptorSetLayoutBindings();
-	vk::DescriptorSetLayoutCreateInfo layoutInfo;
-	layoutInfo
-		.setBindingCount(static_cast<uint32_t>(layoutBindings.size()))
-		.setPBindings(layoutBindings.data());
-  _descriptorSetLayout = deviceVk->_device->createDescriptorSetLayoutUnique(layoutInfo, deviceVk->AllocationCallbacks());
-
-	if (layoutBindings.size()) {
-		uint32_t const descriptorsPerPool = 256;
-		std::vector<vk::DescriptorPoolSize> poolSizes;
-		for (auto &binding : layoutBindings) {
-			auto it = std::find_if(poolSizes.begin(), poolSizes.end(), [&](auto &poolSize) {
-				return poolSize.type == binding.descriptorType;
-			});
-			if (it == poolSizes.end()) {
-				poolSizes.emplace_back(binding.descriptorType);
-				it = poolSizes.end() - 1;
-			}
-			it->setDescriptorCount(it->descriptorCount + descriptorsPerPool * binding.descriptorCount);
-		}
-		_descSetStore.Init(*deviceVk, poolSizes, descriptorsPerPool);
-	}
 }
 
 NAMESPACE_END(gr1)

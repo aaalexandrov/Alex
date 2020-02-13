@@ -135,5 +135,22 @@ protected:
 	std::unordered_map<std::string, size_t> _nameIndices;
 };
 
+inline std::shared_ptr<LayoutElement> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size)
+{
+	return std::make_shared<LayoutArray>(elem, size);
+}
+
+template <typename... Sizes>
+std::shared_ptr<LayoutElement> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size, Sizes... sizes)
+{
+	return std::make_shared<LayoutArray>(CreateLayoutArray(elem, sizes...), size);
+}
+
+template <typename... Sizes>
+std::shared_ptr<LayoutElement> CreateLayoutArray(rttr::type elemType, Sizes... sizes)
+{
+	return CreateLayoutArray(std::make_shared<LayoutValue>(elemType), sizes...);
+}
+
 NAMESPACE_END(util)
 

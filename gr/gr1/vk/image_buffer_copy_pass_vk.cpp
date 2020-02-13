@@ -35,8 +35,8 @@ void ImageBufferCopyPassVk::Prepare()
 	std::array<vk::BufferImageCopy, 1> copy;
 	copy[0]
 		.setBufferOffset(_bufferImageData.GetOffset(_bufferOffset))
-		.setBufferRowLength(bufferDim.y)
-		.setBufferImageHeight(bufferDim.z)
+		.setBufferRowLength(bufferDim.x)
+		.setBufferImageHeight(bufferDim.y)
 		.setImageSubresource(vk::ImageSubresourceLayers(imageVk->GetImageAspect(), _imageMipLevel, _imageOffset.w, effectiveSize.w))
 		.setImageOffset(vk::Offset3D(_imageOffset.x, _imageOffset.y, _imageOffset.z))
 		.setImageExtent(vk::Extent3D(effectiveSize.x, effectiveSize.y, effectiveSize.z));

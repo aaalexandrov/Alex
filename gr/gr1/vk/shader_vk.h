@@ -13,28 +13,19 @@ public:
 
 	void LoadShader(std::vector<uint8_t> const &contents) override;
 
-	vk::DescriptorSetLayout GetDescriptorSetLayout() { return _descriptorSetLayout.get(); }
-
 	vk::PipelineShaderStageCreateInfo GetPipelineShaderStageCreateInfo();
-
-	vk::UniqueDescriptorSet AllocateDescriptorSet();
+	void FillDescriptorSetLayoutBindings(std::vector<vk::DescriptorSetLayoutBinding> &bindings);
 
 protected:
 	void LoadModule(std::vector<uint8_t> const &contents);
-
-  std::vector<vk::DescriptorSetLayoutBinding> GetDescriptorSetLayoutBindings();
 
   static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType const &type);
 	static std::shared_ptr<util::LayoutElement> GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize = 0);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
   std::vector<UniformInfo> GetUniformDescriptions(spirv_cross::Compiler const &reflected, spirv_cross::SmallVector<spirv_cross::Resource> const &resources);
-  void InitDescriptorSetLayoutAndStore();
-
 
 	vk::UniqueShaderModule _module;
 	vk::ShaderStageFlagBits _stageFlags;
-  vk::UniqueDescriptorSetLayout _descriptorSetLayout;
-	DescriptorSetStore _descSetStore;
 
   struct ShaderKindInfo {
     ShaderKind _kind;
