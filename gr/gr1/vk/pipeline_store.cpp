@@ -146,7 +146,8 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 			for (uint32_t i = 0; i < shaderVertLayout->GetStructFieldCount(); ++i) {
 				util::LayoutElement const *attrElem = shaderVertLayout->GetStructFieldElement(i);
 
-				int bufIndex = GetVertexLayoutIndex(shaderVertLayout->GetStructFieldName(i), attrElem, pipelineInfo._vertexBufferLayouts);
+				std::string attrName = shaderVertLayout->GetStructFieldName(i);
+				int bufIndex = GetVertexLayoutIndex(attrName, attrElem, pipelineInfo._vertexBufferLayouts);
 				if (bufIndex < 0) {
 					ASSERT(!"Shader vertex attribute missing from supplied buffers!");
 					continue;
@@ -154,7 +155,10 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 
 				uint32_t binding = pipelineInfo._vertexBufferLayouts[bufIndex]._binding;
 				uint32_t location = static_cast<uint32_t>(attrElem->GetUserData());
-				uint32_t offset = static_cast<uint32_t>(shaderVertLayout->GetStructFieldOffset(i));
+				util::LayoutElement const *vertexLayout = pipelineInfo._vertexBufferLayouts[bufIndex]._bufferLayout.get();
+				if (vertexLayout->GetKind() == util::LayoutElement::Kind::Array)
+					vertexLayout = vertexLayout->GetArrayElement();
+				uint32_t offset = static_cast<uint32_t>(vertexLayout->GetStructFieldOffset(vertexLayout->GetStructFieldIndex(attrName)));
 				vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
 
 				vertexInputAttribDescs.emplace_back();

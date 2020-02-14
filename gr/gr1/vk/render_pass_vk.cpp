@@ -58,14 +58,14 @@ void RenderDrawCommandVk::RemoveShader(ShaderKind kind)
 	RenderDrawCommand::RemoveShader(kind);
 }
 
-int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding, size_t offset, bool frequencyInstance)
+int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance)
 {
 	_cmdDraw.reset();
 	_descriptorSetValid = false;
 	if (!!(buffer->GetUsage() & (Buffer::Usage::Vertex | Buffer::Usage::Index))) {
 		_pipeline.reset();
 	}
-	return RenderDrawCommand::AddBuffer(buffer, shaderKinds, binding, offset, frequencyInstance);
+	return RenderDrawCommand::AddBuffer(buffer, binding, offset, frequencyInstance);
 }
 
 void RenderDrawCommandVk::RemoveBuffer(int bufferIndex)
@@ -94,11 +94,11 @@ void RenderDrawCommandVk::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex
 	RenderDrawCommand::SetDrawCounts(indexCount, firstIndex, instanceCount, firstInstance, vertexOffset);
 }
 
-int RenderDrawCommandVk::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds, int binding)
+int RenderDrawCommandVk::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding)
 {
 	_cmdDraw.reset();
 	_descriptorSetValid = false;
-	return RenderDrawCommand::AddSampler(sampler, image, shaderKinds, binding);
+	return RenderDrawCommand::AddSampler(sampler, image, binding);
 }
 
 void RenderDrawCommandVk::RemoveSampler(int samplerIndex)

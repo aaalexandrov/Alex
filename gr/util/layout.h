@@ -152,5 +152,26 @@ std::shared_ptr<LayoutElement> CreateLayoutArray(rttr::type elemType, Sizes... s
 	return CreateLayoutArray(std::make_shared<LayoutValue>(elemType), sizes...);
 }
 
+inline std::shared_ptr<LayoutElement> GetLayoutElement(rttr::type type) { return std::make_shared<LayoutValue>(type); }
+inline std::shared_ptr<LayoutElement> GetLayoutElement(std::shared_ptr<LayoutElement> elem) { return elem; }
+inline std::shared_ptr<LayoutElement> GetLayoutElement(LayoutElement *elem) { return elem->shared_from_this(); }
+
+inline void PushStructElementName(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> &elems) {}
+
+template <typename Name, typename Elem, typename... Rest>
+void PushStructElementName(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> &elems, Name name, Elem elem, Rest... rest)
+{
+	elems.push_back(std::make_pair(GetLayoutElement(elem), std::string(name)));
+	PushStructElementName(elems, std::forward<Rest>(rest)...);
+}
+
+template <typename... Args>
+std::shared_ptr<LayoutElement> CreateLayoutStruct(Args... args)
+{
+	std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> elems;
+	PushStructElementName(elems, std::forward<Args>(args)...);
+	return std::make_shared<LayoutStruct>(elems);
+}
+
 NAMESPACE_END(util)
 

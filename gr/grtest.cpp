@@ -86,7 +86,6 @@ shared_ptr<Image> LoadImage(Device *device, std::string name)
 	copyPass->Init(staging, image);
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
-	device->GetExecutionQueue().ExecutePasses();
 
 	return image;
 }
@@ -117,7 +116,54 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 	copyPass->Init(vertexStaging, vertexBuffer);
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
-	device->GetExecutionQueue().ExecutePasses();
+}
+
+void InitTriangleStreams(Device *device, std::shared_ptr<Buffer> const &posBuffer, std::shared_ptr<Buffer> const &colorBuffer, std::shared_ptr<Buffer> const &texCoordBuffer)
+{
+	auto posStaging = device->CreateResource<Buffer>();
+	posStaging->Init(Buffer::Usage::Staging, posBuffer->GetBufferLayout());
+
+	auto colorStaging = device->CreateResource<Buffer>();
+	colorStaging->Init(Buffer::Usage::Staging, colorBuffer->GetBufferLayout());
+
+	auto texCoordStaging = device->CreateResource<Buffer>();
+	texCoordStaging->Init(Buffer::Usage::Staging, texCoordBuffer->GetBufferLayout());
+
+	util::LayoutElement *posLayout = posStaging->GetBufferLayout().get();
+	util::LayoutElement *colorLayout = colorStaging->GetBufferLayout().get();
+	util::LayoutElement *tcLayout = texCoordStaging->GetBufferLayout().get();
+	void *positions = posStaging->Map();
+	void *colors = colorStaging->Map();
+	void *tc = texCoordStaging->Map();
+
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 0, "inTexCoord") = glm::vec2(1.0f, 1.0f);
+
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 1, "inTexCoord") = glm::vec2(1.0f, 0.0f);
+
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 2, "inTexCoord") = glm::vec2(0.0f, 1.0f);
+
+	texCoordStaging->Unmap();
+	colorStaging->Unmap();
+	posStaging->Unmap();
+
+	auto copyPosPass = device->CreateResource<BufferCopyPass>();
+	copyPosPass->Init(posStaging, posBuffer);
+
+	auto copyColorPass = device->CreateResource<BufferCopyPass>();
+	copyColorPass->Init(colorStaging, colorBuffer);
+
+	auto copyTcPass = device->CreateResource<BufferCopyPass>();
+	copyTcPass->Init(texCoordStaging, texCoordBuffer);
+
+	device->GetExecutionQueue().EnqueuePass(copyPosPass);
+	device->GetExecutionQueue().EnqueuePass(copyColorPass);
+	device->GetExecutionQueue().EnqueuePass(copyTcPass);
 }
 
 void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuffer)
@@ -142,8 +188,11 @@ void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuf
 	copyPass->Init(indexStaging, indexBuffer);
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
-	device->GetExecutionQueue().ExecutePasses();
 }
+
+struct Mesh {
+
+};
 
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
 {
@@ -197,6 +246,19 @@ int main()
 
 	InitTriangleVertices(device.get(), vertexBuffer);
 
+	auto vbPositionsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inPosition", rttr::type::get<glm::vec3>()), 3);
+	auto vbColorsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inColor", rttr::type::get<glm::vec3>()), 3);
+	auto vbTexCoordsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inTexCoord", rttr::type::get<glm::vec2>()), 3);
+
+	auto posStream = device->CreateResource<Buffer>();
+	posStream->Init(Buffer::Usage::Vertex, vbPositionsLayout);
+	auto colorStream = device->CreateResource<Buffer>();
+	colorStream->Init(Buffer::Usage::Vertex, vbColorsLayout);
+	auto texCoordStream = device->CreateResource<Buffer>();
+	texCoordStream->Init(Buffer::Usage::Vertex, vbTexCoordsLayout);
+
+	InitTriangleStreams(device.get(), posStream, colorStream, texCoordStream);
+
 	auto ibLayout = std::make_shared<util::LayoutArray>(std::make_shared<util::LayoutValue>(rttr::type::get<uint16_t>()), 6);
 	auto indexBuffer = device->CreateResource<Buffer>();
 	indexBuffer->Init(Buffer::Usage::Index, ibLayout);
@@ -228,10 +290,13 @@ int main()
 	renderTriangle->SetShader(vertShader);
 	renderTriangle->SetShader(fragShader);
 	renderTriangle->SetRenderState(renderState);
-	renderTriangle->AddBuffer(vertexBuffer);
+	//renderTriangle->AddBuffer(vertexBuffer);
+	renderTriangle->AddBuffer(posStream, 0);
+	renderTriangle->AddBuffer(colorStream, 1);
+	renderTriangle->AddBuffer(texCoordStream, 2);
 	renderTriangle->AddBuffer(indexBuffer);
-	renderTriangle->AddBuffer(uboShader, ShaderKindBits::Vertex);
-	renderTriangle->AddSampler(sampler, texture, ShaderKindBits::Fragment, 1);
+	renderTriangle->AddBuffer(uboShader);
+	renderTriangle->AddSampler(sampler, texture, 1);
 	renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();

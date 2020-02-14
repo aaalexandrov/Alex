@@ -17,11 +17,10 @@ void RenderDrawCommand::Clear()
 	_drawCounts = DrawCounts();
 }
 
-int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKindBits shaderKinds, int binding, size_t offset, bool frequencyInstance)
+int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance)
 { 
 	BufferData bufData;
 	bufData._buffer = buffer;
-	bufData._shaderKinds = shaderKinds;
 	bufData._binding = binding;
 	bufData._offset = offset;
 	bufData._frequencyInstance = frequencyInstance;
@@ -29,12 +28,11 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, ShaderKi
 	return static_cast<int>(_buffers.size() - 1);
 }
 
-int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, ShaderKindBits shaderKinds, int binding)
+int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding)
 {
 	SamplerData samplerData;
 	samplerData._sampler = sampler;
 	samplerData._image = image;
-	samplerData._shaderKinds = shaderKinds;
 	samplerData._binding = binding;
 	_samplers.push_back(std::move(samplerData));
 	return static_cast<int>(_samplers.size() - 1);

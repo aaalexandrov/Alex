@@ -23,7 +23,7 @@ set(BINARY grtest)
 
 add_executable(${BINARY} ${SOURCES})
 
-target_link_libraries(${BINARY} PRIVATE glm_static)
+target_link_libraries(${BINARY} PRIVATE glm_static tinygltf)
 
 target_include_directories(${BINARY} PRIVATE .)
 
