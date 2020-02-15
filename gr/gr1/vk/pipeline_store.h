@@ -102,7 +102,7 @@ protected:
 	using PipelineLayoutsMap = std::unordered_map<ShaderKindsArray<ShaderVk*>, std::shared_ptr<PipelineLayoutVk>>;
 	using PipelinesMap = std::unordered_map<RecordedPipeline, std::weak_ptr<PipelineVk>>;
 
-	int GetVertexLayoutIndex(std::string attribName, util::LayoutElement const *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts);
+	int GetVertexLayoutIndex(std::string attribName, util::LayoutElement const *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset);
 
 	std::shared_ptr<PipelineVk> AllocatePipeline(std::shared_ptr<PipelineLayoutVk> const &pipelineLayout, PipelineInfo &pipelineInfo);
 

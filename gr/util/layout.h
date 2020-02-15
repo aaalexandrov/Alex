@@ -28,6 +28,9 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	virtual size_t GetStructFieldIndex(std::string name) const { return ~0ull; }
 
 	size_t GetPadding() const { return _padding; }
+	bool IsValue() const { return GetKind() == Kind::Value; }
+	bool IsArray() const { return GetKind() == Kind::Array; }
+	bool IsStruct() const { return GetKind() == Kind::Struct; }
 	intptr_t GetUserData() const { return _userData; }
 	void SetUserData(intptr_t userData) const { _userData = userData; }
 
