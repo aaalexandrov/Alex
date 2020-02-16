@@ -94,7 +94,7 @@ class PipelineStore {
 	RTTR_ENABLE()
 public:
 
-	void Init(DeviceVk &deviceVk) { _deviceVk = &deviceVk; }
+	void Init(DeviceVk &deviceVk);
 
 	std::shared_ptr<PipelineVk> GetPipeline(PipelineInfo &pipelineInfo);
 protected:
@@ -110,6 +110,7 @@ protected:
 	std::shared_ptr<PipelineLayoutVk> AddPipelineLayout(ShaderKindsArray<ShaderVk*> &shaders);
 
 	DeviceVk *_deviceVk = nullptr;
+	vk::UniquePipelineCache _pipelineCache;
 	PipelineLayoutsMap _pipelineLayouts;
 	PipelinesMap _pipelines;
 };

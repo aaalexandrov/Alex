@@ -90,6 +90,13 @@ bool RecordedPipeline::operator==(RecordedPipeline const &other) const
 	return *_pipelineInfo == *other._pipelineInfo;
 }
 
+void PipelineStore::Init(DeviceVk &deviceVk)
+{
+	_deviceVk = &deviceVk;
+
+	vk::PipelineCacheCreateInfo cacheInfo;
+	_deviceVk->_device->createPipelineCacheUnique(cacheInfo, _deviceVk->AllocationCallbacks());
+}
 
 util::ValueRemapper<PrimitiveKind, vk::PrimitiveTopology> s_PrimitiveKind2Topology = { {
 		{ PrimitiveKind::TriangleList, vk::PrimitiveTopology::eTriangleList },
@@ -229,7 +236,7 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 		.setSubpass(pipelineInfo._subpass)
 		.setBasePipelineIndex(-1);
 
-	vk::UniquePipeline pipeline = _deviceVk->_device->createGraphicsPipelineUnique(nullptr, pipeCreateInfo, _deviceVk->AllocationCallbacks());
+	vk::UniquePipeline pipeline = _deviceVk->_device->createGraphicsPipelineUnique(*_pipelineCache, pipeCreateInfo, _deviceVk->AllocationCallbacks());
 
 	return std::make_shared<PipelineVk>(std::move(pipelineLayout), std::move(pipeline));
 }
