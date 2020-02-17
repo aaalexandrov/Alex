@@ -25,27 +25,34 @@ void BufferTransitionPassVk::Prepare()
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
 
+	std::array<vk::BufferMemoryBarrier, 1> bufBarrier;
+
 	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
 
-	_srcCmds->begin(vk::CommandBufferBeginInfo());
+	{
+		std::lock_guard<CmdBufferVk> srcLock(_srcCmds);
 
-	std::array<vk::BufferMemoryBarrier, 1> bufBarrier;
-	bufBarrier[0]
-		.setSrcAccessMask(srcState._access)
-		.setDstAccessMask(queueTransition ? vk::AccessFlags() : dstState._access)
-		.setSrcQueueFamilyIndex(queueTransition ? srcQueue->_family : VK_QUEUE_FAMILY_IGNORED)
-		.setDstQueueFamilyIndex(queueTransition ? dstQueue->_family : VK_QUEUE_FAMILY_IGNORED)
-		.setBuffer(*buf->_buffer)
-		.setOffset(0)
-		.setSize(buf->GetSize());
-	_srcCmds->pipelineBarrier(srcState._stages, queueTransition ? vk::PipelineStageFlagBits::eBottomOfPipe : dstState._stages,
-		vk::DependencyFlags(), nullptr, bufBarrier, nullptr);
+		_srcCmds->begin(vk::CommandBufferBeginInfo());
 
-	_srcCmds->end();
+		bufBarrier[0]
+			.setSrcAccessMask(srcState._access)
+			.setDstAccessMask(queueTransition ? vk::AccessFlags() : dstState._access)
+			.setSrcQueueFamilyIndex(queueTransition ? srcQueue->_family : VK_QUEUE_FAMILY_IGNORED)
+			.setDstQueueFamilyIndex(queueTransition ? dstQueue->_family : VK_QUEUE_FAMILY_IGNORED)
+			.setBuffer(*buf->_buffer)
+			.setOffset(0)
+			.setSize(buf->GetSize());
+		_srcCmds->pipelineBarrier(srcState._stages, queueTransition ? vk::PipelineStageFlagBits::eBottomOfPipe : dstState._stages,
+			vk::DependencyFlags(), nullptr, bufBarrier, nullptr);
+
+		_srcCmds->end();
+	}
 
 	if (queueTransition) {
 
 		_dstCmds = dstQueue->_cmdPool.AllocateCmdBuffer();
+
+		std::lock_guard<CmdBufferVk> dstLock(_dstCmds);
 
 		_dstCmds->begin(vk::CommandBufferBeginInfo());
 

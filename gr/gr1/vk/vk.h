@@ -32,6 +32,25 @@ public:
 
 	~OwnedUniqueHandle() { reset(); }
 
+	void lock() noexcept
+	{
+		if (_owner && _handle)
+			_owner->_mutex.lock();
+	}
+
+	void unlock() noexcept
+	{
+		if (_owner && _handle)
+			_owner->_mutex.unlock();
+	}
+
+	bool try_lock() noexcept
+	{
+		if (!_owner || !_handle)
+			return true;
+		return _owner->_mutex.try_lock();
+	}
+
 	void reset() noexcept 
 	{ 
 		if (_owner && _handle) {

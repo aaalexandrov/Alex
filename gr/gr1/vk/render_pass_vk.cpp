@@ -132,6 +132,9 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	beginInfo
 		.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue)
 		.setPInheritanceInfo(&prepInfoVk->_cmdInheritInfo);
+
+	std::lock_guard<CmdBufferVk> drawLock(_cmdDraw);
+
 	_cmdDraw->begin(beginInfo);
 
 	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline->Get());
@@ -475,6 +478,8 @@ void RenderPassVk::InitFramebuffer()
 void RenderPassVk::RecordPassCommands()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+
+	std::lock_guard<CmdBufferVk> passLock(_passCmds);
 
 	_passCmds->reset(vk::CommandBufferResetFlags());
 

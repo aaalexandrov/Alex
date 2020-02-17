@@ -24,6 +24,8 @@ void BufferCopyPassVk::Prepare()
 	BufferVk *srcVk = static_cast<BufferVk*>(_src.get());
 	BufferVk *dstVk = static_cast<BufferVk*>(_dst.get());
 
+	std::lock_guard<CmdBufferVk> copyLock(_cmdCopy);
+
 	_cmdCopy->reset(vk::CommandBufferResetFlags());
 
 	_cmdCopy->begin(vk::CommandBufferBeginInfo());

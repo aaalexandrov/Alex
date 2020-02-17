@@ -26,10 +26,6 @@ void ImageTransitionPassVk::Prepare()
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
 
-	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
-
-	_srcCmds->begin(vk::CommandBufferBeginInfo());
-
 	vk::ImageSubresourceRange fullImage;
 	fullImage
 		.setAspectMask(img->GetImageAspect())
@@ -38,23 +34,34 @@ void ImageTransitionPassVk::Prepare()
 		.setBaseArrayLayer(0)
 		.setLayerCount(std::max(img->GetArrayLayers(), 1u));
 	std::array<vk::ImageMemoryBarrier, 1> imgBarrier;
-	imgBarrier[0]
-		.setSrcAccessMask(srcState._access)
-		.setDstAccessMask(queueTransition ? vk::AccessFlags() : dstState._access)
-		.setOldLayout(srcState._layout)
-		.setNewLayout(dstState._layout)
-		.setSrcQueueFamilyIndex(queueTransition ? srcQueue->_family : VK_QUEUE_FAMILY_IGNORED)
-		.setDstQueueFamilyIndex(queueTransition ? dstQueue->_family : VK_QUEUE_FAMILY_IGNORED)
-		.setImage(img->_image)
-		.setSubresourceRange(fullImage);
-	_srcCmds->pipelineBarrier(srcState._stages, queueTransition ? vk::PipelineStageFlagBits::eBottomOfPipe : dstState._stages,
-		vk::DependencyFlags(), nullptr, nullptr, imgBarrier);
 
-	_srcCmds->end();
+	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
+
+	{
+		std::lock_guard<CmdBufferVk> srcLock(_srcCmds);
+
+		_srcCmds->begin(vk::CommandBufferBeginInfo());
+
+		imgBarrier[0]
+			.setSrcAccessMask(srcState._access)
+			.setDstAccessMask(queueTransition ? vk::AccessFlags() : dstState._access)
+			.setOldLayout(srcState._layout)
+			.setNewLayout(dstState._layout)
+			.setSrcQueueFamilyIndex(queueTransition ? srcQueue->_family : VK_QUEUE_FAMILY_IGNORED)
+			.setDstQueueFamilyIndex(queueTransition ? dstQueue->_family : VK_QUEUE_FAMILY_IGNORED)
+			.setImage(img->_image)
+			.setSubresourceRange(fullImage);
+		_srcCmds->pipelineBarrier(srcState._stages, queueTransition ? vk::PipelineStageFlagBits::eBottomOfPipe : dstState._stages,
+			vk::DependencyFlags(), nullptr, nullptr, imgBarrier);
+
+		_srcCmds->end();
+	}
 
 	if (queueTransition) {
 
 		_dstCmds = dstQueue->_cmdPool.AllocateCmdBuffer();
+
+		std::lock_guard<CmdBufferVk> dstLock(_dstCmds);
 
 		_dstCmds->begin(vk::CommandBufferBeginInfo());
 

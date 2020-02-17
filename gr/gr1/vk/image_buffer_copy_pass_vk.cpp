@@ -26,6 +26,8 @@ void ImageBufferCopyPassVk::Prepare()
 	ImageVk *imageVk = static_cast<ImageVk*>(_image.get());
 	ImageVk::StateInfo imgStateInfo = imageVk->GetStateInfo(GetImageState());
 
+	std::lock_guard<CmdBufferVk> copyLock(_cmdCopy);
+
 	_cmdCopy->reset(vk::CommandBufferResetFlags());
 
 	_cmdCopy->begin(vk::CommandBufferBeginInfo());

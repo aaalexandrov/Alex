@@ -22,6 +22,7 @@ PresentPassVk::PresentPassVk(Device &device)
 	_beforePresent = deviceVk->CreateSemaphore();
 
 	_cmdSignal = deviceVk->PresentQueue()._cmdPool.AllocateCmdBuffer();
+	std::lock_guard<CmdBufferVk> signalLock(_cmdSignal);
 	_cmdSignal->begin(vk::CommandBufferBeginInfo());
 	_cmdSignal->end();
 }
