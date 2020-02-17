@@ -19,3 +19,44 @@
 
 #include "util/namespace.h"
 
+NAMESPACE_BEGIN(gr1)
+
+template <typename Owner, typename UniqueHandle>
+class OwnedUniqueHandle
+{
+public:
+	using HandleType = typename UniqueHandle::element_type;
+
+	OwnedUniqueHandle(Owner *owner = nullptr, UniqueHandle &&handle = UniqueHandle()) noexcept : _handle(std::move(handle)), _owner(owner) {}
+	OwnedUniqueHandle(OwnedUniqueHandle &&other) : OwnedUniqueHandle(other._owner, std::move(other._handle)) {}
+
+	~OwnedUniqueHandle() { reset(); }
+
+	void reset() noexcept 
+	{ 
+		if (_owner && _handle) {
+			std::lock_guard<std::recursive_mutex> lock(_owner->_mutex);
+			_handle.reset();
+		}
+	}
+	OwnedUniqueHandle release() noexcept { return _handle.release(); }
+	explicit operator bool() const noexcept { return (bool)_handle; }
+
+	HandleType *operator->() noexcept { return _handle.operator->(); }
+	HandleType const *operator->() const noexcept { return _handle.operator->(); }
+
+	HandleType &operator*() noexcept { return *_handle; }
+	HandleType const &operator*() const noexcept { return *_handle; }
+
+	OwnedUniqueHandle &operator=(OwnedUniqueHandle &&other) noexcept 
+	{
+		_owner = other._owner;
+		_handle = std::move(other._handle);
+		return *this;
+	}
+private:
+	Owner *_owner;
+	UniqueHandle _handle;
+};
+
+NAMESPACE_END(gr1)

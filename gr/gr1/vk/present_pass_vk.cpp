@@ -21,7 +21,7 @@ PresentPassVk::PresentPassVk(Device &device)
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_beforePresent = deviceVk->CreateSemaphore();
 
-	_cmdSignal = deviceVk->PresentQueue().AllocateCmdBuffer();
+	_cmdSignal = deviceVk->PresentQueue()._cmdPool.AllocateCmdBuffer();
 	_cmdSignal->begin(vk::CommandBufferBeginInfo());
 	_cmdSignal->end();
 }

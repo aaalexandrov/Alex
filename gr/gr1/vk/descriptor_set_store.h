@@ -6,6 +6,9 @@
 
 NAMESPACE_BEGIN(gr1)
 
+class DescriptorSetStore;
+using DescriptorSetVk = OwnedUniqueHandle<DescriptorSetStore, vk::UniqueDescriptorSet>;
+
 class DeviceVk;
 class DescriptorSetStore {
 	RTTR_ENABLE()
@@ -15,10 +18,11 @@ public:
 
 	bool IsValid() { return _deviceVk && _poolSizes.size() && _maxDescriptorsInPool; }
 
-	vk::UniqueDescriptorSet AllocateDescriptorSet(vk::DescriptorSetLayout layout);
+	DescriptorSetVk AllocateDescriptorSet(vk::DescriptorSetLayout layout);
 
 	static std::vector<vk::DescriptorPoolSize> GetPoolSizes(std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool);
 
+	std::recursive_mutex _mutex;
 protected:
 	void AllocateDescriptorPool();
 
@@ -30,5 +34,6 @@ protected:
 	std::vector<vk::UniqueDescriptorPool> _descPools;
 	uint32_t _descPoolIndex = 0;
 };
+
 
 NAMESPACE_END(gr1)

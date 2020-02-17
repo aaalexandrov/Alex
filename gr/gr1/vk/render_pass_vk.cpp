@@ -126,7 +126,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 
 	UpdateDescriptorSets();
 
-	_cmdDraw = deviceVk->GraphicsQueue().AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
+	_cmdDraw = deviceVk->GraphicsQueue()._cmdPool.AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo
@@ -178,7 +178,7 @@ void RenderDrawCommandVk::Record(CommandRecordInfo &recordInfo)
 {
 	CommandRecordInfoVk *recInfoVk = static_cast<CommandRecordInfoVk*>(&recordInfo);
 
-	recInfoVk->_secondaryCmds->push_back(_cmdDraw.get());
+	recInfoVk->_secondaryCmds->push_back(*_cmdDraw);
 }
 
 void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t subpass)
@@ -316,7 +316,7 @@ RenderPassVk::RenderPassVk(Device &device)
 	: RenderPass(device)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	_passCmds = deviceVk->GraphicsQueue().AllocateCmdBuffer();
+	_passCmds = deviceVk->GraphicsQueue()._cmdPool.AllocateCmdBuffer();
 }
 
 void RenderPassVk::ClearAttachments()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "output_pass_vk.h"
+#include "queue_vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -16,7 +17,7 @@ public:
 
 public:
 
-	vk::UniqueCommandBuffer _srcCmds, _dstCmds;
+	CmdBufferVk _srcCmds, _dstCmds;
 	vk::UniqueSemaphore _queueTransitionSemaphore;
 };
 

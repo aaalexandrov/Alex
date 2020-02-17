@@ -1,6 +1,7 @@
 #pragma once
 
 #include "output_pass_vk.h"
+#include "queue_vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -19,7 +20,7 @@ public:
 
 protected:
 	vk::UniqueFence _passesFinished;
-	vk::UniqueCommandBuffer _cmdFinish;
+	CmdBufferVk _cmdFinish;
 };
 
 NAMESPACE_END(gr1)

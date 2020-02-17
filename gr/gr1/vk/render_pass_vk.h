@@ -3,7 +3,7 @@
 #include "../render_pass.h"
 #include "output_pass_vk.h"
 #include "pipeline_store.h"
-#include "vk.h"
+#include "queue_vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -48,10 +48,10 @@ protected:
 	void UpdateDescriptorSets();
 	void SetDynamicState(CommandPrepareInfoVk &prepareInfo);
 
-	vk::UniqueCommandBuffer _cmdDraw;
+	CmdBufferVk _cmdDraw;
 	std::shared_ptr<PipelineVk> _pipeline;
 	uint32_t _pipelineRenderStateVersion;
-	vk::UniqueDescriptorSet _descriptorSet;
+	DescriptorSetVk _descriptorSet;
 	bool _descriptorSetValid;
 	vk::Viewport _recordedViewport{};
 };
@@ -87,7 +87,7 @@ protected:
 	vk::UniqueRenderPass _renderPass;
 	vk::UniqueFramebuffer _framebuffer;
 
-	vk::UniqueCommandBuffer _passCmds;
+	CmdBufferVk _passCmds;
 };
 
 NAMESPACE_END(gr1)

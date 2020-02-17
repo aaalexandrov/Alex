@@ -250,7 +250,7 @@ int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElem
 			? bufLayout._bufferLayout->GetArrayElement()
 			: bufLayout._bufferLayout.get();
 		ASSERT(vertDesc->GetKind() == util::LayoutElement::Kind::Struct);
-		int elemIndex = vertDesc->GetStructFieldIndex(attribName);
+		size_t elemIndex = vertDesc->GetStructFieldIndex(attribName);
 		util::LayoutElement const *bufElem = vertDesc->GetElement(elemIndex);
 		if (!bufElem || *bufElem != *attribLayout)
 			continue;
@@ -292,7 +292,7 @@ std::shared_ptr<PipelineLayoutVk> PipelineStore::AddPipelineLayout(ShaderKindsAr
 	return it->second;
 }
 
-vk::UniqueDescriptorSet PipelineVk::AllocateDescriptorSet()
+DescriptorSetVk PipelineVk::AllocateDescriptorSet()
 {
 	return _pipelineLayout->_descriptorSetStore.AllocateDescriptorSet(*_pipelineLayout->_descriptorSetLayout);
 }

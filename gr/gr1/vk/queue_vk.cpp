@@ -6,22 +6,14 @@
 
 NAMESPACE_BEGIN(gr1)
 
-void QueueVk::Init(DeviceVk &device, int32_t family, int32_t queueIndex, QueueRole role)
+void QueueVk::Init(DeviceVk &deviceVk, int32_t family, int32_t queueIndex, QueueRole role)
 {
-  _device = &device;
+  _deviceVk = &deviceVk;
   _family = family;
-  _queue = device._device->getQueue(family, queueIndex);
+  _queue = deviceVk._device->getQueue(family, queueIndex);
   _role = role;
 
-  vk::CommandPoolCreateInfo poolInfo { vk::CommandPoolCreateFlagBits::eResetCommandBuffer, static_cast<uint32_t>(family) };
-  _cmdPool = device._device->createCommandPoolUnique(poolInfo, device.AllocationCallbacks());
-}
-
-vk::UniqueCommandBuffer QueueVk::AllocateCmdBuffer(vk::CommandBufferLevel level)
-{
-  vk::CommandBufferAllocateInfo cmdsInfo(*_cmdPool, level, 1);
-  std::vector<vk::UniqueCommandBuffer> buffers = _device->_device->allocateCommandBuffersUnique(cmdsInfo);
-  return std::move(buffers[0]);
+	_cmdPool.Init(deviceVk, role);
 }
 
 vk::PipelineStageFlags QueueVk::GetPipelineStageFlags(QueueRole role)
@@ -79,11 +71,19 @@ vk::AccessFlags QueueVk::GetAccessFlags(QueueRole role)
 }
 
 
-CmdBufferVk::CmdBufferVk(QueueVk &queue, vk::CommandBufferLevel level)
-	: _queue(&queue)
-	, _cmdBuffer(std::move(queue.AllocateCmdBuffer()))
+void CommandPoolVk::Init(DeviceVk &deviceVk, QueueRole role)
 {
+	vk::CommandPoolCreateInfo poolInfo{ vk::CommandPoolCreateFlagBits::eResetCommandBuffer, static_cast<uint32_t>(deviceVk.Queue(role)._family) };
+	_cmdPool = deviceVk._device->createCommandPoolUnique(poolInfo, deviceVk.AllocationCallbacks());
 }
+
+CmdBufferVk CommandPoolVk::AllocateCmdBuffer(vk::CommandBufferLevel level)
+{
+	vk::CommandBufferAllocateInfo cmdsInfo(*_cmdPool, level, 1);
+	std::vector<vk::UniqueCommandBuffer> buffers = _cmdPool.getOwner().allocateCommandBuffersUnique(cmdsInfo);
+	return CmdBufferVk(this, std::move(buffers[0]));
+}
+
 
 NAMESPACE_END(gr1)
 

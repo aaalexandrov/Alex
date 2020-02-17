@@ -5,6 +5,10 @@
 
 NAMESPACE_BEGIN(gr1)
 
+DescriptorSetVk::~DescriptorSetVk()
+{
+}
+
 void DescriptorSetStore::Init(DeviceVk &deviceVk, std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool)
 {
 	Init(deviceVk, GetPoolSizes(layoutBindings, maxDescriptorsInPool), maxDescriptorsInPool);
@@ -19,8 +23,10 @@ void DescriptorSetStore::Init(DeviceVk &deviceVk, std::vector<vk::DescriptorPool
 	AllocateDescriptorPool();
 }
 
-vk::UniqueDescriptorSet DescriptorSetStore::AllocateDescriptorSet(vk::DescriptorSetLayout layout)
+DescriptorSetVk DescriptorSetStore::AllocateDescriptorSet(vk::DescriptorSetLayout layout)
 {
+	std::lock_guard<std::recursive_mutex> lock(_mutex);
+
 	vk::DescriptorSetAllocateInfo setsInfo;
 	setsInfo
 		.setDescriptorSetCount(1)
@@ -33,7 +39,7 @@ vk::UniqueDescriptorSet DescriptorSetStore::AllocateDescriptorSet(vk::Descriptor
 		setsInfo.setDescriptorPool(_descPools[_descPoolIndex].get());
 
 		try {
-			return std::move(_deviceVk->_device->allocateDescriptorSetsUnique(setsInfo)[0]);
+			return DescriptorSetVk(this, std::move(_deviceVk->_device->allocateDescriptorSetsUnique(setsInfo)[0]));
 		} catch (vk::SystemError &e) {
 			if (allocatedPool) {
 				throw GraphicsException("Failed to allocate a descriptor set!", e.code().value());

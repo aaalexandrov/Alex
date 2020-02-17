@@ -25,7 +25,7 @@ void BufferTransitionPassVk::Prepare()
 	QueueVk *srcQueue, *dstQueue;
 	bool queueTransition = GetTransitionQueueInfo(deviceVk, srcState._queueRole, dstState._queueRole, srcQueue, dstQueue);
 
-	_srcCmds = srcQueue->AllocateCmdBuffer();
+	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
 
 	_srcCmds->begin(vk::CommandBufferBeginInfo());
 
@@ -45,7 +45,7 @@ void BufferTransitionPassVk::Prepare()
 
 	if (queueTransition) {
 
-		_dstCmds = dstQueue->AllocateCmdBuffer();
+		_dstCmds = dstQueue->_cmdPool.AllocateCmdBuffer();
 
 		_dstCmds->begin(vk::CommandBufferBeginInfo());
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "output_pass_vk.h"
+#include "queue_vk.h"
 
 NAMESPACE_BEGIN(gr1)
 
@@ -15,7 +16,7 @@ public:
 	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eTransfer;	}
 protected:
 	vk::Result _presentResult;
-	vk::UniqueCommandBuffer _cmdSignal;
+	CmdBufferVk _cmdSignal;
 	vk::UniqueSemaphore _beforePresent;
 };
 

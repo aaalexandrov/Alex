@@ -30,7 +30,7 @@ struct PipelineVk {
 
 	vk::Pipeline &Get() { return *_pipeline; }
 
-	vk::UniqueDescriptorSet AllocateDescriptorSet();
+	DescriptorSetVk AllocateDescriptorSet();
 
 	std::shared_ptr<PipelineLayoutVk> _pipelineLayout;
 	vk::UniquePipeline _pipeline;
