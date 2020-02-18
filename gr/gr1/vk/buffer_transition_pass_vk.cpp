@@ -27,7 +27,7 @@ void BufferTransitionPassVk::Prepare()
 
 	std::array<vk::BufferMemoryBarrier, 1> bufBarrier;
 
-	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
+	_srcCmds = srcQueue->AllocateCmdBuffer();
 
 	{
 		std::lock_guard<CmdBufferVk> srcLock(_srcCmds);
@@ -50,7 +50,7 @@ void BufferTransitionPassVk::Prepare()
 
 	if (queueTransition) {
 
-		_dstCmds = dstQueue->_cmdPool.AllocateCmdBuffer();
+		_dstCmds = dstQueue->AllocateCmdBuffer();
 
 		std::lock_guard<CmdBufferVk> dstLock(_dstCmds);
 

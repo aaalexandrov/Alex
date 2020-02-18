@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR} ${CMAKE_MODULE_PATH})
 include(PrecompiledHeader.cmake)
 include(IdeGrouping.cmake)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 project(gr)
 

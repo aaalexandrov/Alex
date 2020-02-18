@@ -46,16 +46,10 @@ enum class ShaderKindBits {
 
 DEFINE_ENUM_BIT_OPERATORS(gr1::ShaderKindBits)
 
-enum class TextureDimension {
-	None,
-	Dim1D,
-	Dim2D,
-	Dim3D,
-	Cube,
-};
-
-template <TextureDimension Dim>
-struct TextureKind {};
+struct Texture1D {};
+struct Texture2D {};
+struct Texture3D {};
+struct TextureCube {};
 
 class Shader;
 template <typename Data>

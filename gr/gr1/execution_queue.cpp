@@ -81,9 +81,9 @@ void ExecutionQueue::ExecutePasses()
 
 void ExecutionQueue::Prepare()
 {
-	for (uint32_t i = 0; i < _scheduledPasses.size(); ++i) {
-		_scheduledPasses[i]->Prepare();
-	}
+	std::for_each(std::execution::par_unseq, _scheduledPasses.begin(), _scheduledPasses.end(), [](auto &&pass) {
+		pass->Prepare();
+	});
 }
 
 void ExecutionQueue::Execute()

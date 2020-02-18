@@ -13,7 +13,17 @@ void QueueVk::Init(DeviceVk &deviceVk, int32_t family, int32_t queueIndex, Queue
   _queue = deviceVk._device->getQueue(family, queueIndex);
   _role = role;
 
-	_cmdPool.Init(deviceVk, role);
+	for (auto &pool : _cmdPools) {
+		pool.Init(deviceVk, role);
+	}
+}
+
+CmdBufferVk QueueVk::AllocateCmdBuffer(vk::CommandBufferLevel level)
+{
+	size_t threadHash = std::hash<std::thread::id>()(std::this_thread::get_id());
+	size_t ind = threadHash % _cmdPools.size();
+	//std::cout << "Allocating from thread " << std::this_thread::get_id() << " and pool " << ind << std::endl;
+	return _cmdPools[ind].AllocateCmdBuffer(level);
 }
 
 vk::PipelineStageFlags QueueVk::GetPipelineStageFlags(QueueRole role)
@@ -80,6 +90,7 @@ void CommandPoolVk::Init(DeviceVk &deviceVk, QueueRole role)
 CmdBufferVk CommandPoolVk::AllocateCmdBuffer(vk::CommandBufferLevel level)
 {
 	vk::CommandBufferAllocateInfo cmdsInfo(*_cmdPool, level, 1);
+	std::lock_guard<std::recursive_mutex> allocLock(_mutex);
 	std::vector<vk::UniqueCommandBuffer> buffers = _cmdPool.getOwner().allocateCommandBuffersUnique(cmdsInfo);
 	return CmdBufferVk(this, std::move(buffers[0]));
 }

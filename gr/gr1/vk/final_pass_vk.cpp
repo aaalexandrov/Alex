@@ -19,7 +19,7 @@ FinalPassVk::FinalPassVk(Device &device)
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	_passesFinished = deviceVk->CreateFence();
 
-	_cmdFinish = deviceVk->GraphicsQueue()._cmdPool.AllocateCmdBuffer();
+	_cmdFinish = deviceVk->GraphicsQueue().AllocateCmdBuffer();
 	std::lock_guard<CmdBufferVk> finishLock(_cmdFinish);
 	_cmdFinish->begin(vk::CommandBufferBeginInfo());
 	_cmdFinish->end();

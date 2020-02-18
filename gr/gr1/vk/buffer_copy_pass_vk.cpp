@@ -16,7 +16,7 @@ BufferCopyPassVk::BufferCopyPassVk(Device &device)
 	: BufferCopyPass(device)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	_cmdCopy = deviceVk->TransferQueue()._cmdPool.AllocateCmdBuffer();
+	_cmdCopy = deviceVk->TransferQueue().AllocateCmdBuffer();
 }
 
 void BufferCopyPassVk::Prepare()

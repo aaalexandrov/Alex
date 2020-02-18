@@ -105,7 +105,7 @@ struct SPIRTypeInfo {
 
   bool operator ==(SPIRTypeInfo const &other) const
   {
-    return _baseType == other._baseType
+		return _baseType == other._baseType
       && _columns == other._columns
       && _vecSize == other._vecSize;
   }
@@ -134,10 +134,10 @@ std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
 };
 
 static std::unordered_map<spv::Dim, rttr::type> s_spirvDim2Type{ {
-	{ spv::Dim::Dim1D, rttr::type::get<TextureKind<TextureDimension::Dim1D>>() },
-	{ spv::Dim::Dim2D, rttr::type::get<TextureKind<TextureDimension::Dim2D>>() },
-	{ spv::Dim::Dim3D, rttr::type::get<TextureKind<TextureDimension::Dim3D>>() },
-	{ spv::Dim::DimCube, rttr::type::get<TextureKind<TextureDimension::Cube>>() },
+	{ spv::Dim::Dim1D, rttr::type::get<Texture1D>() },
+	{ spv::Dim::Dim2D, rttr::type::get<Texture2D>() },
+	{ spv::Dim::Dim3D, rttr::type::get<Texture3D>() },
+	{ spv::Dim::DimCube, rttr::type::get<TextureCube>() },
 } };
 
 rttr::type ShaderVk::GetTypeFromSpirv(spirv_cross::SPIRType const &type)

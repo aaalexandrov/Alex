@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <execution>
 #include <functional>
 #include <string>
 #include <mutex>

@@ -35,7 +35,7 @@ void ImageTransitionPassVk::Prepare()
 		.setLayerCount(std::max(img->GetArrayLayers(), 1u));
 	std::array<vk::ImageMemoryBarrier, 1> imgBarrier;
 
-	_srcCmds = srcQueue->_cmdPool.AllocateCmdBuffer();
+	_srcCmds = srcQueue->AllocateCmdBuffer();
 
 	{
 		std::lock_guard<CmdBufferVk> srcLock(_srcCmds);
@@ -59,7 +59,7 @@ void ImageTransitionPassVk::Prepare()
 
 	if (queueTransition) {
 
-		_dstCmds = dstQueue->_cmdPool.AllocateCmdBuffer();
+		_dstCmds = dstQueue->AllocateCmdBuffer();
 
 		std::lock_guard<CmdBufferVk> dstLock(_dstCmds);
 

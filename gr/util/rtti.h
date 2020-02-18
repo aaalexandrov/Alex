@@ -231,11 +231,11 @@ struct Func {
 	{
 		if (!ResultType()->IsAssignableTo(TypeInfo::Get<Res>()))
 			return Res();
-		ArgsPackImpl<Args...> args(args...);
-		if (!CompatibleArgs(args))
+		ArgsPackImpl<Args...> argsPack(args...);
+		if (!CompatibleArgs(argsPack))
 			return Res();
 		auto funcTyped = static_cast<FuncImpl<Res, Args...> const*>(this);
-		return args.Call(funcTyped->_func);
+		return argsPack.Call(funcTyped->_func);
 	}
 };
 

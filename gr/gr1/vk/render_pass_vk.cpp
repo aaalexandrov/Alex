@@ -126,7 +126,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 
 	UpdateDescriptorSets();
 
-	_cmdDraw = deviceVk->GraphicsQueue()._cmdPool.AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
+	_cmdDraw = deviceVk->GraphicsQueue().AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
 
 	vk::CommandBufferBeginInfo beginInfo;
 	beginInfo
@@ -319,7 +319,7 @@ RenderPassVk::RenderPassVk(Device &device)
 	: RenderPass(device)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	_passCmds = deviceVk->GraphicsQueue()._cmdPool.AllocateCmdBuffer();
+	_passCmds = deviceVk->GraphicsQueue().AllocateCmdBuffer();
 }
 
 void RenderPassVk::ClearAttachments()
@@ -533,9 +533,9 @@ void RenderPassVk::PrepareToRecordRenderCommands()
 		.setMinDepth(0.0f)
 		.setMaxDepth(1.0f);
 
-	for (auto &renderCmd : _commands) {
+	std::for_each(std::execution::par_unseq, _commands.begin(), _commands.end(), [&](auto &&renderCmd) {
 		renderCmd->PrepareToRecord(prepInfo);
-	}
+	});
 }
 
 void RenderPassVk::RecordRenderCommands(std::vector<vk::CommandBuffer> &secondaryCmds)
