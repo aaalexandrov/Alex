@@ -47,6 +47,9 @@ set(dir_SOURCES
 
 	shader.h
 	shader.cpp
+
+	utl/gltf.h
+	utl/gltf.cpp
 )
 
 if (WIN32)

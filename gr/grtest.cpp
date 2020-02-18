@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "glm/glm.hpp"
 #include "stb/stb_image.h"
+#include "tinygltf/tiny_gltf.h"
 #include "util/rect.h"
 #include "util/time.h"
 #include "util/file.h"
@@ -16,6 +17,7 @@
 #include "gr1/sampler.h"
 #include "gr1/render_pass.h"
 #include "gr1/render_state.h"
+#include "gr1/utl/gltf.h"
 #include <string>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -88,6 +90,26 @@ shared_ptr<Image> LoadImage(Device *device, std::string name)
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 
 	return image;
+}
+
+
+std::shared_ptr<Model> LoadModel(Device *device, std::string name)
+{
+	std::string path = string("../data/models/") + name;
+	tinygltf::TinyGLTF loader;
+	tinygltf::Model model;
+	std::string err, warn;
+
+	if (!loader.LoadASCIIFromFile(&model, &err, &warn, path)) {
+		cout << "Gltf loading failed for " << path << ", error: " << err << " warning: " << warn << endl;
+		return nullptr;
+	}
+	
+	cout << "Gltf loading succeeded for " << path << ", error: " << err << " warning: " << warn << endl;
+
+	std::shared_ptr<Model> result = LoadGltfModel(*device, model);
+
+	return result;
 }
 
 void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexBuffer)
@@ -190,10 +212,6 @@ void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuf
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 }
 
-struct Mesh {
-
-};
-
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
 {
 	util::LayoutElement *layout = buffer->GetBufferLayout().get();
@@ -239,6 +257,8 @@ int main()
 	auto fragShader = LoadShader(device.get(), "simple.frag");
 
 	auto texture = LoadImage(device.get(), "grid2.png");
+
+	auto mesh = LoadModel(device.get(), "Cube.gltf");
 
 	auto vbLayout = std::make_shared<util::LayoutArray>(vertShader->GetVertexLayout(), 3);
 	auto vertexBuffer = device->CreateResource<Buffer>();
