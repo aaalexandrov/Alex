@@ -28,6 +28,7 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	virtual size_t GetStructFieldIndex(std::string name) const { return ~0ull; }
 
 	size_t GetPadding() const { return _padding; }
+	void SetPadding(size_t padding) { _padding = padding; }
 	bool IsValue() const { return GetKind() == Kind::Value; }
 	bool IsArray() const { return GetKind() == Kind::Array; }
 	bool IsStruct() const { return GetKind() == Kind::Struct; }
@@ -112,10 +113,12 @@ protected:
 };
 
 struct LayoutStruct : public LayoutElement {
-	LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> fields, size_t size = 0);
+	LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> fields = {}, size_t size = 0);
+
+	void AddField(std::string name, std::shared_ptr<LayoutElement> const &elem, size_t offset = ~0ull);
 
 	Kind GetKind() const override { return Kind::Struct; }
-	size_t GetSize() const override { return _fields.back()._offset + _fields.back()._element->GetSize() + _padding; }
+	size_t GetSize() const override { return (_fields.size() ? (_fields.back()._offset + _fields.back()._element->GetSize()) : 0) + _padding; }
 	size_t GetOffset(size_t index) const override { return index < _fields.size() ? _fields[index]._offset : ~0ull; }
 	LayoutElement const *GetElement(size_t index) const override { return index < _fields.size() ? _fields[index]._element.get() : nullptr; }
 
@@ -138,19 +141,24 @@ protected:
 	std::unordered_map<std::string, size_t> _nameIndices;
 };
 
-inline std::shared_ptr<LayoutElement> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size)
+inline std::shared_ptr<LayoutValue> CreateLayoutValue(rttr::type type, size_t size = 0)
+{
+	return std::make_shared<LayoutValue>(type, size);
+}
+
+inline std::shared_ptr<LayoutArray> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size)
 {
 	return std::make_shared<LayoutArray>(elem, size);
 }
 
 template <typename... Sizes>
-std::shared_ptr<LayoutElement> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size, Sizes... sizes)
+std::shared_ptr<LayoutArray> CreateLayoutArray(std::shared_ptr<LayoutElement> const &elem, size_t size, Sizes... sizes)
 {
 	return std::make_shared<LayoutArray>(CreateLayoutArray(elem, sizes...), size);
 }
 
 template <typename... Sizes>
-std::shared_ptr<LayoutElement> CreateLayoutArray(rttr::type elemType, Sizes... sizes)
+std::shared_ptr<LayoutArray> CreateLayoutArray(rttr::type elemType, Sizes... sizes)
 {
 	return CreateLayoutArray(std::make_shared<LayoutValue>(elemType), sizes...);
 }
@@ -169,7 +177,7 @@ void PushStructElementName(std::vector<std::pair<std::shared_ptr<LayoutElement>,
 }
 
 template <typename... Args>
-std::shared_ptr<LayoutElement> CreateLayoutStruct(Args... args)
+std::shared_ptr<LayoutStruct> CreateLayoutStruct(Args... args)
 {
 	std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> elems;
 	PushStructElementName(elems, std::forward<Args>(args)...);

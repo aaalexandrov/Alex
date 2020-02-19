@@ -87,5 +87,10 @@ struct ImageData {
 	static void Copy(ImageData const &src, glm::uvec4 srcPos, ImageData const &dst, glm::uvec4 dstPos, glm::uvec4 size);
 };
 
+enum class PrimitiveKind {
+	TriangleList,
+	TriangleStrip,
+};
+
 
 NAMESPACE_END(gr1)

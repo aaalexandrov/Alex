@@ -10,7 +10,7 @@ class Buffer : public Resource {
 	RTTR_ENABLE(Resource)
 public:
   enum class Usage {
-    Invalid = 0,
+    None = 0,
     Vertex = 1,
     Index = 2,
     Uniform = 4,
@@ -28,9 +28,8 @@ public:
   virtual void Unmap() = 0;
 
 	inline std::shared_ptr<util::LayoutElement> const &GetBufferLayout() const { return _layout; }
-
 protected:
-	Usage _usage = Usage::Invalid;
+	Usage _usage = Usage::None;
 	std::shared_ptr<util::LayoutElement> _layout;
 };
 

@@ -53,14 +53,26 @@ bool LayoutElement::operator==(LayoutElement const &other) const
 
 LayoutStruct::LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> fields, size_t size)
 {
-	size_t offset = 0;
+	_padding = size;
 	for (size_t i = 0; i < fields.size(); ++i) {
-		_fields.push_back({ fields[i].first, fields[i].second, offset });
-		offset += _fields.back()._element->GetSize();
-		_nameIndices.insert(std::make_pair(_fields.back()._name, i));
+		AddField(fields[i].second, fields[i].first);
 	}
-	ASSERT(!size || size >= GetSize());
-	_padding = size ? size - GetSize() : 0;
+}
+
+void LayoutStruct::AddField(std::string name, std::shared_ptr<LayoutElement> const &elem, size_t offset)
+{
+	if (offset == ~0ull) {
+		offset = GetSize() - _padding;
+	}
+	Field field = { elem, name, offset };
+	auto it = std::lower_bound(_fields.begin(), _fields.end(), field, [](auto const &f1, auto const &f2) { return f1._offset < f2._offset; });
+	it = _fields.insert(it, field);
+	_nameIndices.insert(std::make_pair(_fields.back()._name, it - _fields.begin()));
+	if (_padding) {
+		ASSERT(_padding >= elem->GetSize());
+		_padding -= elem->GetSize();
+	}
+	ASSERT(it + 1 == _fields.end() || it->_offset + it->_element->GetSize() <= (it + 1)->_offset);
 }
 
 size_t LayoutStruct::GetStructFieldIndex(std::string name) const

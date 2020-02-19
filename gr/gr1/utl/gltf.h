@@ -8,8 +8,8 @@ NAMESPACE_BEGIN(gr1)
 
 class Model {
 public:
-
-	std::vector<Buffer> _buffers;
+	PrimitiveKind _primitiveKind;
+	std::vector<std::shared_ptr<Buffer>> _buffers;
 };
 
 std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel);

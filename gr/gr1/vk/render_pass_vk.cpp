@@ -158,7 +158,8 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 			vertBuffers[bufData._binding] = *bufferVk->_buffer;
 			vertBufferOffsets.resize(vertBuffers.size());
 			vertBufferOffsets[bufData._binding] = bufData._offset;
-		} else if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Index)) {
+		} 
+		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Index)) {
 			ASSERT(!indexBuffer);
 			indexBuffer = *bufferVk->_buffer;
 			indexType = bufferVk->GetVkIndexType();

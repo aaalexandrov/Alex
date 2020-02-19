@@ -12,7 +12,7 @@ class Image : public Resource {
 	RTTR_ENABLE(Resource)
 public:
   enum class Usage {
-    Invalid = 0,
+    None = 0,
     Texture = 1,
     Staging = 2,
     DepthBuffer = 4,
@@ -37,7 +37,7 @@ public:
 
   glm::uvec4 GetEffectiveSize() const { return ImageData::GetEffectiveSize(_size); }
 
-  Usage _usage = Usage::Invalid;
+  Usage _usage = Usage::None;
   ColorFormat _format = ColorFormat::Invalid;
   glm::uvec4 _size;
   uint32_t _mipLevels;

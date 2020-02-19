@@ -30,6 +30,14 @@ struct hash<vector<ElemType>> {
 	}
 };
 
+template <typename T1, typename T2>
+struct hash<pair<T1, T2>> {
+	auto operator() (pair<T1, T2> const &key) const
+	{
+		return hash<T1>()(key.first) * 31 + hash<T2>()(key.second);
+	}
+};
+
 
 NAMESPACE_END(std)
 

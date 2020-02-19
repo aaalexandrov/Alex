@@ -36,11 +36,6 @@ public:
 	virtual void Record(CommandRecordInfo &recordInfo) = 0;
 };
 
-enum class PrimitiveKind {
-	TriangleList,
-	TriangleStrip,
-};
-
 class RenderDrawCommand : public RenderCommand {
 	RTTR_ENABLE(RenderCommand)
 public:
