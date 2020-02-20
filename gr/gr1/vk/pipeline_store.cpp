@@ -8,7 +8,7 @@ NAMESPACE_BEGIN(gr1)
 
 size_t VertexBufferLayout::GetHash() const
 {
-	size_t hash = _bufferLayout->GetHash();
+	size_t hash = _bufferLayout->GetArrayElement()->GetHash();
 	hash = util::GetHash(_binding, hash);
 	hash = util::GetHash(_frequencyInstance, hash);
 	return hash;
@@ -16,7 +16,7 @@ size_t VertexBufferLayout::GetHash() const
 
 bool VertexBufferLayout::operator==(VertexBufferLayout const &other) const
 {
-	return *_bufferLayout == *other._bufferLayout
+	return *_bufferLayout->GetArrayElement() == *other._bufferLayout->GetArrayElement()
 		&& _binding == other._binding
 		&& _frequencyInstance == other._frequencyInstance;
 }
@@ -246,9 +246,7 @@ int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElem
 	for (int i = 0; i < bufferLayouts.size(); ++i) {
 		auto &bufLayout = bufferLayouts[i];
 
-		util::LayoutElement const *vertDesc = bufLayout._bufferLayout->GetKind() == util::LayoutElement::Kind::Array
-			? bufLayout._bufferLayout->GetArrayElement()
-			: bufLayout._bufferLayout.get();
+		util::LayoutElement const *vertDesc = bufLayout._bufferLayout->GetArrayElement();
 		ASSERT(vertDesc->GetKind() == util::LayoutElement::Kind::Struct);
 		size_t elemIndex = vertDesc->GetStructFieldIndex(attribName);
 		util::LayoutElement const *bufElem = vertDesc->GetElement(elemIndex);

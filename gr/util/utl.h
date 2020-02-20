@@ -38,7 +38,6 @@ struct hash<pair<T1, T2>> {
 	}
 };
 
-
 NAMESPACE_END(std)
 
 NAMESPACE_BEGIN(util)

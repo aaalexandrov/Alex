@@ -29,6 +29,8 @@ public:
 	inline std::vector<UniformInfo> const &GetUniformBuffers() const { return _uniformBuffers; }
 	inline std::vector<UniformInfo> const &GetSamplers() const { return _samplers; }
 
+	bool HasCommonVertexAttributes(util::LayoutElement const *vertexLayout) const;
+
 protected:
 	std::string _name;
 	ShaderKind _kind;

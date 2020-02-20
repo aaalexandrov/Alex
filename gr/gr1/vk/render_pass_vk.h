@@ -31,7 +31,7 @@ public:
 	void SetRenderState(std::shared_ptr<RenderState> const &renderState) override;
 	void SetShader(std::shared_ptr<Shader> const &shader) override;
 	void RemoveShader(ShaderKind kind) override;
-	int AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding = 0, size_t offset = 0, bool frequencyInstance = false) override;
+	int AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding = 0, size_t offset = 0, bool frequencyInstance = false, std::shared_ptr<util::LayoutElement> const &overrideLayout = std::shared_ptr<util::LayoutElement>()) override;
 	void RemoveBuffer(int bufferIndex) override;	void SetPrimitiveKind(PrimitiveKind primitiveKind) override;
 	void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0) override;
 	int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding = 0) override;

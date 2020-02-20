@@ -107,7 +107,14 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 	
 	cout << "Gltf loading succeeded for " << path << ", error: " << err << " warning: " << warn << endl;
 
-	std::shared_ptr<Model> result = LoadGltfModel(*device, model);
+	static std::unordered_map<std::string, std::string> remapAttr{ {
+		{ "POSITION", "inPosition" },
+		{ "NORMAL", "inNormal" },
+		{ "TANGENT", "inTangent" },
+		{ "TEXCOORD_0", "inTexCoord" },
+	} };
+
+	std::shared_ptr<Model> result = LoadGltfModel(*device, model, remapAttr);
 
 	return result;
 }
@@ -212,6 +219,23 @@ void InitTriangleIndices(Device *device, std::shared_ptr<Buffer> const &indexBuf
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 }
 
+void InitPerInstanceColor(Device *device, std::shared_ptr<Buffer> const &vertexBuffer)
+{
+	auto vertexStaging = device->CreateResource<Buffer>();
+	vertexStaging->Init(Buffer::Usage::Staging, vertexBuffer->GetBufferLayout());
+
+	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
+	void *mapped = vertexStaging->Map();
+
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	vertexStaging->Unmap();
+
+	auto copyPass = device->CreateResource<BufferCopyPass>();
+	copyPass->Init(vertexStaging, vertexBuffer);
+
+	device->GetExecutionQueue().EnqueuePass(copyPass);
+}
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
 {
 	util::LayoutElement *layout = buffer->GetBufferLayout().get();
@@ -279,6 +303,12 @@ int main()
 
 	InitTriangleStreams(device.get(), posStream, colorStream, texCoordStream);
 
+	auto vbPerInstanceColor = util::CreateLayoutArray(const_cast<util::LayoutElement*>(vbColorsLayout->GetArrayElement())->shared_from_this(), 1);
+	auto perInstanceColor = device->CreateResource<Buffer>();
+	perInstanceColor->Init(Buffer::Usage::Vertex, vbPerInstanceColor);
+	InitPerInstanceColor(device.get(), perInstanceColor);
+	mesh->_buffers.push_back({ perInstanceColor, true });
+
 	auto ibLayout = std::make_shared<util::LayoutArray>(std::make_shared<util::LayoutValue>(rttr::type::get<uint16_t>()), 6);
 	auto indexBuffer = device->CreateResource<Buffer>();
 	indexBuffer->Init(Buffer::Usage::Index, ibLayout);
@@ -287,15 +317,15 @@ int main()
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
-	//renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::None);
-	//renderState->SetDepthState(true, true, RenderState::CompareFunc::Always);
+	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::Front);
+	renderState->SetDepthState(true, true, CompareFunc::Less);
 	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
 
 	auto sampler = device->CreateResource<Sampler>();
 	sampler->Init();
 
 	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
-	view = glm::translate(view, glm::vec3(0, 0, 1.5f));
+	view = glm::translate(view, glm::vec3(0, 0, 5.5f));
 
 	auto uboShader = device->CreateResource<Buffer>();
 	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
@@ -311,13 +341,15 @@ int main()
 	renderTriangle->SetShader(fragShader);
 	renderTriangle->SetRenderState(renderState);
 	//renderTriangle->AddBuffer(vertexBuffer);
-	renderTriangle->AddBuffer(posStream, 0);
-	renderTriangle->AddBuffer(colorStream, 1);
-	renderTriangle->AddBuffer(texCoordStream, 2);
-	renderTriangle->AddBuffer(indexBuffer);
+	//renderTriangle->AddBuffer(posStream, 0);
+	//renderTriangle->AddBuffer(colorStream, 1);
+	//renderTriangle->AddBuffer(perInstanceColor, 1, 0, true);
+	//renderTriangle->AddBuffer(texCoordStream, 2);
+	//renderTriangle->AddBuffer(indexBuffer);
 	renderTriangle->AddBuffer(uboShader);
 	renderTriangle->AddSampler(sampler, texture, 1);
-	renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
+	mesh->SetToDrawCommand(renderTriangle);
+	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Immediate);

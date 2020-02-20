@@ -17,13 +17,14 @@ void RenderDrawCommand::Clear()
 	_drawCounts = DrawCounts();
 }
 
-int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance)
+int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
 { 
 	BufferData bufData;
 	bufData._buffer = buffer;
 	bufData._binding = binding;
 	bufData._offset = offset;
 	bufData._frequencyInstance = frequencyInstance;
+	bufData._overrideLayout = overrideLayout;
 	_buffers.push_back(std::move(bufData));
 	return static_cast<int>(_buffers.size() - 1);
 }

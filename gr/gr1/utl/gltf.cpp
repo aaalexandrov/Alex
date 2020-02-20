@@ -3,10 +3,40 @@
 #include "../buffer.h"
 #include "../output_pass.h"
 #include "../execution_queue.h"
+#include "../render_pass.h"
 #include "util/layout.h"
 #include "util/utl.h"
 
 NAMESPACE_BEGIN(gr1)
+
+uint32_t Model::GetIndicesCount()
+{
+	return static_cast<uint32_t>(GetIndexBuffer()->GetBufferLayout()->GetArrayCount());
+}
+
+Buffer *Model::GetIndexBuffer()
+{
+	auto it = std::find_if(_buffers.begin(), _buffers.end(), [&](auto const &buf) { return !!(buf._buffer->GetUsage() & Buffer::Usage::Index); });
+	if (it == _buffers.end())
+		return nullptr;
+	return it->_buffer.get();
+}
+
+void Model::SetToDrawCommand(std::shared_ptr<RenderDrawCommand> const &drawCmd)
+{
+	int binding = 0;
+	for (auto &buffer : _buffers) {
+		if (!!(buffer._buffer->GetUsage() & Buffer::Usage::Index)) {
+			drawCmd->AddBuffer(buffer._buffer);
+			continue;
+		}
+		ASSERT(buffer._buffer->GetUsage() & Buffer::Usage::Vertex);
+		if (!drawCmd->GetShader(ShaderKind::Vertex)->HasCommonVertexAttributes(buffer._buffer->GetBufferLayout()->GetArrayElement()))
+			continue;
+		drawCmd->AddBuffer(buffer._buffer, binding++, 0, buffer._perInstance);
+	}
+	drawCmd->SetDrawCounts(GetIndicesCount());
+}
 
 std::unordered_map<std::pair<uint32_t, uint32_t>, rttr::type> s_typeWithComponent2type{ {
 	{{ TINYGLTF_TYPE_VEC2, TINYGLTF_COMPONENT_TYPE_FLOAT }, rttr::type::get<glm::vec2>() },
@@ -37,16 +67,16 @@ void AddModelBuffer(Device &device, Model &model, std::vector<uint8_t> const &bu
 	memcpy(mapped, buffer.data() + offset, size);
 	staging->Unmap();
 
-	model._buffers.push_back(device.CreateResource<Buffer>());
-	model._buffers.back()->Init(usage, layout);
+	model._buffers.push_back({ device.CreateResource<Buffer>() });
+	model._buffers.back()._buffer->Init(usage, layout);
 
 	auto copyPass = device.CreateResource<BufferCopyPass>();
-	copyPass->Init(staging, model._buffers.back());
+	copyPass->Init(staging, model._buffers.back()._buffer);
 
 	device.GetExecutionQueue().EnqueuePass(copyPass);
 }
 
-std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel)
+std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel, std::unordered_map<std::string, std::string> const &remapAttributes)
 {
 	ASSERT(gltfModel.buffers.size() == 1);
 	std::shared_ptr<util::LayoutStruct> bufLayout = std::make_shared<util::LayoutStruct>();
@@ -79,7 +109,8 @@ std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel)
 			ASSERT(view.target == TINYGLTF_TARGET_ARRAY_BUFFER);
 			maxElements = std::min(maxElements, accessor.count);
 			auto value = util::CreateLayoutValue(s_typeWithComponent2type.at(std::pair(accessor.type, accessor.componentType)));
-			elem->AddField(attr.first, value, accessor.byteOffset);
+			std::string name = util::FindOrDefault(remapAttributes, attr.first, attr.first);
+			elem->AddField(name, value, accessor.byteOffset);
 		}
 
 		ASSERT(!view.byteStride || maxElements <= (view.byteLength - view.byteOffset) / view.byteStride);

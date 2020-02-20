@@ -58,14 +58,14 @@ void RenderDrawCommandVk::RemoveShader(ShaderKind kind)
 	RenderDrawCommand::RemoveShader(kind);
 }
 
-int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance)
+int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
 {
 	_cmdDraw.reset();
 	_descriptorSetValid = false;
 	if (!!(buffer->GetUsage() & (Buffer::Usage::Vertex | Buffer::Usage::Index))) {
 		_pipeline.reset();
 	}
-	return RenderDrawCommand::AddBuffer(buffer, binding, offset, frequencyInstance);
+	return RenderDrawCommand::AddBuffer(buffer, binding, offset, frequencyInstance, overrideLayout);
 }
 
 void RenderDrawCommandVk::RemoveBuffer(int bufferIndex)
@@ -170,7 +170,7 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	if (indexBuffer) {
 		_cmdDraw->bindIndexBuffer(indexBuffer, indexOffset, indexType);
 
-		_cmdDraw->drawIndexed(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._vertexOffset, _drawCounts._instanceCount);
+		_cmdDraw->drawIndexed(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._vertexOffset, _drawCounts._firstInstance);
 	} else {
 		_cmdDraw->draw(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._firstInstance);
 	}
@@ -202,7 +202,7 @@ void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t sub
 			continue;
 
 		VertexBufferLayout bufLayout;
-		bufLayout._bufferLayout = _buffers[i]._buffer->GetBufferLayout();
+		bufLayout._bufferLayout = _buffers[i]._overrideLayout ? _buffers[i]._overrideLayout : _buffers[i]._buffer->GetBufferLayout();
 		bufLayout._binding = _buffers[i]._binding;
 		bufLayout._frequencyInstance = _buffers[i]._frequencyInstance;
 		pipeInfo._vertexBufferLayouts.push_back(bufLayout);
