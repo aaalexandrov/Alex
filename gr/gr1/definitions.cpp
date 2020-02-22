@@ -25,8 +25,8 @@ void ImageData::Copy(ImageData const &src, glm::uvec4 srcPos, ImageData const &d
 	size = GetEffectiveSize(size);
 	glm::uvec4 srcSize = src.GetEffectiveSize();
 	glm::uvec4 dstSize = dst.GetEffectiveSize();
-	ASSERT(util::VecLessEq(srcPos + size, srcSize));
-	ASSERT(util::VecLessEq(dstPos + size, dstSize));
+	ASSERT(glm::all(glm::lessThanEqual(srcPos + size, srcSize)));
+	ASSERT(glm::all(glm::lessThanEqual(dstPos + size, dstSize)));
 
 	glm::uvec4 ind;
 	uint32_t xSize = size.x * src._pitch.x;

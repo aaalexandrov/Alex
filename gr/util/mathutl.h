@@ -66,16 +66,26 @@ std::string ToString(V const &v)
   return stream.str();
 }
 
-template <typename Val>
-inline Val Min(Val a, Val b)
-{
-  return std::min(a, b);
+template <typename Num>
+struct NumericTraits {
+	static constexpr Num Eps() { return 0; }
+};
+
+template <>
+struct NumericTraits<float> {
+	static constexpr float Eps() { return 1.e-6f; }
+};
+
+template <typename Num>
+bool IsZero(Num n1, Num eps = NumericTraits<Num>::Eps()) 
+{  
+	return -eps <= n1 && n1 <= eps;
 }
 
-template <typename Val>
-inline Val Max(Val a, Val b)
+template <typename Num>
+bool IsEqual(Num n1, Num n2, Num eps = NumericTraits<Num>::Eps())
 {
-  return std::max(a, b);
+	return n1 >= n2 ? IsZero(n1 - n2, eps) : IsZero(n2 - n1, eps);
 }
 
 
@@ -88,91 +98,29 @@ struct VecTraits<glm::vec<D, T, Q>> {
   static const glm::qualifier Precision = Q; 
 };
 
-template <typename Vec>
-Vec VecApplyOp(Vec v, std::function<typename Vec::value_type(typename Vec::value_type)> op)
+template <typename Op, typename Vec, typename ResElem = typename Vec::value_type>
+glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> VecApplyOp(Vec v0, Op op)
 {
-  Vec res;
-  for (int d = 0; d < Vec::length(); ++d) 
-    res[d] = op(v[d]);
-  return res;
+	Vec res;
+	for (int d = 0; d < Vec::length(); ++d)
+		res[d] = op(v0[d]);
 }
 
-template <typename Vec, typename Op>
-Vec VecCombineOp(Vec v0, Vec v1, Op op)
+template <typename Op, typename Vec, typename ResElem = typename Vec::value_type>
+glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> VecCombineOp(Vec v0, Vec v1, Op op)
 {
   Vec res;
   for (int d = 0; d < Vec::length(); ++d)
     res[d] = op(v0[d], v1[d]);
-}
-
-template <typename Vec, typename ResElem = typename Vec::value_type>
-glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> VecCombineTypedOp(Vec v0, Vec v1, std::function<ResElem(typename Vec::value_type, typename Vec::value_type)> op)
-{
-  glm::vec<VecTraits<Vec>::Length, ResElem, VecTraits<Vec>::Precision> res;
-  for (int d = 0; d < Vec::length(); ++d) 
-    res[d] = op(v0[d], v1[d]);
-  return res;
-}
-
-template <typename Vec>
-bool VecLess(Vec a, Vec b)
-{
-  bool res = a[0] < b[0];
-  for (int d = 1; d < Vec::length(); ++d)
-    res &= a[d] < b[d];
-  return res;
-}
-
-template <typename Vec>
-bool VecLessEq(Vec a, Vec b)
-{
-  bool res = a[0] <= b[0];
-  for (int d = 1; d < Vec::length(); ++d)
-    res &= a[d] <= b[d];
-  return res;
 }
 
 template <typename Vec>
 typename Vec::value_type VecDot(Vec v0, Vec v1)
 {
-  Vec::value_type res = v0[0] * v1[0];
-  for (int d = 1; d < Vec::length(); ++d)
-    res += v0[d] * v1[d];
-  return res;
+	typename Vec::value_type res = v0[0] * v1[0];
+	for (int d = 1; d < Vec::length(); ++d)
+		res += v0[d] * v1[d];
+	return res;
 }
-
-template <typename Vec>
-Vec VecSubClamp0(Vec v0, Vec v1)
-{
-  Vec res;
-  for (int d = 0; d < Vec::length(); ++d)
-    res[d] = v0[d] > v1[d] ? v0[d] - v1[d] : 0;
-  return res;
-}
-
-template <typename Vec>
-Vec VecDecClamp0(Vec v0)
-{
-  return VecSubClamp0(v0, glm::one<Vec>());
-}
-
-template <typename Vec>
-Vec VecMin(Vec v0, Vec v1)
-{
-  Vec res;
-  for (int d = 0; d < Vec::length(); ++d)
-    res[d] = std::min(v0[d], v1[d]);
-  return res;
-}
-
-template <typename Vec>
-Vec VecMax(Vec v0, Vec v1)
-{
-  Vec res;
-  for (int d = 0; d < Vec::length(); ++d)
-    res[d] = std::max(v0[d], v1[d]);
-  return res;
-}
-
 
 NAMESPACE_END(util)

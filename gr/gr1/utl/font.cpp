@@ -4,6 +4,7 @@
 #include "../buffer.h"
 #include "util/str.h"
 
+
 NAMESPACE_BEGIN(gr1)
 
 Font::CharRange::CharRange(int32_t first, int32_t count)
@@ -23,14 +24,21 @@ bool Font::CharRange::ContainsCodePoint(int32_t codePoint) const
 void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontIndex, float pixelHeight, std::vector<std::pair<int32_t, int32_t>> const &codePointRanges)
 {
 	_fontData = fontData;
-	_pixelHeight = pixelHeight;
 	_fontIndex = fontIndex;
 
 	if (!stbtt_InitFont(&_stbFont, _fontData->data(), _fontIndex))
 		throw GraphicsException("Failed to load font", ~0ul);
 
-	_scale = stbtt_ScaleForPixelHeight(&_stbFont, _pixelHeight);
+	_scale = stbtt_ScaleForPixelHeight(&_stbFont, pixelHeight);
 	
+	int ascent, descent, lineGap;
+	stbtt_GetFontVMetrics(&_stbFont, &ascent, &descent, &lineGap);
+	_ascent = ascent * _scale;
+	_descent = -descent * _scale;
+	_lineSpacing = _ascent + _descent + lineGap * _scale;
+
+	ASSERT(util::IsEqual(_ascent + _descent, pixelHeight));
+
 	int pixelCount = 0;
 	for (auto &range : codePointRanges) {
 		ASSERT(range.first < range.second);
@@ -46,7 +54,7 @@ void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontI
 	}
 	
 	int size = static_cast<int>(ceil(sqrt(pixelCount)));
-	int pixHeight = static_cast<int>(ceil(_pixelHeight));
+	int pixHeight = static_cast<int>(ceil(pixelHeight));
 	size = (size + pixHeight - 1) / pixHeight * pixHeight;
 	std::vector<uint8_t> pixels(size * size);
 	stbtt_pack_context packCtx;
@@ -54,7 +62,7 @@ void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontI
 
 	for (auto &charRange : _charRanges) {
 		auto &range = charRange.second;
-		int result = stbtt_PackFontRange(&packCtx, _fontData->data(), _fontIndex, _pixelHeight, range._firstCodePoint, range._codePointCount, range._stbChars.data());
+		int result = stbtt_PackFontRange(&packCtx, _fontData->data(), _fontIndex, pixelHeight, range._firstCodePoint, range._codePointCount, range._stbChars.data());
 		if (!result)
 			throw GraphicsException("Failed to render font to bitmap", ~0ul);
 	}
@@ -112,14 +120,13 @@ void Font::Clear()
 	_usedChars = 0;
 }
 
-auto Font::AddText(glm::vec2 &pixelPos, std::string text, glm::vec4 color) -> TextId
+auto Font::AddText(glm::vec2 &pixelPos, std::string text, int32_t prevCodePoint, glm::vec4 color) -> TextId
 {
 	uint8_t const *str = reinterpret_cast<uint8_t const*>(text.c_str());
 	uint8_t const *strEnd = reinterpret_cast<uint8_t const *>(text.c_str() + text.length());
 
 	uint32_t *indices = _stagingBuffer->GetBufferLayout()->GetMemberPtr<uint32_t>(_bufferData.data(), "indices", 0);
 	uint8_t *vertices = reinterpret_cast<uint8_t*>(_stagingBuffer->GetBufferLayout()->GetMemberPtr<void>(_bufferData.data(), "vertices"));
-	int32_t prevCp = 0;
 	TextId id{ _usedChars };
 	glm::u8vec4 packedColor = glm::round(glm::clamp(color, 0.0f, 1.0f) * 255.0f);
 	while (str < strEnd) {
@@ -128,15 +135,46 @@ auto Font::AddText(glm::vec2 &pixelPos, std::string text, glm::vec4 color) -> Te
 			ASSERT(str == strEnd);
 			break;
 		}
-		bool result = SetCharQuad(indices, vertices, _usedChars, cp, prevCp, pixelPos, packedColor);
+		bool result = SetCharQuad(indices, vertices, _usedChars, cp, prevCodePoint, pixelPos, packedColor);
 		ASSERT(result);
 		if (result) {
 			++_usedChars;
 		}
-		prevCp = cp;
+		prevCodePoint = cp;
 	}
 
 	return id;
+}
+
+util::RectF Font::MeasureText(glm::vec2 &pixelPos, std::string text, int32_t prevCodePoint)
+{
+	uint8_t const *str = reinterpret_cast<uint8_t const*>(text.c_str());
+	uint8_t const *strEnd = reinterpret_cast<uint8_t const *>(text.c_str() + text.length());
+
+	util::RectF rect{ pixelPos, pixelPos };
+	glm::vec2 orgPos = pixelPos;
+
+	while (str < strEnd) {
+		int32_t cp = util::ReadUnicodePoint(str, strEnd);
+		if (!cp) {
+			ASSERT(str == strEnd);
+			break;
+		}
+
+		stbtt_aligned_quad quad;
+		if (!FillAlignedQuad(cp, prevCodePoint, pixelPos, quad)) {
+			rect = util::RectF();
+			pixelPos = orgPos;
+			break;
+		}
+
+		rect._min = glm::min(rect._min, glm::vec2(quad.x0, quad.y0));
+		rect._max = glm::max(rect._max, glm::vec2(quad.x1, quad.y1));
+
+		prevCodePoint = cp;
+	}
+
+	return rect;
 }
 
 void Font::SetDataToDrawCommand(RenderDrawCommand *cmdDraw)
@@ -191,7 +229,7 @@ auto Font::GetCharRange(int32_t codePoint) -> CharRange const *
 	return &it->second;
 }
 
-bool Font::SetCharQuad(uint32_t *indices, uint8_t *vertices, uint32_t quadIndex, int32_t codePoint, int32_t prevCodePoint, glm::vec2 &pixelPos, glm::u8vec4 color)
+bool Font::FillAlignedQuad(int32_t codePoint, int32_t prevCodePoint, glm::vec2 &pixelPos, stbtt_aligned_quad &quad)
 {
 	CharRange const *range, *prevRange;
 	range = GetCharRange(codePoint);
@@ -206,8 +244,16 @@ bool Font::SetCharQuad(uint32_t *indices, uint8_t *vertices, uint32_t quadIndex,
 
 	glm::ivec2 size = _texture->GetSize();
 
-	stbtt_aligned_quad quad;
 	stbtt_GetPackedQuad(range->_stbChars.data(), size.x, size.y, codePoint - range->_firstCodePoint, &pixelPos.x, &pixelPos.y, &quad, true);
+
+	return true;
+}
+
+bool Font::SetCharQuad(uint32_t *indices, uint8_t *vertices, uint32_t quadIndex, int32_t codePoint, int32_t prevCodePoint, glm::vec2 &pixelPos, glm::u8vec4 color)
+{
+	stbtt_aligned_quad quad;
+	if (!FillAlignedQuad(codePoint, prevCodePoint, pixelPos, quad))
+		return false;
 
 	vertices += quadIndex * 4 *_vertexStride;
 	indices += quadIndex * 6;

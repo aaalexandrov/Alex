@@ -2,14 +2,15 @@
 
 #include "../render_pass.h"
 #include "../execution_queue.h"
-#include "stb/stb_rect_pack.h"
 #include "stb/stb_truetype.h"
 
 NAMESPACE_BEGIN(gr1)
 
 class Font {
 public:
-	struct TextId;
+	struct TextId {
+		uint32_t _bufferPos;
+	};
 
 	Font(Device &device) : _device(&device) {}
 
@@ -18,11 +19,19 @@ public:
 	void SetRenderingData(uint32_t sizeChars, std::string positionAttr, std::string texCoordAttr, std::string colorAttr);
 
 	void Clear();
-	TextId AddText(glm::vec2 &pixelPos, std::string text, glm::vec4 color = glm::vec4(1));
+	TextId AddText(glm::vec2 &pixelPos, std::string text, int32_t prevCodePoint = 0, glm::vec4 color = glm::vec4(1));
+
+	util::RectF MeasureText(glm::vec2 &pixelPos, std::string text, int32_t prevCodePoint = 0);
 
 	void SetDataToDrawCommand(RenderDrawCommand *cmdDraw);
 
-public:
+	float GetAscent() const { return _ascent; }
+	float GetDescent() const { return _descent; }
+	float GetLineSpacing() const { return _lineSpacing; }
+
+	std::shared_ptr<Image> const &GetTexture() const { return _texture; }
+
+protected:
 	struct CharRange {
 		int32_t _firstCodePoint, _codePointCount;
 		stbtt_pack_range _stbRange = {};
@@ -35,11 +44,8 @@ public:
 	};
 
 	CharRange const *GetCharRange(int32_t codePoint);
+	bool FillAlignedQuad(int32_t codePoint, int32_t prevCodePoint, glm::vec2 &pixelPos, stbtt_aligned_quad &quad);
 	bool SetCharQuad(uint32_t *indices, uint8_t *vertices, uint32_t quadIndex, int32_t codePoint, int32_t prevCodePoint, glm::vec2 &pixelPos, glm::u8vec4 color);
-
-	struct TextId {
-		uint32_t _bufferPos;
-	};
 
 	Device *_device;
 	std::shared_ptr<Image> _texture;
@@ -53,10 +59,9 @@ public:
 
 	std::shared_ptr<std::vector<uint8_t>> _fontData;
 	int _fontIndex = 0;
-	float _pixelHeight;
+	float _ascent, _descent, _lineSpacing;
 	float _scale;
 	stbtt_fontinfo _stbFont = {};
-	stbtt_pack_context _stbPackCtx = {};
 	std::map<int32_t, CharRange> _charRanges;
 };
 

@@ -37,6 +37,20 @@ int32_t ReadUnicodePoint(uint8_t const *&utf8, uint8_t const *utf8End)
 	return 0;
 }
 
+int32_t ReadUnicodePointReverse(uint8_t const *utf8, uint8_t const *&utf8End)
+{
+	uint8_t const *pointStart = utf8End;
+	while (pointStart > utf8 && (pointStart[-1] & 0xc0) == 0x80 && utf8End - pointStart <= 3)
+		--pointStart;
+	int32_t cp = ReadUnicodePoint(pointStart, utf8End);
+	if (pointStart != utf8End) {
+		ASSERT(!cp);
+		return 0;
+	}
+	utf8End = pointStart;
+	return cp;
+}
+
 size_t WriteUnicodePoint(int32_t codePoint, uint8_t *&utf8, uint8_t const *utf8End)
 {
 	ptrdiff_t maxLen = utf8End - utf8;

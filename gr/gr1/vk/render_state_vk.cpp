@@ -13,12 +13,12 @@ RTTR_REGISTRATION
 }
 
 
-util::ValueRemapper<RenderState::FrontFaceMode, vk::FrontFace> RenderStateVk::s_frontFace2Vk { {
+util::ValueRemapper<FrontFaceMode, vk::FrontFace> RenderStateVk::s_frontFace2Vk { {
 		{FrontFaceMode::CCW, vk::FrontFace::eCounterClockwise},
 		{FrontFaceMode::CW, vk::FrontFace::eClockwise},
 	} };
 
-util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> RenderStateVk::s_cullMask2Vk{ {
+util::ValueRemapper<CullMask, vk::CullModeFlagBits> RenderStateVk::s_cullMask2Vk{ {
 		{CullMask::None, vk::CullModeFlagBits::eNone},
 		{CullMask::Front, vk::CullModeFlagBits::eFront},
 		{CullMask::Back, vk::CullModeFlagBits::eBack},
@@ -36,7 +36,7 @@ util::ValueRemapper<CompareFunc, vk::CompareOp> s_compareFunc2Vk{ {
 		{CompareFunc::Always, vk::CompareOp::eAlways},
 	} };
 
-util::ValueRemapper<RenderState::StencilFunc, vk::StencilOp> RenderStateVk::s_stencilFunc2Vk{ {
+util::ValueRemapper<StencilFunc, vk::StencilOp> RenderStateVk::s_stencilFunc2Vk{ {
 		{StencilFunc::Keep, vk::StencilOp::eKeep},
 		{StencilFunc::Zero, vk::StencilOp::eZero},
 		{StencilFunc::Replace, vk::StencilOp::eReplace},
@@ -47,7 +47,7 @@ util::ValueRemapper<RenderState::StencilFunc, vk::StencilOp> RenderStateVk::s_st
 		{StencilFunc::DecrementAndWrap, vk::StencilOp::eDecrementAndWrap},
 	} };
 
-util::ValueRemapper<RenderState::BlendFunc, vk::BlendOp> RenderStateVk::s_blendFunc2Vk{ {
+util::ValueRemapper<BlendFunc, vk::BlendOp> RenderStateVk::s_blendFunc2Vk{ {
 		{BlendFunc::Add,             vk::BlendOp::eAdd,             },
 		{BlendFunc::Subtract,        vk::BlendOp::eSubtract,        },
 		{BlendFunc::ReverseSubtract, vk::BlendOp::eReverseSubtract, },
@@ -55,7 +55,7 @@ util::ValueRemapper<RenderState::BlendFunc, vk::BlendOp> RenderStateVk::s_blendF
 		{BlendFunc::Max,             vk::BlendOp::eMax,             },
 	} };
 
-util::ValueRemapper<RenderState::BlendFactor, vk::BlendFactor> RenderStateVk::s_blendFactor2Vk{ {
+util::ValueRemapper<BlendFactor, vk::BlendFactor> RenderStateVk::s_blendFactor2Vk{ {
 		{BlendFactor::Zero,                     vk::BlendFactor::eZero,                  },
 		{BlendFactor::One,                      vk::BlendFactor::eOne,                   },
 		{BlendFactor::SrcColor,                 vk::BlendFactor::eSrcColor,              },
@@ -77,7 +77,7 @@ util::ValueRemapper<RenderState::BlendFactor, vk::BlendFactor> RenderStateVk::s_
 		{BlendFactor::OneMinusSrc1Alpha,        vk::BlendFactor::eOneMinusSrc1Alpha,     },
 	} };
 
-util::ValueRemapper<RenderState::ColorComponentMask, vk::ColorComponentFlagBits, true> RenderStateVk::s_colorComponentMask2Vk{ {
+util::ValueRemapper<ColorComponentMask, vk::ColorComponentFlagBits, true> RenderStateVk::s_colorComponentMask2Vk{ {
 		{ ColorComponentMask::R, vk::ColorComponentFlagBits::eR	},
 		{ ColorComponentMask::G, vk::ColorComponentFlagBits::eG	},
 		{ ColorComponentMask::B, vk::ColorComponentFlagBits::eB	},

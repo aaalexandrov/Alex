@@ -45,7 +45,7 @@ enum class ShaderKindBits {
 	Fragment = 1 << static_cast<size_t>(ShaderKind::Fragment),
 };
 
-DEFINE_ENUM_BIT_OPERATORS(gr1::ShaderKindBits)
+DEFINE_ENUM_BIT_OPERATORS(ShaderKindBits)
 
 struct Texture1D {};
 struct Texture2D {};
@@ -70,6 +70,73 @@ enum class CompareFunc {
 	Invalid,
 };
 
+enum class StencilFunc {
+	Keep,
+	Zero,
+	Replace,
+	IncrementAndClamp,
+	DecrementAndClamp,
+	Invert,
+	IncrementAndWrap,
+	DecrementAndWrap,
+};
+
+enum class FrontFaceMode {
+	CCW,
+	CW,
+};
+
+enum class CullMask {
+	None,
+	Front = 1,
+	Back = 2,
+	FrontAndBack = 3,
+};
+
+enum class BlendFunc
+{
+	Add,
+	Subtract,
+	ReverseSubtract,
+	Min,
+	Max,
+};
+
+enum class BlendFactor
+{
+	Zero,
+	One,
+	SrcColor,
+	OneMinusSrcColor,
+	DstColor,
+	OneMinusDstColor,
+	SrcAlpha,
+	OneMinusSrcAlpha,
+	DstAlpha,
+	OneMinusDstAlpha,
+	ConstantColor,
+	OneMinusConstantColor,
+	ConstantAlpha,
+	OneMinusConstantAlpha,
+	SrcAlphaSaturate,
+	Src1Color,
+	OneMinusSrc1Color,
+	Src1Alpha,
+	OneMinusSrc1Alpha,
+};
+
+enum class ColorComponentMask
+{
+	None,
+	R = 1,
+	G = 2,
+	B = 4,
+	A = 8,
+	RGBA = 15,
+};
+
+DEFINE_ENUM_BIT_OPERATORS(ColorComponentMask)
+
 struct ImageData {
 	glm::uvec4 _size = {};
 	glm::uvec4 _pitch = {};
@@ -81,8 +148,7 @@ struct ImageData {
 	size_t GetOffset(glm::uvec4 pixelPos) const;
 
 	glm::uvec4 GetEffectiveSize() const { return GetEffectiveSize(_size); }
-	static glm::uvec4 GetEffectiveSize(glm::uvec4 s) { return util::VecMax(s, glm::uvec4(1, 1, 1, 1)); }
-
+	static glm::uvec4 GetEffectiveSize(glm::uvec4 s) { return glm::max(s, glm::uvec4(1, 1, 1, 1)); }
 
 	static glm::uvec4 GetPackedPitch(glm::uvec4 imgSize, uint32_t elemSize);
 	static void Copy(ImageData const &src, glm::uvec4 srcPos, ImageData const &dst, glm::uvec4 dstPos, glm::uvec4 size);

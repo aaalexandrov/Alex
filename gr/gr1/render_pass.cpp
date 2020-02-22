@@ -94,7 +94,7 @@ glm::uvec2 RenderPass::GetRenderAreaSize()
 {
 	glm::uvec2 size(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());
 	for (auto &attach : _attachments) {
-		size = util::VecMin(size, glm::uvec2(attach._image->GetSize()));
+		size = glm::min(size, glm::uvec2(attach._image->GetSize()));
 	}
 	return size;
 }

@@ -60,8 +60,8 @@ void ImageBufferCopyPass::Init(
 	_imageMipLevel = imageMipLevel;
 
 	ASSERT(_direction == CopyDirection::ImageToBuffer || _direction == CopyDirection::BufferToImage);
-	ASSERT(util::VecLessEq(_bufferOffset + _size, _bufferImageData._size));
-	ASSERT(util::VecLessEq(_imageOffset + _size, _image->GetSize()));
+	ASSERT(glm::all(glm::lessThanEqual(_bufferOffset + _size, _bufferImageData._size)));
+	ASSERT(glm::all(glm::lessThanEqual(_imageOffset + _size, _image->GetSize())));
 	ASSERT(_imageMipLevel < _image->GetMipLevels());
 }
 

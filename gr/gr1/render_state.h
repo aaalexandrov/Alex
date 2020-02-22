@@ -17,18 +17,6 @@ public:
 		bool operator==(Viewport const &other) const;
 	};
 
-	enum class FrontFaceMode {
-		CCW,
-		CW,
-	};
-
-	enum class CullMask {
-		None,
-		Front = 1,
-		Back = 2,
-		FrontAndBack = 3,
-	};
-
 	struct CullState {
 		FrontFaceMode _front = FrontFaceMode::CCW;
 		CullMask _cullMask = CullMask::None;
@@ -59,17 +47,6 @@ public:
 		bool operator==(DepthState const &other) const;
 	};
 
-	enum class StencilFunc {
-		Keep,
-		Zero,
-		Replace,
-		IncrementAndClamp,
-		DecrementAndClamp,
-		Invert,
-		IncrementAndWrap,
-		DecrementAndWrap,
-	};
-
 	struct StencilFuncState {
 		StencilFunc _failFunc = StencilFunc::Keep;
 		StencilFunc _passFunc = StencilFunc::Keep;
@@ -81,48 +58,6 @@ public:
 
 		size_t GetHash() const;
 		bool operator==(StencilFuncState const &other) const;
-	};
-
-	enum class BlendFunc
-	{
-		Add,
-		Subtract,
-		ReverseSubtract,
-		Min,
-		Max,
-	};
-
-	enum class BlendFactor
-	{
-		Zero,
-		One,
-		SrcColor,
-		OneMinusSrcColor,
-		DstColor,
-		OneMinusDstColor,
-		SrcAlpha,
-		OneMinusSrcAlpha,
-		DstAlpha,
-		OneMinusDstAlpha,
-		ConstantColor,
-		OneMinusConstantColor,
-		ConstantAlpha,
-		OneMinusConstantAlpha,
-		SrcAlphaSaturate,
-		Src1Color,
-		OneMinusSrc1Color,
-		Src1Alpha,
-		OneMinusSrc1Alpha,
-	};
-
-	enum class ColorComponentMask
-	{
-		None,
-		R = 1,
-		G = 2,
-		B = 4,
-		A = 8,
-		RGBA = 15,
 	};
 
 	struct BlendFuncState {
@@ -201,8 +136,6 @@ public:
 	uint32_t _dataVersion = 1;
 };
 
-DEFINE_ENUM_BIT_OPERATORS(RenderState::ColorComponentMask)
-
 NAMESPACE_END(gr1)
 
 NAMESPACE_BEGIN(std)
@@ -212,6 +145,5 @@ struct hash<gr1::RenderState::StencilFuncState> { size_t operator()(gr1::RenderS
 
 template<>
 struct hash<gr1::RenderState::BlendFuncState> { size_t operator()(gr1::RenderState::BlendFuncState const &b) { return b.GetHash(); } };
-
 
 NAMESPACE_END(std)

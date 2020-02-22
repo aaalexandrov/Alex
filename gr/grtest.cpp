@@ -144,9 +144,9 @@ std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
 	renderState->SetAttachmentBlendState(0, true,
-		RenderState::BlendFactor::SrcAlpha, RenderState::BlendFactor::OneMinusSrcAlpha, RenderState::BlendFunc::Add,
-		RenderState::BlendFactor::SrcAlpha, RenderState::BlendFactor::OneMinusSrcAlpha, RenderState::BlendFunc::Add, 
-		RenderState::ColorComponentMask::RGBA);
+		BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add,
+		BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add, 
+		ColorComponentMask::RGBA);
 
 	auto &uniformInfo = shaderVert->GetUniformBuffers().front();
 	auto samplerInfo = shaderFrag->GetSamplers().front();
@@ -367,8 +367,12 @@ int main()
 	auto font = LoadFont(device.get(), "Lato-Regular.ttf");
 	auto fontDraw = InitFontDraw(device.get(), font, "font");
 	UpdateFontTransform(fontDraw, ri.GetSize(), glm::vec4(1));
-	glm::vec2 textPos(100, 100);
-	font->AddText(textPos, "The quick brown fox");
+	glm::vec2 textPos(font->GetLineSpacing());
+	glm::vec2 measurePos = textPos;
+	std::string text(u8"The quick brown fox");
+	auto rect = font->MeasureText(measurePos, text);
+	font->AddText(textPos, text);
+	ASSERT(glm::all(glm::equal(measurePos, textPos)));
 	font->SetDataToDrawCommand(fontDraw.get());
 
 	auto vbLayout = std::make_shared<util::LayoutArray>(vertShader->GetVertexLayout(), 3);
@@ -404,7 +408,7 @@ int main()
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
-	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::Back);
+	renderState->SetCullState(FrontFaceMode::CCW, CullMask::Back);
 	renderState->SetDepthState(true, true, CompareFunc::Less);
 	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
 
@@ -434,8 +438,8 @@ int main()
 	//renderTriangle->AddBuffer(texCoordStream, 2);
 	//renderTriangle->AddBuffer(indexBuffer);
 	renderTriangle->AddBuffer(uboShader);
-	//renderTriangle->AddSampler(sampler, texture, 1);
-	renderTriangle->AddSampler(sampler, font->_texture, 1);
+	renderTriangle->AddSampler(sampler, texture, 1);
+	//renderTriangle->AddSampler(sampler, font->GetTexture(), 1);
 	mesh->SetToDrawCommand(renderTriangle);
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 

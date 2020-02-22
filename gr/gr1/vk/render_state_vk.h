@@ -24,12 +24,12 @@ public:
 	static void FillViewports(StateData const &data, std::vector<vk::Viewport> &viewports);
 	static void FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst);
 
-	static util::ValueRemapper<RenderState::FrontFaceMode, vk::FrontFace> s_frontFace2Vk;
-	static util::ValueRemapper<RenderState::CullMask, vk::CullModeFlagBits> s_cullMask2Vk;
-	static util::ValueRemapper<RenderState::StencilFunc, vk::StencilOp> s_stencilFunc2Vk;
-	static util::ValueRemapper<RenderState::BlendFunc, vk::BlendOp> s_blendFunc2Vk;
-	static util::ValueRemapper<RenderState::BlendFactor, vk::BlendFactor> s_blendFactor2Vk;
-	static util::ValueRemapper<RenderState::ColorComponentMask, vk::ColorComponentFlagBits, true> s_colorComponentMask2Vk;
+	static util::ValueRemapper<FrontFaceMode, vk::FrontFace> s_frontFace2Vk;
+	static util::ValueRemapper<CullMask, vk::CullModeFlagBits> s_cullMask2Vk;
+	static util::ValueRemapper<StencilFunc, vk::StencilOp> s_stencilFunc2Vk;
+	static util::ValueRemapper<BlendFunc, vk::BlendOp> s_blendFunc2Vk;
+	static util::ValueRemapper<BlendFactor, vk::BlendFactor> s_blendFactor2Vk;
+	static util::ValueRemapper<ColorComponentMask, vk::ColorComponentFlagBits, true> s_colorComponentMask2Vk;
 };
 
 extern util::ValueRemapper<CompareFunc, vk::CompareOp> s_compareFunc2Vk;
