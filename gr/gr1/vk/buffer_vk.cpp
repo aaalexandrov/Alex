@@ -51,10 +51,10 @@ void BufferVk::Unmap()
   vmaUnmapMemory(*deviceVk->_allocator, *_memory);
 }
 
-vk::IndexType BufferVk::GetVkIndexType()
+vk::IndexType BufferVk::GetVkIndexType(util::LayoutElement const *layout)
 {
 	ASSERT(_usage & Usage::Index);
-	rttr::type elemType = _layout->GetArrayElement()->GetValueType();
+	rttr::type elemType = layout->GetArrayElement()->GetValueType();
 	if (elemType == rttr::type::get<uint16_t>())
 		return vk::IndexType::eUint16;
 	if (elemType == rttr::type::get<uint32_t>())

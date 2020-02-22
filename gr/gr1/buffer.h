@@ -21,6 +21,15 @@ public:
 
 	virtual void Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout);
 
+	template <typename Elem>
+	void Init(Usage usage, std::vector<Elem> const &content)
+	{
+		Init(usage, util::CreateLayoutArray(content));
+		void *mapped = Map();
+		memcpy(mapped, content.data(), content.size());
+		Unmap();
+	}
+
 	Usage GetUsage() const { return _usage; }
 	uint32_t GetSize() const { return static_cast<uint32_t>(_layout->GetSize()); }
 

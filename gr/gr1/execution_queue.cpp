@@ -52,6 +52,7 @@ ExecutionQueue::ExecutionQueue(Device &device)
 
 void ExecutionQueue::EnqueuePass(std::shared_ptr<OutputPass> const &pass)
 {
+	ASSERT(!_executing);
 	_passes.push_back(pass);
 }
 
@@ -68,6 +69,7 @@ void ExecutionQueue::ExecutePasses()
 {
 	EnqueuePass(_finalPass);
 
+	_executing = true;
 	ProcessPassDependencies();
 
 	Prepare();
@@ -77,6 +79,7 @@ void ExecutionQueue::ExecutePasses()
 	WaitExecutionFinished();
 
 	CleanupAfterExecution();
+	_executing = false;
 }
 
 void ExecutionQueue::Prepare()

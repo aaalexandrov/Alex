@@ -20,7 +20,7 @@ public:
 
 	Shader(Device &device) : Resource(device) {}
 
-  virtual void Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents);
+  virtual void Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents, std::string entryPoint = "main");
 	virtual void LoadShader(std::vector<uint8_t> const &contents) = 0;
 
 	inline std::string const &GetName() const { return _name; }
@@ -32,7 +32,7 @@ public:
 	bool HasCommonVertexAttributes(util::LayoutElement const *vertexLayout) const;
 
 protected:
-	std::string _name;
+	std::string _name, _entryPoint;
 	ShaderKind _kind;
 	std::shared_ptr<util::LayoutElement> _vertexLayout;
   std::vector<UniformInfo> _uniformBuffers;

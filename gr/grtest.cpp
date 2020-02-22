@@ -18,6 +18,7 @@
 #include "gr1/render_pass.h"
 #include "gr1/render_state.h"
 #include "gr1/utl/gltf.h"
+#include "gr1/utl/font.h"
 #include <string>
 
 #if defined(_MSC_VER) && defined(_DEBUG)
@@ -39,6 +40,8 @@ static struct DbgInit {
 
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+
+		//_CrtSetBreakAlloc(19282);
   }
 } dbgInit;
 
@@ -92,7 +95,6 @@ shared_ptr<Image> LoadImage(Device *device, std::string name)
 	return image;
 }
 
-
 std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 {
 	std::string path = string("../data/models/") + name;
@@ -117,6 +119,84 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 	std::shared_ptr<Model> result = LoadGltfModel(*device, model, remapAttr);
 
 	return result;
+}
+
+std::shared_ptr<Font> LoadFont(Device *device, std::string name)
+{
+	string path = string("../data/fonts/") + name;
+	shared_ptr<vector<uint8_t>> fontData = make_shared<vector<uint8_t>>();
+	*fontData = util::ReadFile(path);
+	shared_ptr<Font> font = make_shared<Font>(*device);
+	font->Init(fontData, 0, 32, { {32, 128} });
+	return font;
+}
+
+std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<Font> const &font, std::string shaderName)
+{
+	auto shaderVert = LoadShader(device, shaderName + ".vert");
+	auto shaderFrag = LoadShader(device, shaderName + ".frag");
+
+	auto sampler = device->CreateResource<Sampler>();
+	sampler->Init();
+
+	font->SetRenderingData(1024, "inPosition", "inTexCoord", "inColor");
+
+	auto renderState = device->CreateResource<RenderState>();
+	renderState->Init();
+	renderState->SetAttachmentBlendState(0, true,
+		RenderState::BlendFactor::SrcAlpha, RenderState::BlendFactor::OneMinusSrcAlpha, RenderState::BlendFunc::Add,
+		RenderState::BlendFactor::SrcAlpha, RenderState::BlendFactor::OneMinusSrcAlpha, RenderState::BlendFunc::Add, 
+		RenderState::ColorComponentMask::RGBA);
+
+	auto &uniformInfo = shaderVert->GetUniformBuffers().front();
+	auto samplerInfo = shaderFrag->GetSamplers().front();
+
+	auto uniforms = device->CreateResource<Buffer>();
+	uniforms->Init(Buffer::Usage::Uniform, uniformInfo._layout);
+
+	auto drawFontCmd = device->CreateResource<RenderDrawCommand>();
+	drawFontCmd->SetShader(shaderVert);
+	drawFontCmd->SetShader(shaderFrag);
+	drawFontCmd->SetRenderState(renderState);
+	drawFontCmd->AddBuffer(uniforms, uniformInfo._binding);
+	drawFontCmd->AddSampler(sampler, nullptr, samplerInfo._binding);
+
+	return drawFontCmd;
+}
+
+void UpdateFontTransform(std::shared_ptr<RenderDrawCommand> const &fontDraw, glm::uvec2 screenSize, glm::vec4 fontColor)
+{
+	shared_ptr<Buffer> uniforms;
+	for (int i = 0; i < fontDraw->GetBufferCount(); ++i) {
+		auto &bufData = fontDraw->GetBufferData(i);
+		if (bufData.IsUniform()) {
+			uniforms = bufData._buffer;
+			break;
+		}
+	}
+
+	Device *device = fontDraw->GetDevice();
+	auto staging = device->CreateResource<Buffer>();
+	staging->Init(Buffer::Usage::Staging, uniforms->GetBufferLayout());
+
+	glm::mat4 transform(1);
+	transform[0].x = 2.0f / screenSize.x;
+	transform[3].x = -1;
+
+	transform[1].y = 2.0f / screenSize.y;
+	transform[3].y = -1;
+
+	void *mapped = staging->Map();
+
+	*staging->GetBufferLayout()->GetMemberPtr<glm::mat4>(mapped, "transform") = transform;
+	*staging->GetBufferLayout()->GetMemberPtr<glm::vec4>(mapped, "fontColor") = fontColor;
+
+	staging->Unmap();
+
+	auto copyPass = device->CreateResource<BufferCopyPass>();
+	copyPass->Init(staging, uniforms);
+
+	device->GetExecutionQueue().EnqueuePass(copyPass);
 }
 
 void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexBuffer)
@@ -283,6 +363,13 @@ int main()
 	auto texture = LoadImage(device.get(), "grid2.png");
 
 	auto mesh = LoadModel(device.get(), "Cube.gltf");
+	
+	auto font = LoadFont(device.get(), "Lato-Regular.ttf");
+	auto fontDraw = InitFontDraw(device.get(), font, "font");
+	UpdateFontTransform(fontDraw, ri.GetSize(), glm::vec4(1));
+	glm::vec2 textPos(100, 100);
+	font->AddText(textPos, "The quick brown fox");
+	font->SetDataToDrawCommand(fontDraw.get());
 
 	auto vbLayout = std::make_shared<util::LayoutArray>(vertShader->GetVertexLayout(), 3);
 	auto vertexBuffer = device->CreateResource<Buffer>();
@@ -303,7 +390,7 @@ int main()
 
 	InitTriangleStreams(device.get(), posStream, colorStream, texCoordStream);
 
-	auto vbPerInstanceColor = util::CreateLayoutArray(const_cast<util::LayoutElement*>(vbColorsLayout->GetArrayElement())->shared_from_this(), 1);
+	auto vbPerInstanceColor = util::CreateLayoutArray(vbColorsLayout->GetArrayElement()->AsShared(), 1);
 	auto perInstanceColor = device->CreateResource<Buffer>();
 	perInstanceColor->Init(Buffer::Usage::Vertex, vbPerInstanceColor);
 	InitPerInstanceColor(device.get(), perInstanceColor);
@@ -317,15 +404,15 @@ int main()
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
-	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::Front);
+	renderState->SetCullState(RenderState::FrontFaceMode::CCW, RenderState::CullMask::Back);
 	renderState->SetDepthState(true, true, CompareFunc::Less);
 	//renderState->SetScissor(util::RectI{ { 0, 0 }, { 1024, 1024 } });
 
 	auto sampler = device->CreateResource<Sampler>();
 	sampler->Init();
 
-	glm::mat4 model(1.0f), view(1.0f), proj(1.0f);
-	view = glm::translate(view, glm::vec3(0, 0, 5.5f));
+	mat4 model(1.0f), view(1.0f), proj(1.0f);
+	view = glm::translate(view, vec3(0, 0, 5.5f));
 
 	auto uboShader = device->CreateResource<Buffer>();
 	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
@@ -347,7 +434,8 @@ int main()
 	//renderTriangle->AddBuffer(texCoordStream, 2);
 	//renderTriangle->AddBuffer(indexBuffer);
 	renderTriangle->AddBuffer(uboShader);
-	renderTriangle->AddSampler(sampler, texture, 1);
+	//renderTriangle->AddSampler(sampler, texture, 1);
+	renderTriangle->AddSampler(sampler, font->_texture, 1);
 	mesh->SetToDrawCommand(renderTriangle);
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
@@ -366,6 +454,7 @@ int main()
 	renderPass->SetAttachmentImage(1, depthBuffer);
 
 	renderPass->AddCommand(renderTriangle);
+	renderPass->AddCommand(fontDraw);
 
 	auto presentPass = device->CreateResource<PresentPass>();
 	presentPass->Init(surface);
@@ -380,6 +469,7 @@ int main()
 			depthBuffer = device->CreateResource<Image>();
 			depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
 			renderPass->SetAttachmentImage(1, depthBuffer);
+			UpdateFontTransform(fontDraw, size, glm::vec4(1));
 		}
 	});
 

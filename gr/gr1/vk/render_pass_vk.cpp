@@ -152,17 +152,17 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	std::vector<size_t> vertBufferOffsets;
 	for (auto &bufData : _buffers) {
 		BufferVk *bufferVk = static_cast<BufferVk*>(bufData._buffer.get());
-		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Vertex)) {
+		if (bufData.IsVertex()) {
 			vertBuffers.resize(std::max<size_t>(vertBuffers.size(), bufData._binding + 1));
 			ASSERT(!vertBuffers[bufData._binding]);
 			vertBuffers[bufData._binding] = *bufferVk->_buffer;
 			vertBufferOffsets.resize(vertBuffers.size());
 			vertBufferOffsets[bufData._binding] = bufData._offset;
 		} 
-		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Index)) {
+		if (bufData.IsIndex()) {
 			ASSERT(!indexBuffer);
 			indexBuffer = *bufferVk->_buffer;
-			indexType = bufferVk->GetVkIndexType();
+			indexType = bufferVk->GetVkIndexType(bufData.GetBufferLayout().get());
 			indexOffset = bufData._offset;
 		}
 	}
@@ -198,11 +198,11 @@ void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t sub
 	}
 
 	for (int i = 0; i < _buffers.size(); ++i) {
-		if (!(_buffers[i]._buffer->GetUsage() & Buffer::Usage::Vertex))
+		if (!_buffers[i].IsVertex())
 			continue;
 
 		VertexBufferLayout bufLayout;
-		bufLayout._bufferLayout = _buffers[i]._overrideLayout ? _buffers[i]._overrideLayout : _buffers[i]._buffer->GetBufferLayout();
+		bufLayout._bufferLayout = _buffers[i].GetBufferLayout();
 		bufLayout._binding = _buffers[i]._binding;
 		bufLayout._frequencyInstance = _buffers[i]._frequencyInstance;
 		pipeInfo._vertexBufferLayouts.push_back(bufLayout);

@@ -47,9 +47,11 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
 
 	ShaderKindInfo *kind = GetShaderKindInfo(_kind);
   shaderc::SpvCompilationResult res = 
-    compiler.CompileGlslToSpv(reinterpret_cast<char const *>(contents.data()), contents.size(), kind->_shadercKind, _name.c_str(), "main", options);
-  if (res.GetCompilationStatus() != shaderc_compilation_status_success)
-    throw GraphicsException("Shader " + _name + " compilation failed with error : " + res.GetErrorMessage(), VK_RESULT_MAX_ENUM);
+    compiler.CompileGlslToSpv(reinterpret_cast<char const *>(contents.data()), contents.size(), kind->_shadercKind, _name.c_str(), _entryPoint.c_str(), options);
+	if (res.GetCompilationStatus() != shaderc_compilation_status_success) {
+		std::string message = res.GetErrorMessage();
+		throw GraphicsException("Shader " + _name + " compilation failed with error : " + message, VK_RESULT_MAX_ENUM);
+	}
 
 	vk::ShaderModuleCreateInfo moduleInfo;
 	moduleInfo
@@ -74,7 +76,7 @@ vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()
 	info
 		.setStage(_stageFlags)
 		.setModule(*_module)
-		.setPName("main");
+		.setPName(_entryPoint.c_str());
 	return info;
 }
 
@@ -116,27 +118,37 @@ struct SPIRTypeInfoHasher {
 };
 
 static std::unordered_map<SPIRTypeInfo, rttr::type, SPIRTypeInfoHasher> SPIRType2TypeInfo = {
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 1), rttr::type::get<float>()     },
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 2), rttr::type::get<glm::vec2>() },
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 3), rttr::type::get<glm::vec3>() },
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 4), rttr::type::get<glm::vec4>() },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 1), rttr::type::get<float>()       },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 2), rttr::type::get<glm::vec2>()   },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 3), rttr::type::get<glm::vec3>()   },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 1, 4), rttr::type::get<glm::vec4>()   },
 
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 2, 2), rttr::type::get<glm::mat2>() },
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 3, 3), rttr::type::get<glm::mat3>() },
-  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 4, 4), rttr::type::get<glm::mat4>() },
+	{ SPIRTypeInfo(spirv_cross::SPIRType::UByte, 1, 1), rttr::type::get<uint8_t>()     },
+	{ SPIRTypeInfo(spirv_cross::SPIRType::UByte, 1, 2), rttr::type::get<glm::u8vec2>() },
+	{ SPIRTypeInfo(spirv_cross::SPIRType::UByte, 1, 3), rttr::type::get<glm::u8vec3>() },
+	{ SPIRTypeInfo(spirv_cross::SPIRType::UByte, 1, 4), rttr::type::get<glm::u8vec4>() },
+
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 2, 2), rttr::type::get<glm::mat2>()   },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 3, 3), rttr::type::get<glm::mat3>()   },
+  { SPIRTypeInfo(spirv_cross::SPIRType::Float, 4, 4), rttr::type::get<glm::mat4>()   },
 };
 
 std::unordered_map<rttr::type, vk::Format> Type2VkFormat {
-  { rttr::type::get<float>()    , vk::Format::eR32Sfloat          },
-  { rttr::type::get<glm::vec2>(), vk::Format::eR32G32Sfloat       },
-  { rttr::type::get<glm::vec3>(), vk::Format::eR32G32B32Sfloat    },
-  { rttr::type::get<glm::vec4>(), vk::Format::eR32G32B32A32Sfloat },
+  { rttr::type::get<float>()      , vk::Format::eR32Sfloat          },
+  { rttr::type::get<glm::vec2>()  , vk::Format::eR32G32Sfloat       },
+  { rttr::type::get<glm::vec3>()  , vk::Format::eR32G32B32Sfloat    },
+  { rttr::type::get<glm::vec4>()  , vk::Format::eR32G32B32A32Sfloat },
+
+	{ rttr::type::get<uint8_t>()    , vk::Format::eR8Unorm            },
+	{ rttr::type::get<glm::u8vec2>(), vk::Format::eR8G8Unorm          },
+	{ rttr::type::get<glm::u8vec3>(), vk::Format::eR8G8B8Unorm        },
+	{ rttr::type::get<glm::u8vec4>(), vk::Format::eR8G8B8A8Unorm      },
 };
 
 static std::unordered_map<spv::Dim, rttr::type> s_spirvDim2Type{ {
-	{ spv::Dim::Dim1D, rttr::type::get<Texture1D>() },
-	{ spv::Dim::Dim2D, rttr::type::get<Texture2D>() },
-	{ spv::Dim::Dim3D, rttr::type::get<Texture3D>() },
+	{ spv::Dim::Dim1D  , rttr::type::get<Texture1D>()   },
+	{ spv::Dim::Dim2D  , rttr::type::get<Texture2D>()   },
+	{ spv::Dim::Dim3D  , rttr::type::get<Texture3D>()   },
 	{ spv::Dim::DimCube, rttr::type::get<TextureCube>() },
 } };
 

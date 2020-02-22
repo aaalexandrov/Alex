@@ -19,7 +19,7 @@ public:
 	template<typename ResourceType>
 	std::shared_ptr<ResourceType> AsSharedPtr() { return std::static_pointer_cast<ResourceType>(shared_from_this()); }
 
-	template<typename DeviceType>
+	template<typename DeviceType = Device>
 	DeviceType *GetDevice() { return static_cast<DeviceType*>(_device); }
 protected:
 	Device *_device;

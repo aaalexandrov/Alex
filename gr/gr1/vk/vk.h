@@ -28,7 +28,7 @@ public:
 	using HandleType = typename UniqueHandle::element_type;
 
 	OwnedUniqueHandle(Owner *owner = nullptr, UniqueHandle &&handle = UniqueHandle()) noexcept : _handle(std::move(handle)), _owner(owner) {}
-	OwnedUniqueHandle(OwnedUniqueHandle &&other) : OwnedUniqueHandle(other._owner, std::move(other._handle)) {}
+	OwnedUniqueHandle(OwnedUniqueHandle &&other) noexcept : OwnedUniqueHandle(other._owner, std::move(other._handle)) {}
 
 	~OwnedUniqueHandle() { reset(); }
 
@@ -69,6 +69,7 @@ public:
 
 	OwnedUniqueHandle &operator=(OwnedUniqueHandle &&other) noexcept 
 	{
+		reset();
 		_owner = other._owner;
 		_handle = std::move(other._handle);
 		return *this;

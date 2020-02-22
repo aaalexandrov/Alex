@@ -105,6 +105,8 @@ util::ValueRemapper<PrimitiveKind, vk::PrimitiveTopology> s_PrimitiveKind2Topolo
 
 std::shared_ptr<PipelineVk> PipelineStore::GetPipeline(PipelineInfo &pipelineInfo)
 {
+	std::lock_guard lock(_mutex);
+
 	RecordedPipeline pipelineKey(&pipelineInfo);
 	auto it = _pipelines.find(pipelineKey);
 	auto itLayout = GetExistingPipelineLayout(pipelineInfo._shaders);
@@ -151,18 +153,19 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 
 			ASSERT(shaderVertLayout->GetKind() == util::LayoutElement::Kind::Struct);
 			for (uint32_t i = 0; i < shaderVertLayout->GetStructFieldCount(); ++i) {
-				util::LayoutElement const *attrElem = shaderVertLayout->GetStructFieldElement(i);
+				util::LayoutElement const *shaderAttrElem = shaderVertLayout->GetStructFieldElement(i);
 
 				std::string attrName = shaderVertLayout->GetStructFieldName(i);
 				size_t attrOffset;
-				int bufIndex = GetVertexLayoutIndex(attrName, attrElem, pipelineInfo._vertexBufferLayouts, attrOffset);
+				util::LayoutElement const *attrElem;
+				int bufIndex = GetVertexLayoutIndex(attrName, pipelineInfo._vertexBufferLayouts, attrOffset, attrElem);
 				if (bufIndex < 0) {
 					ASSERT(!"Shader vertex attribute missing from supplied buffers!");
 					continue;
 				}
 
 				uint32_t binding = pipelineInfo._vertexBufferLayouts[bufIndex]._binding;
-				uint32_t location = static_cast<uint32_t>(attrElem->GetUserData());
+				uint32_t location = static_cast<uint32_t>(shaderAttrElem->GetUserData());
 				vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
 
 				vertexInputAttribDescs.emplace_back();
@@ -241,7 +244,7 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 	return std::make_shared<PipelineVk>(std::move(pipelineLayout), std::move(pipeline));
 }
 
-int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElement const *attribLayout, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset)
+int PipelineStore::GetVertexLayoutIndex(std::string attribName, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset, util::LayoutElement const *&attribLayout)
 {
 	for (int i = 0; i < bufferLayouts.size(); ++i) {
 		auto &bufLayout = bufferLayouts[i];
@@ -249,8 +252,8 @@ int PipelineStore::GetVertexLayoutIndex(std::string attribName, util::LayoutElem
 		util::LayoutElement const *vertDesc = bufLayout._bufferLayout->GetArrayElement();
 		ASSERT(vertDesc->GetKind() == util::LayoutElement::Kind::Struct);
 		size_t elemIndex = vertDesc->GetStructFieldIndex(attribName);
-		util::LayoutElement const *bufElem = vertDesc->GetElement(elemIndex);
-		if (!bufElem || *bufElem != *attribLayout)
+		attribLayout = vertDesc->GetElement(elemIndex);
+		if (!attribLayout)
 			continue;
 		attribOffset = vertDesc->GetStructFieldOffset(elemIndex);
 		return i;

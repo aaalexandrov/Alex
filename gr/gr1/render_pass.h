@@ -45,6 +45,11 @@ public:
 		int _binding = 0;
 		bool _frequencyInstance = false;
 		std::shared_ptr<util::LayoutElement> _overrideLayout;
+
+		std::shared_ptr<util::LayoutElement> const &GetBufferLayout() const;
+		bool IsVertex() const;
+		bool IsIndex() const;
+		bool IsUniform() const;
 	};
 
 	struct SamplerData {

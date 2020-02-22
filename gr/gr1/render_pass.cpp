@@ -8,6 +8,27 @@
 
 NAMESPACE_BEGIN(gr1)
 
+std::shared_ptr<util::LayoutElement> const &RenderDrawCommand::BufferData::GetBufferLayout() const 
+{ 
+	return _overrideLayout ? _overrideLayout : _buffer->GetBufferLayout(); 
+}
+
+bool RenderDrawCommand::BufferData::IsVertex() const 
+{ 
+	return !!(_buffer->GetUsage() & Buffer::Usage::Vertex) && GetBufferLayout()->GetArrayElement()->IsStruct(); 
+}
+
+bool RenderDrawCommand::BufferData::IsIndex() const 
+{ 
+	return !!(_buffer->GetUsage() & Buffer::Usage::Index) && GetBufferLayout()->GetArrayElement()->IsValue(); 
+}
+
+bool RenderDrawCommand::BufferData::IsUniform() const
+{
+	return !!(_buffer->GetUsage() & Buffer::Usage::Uniform);
+}
+
+
 void RenderDrawCommand::Clear()
 {
 	std::fill(_shaders.begin(), _shaders.end(), nullptr);
@@ -61,7 +82,9 @@ void RenderDrawCommand::GetDependencies(DependencyType dependencyType, Dependenc
 		}
 		for (auto &samplerData : _samplers) {
 			//addDependencyFunc(samplerData._sampler.get(), ResourceState::ShaderRead);
-			addDependencyFunc(samplerData._image.get(), ResourceState::ShaderRead);
+			Image *image = samplerData._image.get();
+			if (image)
+				addDependencyFunc(image, ResourceState::ShaderRead);
 		}
 		addDependencyFunc(_renderState.get(), ResourceState::ShaderRead);
 	}

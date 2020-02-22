@@ -44,6 +44,8 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	size_t GetMultidimensionalArrayCount() const;
 	LayoutElement const *GetMultidimensionalArrayElement() const;
 
+	std::shared_ptr<LayoutElement> AsShared() const { return const_cast<LayoutElement*>(this)->shared_from_this(); }
+
 	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset() const { return std::make_pair(this, 0); }
 	template<typename First, typename... Rest>
 	std::pair<LayoutElement const*, size_t> GetMemberElementAndOffset(First first, Rest... rest) const
@@ -62,7 +64,8 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	DataType *GetMemberPtr(void *buffer, Indices... indices) const
 	{
 		std::pair<LayoutElement const*, size_t> elemOffs = GetMemberElementAndOffset(indices...);
-		if (!elemOffs.first || elemOffs.first->GetValueType() != rttr::type::get<DataType>())
+		rttr::type dataType = rttr::type::get<DataType>();
+		if (!elemOffs.first || elemOffs.first->GetValueType() != dataType && dataType != rttr::type::get<void>())
 			return nullptr;
 		return reinterpret_cast<DataType*>(reinterpret_cast<uint8_t*>(buffer) + elemOffs.second);
 	}
@@ -161,6 +164,12 @@ template <typename... Sizes>
 std::shared_ptr<LayoutArray> CreateLayoutArray(rttr::type elemType, Sizes... sizes)
 {
 	return CreateLayoutArray(std::make_shared<LayoutValue>(elemType), sizes...);
+}
+
+template <typename Elem>
+inline std::shared_ptr<LayoutArray> CreateLayoutArray(std::vector<Elem> const &vec)
+{
+	return CreateLayoutArray(CreateLayoutValue(rttr::type::get<Elem>()), vec.size());
 }
 
 inline std::shared_ptr<LayoutElement> GetLayoutElement(rttr::type type) { return std::make_shared<LayoutValue>(type); }

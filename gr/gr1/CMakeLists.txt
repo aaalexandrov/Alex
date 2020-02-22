@@ -48,6 +48,9 @@ set(dir_SOURCES
 	shader.h
 	shader.cpp
 
+	utl/font.h
+	utl/font.cpp
+
 	utl/gltf.h
 	utl/gltf.cpp
 )

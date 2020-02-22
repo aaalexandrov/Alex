@@ -67,6 +67,7 @@ protected:
 	Device *_device;
 	std::shared_ptr<FinalPass> _finalPass;
 
+	bool _executing = false;
 	std::vector<std::shared_ptr<OutputPass>> _passes;
 	std::vector<std::shared_ptr<OutputPass>> _dependencyPasses;
 	std::vector<OutputPass*> _scheduledPasses;

@@ -29,6 +29,9 @@ set(dir_SOURCES
 	rtti.h
 	rtti.cpp
 	
+	str.h
+	str.cpp
+
 	time.h
 	time.cpp
 

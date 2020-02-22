@@ -2,9 +2,10 @@
 
 NAMESPACE_BEGIN(gr1)
 
-void Shader::Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents)
+void Shader::Init(std::string name, ShaderKind shaderKind, std::vector<uint8_t> const &contents, std::string entryPoint)
 {
 	_name = name;
+	_entryPoint = entryPoint;
 	_kind = shaderKind;
 	LoadShader(contents);
 }
@@ -20,4 +21,3 @@ bool Shader::HasCommonVertexAttributes(util::LayoutElement const *vertexLayout) 
 }
 
 NAMESPACE_END(gr1)
-

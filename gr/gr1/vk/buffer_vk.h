@@ -19,7 +19,7 @@ public:
   void *Map() override;
   void Unmap() override;
 
-	vk::IndexType GetVkIndexType();
+	vk::IndexType GetVkIndexType(util::LayoutElement const *layout);
 
 public:
   static vk::BufferUsageFlags GetBufferUsage(Usage usage);
