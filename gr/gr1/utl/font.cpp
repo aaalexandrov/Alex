@@ -21,6 +21,11 @@ bool Font::CharRange::ContainsCodePoint(int32_t codePoint) const
 	return _firstCodePoint <= codePoint && codePoint < _firstCodePoint + _codePointCount;
 }
 
+int Font::GetFontIndices(std::shared_ptr<std::vector<uint8_t>> const &fontData)
+{
+	return stbtt_GetNumberOfFonts(fontData->data());
+}
+
 void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontIndex, float pixelHeight, std::vector<std::pair<int32_t, int32_t>> const &codePointRanges)
 {
 	_fontData = fontData;

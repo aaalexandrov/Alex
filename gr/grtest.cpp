@@ -365,6 +365,7 @@ int main()
 	auto mesh = LoadModel(device.get(), "Cube.gltf");
 	
 	auto font = LoadFont(device.get(), "Lato-Regular.ttf");
+	int fonts = Font::GetFontIndices(font->GetFontData());
 	auto fontDraw = InitFontDraw(device.get(), font, "font");
 	UpdateFontTransform(fontDraw, ri.GetSize(), glm::vec4(1));
 	glm::vec2 textPos(font->GetLineSpacing());

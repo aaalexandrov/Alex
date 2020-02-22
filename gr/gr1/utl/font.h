@@ -14,6 +14,7 @@ public:
 
 	Font(Device &device) : _device(&device) {}
 
+	static int GetFontIndices(std::shared_ptr<std::vector<uint8_t>> const &fontData);
 	void Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontIndex, float pixelHeight, std::vector<std::pair<int32_t, int32_t>> const &codePointRanges);
 
 	void SetRenderingData(uint32_t sizeChars, std::string positionAttr, std::string texCoordAttr, std::string colorAttr);
@@ -25,6 +26,7 @@ public:
 
 	void SetDataToDrawCommand(RenderDrawCommand *cmdDraw);
 
+	std::shared_ptr<std::vector<uint8_t>> const &GetFontData() const { return _fontData; }
 	float GetAscent() const { return _ascent; }
 	float GetDescent() const { return _descent; }
 	float GetLineSpacing() const { return _lineSpacing; }
