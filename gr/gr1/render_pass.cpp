@@ -38,24 +38,67 @@ void RenderDrawCommand::Clear()
 	_drawCounts = DrawCounts();
 }
 
-int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
+int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::StrId shaderId, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
 { 
 	BufferData bufData;
 	bufData._buffer = buffer;
-	bufData._binding = binding;
 	bufData._offset = offset;
 	bufData._frequencyInstance = frequencyInstance;
 	bufData._overrideLayout = overrideLayout;
+
+	bool valid = true;
+	if (bufData.IsIndex()) {
+		valid &= std::find_if(_buffers.begin(), _buffers.end(), [](auto &b) { return b.IsIndex(); }) == _buffers.end();
+		ASSERT(valid);
+	}
+	if (bufData.IsVertex()) {
+		valid &= _shaders[static_cast<int>(ShaderKind::Vertex)]->HasCommonVertexAttributes(bufData.GetBufferLayout()->GetArrayElement(), nullptr);
+		ASSERT(valid);
+	}
+	if (bufData.IsUniform()) {
+		bool used = false;
+		for (int i = 0; i < _shaders.size(); ++i) {
+			bufData._bindings[i] = ~0ul;
+			if (!_shaders[i])
+				continue;
+			auto info = _shaders[i]->GetUniformInfo(shaderId);
+			if (!info)
+				continue;
+			used = true;
+			bufData._bindings[i] = info->_binding;
+		}
+		ASSERT(used);
+		valid &= used;
+	}
+
+	if (!valid)
+		return -1;
+
 	_buffers.push_back(std::move(bufData));
 	return static_cast<int>(_buffers.size() - 1);
 }
 
-int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding)
+int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, util::StrId shaderId)
 {
 	SamplerData samplerData;
 	samplerData._sampler = sampler;
 	samplerData._image = image;
-	samplerData._binding = binding;
+
+	bool used = false;
+	for (int i = 0; i < _shaders.size(); ++i) {
+		samplerData._bindings[i] = ~0ul;
+		if (!_shaders[i])
+			continue;
+		auto info = _shaders[i]->GetSamplerInfo(shaderId);
+		if (!info)
+			continue;
+		used = true;
+		samplerData._bindings[i] = info->_binding;
+	}
+	ASSERT(used);
+	if (!used)
+		return -1;
+
 	_samplers.push_back(std::move(samplerData));
 	return static_cast<int>(_samplers.size() - 1);
 }

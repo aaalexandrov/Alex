@@ -9,7 +9,6 @@ NAMESPACE_BEGIN(gr1)
 size_t VertexBufferLayout::GetHash() const
 {
 	size_t hash = _bufferLayout->GetArrayElement()->GetHash();
-	hash = util::GetHash(_binding, hash);
 	hash = util::GetHash(_frequencyInstance, hash);
 	return hash;
 }
@@ -17,7 +16,6 @@ size_t VertexBufferLayout::GetHash() const
 bool VertexBufferLayout::operator==(VertexBufferLayout const &other) const
 {
 	return *_bufferLayout->GetArrayElement() == *other._bufferLayout->GetArrayElement()
-		&& _binding == other._binding
 		&& _frequencyInstance == other._frequencyInstance;
 }
 
@@ -149,42 +147,39 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 	for (auto shaderVk : pipelineInfo._shaders) {
 		shaderStageInfos.push_back(shaderVk->GetPipelineShaderStageCreateInfo());
 		if (shaderVk->GetShaderKind() == ShaderKind::Vertex) {
-			util::LayoutElement *shaderVertLayout = shaderVk->GetVertexLayout().get();
+			util::LayoutElement const *shaderVertLayout = shaderVk->GetVertexLayout().get();
 
-			ASSERT(shaderVertLayout->GetKind() == util::LayoutElement::Kind::Struct);
-			for (uint32_t i = 0; i < shaderVertLayout->GetStructFieldCount(); ++i) {
-				util::LayoutElement const *shaderAttrElem = shaderVertLayout->GetStructFieldElement(i);
-
-				std::string attrName = shaderVertLayout->GetStructFieldName(i);
-				size_t attrOffset;
-				util::LayoutElement const *attrElem;
-				int bufIndex = GetVertexLayoutIndex(attrName, pipelineInfo._vertexBufferLayouts, attrOffset, attrElem);
-				if (bufIndex < 0) {
-					ASSERT(!"Shader vertex attribute missing from supplied buffers!");
+			std::vector<std::pair<uint32_t, uint32_t>> matching;
+			for (auto &bufLayout : pipelineInfo._vertexBufferLayouts) {
+				util::LayoutElement const *vertStruct = bufLayout._bufferLayout->GetArrayElement();
+				bool hasMatches = shaderVk->HasCommonVertexAttributes(vertStruct, &matching);
+				ASSERT(hasMatches);
+				if (!hasMatches)
 					continue;
+
+				// vertex buffer bindings are implicit, counting from 0 in the order the buffers appear in the array
+				// render draw command uses the same logic
+				uint32_t binding = static_cast<uint32_t>(vertexInputBindingDescs.size());
+				for (auto &match : matching) {
+					uint32_t location = static_cast<uint32_t>(shaderVertLayout->GetStructFieldElement(match.first)->GetUserData());
+					vk::Format format = Type2VkFormat.at(vertStruct->GetStructFieldElement(match.second)->GetValueType());
+					uint32_t offset = static_cast<uint32_t>(vertStruct->GetStructFieldOffset(match.second));
+
+					vertexInputAttribDescs.emplace_back();
+					vertexInputAttribDescs.back()
+						.setLocation(location)
+						.setBinding(binding)
+						.setFormat(format)
+						.setOffset(offset);
 				}
-
-				uint32_t binding = pipelineInfo._vertexBufferLayouts[bufIndex]._binding;
-				uint32_t location = static_cast<uint32_t>(shaderAttrElem->GetUserData());
-				vk::Format format = Type2VkFormat.at(attrElem->GetValueType());
-
-				vertexInputAttribDescs.emplace_back();
-				vertexInputAttribDescs.back()
-					.setLocation(location)
-					.setBinding(binding)
-					.setFormat(format)
-					.setOffset(static_cast<uint32_t>(attrOffset));
-			}
-
-			for (int i = 0; i < pipelineInfo._vertexBufferLayouts.size(); ++i) {
-				auto bufLayout = pipelineInfo._vertexBufferLayouts[i];
 
 				vertexInputBindingDescs.emplace_back();
 				vertexInputBindingDescs.back()
-					.setStride(static_cast<uint32_t>(bufLayout._bufferLayout->GetArrayElement()->GetSize()))
-					.setBinding(bufLayout._binding)
+					.setStride(static_cast<uint32_t>(vertStruct->GetSize()))
+					.setBinding(binding)
 					.setInputRate(bufLayout._frequencyInstance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex);
 			}
+			ASSERT(vertexInputAttribDescs.size() == shaderVertLayout->GetStructFieldCount());
 		}
 	}
 
@@ -244,14 +239,14 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 	return std::make_shared<PipelineVk>(std::move(pipelineLayout), std::move(pipeline));
 }
 
-int PipelineStore::GetVertexLayoutIndex(std::string attribName, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset, util::LayoutElement const *&attribLayout)
+int PipelineStore::GetVertexLayoutIndex(util::StrId attribId, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset, util::LayoutElement const *&attribLayout)
 {
 	for (int i = 0; i < bufferLayouts.size(); ++i) {
 		auto &bufLayout = bufferLayouts[i];
 
 		util::LayoutElement const *vertDesc = bufLayout._bufferLayout->GetArrayElement();
 		ASSERT(vertDesc->GetKind() == util::LayoutElement::Kind::Struct);
-		size_t elemIndex = vertDesc->GetStructFieldIndex(attribName);
+		size_t elemIndex = vertDesc->GetStructFieldIndex(attribId);
 		attribLayout = vertDesc->GetElement(elemIndex);
 		if (!attribLayout)
 			continue;

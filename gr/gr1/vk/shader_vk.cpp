@@ -273,10 +273,7 @@ std::vector<ShaderVk::UniformInfo> ShaderVk::GetUniformDescriptions(spirv_cross:
 		size_t size = type.basetype == spirv_cross::SPIRType::Struct
 			? reflected.get_declared_struct_size(type) : 0;
 
-    UniformInfo uniformInfo;
-    uniformInfo._name = name;
-    uniformInfo._binding = binding;
-		uniformInfo._layout = GetLayoutFromSpirv(reflected, type, size);
+    UniformInfo uniformInfo(name, binding, GetLayoutFromSpirv(reflected, type, size));
     uniforms.push_back(std::move(uniformInfo));
   }
 	return uniforms;

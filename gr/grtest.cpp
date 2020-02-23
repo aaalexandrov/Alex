@@ -95,6 +95,9 @@ shared_ptr<Image> LoadImage(Device *device, std::string name)
 	return image;
 }
 
+static util::StrId s_inPositionId("inPosition", util::StrId::AddToRepository), s_inColorId("inColor", util::StrId::AddToRepository), s_inTexCoordId("inTexCoord", util::StrId::AddToRepository);
+
+
 std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 {
 	std::string path = string("../data/models/") + name;
@@ -110,10 +113,10 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 	cout << "Gltf loading succeeded for " << path << ", error: " << err << " warning: " << warn << endl;
 
 	static std::unordered_map<std::string, std::string> remapAttr{ {
-		{ "POSITION", "inPosition" },
+		{ "POSITION", s_inPositionId.GetString() },
 		{ "NORMAL", "inNormal" },
 		{ "TANGENT", "inTangent" },
-		{ "TEXCOORD_0", "inTexCoord" },
+		{ "TEXCOORD_0", s_inTexCoordId.GetString() },
 	} };
 
 	std::shared_ptr<Model> result = LoadGltfModel(*device, model, remapAttr);
@@ -139,7 +142,7 @@ std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<
 	auto sampler = device->CreateResource<Sampler>();
 	sampler->Init();
 
-	font->SetRenderingData(1024, "inPosition", "inTexCoord", "inColor");
+	font->SetRenderingData(1024, s_inPositionId.GetString(), s_inTexCoordId.GetString(), s_inColorId.GetString());
 
 	auto renderState = device->CreateResource<RenderState>();
 	renderState->Init();
@@ -158,11 +161,13 @@ std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<
 	drawFontCmd->SetShader(shaderVert);
 	drawFontCmd->SetShader(shaderFrag);
 	drawFontCmd->SetRenderState(renderState);
-	drawFontCmd->AddBuffer(uniforms, uniformInfo._binding);
-	drawFontCmd->AddSampler(sampler, nullptr, samplerInfo._binding);
+	drawFontCmd->AddBuffer(uniforms, uniformInfo._id);
+	drawFontCmd->AddSampler(sampler, nullptr, samplerInfo._id);
 
 	return drawFontCmd;
 }
+
+static util::StrId s_transformId("transform"), s_fontColorId("fontColor");
 
 void UpdateFontTransform(std::shared_ptr<RenderDrawCommand> const &fontDraw, glm::uvec2 screenSize, glm::vec4 fontColor)
 {
@@ -188,8 +193,8 @@ void UpdateFontTransform(std::shared_ptr<RenderDrawCommand> const &fontDraw, glm
 
 	void *mapped = staging->Map();
 
-	*staging->GetBufferLayout()->GetMemberPtr<glm::mat4>(mapped, "transform") = transform;
-	*staging->GetBufferLayout()->GetMemberPtr<glm::vec4>(mapped, "fontColor") = fontColor;
+	*staging->GetBufferLayout()->GetMemberPtr<glm::mat4>(mapped, s_transformId) = transform;
+	*staging->GetBufferLayout()->GetMemberPtr<glm::vec4>(mapped, s_fontColorId) = fontColor;
 
 	staging->Unmap();
 
@@ -207,17 +212,17 @@ void InitTriangleVertices(Device *device, std::shared_ptr<Buffer> const &vertexB
 	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
 	void *mapped = vertexStaging->Map();
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
-	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
-	*layout->GetMemberPtr<glm::vec2>(mapped, 0, "inTexCoord") = glm::vec2(1.0f, 1.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, s_inPositionId) = glm::vec3(0.0f, -0.5f, 0.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, s_inColorId) = glm::vec3(1.0f, 0.0f, 0.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 0, s_inTexCoordId) = glm::vec2(1.0f, 1.0f);
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.0f);
-	*layout->GetMemberPtr<glm::vec3>(mapped, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
-	*layout->GetMemberPtr<glm::vec2>(mapped, 1, "inTexCoord") = glm::vec2(1.0f, 0.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 1, s_inPositionId) = glm::vec3(0.5f, 0.5f, 0.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 1, s_inColorId) = glm::vec3(0.0f, 1.0f, 0.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 1, s_inTexCoordId) = glm::vec2(1.0f, 0.0f);
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.0f);
-	*layout->GetMemberPtr<glm::vec3>(mapped, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
-	*layout->GetMemberPtr<glm::vec2>(mapped, 2, "inTexCoord") = glm::vec2(0.0f, 1.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 2, s_inPositionId) = glm::vec3(-0.5f, 0.5f, 0.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 2, s_inColorId) = glm::vec3(0.0f, 0.0f, 1.0f);
+	*layout->GetMemberPtr<glm::vec2>(mapped, 2, s_inTexCoordId) = glm::vec2(0.0f, 1.0f);
 
 	vertexStaging->Unmap();
 
@@ -245,17 +250,17 @@ void InitTriangleStreams(Device *device, std::shared_ptr<Buffer> const &posBuffe
 	void *colors = colorStaging->Map();
 	void *tc = texCoordStaging->Map();
 
-	*posLayout->GetMemberPtr<glm::vec3>(positions, 0, "inPosition") = glm::vec3(0.0f, -0.5f, 0.0f);
-	*colorLayout->GetMemberPtr<glm::vec3>(colors, 0, "inColor") = glm::vec3(1.0f, 0.0f, 0.0f);
-	*tcLayout->GetMemberPtr<glm::vec2>(tc, 0, "inTexCoord") = glm::vec2(1.0f, 1.0f);
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 0, s_inPositionId) = glm::vec3(0.0f, -0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 0, s_inColorId) = glm::vec3(1.0f, 0.0f, 0.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 0, s_inTexCoordId) = glm::vec2(1.0f, 1.0f);
 
-	*posLayout->GetMemberPtr<glm::vec3>(positions, 1, "inPosition") = glm::vec3(0.5f, 0.5f, 0.0f);
-	*colorLayout->GetMemberPtr<glm::vec3>(colors, 1, "inColor") = glm::vec3(0.0f, 1.0f, 0.0f);
-	*tcLayout->GetMemberPtr<glm::vec2>(tc, 1, "inTexCoord") = glm::vec2(1.0f, 0.0f);
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 1, s_inPositionId) = glm::vec3(0.5f, 0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 1, s_inColorId) = glm::vec3(0.0f, 1.0f, 0.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 1, s_inTexCoordId) = glm::vec2(1.0f, 0.0f);
 
-	*posLayout->GetMemberPtr<glm::vec3>(positions, 2, "inPosition") = glm::vec3(-0.5f, 0.5f, 0.0f);
-	*colorLayout->GetMemberPtr<glm::vec3>(colors, 2, "inColor") = glm::vec3(0.0f, 0.0f, 1.0f);
-	*tcLayout->GetMemberPtr<glm::vec2>(tc, 2, "inTexCoord") = glm::vec2(0.0f, 1.0f);
+	*posLayout->GetMemberPtr<glm::vec3>(positions, 2, s_inPositionId) = glm::vec3(-0.5f, 0.5f, 0.0f);
+	*colorLayout->GetMemberPtr<glm::vec3>(colors, 2, s_inColorId) = glm::vec3(0.0f, 0.0f, 1.0f);
+	*tcLayout->GetMemberPtr<glm::vec2>(tc, 2, s_inTexCoordId) = glm::vec2(0.0f, 1.0f);
 
 	texCoordStaging->Unmap();
 	colorStaging->Unmap();
@@ -307,7 +312,7 @@ void InitPerInstanceColor(Device *device, std::shared_ptr<Buffer> const &vertexB
 	util::LayoutElement *layout = vertexStaging->GetBufferLayout().get();
 	void *mapped = vertexStaging->Map();
 
-	*layout->GetMemberPtr<glm::vec3>(mapped, 0, "inColor") = glm::vec3(1.0f, 1.0f, 1.0f);
+	*layout->GetMemberPtr<glm::vec3>(mapped, 0, s_inColorId) = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	vertexStaging->Unmap();
 
@@ -316,13 +321,16 @@ void InitPerInstanceColor(Device *device, std::shared_ptr<Buffer> const &vertexB
 
 	device->GetExecutionQueue().EnqueuePass(copyPass);
 }
+
+util::StrId s_modelId("model"), s_viewId("view"), s_projId("proj");
+
 void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, glm::mat4 view, glm::mat4 proj)
 {
 	util::LayoutElement *layout = buffer->GetBufferLayout().get();
 	void *mapped = buffer->Map();
-	*layout->GetMemberPtr<glm::mat4>(mapped, "model") = model;
-	*layout->GetMemberPtr<glm::mat4>(mapped, "view") = view;
-	*layout->GetMemberPtr<glm::mat4>(mapped, "proj") = proj;
+	*layout->GetMemberPtr<glm::mat4>(mapped, s_modelId) = model;
+	*layout->GetMemberPtr<glm::mat4>(mapped, s_viewId) = view;
+	*layout->GetMemberPtr<glm::mat4>(mapped, s_projId) = proj;
 	buffer->Unmap();
 }
 
@@ -382,9 +390,9 @@ int main()
 
 	InitTriangleVertices(device.get(), vertexBuffer);
 
-	auto vbPositionsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inPosition", rttr::type::get<glm::vec3>()), 3);
-	auto vbColorsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inColor", rttr::type::get<glm::vec3>()), 3);
-	auto vbTexCoordsLayout = util::CreateLayoutArray(util::CreateLayoutStruct("inTexCoord", rttr::type::get<glm::vec2>()), 3);
+	auto vbPositionsLayout = util::CreateLayoutArray(util::CreateLayoutStruct(s_inPositionId.GetString(), rttr::type::get<glm::vec3>()), 3);
+	auto vbColorsLayout = util::CreateLayoutArray(util::CreateLayoutStruct(s_inColorId.GetString(), rttr::type::get<glm::vec3>()), 3);
+	auto vbTexCoordsLayout = util::CreateLayoutArray(util::CreateLayoutStruct(s_inTexCoordId.GetString(), rttr::type::get<glm::vec2>()), 3);
 
 	auto posStream = device->CreateResource<Buffer>();
 	posStream->Init(Buffer::Usage::Vertex, vbPositionsLayout);
@@ -438,8 +446,8 @@ int main()
 	//renderTriangle->AddBuffer(perInstanceColor, 1, 0, true);
 	//renderTriangle->AddBuffer(texCoordStream, 2);
 	//renderTriangle->AddBuffer(indexBuffer);
-	renderTriangle->AddBuffer(uboShader);
-	renderTriangle->AddSampler(sampler, texture, 1);
+	renderTriangle->AddBuffer(uboShader, vertShader->GetUniformBuffers().front()._id);
+	renderTriangle->AddSampler(sampler, texture, fragShader->GetSamplers().front()._id);
 	//renderTriangle->AddSampler(sampler, font->GetTexture(), 1);
 	mesh->SetToDrawCommand(renderTriangle);
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));

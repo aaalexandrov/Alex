@@ -56,9 +56,8 @@ protected:
 	std::shared_ptr<BufferCopyPass> _copyStagingToRenderBuffer;
 	std::vector<uint8_t> _bufferData;
 
-	std::string _positionAttr, _texCoordAttr, _colorAttr;
 	uint32_t _offsetPosition, _offsetTexCoord, _offsetColor, _vertexStride;
-
+	
 	std::shared_ptr<std::vector<uint8_t>> _fontData;
 	int _fontIndex = 0;
 	float _ascent, _descent, _lineSpacing;

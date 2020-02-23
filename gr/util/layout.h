@@ -1,6 +1,7 @@
 #pragma once
 
 #include "namespace.h"
+#include "str.h"
 #include "rttr/rttr_enable.h"
 #include <memory>
 
@@ -24,8 +25,10 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	virtual size_t GetStructFieldCount() const { return 0; }
 	virtual LayoutElement const *GetStructFieldElement(size_t fieldIndex) const { return nullptr; }
 	virtual std::string GetStructFieldName(size_t fieldIndex) const { return {}; }
+	virtual StrId GetStructFieldId(size_t fieldIndex) const { return StrId(); }
 	virtual size_t GetStructFieldOffset(size_t fieldIndex) const { return ~0ull; }
-	virtual size_t GetStructFieldIndex(std::string name) const { return ~0ull; }
+	virtual size_t GetStructFieldIndex(StrId nameId) const { return ~0ull; }
+	virtual std::string GetStructFieldName(StrId nameId) const { return GetStructFieldName(GetStructFieldIndex(nameId)); }
 
 	size_t GetPadding() const { return _padding; }
 	void SetPadding(size_t padding) { _padding = padding; }
@@ -36,9 +39,9 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 	void SetUserData(intptr_t userData) const { _userData = userData; }
 
 	virtual size_t GetOffset(size_t index) const = 0;
-	size_t GetOffset(std::string name) const { return GetOffset(GetStructFieldIndex(name)); }
+	size_t GetOffset(StrId nameId) const { return GetOffset(GetStructFieldIndex(nameId)); }
 	virtual LayoutElement const *GetElement(size_t index) const = 0;
-	LayoutElement const *GetElement(std::string name) const { return GetElement(GetStructFieldIndex(name)); }
+	LayoutElement const *GetElement(StrId nameId) const { return GetElement(GetStructFieldIndex(nameId)); }
 	size_t GetOffset(std::vector<rttr::variant> const &indices) const;
 
 	size_t GetMultidimensionalArrayCount() const;
@@ -128,8 +131,9 @@ struct LayoutStruct : public LayoutElement {
 	size_t GetStructFieldCount() const override { return _fields.size(); }
 	LayoutElement const *GetStructFieldElement(size_t fieldIndex) const override { return _fields[fieldIndex]._element.get(); }
 	std::string GetStructFieldName(size_t fieldIndex) const override { return _fields[fieldIndex]._name; }
+	StrId GetStructFieldId(size_t fieldIndex) const override { return _fields[fieldIndex]._id; }
 	size_t GetStructFieldOffset(size_t fieldIndex) const override { return _fields[fieldIndex]._offset; }
-	size_t GetStructFieldIndex(std::string name) const override;
+	size_t GetStructFieldIndex(StrId nameId) const override;
 
 	bool IsEqualToSameKind(LayoutElement const &other) const override;
 	size_t GetHash() const override;
@@ -137,11 +141,12 @@ protected:
 	struct Field { 
 		std::shared_ptr<LayoutElement> _element;
 		std::string _name;
+		StrId _id;
 		size_t _offset;
 	};
 
 	std::vector<Field> _fields;
-	std::unordered_map<std::string, size_t> _nameIndices;
+	std::unordered_map<StrId, size_t> _nameIndices;
 };
 
 inline std::shared_ptr<LayoutValue> CreateLayoutValue(rttr::type type, size_t size = 0)

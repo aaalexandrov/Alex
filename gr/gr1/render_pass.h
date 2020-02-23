@@ -42,7 +42,7 @@ public:
 	struct BufferData {
 		std::shared_ptr<Buffer> _buffer;
 		size_t _offset = 0;
-		int _binding = 0;
+		ShaderKindsArray<uint32_t> _bindings;
 		bool _frequencyInstance = false;
 		std::shared_ptr<util::LayoutElement> _overrideLayout;
 
@@ -55,7 +55,7 @@ public:
 	struct SamplerData {
 		std::shared_ptr<Sampler> _sampler;
 		std::shared_ptr<Image> _image;
-		int _binding = 0;
+		ShaderKindsArray<uint32_t> _bindings;
 	};
 
 	struct DrawCounts {
@@ -69,16 +69,15 @@ public:
 	virtual void SetRenderState(std::shared_ptr<RenderState> const &renderState) { _renderState = renderState; }
 	std::shared_ptr<RenderState> const &GetRenderState() { return _renderState; }
 
-	virtual void SetShader(std::shared_ptr<Shader> const &shader) { _shaders[static_cast<int>(shader->GetShaderKind())] = shader; }
-	virtual void RemoveShader(ShaderKind kind) { _shaders[static_cast<int>(kind)].reset(); }
+	virtual void SetShader(std::shared_ptr<Shader> const &shader) { ASSERT(!_shaders[static_cast<int>(shader->GetShaderKind())]); _shaders[static_cast<int>(shader->GetShaderKind())] = shader; }
 	std::shared_ptr<Shader> const &GetShader(ShaderKind kind) { return _shaders[static_cast<int>(kind)]; }
 
-	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding = 0, size_t offset = 0, bool frequencyInstance = false, std::shared_ptr<util::LayoutElement> const &overrideLayout = std::shared_ptr<util::LayoutElement>());
+	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, util::StrId shaderId = util::StrId(), size_t offset = 0, bool frequencyInstance = false, std::shared_ptr<util::LayoutElement> const &overrideLayout = std::shared_ptr<util::LayoutElement>());
 	virtual void RemoveBuffer(int bufferIndex) { _buffers.erase(_buffers.begin() + bufferIndex); }
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
 
-	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding = 0);
+	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, util::StrId shaderId);
 	virtual void RemoveSampler(int samplerIndex) { _samplers.erase(_samplers.begin() + samplerIndex); }
 	int GetSamplerCount() { return static_cast<int>(_samplers.size()); }
 	SamplerData const &GetSamplerData(int samplerIndex) { return _samplers[samplerIndex]; }

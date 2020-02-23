@@ -95,4 +95,63 @@ size_t WriteUnicodePoint(int32_t codePoint, uint8_t *&utf8, uint8_t const *utf8E
 	return 0;
 }
 
+
+StrId::StrId(char const *c, size_t charCount, InitParam addStr)
+	: _id(HashFNV<32>::Fnv1<char>(c, charCount))
+{
+	if (addStr == InitParam::AddToRepository)
+		GetStrRepo().AddToRepository(*this, std::string(c, charCount));
+}
+
+StrId::StrId(std::string s, InitParam addStr)
+	: _id(HashFNV<32>::Fnv1(s))
+{
+	if (addStr == InitParam::AddToRepository)
+		GetStrRepo().AddToRepository(*this, s);
+}
+
+std::string StrId::GetString() const 
+{ 
+	return GetStrRepo().GetFromRepository(*this); 
+}
+
+void StrId::RemoveStringGlobal() const 
+{ 
+	GetStrRepo().RemoveFromRepository(*this); 
+}
+
+
+void StringRepository::AddToRepository(StrId id, std::string str)
+{
+	if (!id) {
+		ASSERT(str == std::string());
+		return;
+	}
+	std::lock_guard lock(_mutex);
+	auto it = _strRepo.find(id);
+	if (it != _strRepo.end()) {
+		ASSERT(str == it->second);
+		return;
+	}
+	_strRepo.insert(std::make_pair(id, str));
+}
+
+std::string StringRepository::GetFromRepository(StrId id)
+{
+	if (!id)
+		return std::string();
+	std::lock_guard lock(_mutex);
+	auto it = _strRepo.find(id);
+	if (it == _strRepo.end())
+		return std::string();
+	return it->second;
+}
+
+void StringRepository::RemoveFromRepository(StrId id)
+{
+	std::lock_guard lock(_mutex);
+	_strRepo.erase(id);
+}
+
 NAMESPACE_END(util)
+

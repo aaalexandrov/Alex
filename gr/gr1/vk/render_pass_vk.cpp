@@ -51,21 +51,14 @@ void RenderDrawCommandVk::SetShader(std::shared_ptr<Shader> const &shader)
 	RenderDrawCommand::SetShader(shader);
 }
 
-void RenderDrawCommandVk::RemoveShader(ShaderKind kind)
-{
-	_cmdDraw.reset();
-	_pipeline.reset();
-	RenderDrawCommand::RemoveShader(kind);
-}
-
-int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, int binding, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
+int RenderDrawCommandVk::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::StrId shaderId, size_t offset, bool frequencyInstance, std::shared_ptr<util::LayoutElement> const &overrideLayout)
 {
 	_cmdDraw.reset();
 	_descriptorSetValid = false;
 	if (!!(buffer->GetUsage() & (Buffer::Usage::Vertex | Buffer::Usage::Index))) {
 		_pipeline.reset();
 	}
-	return RenderDrawCommand::AddBuffer(buffer, binding, offset, frequencyInstance, overrideLayout);
+	return RenderDrawCommand::AddBuffer(buffer, shaderId, offset, frequencyInstance, overrideLayout);
 }
 
 void RenderDrawCommandVk::RemoveBuffer(int bufferIndex)
@@ -94,11 +87,11 @@ void RenderDrawCommandVk::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex
 	RenderDrawCommand::SetDrawCounts(indexCount, firstIndex, instanceCount, firstInstance, vertexOffset);
 }
 
-int RenderDrawCommandVk::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, int binding)
+int RenderDrawCommandVk::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, util::StrId shaderId)
 {
 	_cmdDraw.reset();
 	_descriptorSetValid = false;
-	return RenderDrawCommand::AddSampler(sampler, image, binding);
+	return RenderDrawCommand::AddSampler(sampler, image, shaderId);
 }
 
 void RenderDrawCommandVk::RemoveSampler(int samplerIndex)
@@ -153,11 +146,10 @@ void RenderDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 	for (auto &bufData : _buffers) {
 		BufferVk *bufferVk = static_cast<BufferVk*>(bufData._buffer.get());
 		if (bufData.IsVertex()) {
-			vertBuffers.resize(std::max<size_t>(vertBuffers.size(), bufData._binding + 1));
-			ASSERT(!vertBuffers[bufData._binding]);
-			vertBuffers[bufData._binding] = *bufferVk->_buffer;
-			vertBufferOffsets.resize(vertBuffers.size());
-			vertBufferOffsets[bufData._binding] = bufData._offset;
+			// vertex buffer bindings are implicit, counting from 0 in the order the buffers appear in the array
+			// pipeline store uses the same logic
+			vertBuffers.push_back(*bufferVk->_buffer);
+			vertBufferOffsets.push_back(bufData._offset);
 		} 
 		if (bufData.IsIndex()) {
 			ASSERT(!indexBuffer);
@@ -203,7 +195,6 @@ void RenderDrawCommandVk::PreparePipeline(RenderPassVk *renderPass, uint32_t sub
 
 		VertexBufferLayout bufLayout;
 		bufLayout._bufferLayout = _buffers[i].GetBufferLayout();
-		bufLayout._binding = _buffers[i]._binding;
 		bufLayout._frequencyInstance = _buffers[i]._frequencyInstance;
 		pipeInfo._vertexBufferLayouts.push_back(bufLayout);
 	}
@@ -227,20 +218,14 @@ void RenderDrawCommandVk::PrepareDescriptorSets()
 	_descriptorSetValid = false;
 }
 
-uint32_t RenderDrawCommandVk::GetBuffersDescriptorCount()
+uint32_t RenderDrawCommandVk::GetMaxBuffersDescriptorCount()
 {
-	uint32_t count = 0;
-	for (auto &bufData : _buffers) {
-		if (!(bufData._buffer->GetUsage() & Buffer::Usage::Uniform))
-			continue;
-		++count;
-	}
-	return count;
+	return static_cast<uint32_t>(_buffers.size()) * static_cast<uint32_t>(ShaderKind::Count);
 }
 
-uint32_t RenderDrawCommandVk::GetSamplersDescriptorCount()
+uint32_t RenderDrawCommandVk::GetMaxSamplersDescriptorCount()
 {
-	return static_cast<uint32_t>(_samplers.size());
+	return static_cast<uint32_t>(_samplers.size()) * static_cast<uint32_t>(ShaderKind::Count);
 }
 
 void RenderDrawCommandVk::UpdateDescriptorSets()
@@ -254,7 +239,7 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 
 	std::vector<vk::DescriptorBufferInfo> bufferInfos;
 	// reserve enough elements so that the array won't be reallocated, we're storing addresses of elements below
-	bufferInfos.reserve(GetBuffersDescriptorCount());
+	bufferInfos.reserve(GetMaxBuffersDescriptorCount());
 	for (auto &bufData : _buffers) {
 		if (!!(bufData._buffer->GetUsage() & Buffer::Usage::Uniform)) {
 			BufferVk *bufferVk = static_cast<BufferVk*>(bufData._buffer.get());
@@ -264,19 +249,23 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 				.setOffset(bufData._offset)
 				.setRange(bufferVk->GetSize() - bufData._offset);
 
-			setWrites.emplace_back();
-			setWrites.back()
-				.setDstSet(*_descriptorSet)
-				.setDstBinding(bufData._binding)
-				.setDstArrayElement(0)
-				.setDescriptorCount(1)
-				.setDescriptorType(vk::DescriptorType::eUniformBuffer)
-				.setPBufferInfo(&bufferInfos.back());
+			for (uint32_t i = 0; i < _shaders.size(); ++i) {
+				if (bufData._bindings[i] == ~0ul)
+					continue;
+				setWrites.emplace_back();
+				setWrites.back()
+					.setDstSet(*_descriptorSet)
+					.setDstBinding(bufData._bindings[i])
+					.setDstArrayElement(0)
+					.setDescriptorCount(1)
+					.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+					.setPBufferInfo(&bufferInfos.back());
+			}
 		}
 	}
 	
 	std::vector<vk::DescriptorImageInfo> samplerInfos;
-	samplerInfos.reserve(GetSamplersDescriptorCount());
+	samplerInfos.reserve(GetMaxSamplersDescriptorCount());
 	for (auto &samplerData : _samplers) {
 		SamplerVk *samplerVk = static_cast<SamplerVk*>(samplerData._sampler.get());
 		ImageVk *imageVk = static_cast<ImageVk*>(samplerData._image.get());
@@ -286,14 +275,18 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 			.setImageView(*imageVk->_view)
 			.setImageLayout(imageVk->GetStateInfo(ResourceState::ShaderRead)._layout);
 
-		setWrites.emplace_back();
-		setWrites.back()
-			.setDstSet(*_descriptorSet)
-			.setDstBinding(samplerData._binding)
-			.setDstArrayElement(0)
-			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-			.setPImageInfo(&samplerInfos.back());
+		for (uint32_t i = 0; i < _shaders.size(); ++i) {
+			if (samplerData._bindings[i] == ~0ul)
+				continue;
+			setWrites.emplace_back();
+			setWrites.back()
+				.setDstSet(*_descriptorSet)
+				.setDstBinding(samplerData._bindings[i])
+				.setDstArrayElement(0)
+				.setDescriptorCount(1)
+				.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+				.setPImageInfo(&samplerInfos.back());
+		}
 	}
 
 	if (setWrites.size())

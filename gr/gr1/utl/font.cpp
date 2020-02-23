@@ -86,18 +86,16 @@ void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontI
 	_device->GetExecutionQueue().EnqueuePass(copyTexPass);
 }
 
+static util::StrId s_indicesId("indices", util::StrId::AddToRepository), s_verticesId("vertices", util::StrId::AddToRepository);
+
 void Font::SetRenderingData(uint32_t sizeChars, std::string positionAttr, std::string texCoordAttr, std::string colorAttr)
 {
-	_positionAttr = positionAttr;
-	_texCoordAttr = texCoordAttr;
-	_colorAttr = colorAttr;
-
 	auto indicesLayout = util::CreateLayoutArray(rttr::type::get<uint32_t>(), sizeChars * 6);
 	auto verticesLayout = util::CreateLayoutArray(
-		util::CreateLayoutStruct(_positionAttr, rttr::type::get<glm::vec2>(), 
-			_texCoordAttr, rttr::type::get<glm::vec2>(), 
-			_colorAttr, rttr::type::get<glm::u8vec4>()), sizeChars * 4);
-	auto bufLayout = util::CreateLayoutStruct("indices", indicesLayout, "vertices", verticesLayout);
+		util::CreateLayoutStruct(positionAttr, rttr::type::get<glm::vec2>(), 
+			texCoordAttr, rttr::type::get<glm::vec2>(), 
+			colorAttr, rttr::type::get<glm::u8vec4>()), sizeChars * 4);
+	auto bufLayout = util::CreateLayoutStruct(s_indicesId.GetString(), indicesLayout, s_verticesId.GetString(), verticesLayout);
 
 	_stagingBuffer = _device->CreateResource<Buffer>();
 	_stagingBuffer->Init(Buffer::Usage::Staging, bufLayout);
@@ -114,9 +112,9 @@ void Font::SetRenderingData(uint32_t sizeChars, std::string positionAttr, std::s
 	_usedChars = 0;
 
 	auto vertElemLayout = verticesLayout->GetArrayElement();
-	_offsetPosition = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(_positionAttr).second);
-	_offsetTexCoord = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(_texCoordAttr).second);
-	_offsetColor = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(_colorAttr).second);
+	_offsetPosition = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(util::StrId(positionAttr)).second);
+	_offsetTexCoord = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(util::StrId(texCoordAttr)).second);
+	_offsetColor = static_cast<uint32_t>(vertElemLayout->GetMemberElementAndOffset(util::StrId(colorAttr)).second);
 	_vertexStride = static_cast<uint32_t>(vertElemLayout->GetSize());
 }
 
@@ -130,8 +128,8 @@ auto Font::AddText(glm::vec2 &pixelPos, std::string text, int32_t prevCodePoint,
 	uint8_t const *str = reinterpret_cast<uint8_t const*>(text.c_str());
 	uint8_t const *strEnd = reinterpret_cast<uint8_t const *>(text.c_str() + text.length());
 
-	uint32_t *indices = _stagingBuffer->GetBufferLayout()->GetMemberPtr<uint32_t>(_bufferData.data(), "indices", 0);
-	uint8_t *vertices = reinterpret_cast<uint8_t*>(_stagingBuffer->GetBufferLayout()->GetMemberPtr<void>(_bufferData.data(), "vertices"));
+	uint32_t *indices = _stagingBuffer->GetBufferLayout()->GetMemberPtr<uint32_t>(_bufferData.data(), s_indicesId, 0);
+	uint8_t *vertices = reinterpret_cast<uint8_t*>(_stagingBuffer->GetBufferLayout()->GetMemberPtr<void>(_bufferData.data(), s_verticesId));
 	TextId id{ _usedChars };
 	glm::u8vec4 packedColor = glm::round(glm::clamp(color, 0.0f, 1.0f) * 255.0f);
 	while (str < strEnd) {
@@ -184,8 +182,8 @@ util::RectF Font::MeasureText(glm::vec2 &pixelPos, std::string text, int32_t pre
 
 void Font::SetDataToDrawCommand(RenderDrawCommand *cmdDraw)
 {
-	size_t indOffset = _stagingBuffer->GetBufferLayout()->GetMemberElementAndOffset("indices").second;
-	size_t vertOffset = _stagingBuffer->GetBufferLayout()->GetMemberElementAndOffset("vertices").second;
+	size_t indOffset = _stagingBuffer->GetBufferLayout()->GetMemberElementAndOffset(s_indicesId).second;
+	size_t vertOffset = _stagingBuffer->GetBufferLayout()->GetMemberElementAndOffset(s_verticesId).second;
 	uint8_t *mapped = reinterpret_cast<uint8_t*>(_stagingBuffer->Map());
 
 	memcpy(mapped + indOffset, _bufferData.data() + indOffset, _usedChars * 6 * sizeof(uint32_t));
@@ -210,14 +208,15 @@ void Font::SetDataToDrawCommand(RenderDrawCommand *cmdDraw)
 	}
 
 	if (addIndex)
-		cmdDraw->AddBuffer(_renderBuffer, 0, indOffset, false, _renderBuffer->GetBufferLayout()->GetElement("indices")->AsShared());
+		cmdDraw->AddBuffer(_renderBuffer, util::StrId(), indOffset, false, _renderBuffer->GetBufferLayout()->GetElement(s_indicesId)->AsShared());
 	if (addVertex)
-		cmdDraw->AddBuffer(_renderBuffer, 0, vertOffset, false, _renderBuffer->GetBufferLayout()->GetElement("vertices")->AsShared());
+		cmdDraw->AddBuffer(_renderBuffer, util::StrId(), vertOffset, false, _renderBuffer->GetBufferLayout()->GetElement(s_verticesId)->AsShared());
 
 	auto samplerData = cmdDraw->GetSamplerData(0);
 	if (samplerData._image != _texture) {
+		util::StrId samplerId = cmdDraw->GetShader(ShaderKind::Fragment)->GetSamplerInfo(samplerData._bindings[static_cast<int>(ShaderKind::Fragment)])->_id;
 		cmdDraw->RemoveSampler(0);
-		cmdDraw->AddSampler(samplerData._sampler, _texture, samplerData._binding);
+		cmdDraw->AddSampler(samplerData._sampler, _texture, samplerId);
 	}
 
 	cmdDraw->SetDrawCounts(_usedChars * 6);

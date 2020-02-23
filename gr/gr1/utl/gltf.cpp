@@ -24,16 +24,15 @@ Buffer *Model::GetIndexBuffer()
 
 void Model::SetToDrawCommand(std::shared_ptr<RenderDrawCommand> const &drawCmd)
 {
-	int binding = 0;
 	for (auto &buffer : _buffers) {
 		if (!!(buffer._buffer->GetUsage() & Buffer::Usage::Index)) {
 			drawCmd->AddBuffer(buffer._buffer);
 			continue;
 		}
 		ASSERT(buffer._buffer->GetUsage() & Buffer::Usage::Vertex);
-		if (!drawCmd->GetShader(ShaderKind::Vertex)->HasCommonVertexAttributes(buffer._buffer->GetBufferLayout()->GetArrayElement()))
+		if (!drawCmd->GetShader(ShaderKind::Vertex)->HasCommonVertexAttributes(buffer._buffer->GetBufferLayout()->GetArrayElement(), nullptr))
 			continue;
-		drawCmd->AddBuffer(buffer._buffer, binding++, 0, buffer._perInstance);
+		drawCmd->AddBuffer(buffer._buffer, util::StrId(), 0, buffer._perInstance);
 	}
 	drawCmd->SetDrawCounts(GetIndicesCount());
 }

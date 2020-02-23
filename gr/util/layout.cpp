@@ -8,9 +8,9 @@ size_t LayoutElement::GetOffset(std::vector<rttr::variant> const &indices) const
 	LayoutElement const *elem = this;
 	for (size_t i = 0; i < indices.size(); ++i) {
 		size_t indexOffs = ~0ull;
-		if (indices[i].can_convert<std::string>()) {
-			std::string name = indices[i].get_value<std::string>();
-			indexOffs = elem->GetOffset(name);
+		if (indices[i].can_convert<StrId>()) {
+			StrId nameId = indices[i].get_value<StrId>();
+			indexOffs = elem->GetOffset(nameId);
 		} else if (indices[i].can_convert<size_t>()) {
 			size_t ind = indices[i].get_value<size_t>();
 			indexOffs = elem->GetOffset(ind);
@@ -64,7 +64,7 @@ void LayoutStruct::AddField(std::string name, std::shared_ptr<LayoutElement> con
 	if (offset == ~0ull) {
 		offset = GetSize() - _padding;
 	}
-	Field field = { elem, name, offset };
+	Field field = { elem, name, StrId(name), offset };
 	auto it = std::lower_bound(_fields.begin(), _fields.end(), field, [](auto const &f1, auto const &f2) { return f1._offset < f2._offset; });
 	it = _fields.insert(it, field);
 	_nameIndices.insert(std::make_pair(_fields.back()._name, it - _fields.begin()));
@@ -75,9 +75,9 @@ void LayoutStruct::AddField(std::string name, std::shared_ptr<LayoutElement> con
 	ASSERT(it + 1 == _fields.end() || it->_offset + it->_element->GetSize() <= (it + 1)->_offset);
 }
 
-size_t LayoutStruct::GetStructFieldIndex(std::string name) const
+size_t LayoutStruct::GetStructFieldIndex(StrId nameId) const
 {
-	auto it = _nameIndices.find(name);
+	auto it = _nameIndices.find(nameId);
 	return it != _nameIndices.end() ? it->second : ~0ull;
 }
 
@@ -86,7 +86,8 @@ bool LayoutStruct::IsEqualToSameKind(LayoutElement const &other) const
 	if (_fields.size() != other.GetStructFieldCount() || _padding != other.GetPadding())
 		return false;
 	for (size_t i = 0; i < _fields.size(); ++i) {
-		if (_fields[i]._name != other.GetStructFieldName(i))
+		ASSERT((_fields[i]._id == other.GetStructFieldId(i)) == (_fields[i]._name == other.GetStructFieldName(i)));
+		if (_fields[i]._id != other.GetStructFieldId(i))
 			return false;
 		if (*_fields[i]._element != *other.GetStructFieldElement(i))
 			return false;
@@ -98,9 +99,9 @@ bool LayoutStruct::IsEqualToSameKind(LayoutElement const &other) const
 size_t LayoutStruct::GetHash() const
 {
 	size_t hash = _padding;
-	std::hash<std::string> strHasher;
+	std::hash<StrId> strHasher;
 	for (size_t i = 0; i < _fields.size(); ++i) {
-		hash = 31 * hash + strHasher(_fields[i]._name);
+		hash = 31 * hash + strHasher(_fields[i]._id);
 		hash = 31 * hash + _fields[i]._element->GetHash();
 	}
 	return hash;

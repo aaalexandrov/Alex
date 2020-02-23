@@ -38,7 +38,6 @@ struct PipelineVk {
 
 struct VertexBufferLayout {
 	std::shared_ptr<util::LayoutElement> _bufferLayout;
-	uint32_t _binding = 0;
 	bool _frequencyInstance = false;
 
 	size_t GetHash() const;
@@ -102,7 +101,7 @@ protected:
 	using PipelineLayoutsMap = std::unordered_map<ShaderKindsArray<ShaderVk*>, std::shared_ptr<PipelineLayoutVk>>;
 	using PipelinesMap = std::unordered_map<RecordedPipeline, std::weak_ptr<PipelineVk>>;
 
-	static int GetVertexLayoutIndex(std::string attribName, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset, util::LayoutElement const *&attribLayout);
+	static int GetVertexLayoutIndex(util::StrId attribId, std::vector<VertexBufferLayout> &bufferLayouts, size_t &attribOffset, util::LayoutElement const *&attribLayout);
 
 	std::shared_ptr<PipelineVk> AllocatePipeline(std::shared_ptr<PipelineLayoutVk> const &pipelineLayout, PipelineInfo &pipelineInfo);
 
