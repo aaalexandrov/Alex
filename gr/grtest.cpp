@@ -61,7 +61,7 @@ shared_ptr<Shader> LoadShader(Device *device, std::string name)
 {
 	vector<uint8_t> contents = util::ReadFile(string("../data/") + name);
 	string ext = name.substr(name.find_last_of('.'));
-	ShaderKind kind = ext == ".vert" ? ShaderKind::Vertex : ShaderKind::Fragment;
+	ShaderKind::Enum kind = ext == ".vert" ? ShaderKind::Vertex : ShaderKind::Fragment;
 	shared_ptr<Shader> shader = device->CreateResource<Shader>();
 	shader->Init(name, kind, contents);
 	return shader;
@@ -95,7 +95,11 @@ shared_ptr<Image> LoadImage(Device *device, std::string name)
 	return image;
 }
 
-static util::StrId s_inPositionId("inPosition", util::StrId::AddToRepository), s_inColorId("inColor", util::StrId::AddToRepository), s_inTexCoordId("inTexCoord", util::StrId::AddToRepository);
+static util::StrId 
+	s_inPositionId("inPosition", util::StrId::AddToRepository), 
+	s_inColorId("inColor", util::StrId::AddToRepository), 
+	s_inTexCoordId("inTexCoord", util::StrId::AddToRepository),
+	s_texSamplerId("texSampler", util::StrId::AddToRepository);
 
 
 std::shared_ptr<Model> LoadModel(Device *device, std::string name)
@@ -112,16 +116,15 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 	
 	cout << "Gltf loading succeeded for " << path << ", error: " << err << " warning: " << warn << endl;
 
-	static std::unordered_map<std::string, std::string> remapAttr{ {
-		{ "POSITION", s_inPositionId.GetString() },
-		{ "NORMAL", "inNormal" },
-		{ "TANGENT", "inTangent" },
-		{ "TEXCOORD_0", s_inTexCoordId.GetString() },
-	} };
+	static std::unordered_map<std::string, std::string> modelToShader{{
+		{ "POSITION"        , s_inPositionId.GetString() },
+		{ "TEXCOORD_0"      , s_inTexCoordId.GetString() },
+		{ "baseColorTexture", s_texSamplerId.GetString() },
+	}};
 
-	std::shared_ptr<Model> result = LoadGltfModel(*device, model, remapAttr);
+	std::shared_ptr<Model> loadedModel = LoadGltfModel(*device, model, modelToShader);
 
-	return result;
+	return loadedModel;
 }
 
 std::shared_ptr<Font> LoadFont(Device *device, std::string name)
@@ -151,8 +154,8 @@ std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<
 		BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add, 
 		ColorComponentMask::RGBA);
 
-	auto &uniformInfo = shaderVert->GetUniformBuffers().front();
-	auto samplerInfo = shaderFrag->GetSamplers().front();
+	auto &uniformInfo = shaderVert->GetParameters(Shader::Parameter::UniformBuffer).front();
+	auto samplerInfo = shaderFrag->GetParameters(Shader::Parameter::Sampler).front();
 
 	auto uniforms = device->CreateResource<Buffer>();
 	uniforms->Init(Buffer::Usage::Uniform, uniformInfo._layout);
@@ -428,7 +431,7 @@ int main()
 	view = glm::translate(view, vec3(0, 0, 5.5f));
 
 	auto uboShader = device->CreateResource<Buffer>();
-	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetUniformBuffers()[0]._layout);
+	uboShader->Init(Buffer::Usage::Uniform, vertShader->GetParameters(Shader::Parameter::UniformBuffer)[0]._layout);
 
 	auto uboStaging = device->CreateResource<Buffer>();
 	uboStaging->Init(Buffer::Usage::Staging, uboShader->GetBufferLayout());
@@ -446,8 +449,8 @@ int main()
 	//renderTriangle->AddBuffer(perInstanceColor, 1, 0, true);
 	//renderTriangle->AddBuffer(texCoordStream, 2);
 	//renderTriangle->AddBuffer(indexBuffer);
-	renderTriangle->AddBuffer(uboShader, vertShader->GetUniformBuffers().front()._id);
-	renderTriangle->AddSampler(sampler, texture, fragShader->GetSamplers().front()._id);
+	renderTriangle->AddBuffer(uboShader, vertShader->GetParameters(Shader::Parameter::UniformBuffer).front()._id);
+	renderTriangle->AddSampler(sampler, texture, fragShader->GetParameters(Shader::Parameter::Sampler).front()._id);
 	//renderTriangle->AddSampler(sampler, font->GetTexture(), 1);
 	mesh->SetToDrawCommand(renderTriangle);
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));

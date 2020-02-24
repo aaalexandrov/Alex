@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../buffer.h"
+#include "../image.h"
 #include "util/namespace.h"
 #include "tinygltf/tiny_gltf.h"
 
@@ -18,10 +19,16 @@ public:
 		bool _perInstance = false;
 	};
 
+	struct MaterialData {
+		std::unordered_map<std::string, std::shared_ptr<Image>> _textures;
+	};
+
 	PrimitiveKind _primitiveKind;
 	std::vector<BufferData> _buffers;
+	MaterialData _material;
+	std::unordered_map<std::string, std::string> _remapNames;
 };
 
-std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel, std::unordered_map<std::string, std::string> const &remapAttributes = std::unordered_map<std::string, std::string>());
+std::shared_ptr<Model> LoadGltfModel(Device &device, tinygltf::Model &gltfModel, std::unordered_map<std::string, std::string> remapNames = {});
 
 NAMESPACE_END(gr1)

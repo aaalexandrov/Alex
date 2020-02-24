@@ -214,9 +214,8 @@ void Font::SetDataToDrawCommand(RenderDrawCommand *cmdDraw)
 
 	auto samplerData = cmdDraw->GetSamplerData(0);
 	if (samplerData._image != _texture) {
-		util::StrId samplerId = cmdDraw->GetShader(ShaderKind::Fragment)->GetSamplerInfo(samplerData._bindings[static_cast<int>(ShaderKind::Fragment)])->_id;
 		cmdDraw->RemoveSampler(0);
-		cmdDraw->AddSampler(samplerData._sampler, _texture, samplerId);
+		cmdDraw->AddSampler(samplerData._sampler, _texture, samplerData._parameterId);
 	}
 
 	cmdDraw->SetDrawCounts(_usedChars * 6);

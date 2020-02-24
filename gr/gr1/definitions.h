@@ -31,18 +31,21 @@ enum class ColorFormat {
 	D24S8,
 };
 
-enum class ShaderKind {
-	Vertex,
-	Fragment,
-	Invalid,
+struct ShaderKind {
+	enum Enum {
+		Vertex,
+		Fragment,
+		Invalid,
 
-	Count = Invalid
+		First = Vertex,
+		Count = Invalid
+	};
 };
 
 enum class ShaderKindBits {
 	None = 0,
-	Vertex = 1 << static_cast<size_t>(ShaderKind::Vertex),
-	Fragment = 1 << static_cast<size_t>(ShaderKind::Fragment),
+	Vertex = 1 << ShaderKind::Vertex,
+	Fragment = 1 << ShaderKind::Fragment,
 };
 
 DEFINE_ENUM_BIT_OPERATORS(ShaderKindBits)
@@ -54,7 +57,7 @@ struct TextureCube {};
 
 class Shader;
 template <typename Data>
-using ShaderKindsArray = std::array<Data, static_cast<int>(ShaderKind::Count)>;
+using ShaderKindsArray = std::array<Data, ShaderKind::Count>;
 
 enum class CompareFunc {
 	Never,

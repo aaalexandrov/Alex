@@ -22,19 +22,19 @@ protected:
   static rttr::type GetTypeFromSpirv(spirv_cross::SPIRType const &type);
 	static std::shared_ptr<util::LayoutElement> GetLayoutFromSpirv(spirv_cross::Compiler const &reflected, spirv_cross::SPIRType const &type, size_t typeSize = 0);
   void InitVertexDescription(spirv_cross::Compiler const &reflected);
-  std::vector<UniformInfo> GetUniformDescriptions(spirv_cross::Compiler const &reflected, spirv_cross::SmallVector<spirv_cross::Resource> const &resources);
+  std::vector<Parameter> GetUniformDescriptions(spirv_cross::Compiler const &reflected, spirv_cross::SmallVector<spirv_cross::Resource> const &resources);
 
 	vk::UniqueShaderModule _module;
 	vk::ShaderStageFlagBits _stageFlags;
 
   struct ShaderKindInfo {
-    ShaderKind _kind;
+    ShaderKind::Enum _kind;
     vk::ShaderStageFlagBits _stage;
     shaderc_shader_kind _shadercKind;
   };
 
-  static ShaderKindInfo *GetShaderKindInfo(ShaderKind kind);
-  static vk::ShaderStageFlags GetShaderStageFlags(ShaderKind kindMask);
+  static ShaderKindInfo *GetShaderKindInfo(ShaderKind::Enum kind);
+  static vk::ShaderStageFlags GetShaderStageFlags(ShaderKind::Enum kindMask);
 
   static std::vector<ShaderKindInfo> _shaderKinds;
 };

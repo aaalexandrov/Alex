@@ -35,6 +35,8 @@ public:
   uint32_t GetColorFormatSize() const { return GetColorFormatSize(_format); }
   static uint32_t GetColorFormatSize(ColorFormat format);
 
+	static rttr::type GetColorFormatType(ColorFormat format);
+
   glm::uvec4 GetEffectiveSize() const { return ImageData::GetEffectiveSize(_size); }
 
   Usage _usage = Usage::None;

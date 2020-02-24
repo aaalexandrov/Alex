@@ -20,13 +20,13 @@ std::vector<ShaderVk::ShaderKindInfo> ShaderVk::_shaderKinds = {
   { ShaderKind::Fragment, vk::ShaderStageFlagBits::eFragment, shaderc_shader_kind::shaderc_fragment_shader },
 };
 
-ShaderVk::ShaderKindInfo *ShaderVk::GetShaderKindInfo(ShaderKind kind)
+ShaderVk::ShaderKindInfo *ShaderVk::GetShaderKindInfo(ShaderKind::Enum kind)
 {
   auto found = std::find_if(_shaderKinds.begin(), _shaderKinds.end(), [=](ShaderKindInfo &info) { return info._kind == kind; });
   return found != _shaderKinds.end() ? &*found : nullptr;
 }
 
-vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind kind)
+vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind::Enum kind)
 {
   vk::ShaderStageFlags stageFlags = GetShaderKindInfo(kind)->_stage;
   return stageFlags;
@@ -66,8 +66,8 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
     InitVertexDescription(refl);
   }
 
-	_uniformBuffers = GetUniformDescriptions(refl, refl.get_shader_resources().uniform_buffers);
-	_samplers = GetUniformDescriptions(refl, refl.get_shader_resources().sampled_images);
+	_parameters[Parameter::UniformBuffer] = GetUniformDescriptions(refl, refl.get_shader_resources().uniform_buffers);
+	_parameters[Parameter::Sampler] = GetUniformDescriptions(refl, refl.get_shader_resources().sampled_images);
 }
 
 vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()
@@ -215,7 +215,7 @@ static void AddSetLayoutBinding(std::vector<vk::DescriptorSetLayoutBinding> &bin
 
 void ShaderVk::FillDescriptorSetLayoutBindings(std::vector<vk::DescriptorSetLayoutBinding> &bindings)
 {
-  for (auto &bufferInfo : _uniformBuffers) {
+  for (auto &bufferInfo : _parameters[Parameter::UniformBuffer]) {
     vk::DescriptorSetLayoutBinding binding;
     binding
       .setBinding(bufferInfo._binding)
@@ -226,7 +226,7 @@ void ShaderVk::FillDescriptorSetLayoutBindings(std::vector<vk::DescriptorSetLayo
     AddSetLayoutBinding(bindings, binding);
   }
 
-	for (auto &samplerInfo : _samplers) {
+	for (auto &samplerInfo : _parameters[Parameter::Sampler]) {
 		vk::DescriptorSetLayoutBinding binding;
 		binding
 			.setBinding(samplerInfo._binding)
@@ -261,10 +261,10 @@ void ShaderVk::InitVertexDescription(spirv_cross::Compiler const &reflected)
 	}
 }
 
-std::vector<ShaderVk::UniformInfo> ShaderVk::GetUniformDescriptions(spirv_cross::Compiler const &reflected, 
+std::vector<ShaderVk::Parameter> ShaderVk::GetUniformDescriptions(spirv_cross::Compiler const &reflected, 
 	spirv_cross::SmallVector<spirv_cross::Resource> const &resources)
 {
-	std::vector<UniformInfo> uniforms;
+	std::vector<Parameter> uniforms;
   for (auto u : resources) {
     auto &type = reflected.get_type(u.type_id);
 
@@ -273,7 +273,7 @@ std::vector<ShaderVk::UniformInfo> ShaderVk::GetUniformDescriptions(spirv_cross:
 		size_t size = type.basetype == spirv_cross::SPIRType::Struct
 			? reflected.get_declared_struct_size(type) : 0;
 
-    UniformInfo uniformInfo(name, binding, GetLayoutFromSpirv(reflected, type, size));
+    Parameter uniformInfo(name, binding, GetLayoutFromSpirv(reflected, type, size));
     uniforms.push_back(std::move(uniformInfo));
   }
 	return uniforms;

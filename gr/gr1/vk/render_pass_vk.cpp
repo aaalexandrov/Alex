@@ -220,12 +220,12 @@ void RenderDrawCommandVk::PrepareDescriptorSets()
 
 uint32_t RenderDrawCommandVk::GetMaxBuffersDescriptorCount()
 {
-	return static_cast<uint32_t>(_buffers.size()) * static_cast<uint32_t>(ShaderKind::Count);
+	return static_cast<uint32_t>(_buffers.size()) * ShaderKind::Count;
 }
 
 uint32_t RenderDrawCommandVk::GetMaxSamplersDescriptorCount()
 {
-	return static_cast<uint32_t>(_samplers.size()) * static_cast<uint32_t>(ShaderKind::Count);
+	return static_cast<uint32_t>(_samplers.size()) * ShaderKind::Count;
 }
 
 void RenderDrawCommandVk::UpdateDescriptorSets()

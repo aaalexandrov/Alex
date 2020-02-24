@@ -28,6 +28,29 @@ bool RenderDrawCommand::BufferData::IsUniform() const
 	return !!(_buffer->GetUsage() & Buffer::Usage::Uniform);
 }
 
+bool RenderDrawCommand::SetBinding(ShaderKindsArray<uint32_t> &bindings, ShaderKind::Enum kind, uint32_t binding)
+{
+	ASSERT(binding != ~0ul);
+	for (int i = 0; i < kind; ++i) {
+		if (bindings[i] == binding)
+			return false;
+	}
+	bindings[kind] = binding;
+	return true;
+}
+
+Shader::Parameter const *RenderDrawCommand::GetShaderParamFromBinding(ShaderKindsArray<uint32_t> &bindings, Shader::Parameter::Kind paramKind)
+{
+	for (int i = 0; i < bindings.size(); ++i) {
+		if (bindings[i] == ~0ul)
+			continue;
+		Shader *shader = _shaders[i].get();
+		Shader::Parameter const *param = shader->GetParamInfo(paramKind, bindings[i]);
+		if (param)
+			return param;
+	}
+	return nullptr;
+}
 
 void RenderDrawCommand::Clear()
 {
@@ -45,6 +68,7 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::St
 	bufData._offset = offset;
 	bufData._frequencyInstance = frequencyInstance;
 	bufData._overrideLayout = overrideLayout;
+	bufData._parameterId = shaderId;
 
 	bool valid = true;
 	if (bufData.IsIndex()) {
@@ -52,7 +76,7 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::St
 		ASSERT(valid);
 	}
 	if (bufData.IsVertex()) {
-		valid &= _shaders[static_cast<int>(ShaderKind::Vertex)]->HasCommonVertexAttributes(bufData.GetBufferLayout()->GetArrayElement(), nullptr);
+		valid &= _shaders[ShaderKind::Vertex]->HasCommonVertexAttributes(bufData.GetBufferLayout()->GetArrayElement(), nullptr);
 		ASSERT(valid);
 	}
 	if (bufData.IsUniform()) {
@@ -61,11 +85,11 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::St
 			bufData._bindings[i] = ~0ul;
 			if (!_shaders[i])
 				continue;
-			auto info = _shaders[i]->GetUniformInfo(shaderId);
+			auto info = _shaders[i]->GetParamInfo(Shader::Parameter::UniformBuffer, shaderId);
 			if (!info)
 				continue;
 			used = true;
-			bufData._bindings[i] = info->_binding;
+			SetBinding(bufData._bindings, static_cast<ShaderKind::Enum>(i), info->_binding);
 		}
 		ASSERT(used);
 		valid &= used;
@@ -78,22 +102,32 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::St
 	return static_cast<int>(_buffers.size() - 1);
 }
 
+int RenderDrawCommand::GetBufferIndex(util::StrId shaderId)
+{
+	auto it = std::find_if(_buffers.begin(), _buffers.end(), [&](auto &b) { return b._parameterId == shaderId; });
+	if (it == _buffers.end())
+		return -1;
+	ASSERT(GetShaderParamFromBinding(it->_bindings, Shader::Parameter::UniformBuffer)->_id == shaderId);
+	return static_cast<int>(it - _buffers.begin());
+}
+
 int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, util::StrId shaderId)
 {
 	SamplerData samplerData;
 	samplerData._sampler = sampler;
 	samplerData._image = image;
+	samplerData._parameterId = shaderId;
 
 	bool used = false;
 	for (int i = 0; i < _shaders.size(); ++i) {
 		samplerData._bindings[i] = ~0ul;
 		if (!_shaders[i])
 			continue;
-		auto info = _shaders[i]->GetSamplerInfo(shaderId);
+		auto info = _shaders[i]->GetParamInfo(Shader::Parameter::Sampler, shaderId);
 		if (!info)
 			continue;
 		used = true;
-		samplerData._bindings[i] = info->_binding;
+		SetBinding(samplerData._bindings, static_cast<ShaderKind::Enum>(i), info->_binding);
 	}
 	ASSERT(used);
 	if (!used)
@@ -101,6 +135,15 @@ int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::
 
 	_samplers.push_back(std::move(samplerData));
 	return static_cast<int>(_samplers.size() - 1);
+}
+
+int RenderDrawCommand::GetSamplerIndex(util::StrId shaderId)
+{
+	auto it = std::find_if(_samplers.begin(), _samplers.end(), [&](auto &s) { return s._parameterId == shaderId; });
+	if (it == _samplers.end())
+		return -1;
+	ASSERT(GetShaderParamFromBinding(it->_bindings, Shader::Parameter::Sampler)->_id == shaderId);
+	return static_cast<int>(it - _samplers.begin());
 }
 
 void RenderDrawCommand::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex, uint32_t instanceCount, uint32_t firstInstance, uint32_t vertexOffset)

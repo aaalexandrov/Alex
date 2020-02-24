@@ -42,6 +42,7 @@ public:
 	struct BufferData {
 		std::shared_ptr<Buffer> _buffer;
 		size_t _offset = 0;
+		util::StrId _parameterId;
 		ShaderKindsArray<uint32_t> _bindings;
 		bool _frequencyInstance = false;
 		std::shared_ptr<util::LayoutElement> _overrideLayout;
@@ -56,6 +57,7 @@ public:
 		std::shared_ptr<Sampler> _sampler;
 		std::shared_ptr<Image> _image;
 		ShaderKindsArray<uint32_t> _bindings;
+		util::StrId _parameterId;
 	};
 
 	struct DrawCounts {
@@ -69,18 +71,20 @@ public:
 	virtual void SetRenderState(std::shared_ptr<RenderState> const &renderState) { _renderState = renderState; }
 	std::shared_ptr<RenderState> const &GetRenderState() { return _renderState; }
 
-	virtual void SetShader(std::shared_ptr<Shader> const &shader) { ASSERT(!_shaders[static_cast<int>(shader->GetShaderKind())]); _shaders[static_cast<int>(shader->GetShaderKind())] = shader; }
-	std::shared_ptr<Shader> const &GetShader(ShaderKind kind) { return _shaders[static_cast<int>(kind)]; }
+	virtual void SetShader(std::shared_ptr<Shader> const &shader) { ASSERT(!_shaders[shader->GetShaderKind()]); _shaders[shader->GetShaderKind()] = shader; }
+	std::shared_ptr<Shader> const &GetShader(ShaderKind::Enum kind) { return _shaders[kind]; }
 
 	virtual int AddBuffer(std::shared_ptr<Buffer> const &buffer, util::StrId shaderId = util::StrId(), size_t offset = 0, bool frequencyInstance = false, std::shared_ptr<util::LayoutElement> const &overrideLayout = std::shared_ptr<util::LayoutElement>());
 	virtual void RemoveBuffer(int bufferIndex) { _buffers.erase(_buffers.begin() + bufferIndex); }
 	int GetBufferCount() { return static_cast<int>(_buffers.size()); }
 	BufferData const &GetBufferData(int bufferIndex) { return _buffers[bufferIndex]; }
+	int GetBufferIndex(util::StrId shaderId);
 
 	virtual int AddSampler(std::shared_ptr<Sampler> const &sampler, std::shared_ptr<Image> const &image, util::StrId shaderId);
 	virtual void RemoveSampler(int samplerIndex) { _samplers.erase(_samplers.begin() + samplerIndex); }
 	int GetSamplerCount() { return static_cast<int>(_samplers.size()); }
 	SamplerData const &GetSamplerData(int samplerIndex) { return _samplers[samplerIndex]; }
+	int GetSamplerIndex(util::StrId shaderId);
 
 	virtual void SetPrimitiveKind(PrimitiveKind primitiveKind) { _primitiveKind = primitiveKind; }
 	PrimitiveKind GetPrimitiveKind() { return _primitiveKind; }
@@ -91,6 +95,9 @@ public:
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 protected:
+	static bool SetBinding(ShaderKindsArray<uint32_t> &bindings, ShaderKind::Enum kind, uint32_t binding);
+	Shader::Parameter const *GetShaderParamFromBinding(ShaderKindsArray<uint32_t> &bindings, Shader::Parameter::Kind paramKind);
+
 	ShaderKindsArray<std::shared_ptr<Shader>> _shaders;
 	std::shared_ptr<RenderState> _renderState;
 	std::vector<BufferData> _buffers;
