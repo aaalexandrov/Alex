@@ -6,19 +6,6 @@
 
 NAMESPACE_BEGIN(gr1)
 
-size_t VertexBufferLayout::GetHash() const
-{
-	size_t hash = _bufferLayout->GetArrayElement()->GetHash();
-	hash = util::GetHash(_frequencyInstance, hash);
-	return hash;
-}
-
-bool VertexBufferLayout::operator==(VertexBufferLayout const &other) const
-{
-	return *_bufferLayout->GetArrayElement() == *other._bufferLayout->GetArrayElement()
-		&& _frequencyInstance == other._frequencyInstance;
-}
-
 void PipelineLayoutVk::Init(DeviceVk &deviceVk, ShaderKindsArray<ShaderVk*> &shaders)
 {
 	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;

@@ -114,50 +114,66 @@ void ExecutionQueue::CleanupAfterExecution()
 	_passes.clear();
 }
 
+void ExecutionQueue::ProcessInputDependency(Resource *resource, ResourceState state, OutputPass *pass, std::unordered_set<Resource*> &resourcesInTransition)
+{
+	ResourceStateData &recordedData = GetResourceStateData(resource);
+	if (recordedData._state != state || recordedData._outputOfPass) {
+		bool shouldTransition = recordedData._state != state;
+		if (shouldTransition) {
+			ASSERT(resourcesInTransition.find(resource) == resourcesInTransition.end() && "Circular dependency in transitions!");
+			resourcesInTransition.insert(resource);
+
+			std::shared_ptr<ResourceStateTransitionPass> transition = resource->CreateTransitionPass(recordedData._state, state);
+
+			DependencyFunc addTransitionDep = [&](Resource *resource, ResourceState state) { 
+				ProcessInputDependency(resource, state, transition.get(), resourcesInTransition); 
+			};
+			transition->GetDependencies(DependencyType::Input, addTransitionDep);
+
+			if (recordedData._outputOfPass) {
+				_dependencyTracker.AddDependency(recordedData._outputOfPass, transition.get());
+			}
+
+			_scheduledPasses.push_back(transition.get());
+
+			_dependencyTracker.AddDependency(transition.get(), pass);
+			recordedData._outputOfPass = transition.get();
+
+			_dependencyPasses.push_back(std::move(transition));
+
+			resourcesInTransition.erase(resource);
+		} else {
+			if (recordedData._outputOfPass) {
+				_dependencyTracker.AddDependency(recordedData._outputOfPass, pass);
+			}
+		}
+
+		recordedData._state = state;
+	}
+}
+
 void ExecutionQueue::ProcessPassDependencies()
 {
 	ASSERT(_passes.back() == _finalPass);
 	ASSERT(!_resourceStates.size());
+	std::unordered_set<Resource*> resourcesInTransition;
 	for (int i = 0; i < _passes.size(); ++i) {
-		auto &pass = _passes[i];
-		DependencyFunc addInputDependency = [&](Resource *resource, ResourceState state) {
-			ResourceStateData &recordedData = GetResourceStateData(resource);
-			if (recordedData._state != state || recordedData._outputOfPass) {
-				bool shouldTransition = recordedData._state != state;
-				if (shouldTransition) {
-					std::shared_ptr<ResourceStateTransitionPass> transition = resource->CreateTransitionPass(recordedData._state, state);
-
-					if (recordedData._outputOfPass) {
-						_dependencyTracker.AddDependency(recordedData._outputOfPass, transition.get());
-					}
-
-					_scheduledPasses.push_back(transition.get());
-
-					_dependencyTracker.AddDependency(transition.get(), pass.get());
-					recordedData._outputOfPass = transition.get();
-
-					_dependencyPasses.push_back(std::move(transition));
-				} else {
-					if (recordedData._outputOfPass) {
-						_dependencyTracker.AddDependency(recordedData._outputOfPass, pass.get());
-					}
-				}
-
-				recordedData._state = state;
-			}
+		OutputPass *pass = _passes[i].get();
+		DependencyFunc addInputDependency = [&](Resource *resource, ResourceState state) { 
+			ProcessInputDependency(resource, state, pass, resourcesInTransition); 
 		};
 
-		_passes[i]->GetDependencies(DependencyType::Input, addInputDependency);
+		pass->GetDependencies(DependencyType::Input, addInputDependency);
 
 		DependencyFunc addOutputDependency = [&](Resource *resource, ResourceState state) {
 			ResourceStateData &recordedData = GetResourceStateData(resource);
 			recordedData._state = state;
-			recordedData._outputOfPass = pass.get();
+			recordedData._outputOfPass = pass;
 		};
 
-		_passes[i]->GetDependencies(DependencyType::Output, addOutputDependency);
+		pass->GetDependencies(DependencyType::Output, addOutputDependency);
 
-		_scheduledPasses.push_back(_passes[i].get());
+		_scheduledPasses.push_back(pass);
 	}
 
 	// all passes that don't have follow-up passes need to be added as input dependencies of the final pass so it waits for them to finish

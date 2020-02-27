@@ -10,6 +10,8 @@ class BufferTransitionPassVk : public ResourceStateTransitionPass, public PassVk
 public:
 	BufferTransitionPassVk(Device &device);
 
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override {}
+
 	void Prepare() override;
 	void Execute(PassDependencyTracker &dependencies) override;
 

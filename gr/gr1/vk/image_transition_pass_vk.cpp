@@ -18,7 +18,7 @@ ImageTransitionPassVk::ImageTransitionPassVk(Device &device)
 void ImageTransitionPassVk::Prepare()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource.get());
+	ImageVk *img = GetResource<ImageVk>();
 
 	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
@@ -84,7 +84,7 @@ void ImageTransitionPassVk::Prepare()
 void ImageTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	ImageVk *img = static_cast<ImageVk*>(_resource.get());
+	ImageVk *img = GetResource<ImageVk>();
 
 	ImageVk::StateInfo srcState = img->GetStateInfo(_srcState);
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
@@ -151,7 +151,7 @@ void ImageTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 
 vk::PipelineStageFlags ImageTransitionPassVk::GetPassDstStages()
 {
-	ImageVk *img = static_cast<ImageVk*>(_resource.get());
+	ImageVk *img = GetResource<ImageVk>();
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
 	return dstState._stages;
 }

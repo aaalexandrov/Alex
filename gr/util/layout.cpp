@@ -1,4 +1,5 @@
 #include "layout.h"
+#include "mathutl.h"
 
 NAMESPACE_BEGIN(util)
 
@@ -42,13 +43,30 @@ LayoutElement const *LayoutElement::GetMultidimensionalArrayElement() const
 	return elem;
 }
 
-bool LayoutElement::operator==(LayoutElement const &other) const
+int LayoutElement::CompareTo(LayoutElement const &other) const
 {
 	if (this == &other)
-		return true;
-	if (GetKind() != other.GetKind() || _padding != other._padding)
-		return false;
-	return IsEqualToSameKind(other);
+		return 0;
+	int diff = SignOfDifference(GetKind(), other.GetKind());
+	if (diff)
+		return diff;
+	diff = SignOfDifference(_padding, other._padding);
+	if (diff)
+		return diff;
+	return CompareToSameKind(other);
+}
+
+int LayoutValue::CompareToSameKind(LayoutElement const &other) const
+{
+	return SignOfDifference(_type, other.GetValueType());
+}
+
+int LayoutArray::CompareToSameKind(LayoutElement const &other) const
+{
+	int diff = SignOfDifference(_arrayCount, other.GetArrayCount());
+	if (diff)
+		return diff;
+	return _element->CompareTo(*other.GetArrayElement());
 }
 
 LayoutStruct::LayoutStruct(std::vector<std::pair<std::shared_ptr<LayoutElement>, std::string>> fields, size_t size)
@@ -81,19 +99,22 @@ size_t LayoutStruct::GetStructFieldIndex(StrId nameId) const
 	return it != _nameIndices.end() ? it->second : ~0ull;
 }
 
-bool LayoutStruct::IsEqualToSameKind(LayoutElement const &other) const
+int LayoutStruct::CompareToSameKind(LayoutElement const &other) const
 {
-	if (_fields.size() != other.GetStructFieldCount() || _padding != other.GetPadding())
-		return false;
+	int diff = SignOfDifference(_fields.size(), other.GetStructFieldCount());
+	if (diff)
+		return diff;
 	for (size_t i = 0; i < _fields.size(); ++i) {
 		ASSERT((_fields[i]._id == other.GetStructFieldId(i)) == (_fields[i]._name == other.GetStructFieldName(i)));
-		if (_fields[i]._id != other.GetStructFieldId(i))
-			return false;
-		if (*_fields[i]._element != *other.GetStructFieldElement(i))
-			return false;
+		diff = SignOfDifference(_fields[i]._id, other.GetStructFieldId(i));
+		if (diff)
+			return diff;
+		diff = _fields[i]._element->CompareTo(*other.GetStructFieldElement(i));
+		if (diff)
+			return diff;
 		ASSERT(_fields[i]._offset == other.GetStructFieldOffset(i));
 	}
-	return true;
+	return 0;
 }
 
 size_t LayoutStruct::GetHash() const
@@ -108,4 +129,3 @@ size_t LayoutStruct::GetHash() const
 }
 
 NAMESPACE_END(util)
-

@@ -16,8 +16,12 @@ public:
 		enum Kind {
 			UniformBuffer,
 			Sampler,
+			Invalid,
 
-			Count,
+			VertexBuffer,
+			IndexBuffer,
+
+			Count = Invalid,
 			First = UniformBuffer,
 		};
 
@@ -44,8 +48,15 @@ public:
 	Parameter const *GetParamInfo(Parameter::Kind paramKind, util::StrId paramId) const;
 	Parameter const *GetParamInfo(Parameter::Kind paramKind, uint32_t binding) const;
 
-	bool HasCommonVertexAttributes(util::LayoutElement const *otherLayout, std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices) const;
-	bool HasCommonVertexAttributes(std::function<std::pair<size_t, std::string>(util::StrId fieldId)> getMatchingIndexName, std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices) const;
+	bool HasCommonVertexAttributes(
+		util::LayoutElement const *otherLayout, 
+		std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices) const 
+	{ return HasCommonVertexAttributes(_vertexLayout.get(), otherLayout, matchingIndices); }
+
+	static bool HasCommonVertexAttributes(
+		util::LayoutElement const *layout, 
+		util::LayoutElement const *otherLayout, 
+		std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices);
 
 protected:
 	std::string _name, _entryPoint;

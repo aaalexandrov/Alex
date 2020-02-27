@@ -73,11 +73,16 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 		return reinterpret_cast<DataType*>(reinterpret_cast<uint8_t*>(buffer) + elemOffs.second);
 	}
 
-	virtual bool IsEqualToSameKind(LayoutElement const &other) const = 0;
+	virtual int CompareToSameKind(LayoutElement const &other) const = 0;
 	virtual size_t GetHash() const = 0;
 
-	bool operator==(LayoutElement const &other) const;
+	int CompareTo(LayoutElement const &other) const;
+	bool operator==(LayoutElement const &other) const { return !CompareTo(other); }
 	bool operator!=(LayoutElement const &other) const { return !(*this == other); }
+	bool operator<(LayoutElement const &other) const { return CompareTo(other) < 0; }
+	bool operator<=(LayoutElement const &other) const { return CompareTo(other) <= 0; }
+	bool operator>(LayoutElement const &other) const { return CompareTo(other) > 0; }
+	bool operator>=(LayoutElement const &other) const { return CompareTo(other) >= 0; }
 protected:
 	size_t _padding = 0;
 	mutable intptr_t _userData = 0;
@@ -93,7 +98,7 @@ struct LayoutValue : public LayoutElement {
 
 	rttr::type GetValueType() const override { return _type; }
 
-	bool IsEqualToSameKind(LayoutElement const &other) const override { return GetValueType() == other.GetValueType() && _padding == other.GetPadding(); }
+	int CompareToSameKind(LayoutElement const &other) const override;
 	size_t GetHash() const override { return 31 * _type.get_id() + _padding; }
 protected:
 	rttr::type _type;
@@ -111,7 +116,7 @@ struct LayoutArray : public LayoutElement {
 	LayoutElement const *GetArrayElement() const override { return _element.get(); }
 	size_t GetArrayCount() const override { return _arrayCount; }
 
-	bool IsEqualToSameKind(LayoutElement const &other) const override { return GetArrayCount() == other.GetArrayCount() && *GetArrayElement() == *other.GetArrayElement() && _padding == other.GetPadding(); }
+	int CompareToSameKind(LayoutElement const &other) const override;
 	size_t GetHash() const override { return 31 * (GetArrayCount() + 31 * GetArrayElement()->GetHash()) + _padding; }
 protected:
 	std::shared_ptr<LayoutElement> _element;
@@ -135,7 +140,7 @@ struct LayoutStruct : public LayoutElement {
 	size_t GetStructFieldOffset(size_t fieldIndex) const override { return _fields[fieldIndex]._offset; }
 	size_t GetStructFieldIndex(StrId nameId) const override;
 
-	bool IsEqualToSameKind(LayoutElement const &other) const override;
+	int CompareToSameKind(LayoutElement const &other) const override;
 	size_t GetHash() const override;
 protected:
 	struct Field { 

@@ -17,7 +17,7 @@ BufferTransitionPassVk::BufferTransitionPassVk(Device &device)
 void BufferTransitionPassVk::Prepare()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
+	BufferVk *buf = GetResource<BufferVk>();
 
 	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
@@ -74,7 +74,7 @@ void BufferTransitionPassVk::Prepare()
 void BufferTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
+	BufferVk *buf = GetResource<BufferVk>();
 
 	BufferVk::StateInfo srcState = buf->GetStateInfo(_srcState);
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
@@ -135,7 +135,7 @@ void BufferTransitionPassVk::Execute(PassDependencyTracker &dependencies)
 
 vk::PipelineStageFlags BufferTransitionPassVk::GetPassDstStages()
 {
-	BufferVk *buf = static_cast<BufferVk*>(_resource.get());
+	BufferVk *buf = GetResource<BufferVk>();
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
 	return dstState._stages;
 }

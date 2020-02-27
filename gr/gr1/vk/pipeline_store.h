@@ -4,6 +4,7 @@
 #include "../shader.h"
 #include "../render_pass.h"
 #include "../render_state.h"
+#include "../render_pipeline.h"
 #include "descriptor_set_store.h"
 #include "util/utl.h"
 #include "vk.h"
@@ -34,14 +35,6 @@ struct PipelineVk {
 
 	std::shared_ptr<PipelineLayoutVk> _pipelineLayout;
 	vk::UniquePipeline _pipeline;
-};
-
-struct VertexBufferLayout {
-	std::shared_ptr<util::LayoutElement> _bufferLayout;
-	bool _frequencyInstance = false;
-
-	size_t GetHash() const;
-	bool operator==(VertexBufferLayout const &other) const;
 };
 
 class RenderPassVk;

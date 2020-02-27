@@ -15,6 +15,12 @@ constexpr N Clamp(N min, N max, N n)
 }
 
 template <typename N>
+constexpr int SignOfDifference(N n0, N n1)
+{
+	return n0 < n1 ? -1 : (n0 > n1 ? 1 : 0);
+}
+
+template <typename N>
 constexpr bool IsPowerOf2(N n) { return !(n & (n - 1)); }
 
 template <typename N>

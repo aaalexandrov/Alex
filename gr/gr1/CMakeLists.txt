@@ -30,9 +30,15 @@ set(dir_SOURCES
 	presentation_surface.h
 	presentation_surface.cpp
 	
+	render_commands.h
+	render_commands.cpp
+
 	render_pass.h
 	render_pass.cpp
 	
+	render_pipeline.h
+	render_pipeline.cpp
+
 	render_state.h
 	render_state.cpp
 	
@@ -112,8 +118,17 @@ if(gr_implementation STREQUAL VK)
 		vk/queue_vk.h
 		vk/queue_vk.cpp
 
+		vk/render_commands_vk.h
+		vk/render_commands_vk.cpp
+
 		vk/render_pass_vk.h
 		vk/render_pass_vk.cpp
+
+		vk/render_pipeline_transition_pass_vk.h
+		vk/render_pipeline_transition_pass_vk.cpp
+
+		vk/render_pipeline_vk.h
+		vk/render_pipeline_vk.cpp
 
 		vk/render_state_vk.h
 		vk/render_state_vk.cpp

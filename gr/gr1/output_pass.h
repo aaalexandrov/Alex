@@ -4,14 +4,6 @@
 
 NAMESPACE_BEGIN(gr1)
 
-enum class DependencyType {
-	None = 0,
-	Input = 1,
-	Output = 2,
-};
-
-using DependencyFunc = std::function<void(Resource*, ResourceState)>;
-
 struct PassDependencyTracker;
 class OutputPass : public Resource {
 	RTTR_ENABLE(Resource)
@@ -31,10 +23,8 @@ public:
 		 
 	virtual void Init(std::shared_ptr<Resource> const &resource, ResourceState srcState, ResourceState dstState);
 
-	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override { ASSERT(!"This shouldn't be called"); }
-
 	template<typename ResourceType>
-	ResourceType GetResource() { return static_cast<ResourceType*>(_resource).get(); }
+	ResourceType* GetResource() { return static_cast<ResourceType*>(_resource.get()); }
 
 public:
 	std::shared_ptr<Resource> _resource;

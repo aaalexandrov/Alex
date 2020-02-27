@@ -30,32 +30,17 @@ auto Shader::GetParamInfo(Parameter::Kind paramKind, uint32_t binding) const -> 
 	return nullptr;
 }
 
-bool Shader::HasCommonVertexAttributes(util::LayoutElement const *otherLayout, std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices) const
+bool Shader::HasCommonVertexAttributes(util::LayoutElement const *layout, util::LayoutElement const *otherLayout, std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices)
 {
 	ASSERT(otherLayout->IsStruct());
-	auto getLayoutIndexName = [&](util::StrId fieldId) {
-		size_t matching = otherLayout->GetStructFieldIndex(fieldId);
-		std::string name;
-		if (matching != ~0ull)
-			otherLayout->GetStructFieldName(matching);
-		return std::make_pair(matching, name);
-	};
-	return HasCommonVertexAttributes(getLayoutIndexName, matchingIndices);
-}
-
-bool Shader::HasCommonVertexAttributes(
-	std::function<std::pair<size_t, std::string>(util::StrId fieldId)> getMatchingIndexName, 
-	std::vector<std::pair<uint32_t, uint32_t>> *matchingIndices) const
-{
 	if (matchingIndices)
 		matchingIndices->clear();
-	for (uint32_t v = 0; v < _vertexLayout->GetStructFieldCount(); ++v) {
-		util::StrId fieldId = _vertexLayout->GetStructFieldId(v);
-		std::pair<size_t, std::string> indexName = getMatchingIndexName(fieldId);
-		size_t matching = indexName.first;
+	for (uint32_t v = 0; v < layout->GetStructFieldCount(); ++v) {
+		util::StrId fieldId = layout->GetStructFieldId(v);
+		size_t matching = otherLayout->GetStructFieldIndex(fieldId);
 		if (matching == ~0ull)
 			continue;
-		ASSERT(_vertexLayout->GetStructFieldName(v) == indexName.second || !indexName.second.size());
+		ASSERT(layout->GetStructFieldName(v) == otherLayout->GetStructFieldName(matching));
 		if (!matchingIndices)
 			return true;
 		matchingIndices->emplace_back(static_cast<uint32_t>(v), static_cast<uint32_t>(matching));

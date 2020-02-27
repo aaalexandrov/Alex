@@ -14,7 +14,7 @@ public:
   BufferVk(Device &device) : Buffer(device) {}
 
 	void Init(Usage usage, std::shared_ptr<util::LayoutElement> const &layout) override;
-	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
+	std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
   void *Map() override;
   void Unmap() override;

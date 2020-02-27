@@ -55,6 +55,7 @@ protected:
 	virtual void Prepare();
 	virtual void Execute();
 
+	void ProcessInputDependency(Resource *resource, ResourceState state, OutputPass *pass, std::unordered_set<Resource*> &resourcesInTransition);
 	virtual void ProcessPassDependencies();
 
 	struct ResourceStateData {

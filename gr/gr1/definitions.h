@@ -20,6 +20,7 @@ enum class ResourceState {
 	RenderWrite = 1 << 4,
 	PresentRead = 1 << 5,
 	PresentAcquired = 1 << 6,
+	Invalidated = 1 << 7,
 };
 
 enum class ColorFormat {
@@ -55,9 +56,27 @@ struct Texture2D {};
 struct Texture3D {};
 struct TextureCube {};
 
-class Shader;
 template <typename Data>
 using ShaderKindsArray = std::array<Data, ShaderKind::Count>;
+
+struct PipelineResource {
+	enum Kind : uint32_t {
+		Buffer,
+		Sampler,
+		Invalid,
+
+		Count = Invalid,
+	};
+};
+
+enum class DependencyType {
+	None = 0,
+	Input = 1,
+	Output = 2,
+};
+
+class Resource;
+using DependencyFunc = std::function<void(Resource*, ResourceState)>;
 
 enum class CompareFunc {
 	Never,
