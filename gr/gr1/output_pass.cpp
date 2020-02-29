@@ -12,6 +12,11 @@ void ResourceStateTransitionPass::Init(std::shared_ptr<Resource> const &resource
 	_dstState = dstState;
 }
 
+void ResourceStateTransitionPass::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
+{
+	addDependencyFunc(_resource.get(), dependencyType == DependencyType::Input ? _srcState : _dstState);
+}
+
 
 void BufferCopyPass::Init(std::shared_ptr<Buffer> const &srcBuffer, std::shared_ptr<Buffer> const &dstBuffer, uint32_t size, uint32_t srcOffset, uint32_t dstOffset)
 {

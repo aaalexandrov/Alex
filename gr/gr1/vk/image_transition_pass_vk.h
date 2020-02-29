@@ -10,8 +10,6 @@ class ImageTransitionPassVk : public ResourceStateTransitionPass, public PassVk 
 public:
 	ImageTransitionPassVk(Device &device);
 
-	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override {}
-
 	void Prepare() override;
 	void Submit(PassDependencyTracker &dependencies) override;
 

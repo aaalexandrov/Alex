@@ -4,6 +4,10 @@
 
 NAMESPACE_BEGIN(gr1)
 
+struct DrawCounts {
+	uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
+};
+
 class RenderPipeline;
 class PipelineDrawCommand : public RenderCommand {
 	RTTR_ENABLE(RenderCommand)
@@ -51,11 +55,15 @@ public:
 	virtual BufferData const *GetBufferData(util::StrId bufferId) const;
 	virtual SamplerData const *GetSamplerData(util::StrId samplerId) const;
 
+	virtual void SetDrawCounts(uint32_t indexCount, uint32_t firstIndex = 0, uint32_t instanceCount = 1, uint32_t firstInstance = 0, uint32_t vertexOffset = 0);
+	DrawCounts const &GetDrawCounts() { return _drawCounts; }
+
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
 
 protected:
 	std::shared_ptr<RenderPipeline> _pipeline;
 	std::vector<ResourceData> _resources;
+	DrawCounts _drawCounts;
 };
 
 class RenderDrawCommand : public RenderCommand {
@@ -80,10 +88,6 @@ public:
 		std::shared_ptr<Image> _image;
 		ShaderKindsArray<uint32_t> _bindings;
 		util::StrId _parameterId;
-	};
-
-	struct DrawCounts {
-		uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
 	};
 
 	RenderDrawCommand(Device &device) : RenderCommand(device) {}

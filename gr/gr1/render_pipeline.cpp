@@ -17,18 +17,6 @@ bool VertexBufferLayout::operator==(VertexBufferLayout const &other) const
 		&& _frequencyInstance == other._frequencyInstance;
 }
 
-PipelineResource::Kind RenderPipeline::ResourceInfo::GetPipelineResourceKind() const
-{
-	switch (_kind) {
-		case Shader::Parameter::IndexBuffer:
-		case Shader::Parameter::VertexBuffer:
-		case Shader::Parameter::UniformBuffer:
-			return PipelineResource::Buffer;
-		case Shader::Parameter::Sampler:
-			return PipelineResource::Sampler;
-	}
-	throw GraphicsException("Unrecognized shader parameter kind", ~0u);
-}
 
 void RenderPipeline::ResourceInfo::AddUniqueBinding(uint32_t binding)
 {
@@ -76,12 +64,25 @@ void RenderPipeline::SetRenderState(std::shared_ptr<RenderState> const &renderSt
 {
 	_renderState = renderState;
 	_renderStateDataVersion = renderState->GetStateDataVersion();
+	SetResourceState(ResourceState::Invalidated);
 }
 
 void RenderPipeline::SetRenderPass(std::weak_ptr<RenderPass> const &renderPass)
 {
 	_renderPass = renderPass;
+	SetResourceState(ResourceState::Invalidated);
 }
+
+ResourceState RenderPipeline::UpdateResourceStateForExecute()
+{
+	if (_state == ResourceState::ShaderRead) {
+		if (_renderState->GetResourceState() == ResourceState::Invalidated) {
+			SetResourceState(ResourceState::Invalidated);
+		}
+	}
+	return _state;
+}
+
 
 void RenderPipeline::AddResourceInfo(ResourceInfo &info)
 {
@@ -93,7 +94,7 @@ void RenderPipeline::AddResourceInfo(ResourceInfo &info)
 void RenderPipeline::InitResourceInfos()
 {
 	ASSERT(std::find_if(_shaders.begin(), _shaders.end(), [](auto &s) { return s; }) != _shaders.end());
-	ASSERT(!_resourceInfos.size() && !_id2Info.size());
+	ASSERT(!_resourceInfos.size() && !_id2Info.size() && !_vertexBufferIndices.size());
 
 	std::sort(_vertexBufferLayouts.begin(), _vertexBufferLayouts.end(), 
 		[](auto const &l1, auto const &l2) { return *l1._bufferLayout < *l2._bufferLayout; });
@@ -101,6 +102,7 @@ void RenderPipeline::InitResourceInfos()
 	std::array<uint32_t, PipelineResource::Kind::Count> paramIndices{0, 0};
 	ResourceInfo indicesInfo;
 	indicesInfo._kind = Shader::Parameter::IndexBuffer;
+	_indexBufferIndex = static_cast<int32_t>(_resourceInfos.size());
 	AddResourceInfo(indicesInfo);
 
 	for (uint32_t i = 0; i < _vertexBufferLayouts.size(); ++i) {
@@ -110,6 +112,7 @@ void RenderPipeline::InitResourceInfos()
 		vbInfo._kind = Shader::Parameter::VertexBuffer;
 		vbInfo._indexInShader[ShaderKind::Vertex] = i;
 		vbInfo._binding[ShaderKind::Vertex] = i;
+		_vertexBufferIndices.push_back(static_cast<int32_t>(_resourceInfos.size()));
 		AddResourceInfo(vbInfo);
 	}
 
@@ -135,6 +138,19 @@ void RenderPipeline::InitResourceInfos()
 			}
 		}
 	}
+}
+
+PipelineResource::Kind RenderPipeline::GetPipelineResourceKind(Shader::Parameter::Kind kind)
+{
+	switch (kind) {
+		case Shader::Parameter::IndexBuffer:
+		case Shader::Parameter::VertexBuffer:
+		case Shader::Parameter::UniformBuffer:
+			return PipelineResource::Buffer;
+		case Shader::Parameter::Sampler:
+			return PipelineResource::Sampler;
+	}
+	throw GraphicsException("Unrecognized shader parameter kind", ~0u);
 }
 
 NAMESPACE_END(gr1)

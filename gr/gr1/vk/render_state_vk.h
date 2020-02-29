@@ -21,6 +21,7 @@ public:
 	static void FillBlendState(StateData const &data, vk::PipelineColorBlendStateCreateInfo &blendState, std::vector<vk::PipelineColorBlendAttachmentState> &attachmentBlends);
 	static void FillDynamicState(StateData const &data, vk::PipelineDynamicStateCreateInfo &dynamicState, std::vector<vk::DynamicState> &dynamicStates);
 
+	static vk::Viewport GetVkViewport(Viewport const &viewport);
 	static void FillViewports(StateData const &data, std::vector<vk::Viewport> &viewports);
 	static void FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst);
 

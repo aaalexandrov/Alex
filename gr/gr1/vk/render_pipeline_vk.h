@@ -11,10 +11,12 @@ class RenderPipelineVk : public RenderPipeline {
 public:
 	RenderPipelineVk(Device &device) : RenderPipeline(device) {}
 
-	void Init() override;
+	void SetResourceState(ResourceState state) override;
 	std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) override;
 
 public:
+	void UpdatePipeline();
+
 	std::shared_ptr<PipelineVk> _pipeline;
 };
 

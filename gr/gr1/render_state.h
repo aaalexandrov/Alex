@@ -131,6 +131,7 @@ public:
 	uint32_t GetStateDataVersion() const { return _dataVersion; }
 public:
 	void SetStencil(StencilFuncState &stencil, StencilFunc failFunc, StencilFunc passFunc, StencilFunc depthFailFunc, CompareFunc compareFunc, uint32_t compareMask, uint32_t writeMask, uint32_t reference);
+	void DataChanged();
 
 	StateData _data;
 	uint32_t _dataVersion = 1;

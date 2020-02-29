@@ -127,6 +127,15 @@ auto PipelineDrawCommand::GetSamplerData(util::StrId samplerId) const ->SamplerD
 	return nullptr;
 }
 
+void PipelineDrawCommand::SetDrawCounts(uint32_t indexCount, uint32_t firstIndex, uint32_t instanceCount, uint32_t firstInstance, uint32_t vertexOffset)
+{
+	_drawCounts._indexCount = indexCount;
+	_drawCounts._firstIndex = firstIndex;
+	_drawCounts._instanceCount = instanceCount;
+	_drawCounts._firstInstance = firstInstance;
+	_drawCounts._vertexOffset = vertexOffset;
+}
+
 void PipelineDrawCommand::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
 	addDependencyFunc(_pipeline.get(), ResourceState::ShaderRead);

@@ -32,7 +32,8 @@ public:
 	Resource(Device &device) : ResourceBase(device) {}
 
 	inline ResourceState GetResourceState() { return _state; }
-	inline void SetResourceState(ResourceState state) { _state = state; }
+	virtual void SetResourceState(ResourceState state) { _state = state; }
+	virtual ResourceState UpdateResourceStateForExecute() { return _state; }
 	virtual std::shared_ptr<ResourceStateTransitionPass> CreateTransitionPass(ResourceState srcState, ResourceState dstState) { return nullptr; }
 
 protected:

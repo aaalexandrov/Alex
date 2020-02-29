@@ -26,7 +26,7 @@ public:
 		ShaderKindsArray<uint32_t> _indexInShader = {~0u, ~0u};
 		ShaderKindsArray<uint32_t> _binding = {~0u, ~0u};
 
-		PipelineResource::Kind GetPipelineResourceKind() const;
+		PipelineResource::Kind GetPipelineResourceKind() const { return RenderPipeline::GetPipelineResourceKind(_kind); }
 		void AddUniqueBinding(uint32_t binding);
 	};
 
@@ -49,6 +49,12 @@ public:
 	std::vector<ResourceInfo> const &GetResourceInfos() const { return _resourceInfos; }
 	int32_t GetResourceInfoIndex(util::StrId resourceId) const { return util::FindOrDefault(_id2Info, resourceId, -1); }
 
+	std::vector<int32_t> const &GetVertexBufferIndices() const { return _vertexBufferIndices; };
+	int32_t GetIndexBufferIndex() const { return _indexBufferIndex; }
+
+	static PipelineResource::Kind GetPipelineResourceKind(Shader::Parameter::Kind kind);
+
+	ResourceState UpdateResourceStateForExecute() override;
 protected:
 	void InitResourceInfos();
 
@@ -56,6 +62,8 @@ protected:
 
 	ShaderKindsArray<std::shared_ptr<Shader>> _shaders;
 	std::vector<VertexBufferLayout> _vertexBufferLayouts;
+	std::vector<int32_t> _vertexBufferIndices;
+	int32_t _indexBufferIndex;
 	std::shared_ptr<RenderState> _renderState;
 	PrimitiveKind _primitiveKind;
 	std::weak_ptr<RenderPass> _renderPass;

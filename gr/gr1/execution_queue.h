@@ -70,8 +70,8 @@ protected:
 	virtual void Prepare();
 	virtual void Submit();
 
-	void ProcessInputDependency(Resource *resource, ResourceState state, OutputPass *pass, std::unordered_set<Resource*> &resourcesInTransition);
-	virtual void ProcessPassDependencies();
+	void ProcessPassDependencies(OutputPass *pass);
+	virtual void ProcessPassesDependencies();
 
 	struct ResourceStateData {
 		ResourceState _state;

@@ -95,7 +95,7 @@ ExecutionQueue::ResourceStateData &ExecutionQueue::GetResourceStateData(Resource
 {
 	auto it = _resourceStates.find(resource);
 	if (it == _resourceStates.end()) {
-		it = _resourceStates.insert(std::make_pair(resource, ResourceStateData{ resource->GetResourceState() })).first;
+		it = _resourceStates.insert(std::make_pair(resource, ResourceStateData{ resource->UpdateResourceStateForExecute() })).first;
 	}
 	return it->second;
 }
@@ -105,7 +105,7 @@ void ExecutionQueue::ExecutePasses()
 	EnqueuePass(_finalPass);
 
 	_executing = true;
-	ProcessPassDependencies();
+	ProcessPassesDependencies();
 
 	Prepare();
 
@@ -150,70 +150,46 @@ void ExecutionQueue::CleanupAfterExecution()
 	_passes.clear();
 }
 
-void ExecutionQueue::ProcessInputDependency(Resource *resource, ResourceState state, OutputPass *pass, std::unordered_set<Resource*> &resourcesInTransition)
+void ExecutionQueue::ProcessPassDependencies(OutputPass *pass)
 {
-	ResourceStateData &recordedData = GetResourceStateData(resource);
-	if (recordedData._state != state || recordedData._outputOfPass) {
-		bool shouldTransition = recordedData._state != state;
-		if (shouldTransition) {
-#if defined(_DEBUG)
-			ASSERT(resourcesInTransition.find(resource) == resourcesInTransition.end() && "Circular dependency in transitions!");
-			resourcesInTransition.insert(resource);
-#endif
-
+	DependencyFunc addInputDependency = [&](Resource *resource, ResourceState state) {
+		ResourceStateData &recordedData = GetResourceStateData(resource);
+		if (recordedData._state != state) {
 			std::shared_ptr<ResourceStateTransitionPass> transition = resource->CreateTransitionPass(recordedData._state, state);
+			if (transition) {
+				ProcessPassDependencies(transition.get());
+				ASSERT(recordedData._state == state);
+				ASSERT(recordedData._outputOfPass == transition.get());
 
-			DependencyFunc addTransitionDep = [&](Resource *resource, ResourceState state) { 
-				ProcessInputDependency(resource, state, transition.get(), resourcesInTransition); 
-			};
-			transition->GetDependencies(DependencyType::Input, addTransitionDep);
-
-			if (recordedData._outputOfPass) {
-				_passScheduler.AddDependency(recordedData._outputOfPass, transition.get());
-			}
-
-			_passScheduler.AddPass(transition.get(), _submitQueue);
-
-			_passScheduler.AddDependency(transition.get(), pass);
-			recordedData._outputOfPass = transition.get();
-
-			_dependencyPasses.push_back(std::move(transition));
-
-#if defined(_DEBUG)
-			resourcesInTransition.erase(resource);
-#endif
-		} else {
-			if (recordedData._outputOfPass) {
-				_passScheduler.AddDependency(recordedData._outputOfPass, pass);
+				_dependencyPasses.push_back(std::move(transition));
+			} else {
+				recordedData._state = state;
 			}
 		}
+		if (recordedData._outputOfPass) {
+			_passScheduler.AddDependency(recordedData._outputOfPass, pass);
+		}
+	};
 
+	pass->GetDependencies(DependencyType::Input, addInputDependency);
+
+	DependencyFunc addOutputDependency = [&](Resource *resource, ResourceState state) {
+		ResourceStateData &recordedData = GetResourceStateData(resource);
 		recordedData._state = state;
-	}
+		recordedData._outputOfPass = pass;
+	};
+
+	pass->GetDependencies(DependencyType::Output, addOutputDependency);
+
+	_passScheduler.AddPass(pass, _submitQueue);
 }
 
-void ExecutionQueue::ProcessPassDependencies()
+void ExecutionQueue::ProcessPassesDependencies()
 {
 	ASSERT(_passes.back() == _finalPass);
 	ASSERT(!_resourceStates.size());
-	std::unordered_set<Resource*> resourcesInTransition;
 	for (int i = 0; i < _passes.size(); ++i) {
-		OutputPass *pass = _passes[i].get();
-		DependencyFunc addInputDependency = [&](Resource *resource, ResourceState state) { 
-			ProcessInputDependency(resource, state, pass, resourcesInTransition); 
-		};
-
-		pass->GetDependencies(DependencyType::Input, addInputDependency);
-
-		DependencyFunc addOutputDependency = [&](Resource *resource, ResourceState state) {
-			ResourceStateData &recordedData = GetResourceStateData(resource);
-			recordedData._state = state;
-			recordedData._outputOfPass = pass;
-		};
-
-		pass->GetDependencies(DependencyType::Output, addOutputDependency);
-
-		_passScheduler.AddPass(pass, _submitQueue);
+		ProcessPassDependencies(_passes[i].get());
 	}
 
 	// all passes that don't have follow-up passes need to be added as input dependencies of the final pass so it waits for them to finish

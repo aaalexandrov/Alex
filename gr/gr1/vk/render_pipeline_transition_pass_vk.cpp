@@ -18,6 +18,7 @@ RenderPipelineTransitionPassVk::RenderPipelineTransitionPassVk(Device &device)
 
 void RenderPipelineTransitionPassVk::GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc)
 {
+	ResourceStateTransitionPass::GetDependencies(dependencyType, addDependencyFunc);
 	RenderPipeline *pipeline = GetResource<RenderPipeline>();
 	if (dependencyType == DependencyType::Input) {
 		for (auto &shader : pipeline->GetShaders()) {
@@ -33,7 +34,10 @@ void RenderPipelineTransitionPassVk::GetDependencies(DependencyType dependencyTy
 void RenderPipelineTransitionPassVk::Prepare()
 {
 	ASSERT(_srcState == ResourceState::Initial || _srcState == ResourceState::Invalidated);
-	ASSERT(_srcState == ResourceState::ShaderRead);
+	ASSERT(_dstState == ResourceState::ShaderRead);
+
+	RenderPipelineVk *pipelineVk = GetResource<RenderPipelineVk>();
+	pipelineVk->UpdatePipeline();
 }
 
 void RenderPipelineTransitionPassVk::Submit(PassDependencyTracker &dependencies)

@@ -6,6 +6,7 @@
 #include "sampler_vk.h"
 #include "execution_queue_vk.h"
 #include "render_state_vk.h"
+#include "render_pipeline_vk.h"
 #include "../graphics_exception.h"
 #include "rttr/registration.h"
 
@@ -28,10 +29,164 @@ PipelineDrawCommandVk::PipelineDrawCommandVk(Device &device)
 
 void PipelineDrawCommandVk::PrepareToRecord(CommandPrepareInfo &prepareInfo)
 {
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	CommandPrepareInfoVk *prepInfoVk = static_cast<CommandPrepareInfoVk*>(&prepareInfo);
+	RenderPipelineVk *pipelineVk = static_cast<RenderPipelineVk*>(_pipeline.get());
+
+	if (pipelineVk->GetResourceState() != ResourceState::ShaderRead) {
+		_cmdDraw.reset();
+		_descriptorSet.reset();
+	}
+
+	UpdateDescriptorSets();
+
+	DynamicState dynState = GetDynamicState(*prepInfoVk);
+	if (_cmdDraw && _recordedDynState == dynState)
+		return;
+
+	_cmdDraw = deviceVk->GraphicsQueue().AllocateCmdBuffer(vk::CommandBufferLevel::eSecondary);
+
+	vk::CommandBufferBeginInfo beginInfo;
+	beginInfo
+		.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue)
+		.setPInheritanceInfo(&prepInfoVk->_cmdInheritInfo);
+
+	std::lock_guard<CmdBufferVk> drawLock(_cmdDraw);
+
+	_cmdDraw->begin(beginInfo);
+
+	_cmdDraw->bindPipeline(vk::PipelineBindPoint::eGraphics, pipelineVk->_pipeline->Get());
+
+	RecordDynamicState(dynState);
+
+	std::array<vk::DescriptorSet, 1> descriptorSets{*_descriptorSet};
+	_cmdDraw->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineVk->_pipeline->_pipelineLayout->Get(), 0, descriptorSets, nullptr);
+
+	std::vector<vk::Buffer> vertBuffers;
+	std::vector<size_t> vertBufferOffsets;
+	for (int32_t bufIndex : pipelineVk->GetVertexBufferIndices()) {
+		BufferData const *bufData = _resources[bufIndex].GetBufferData();
+		BufferVk *bufferVk = static_cast<BufferVk*>(bufData->_buffer.get());
+		vertBuffers.push_back(*bufferVk->_buffer);
+		vertBufferOffsets.push_back(bufData->_offset);
+	}
+	_cmdDraw->bindVertexBuffers(0, vertBuffers, vertBufferOffsets);
+
+	BufferData const *indexBufData = _resources[pipelineVk->GetIndexBufferIndex()].GetBufferData();
+	if (indexBufData->_buffer) {
+		BufferVk *indexBufferVk = static_cast<BufferVk*>(indexBufData->_buffer.get());
+		vk::IndexType indexType = indexBufferVk->GetVkIndexType(indexBufferVk->GetBufferLayout().get());
+		_cmdDraw->bindIndexBuffer(*indexBufferVk->_buffer, indexBufData->_offset, indexType);
+
+		_cmdDraw->drawIndexed(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._vertexOffset, _drawCounts._firstInstance);
+	} else {
+		_cmdDraw->draw(_drawCounts._indexCount, _drawCounts._instanceCount, _drawCounts._firstIndex, _drawCounts._firstInstance);
+	}
+
+	_cmdDraw->end();
 }
 
 void PipelineDrawCommandVk::Record(CommandRecordInfo &recordInfo)
 {
+	CommandRecordInfoVk *recInfoVk = static_cast<CommandRecordInfoVk*>(&recordInfo);
+
+	recInfoVk->_secondaryCmds->push_back(*_cmdDraw);
+}
+
+void PipelineDrawCommandVk::UpdateDescriptorSets()
+{
+	if (_descriptorSet && _descriptorSetValid)
+		return;
+
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	RenderPipelineVk *pipelineVk = static_cast<RenderPipelineVk*>(_pipeline.get());
+
+	std::vector<vk::WriteDescriptorSet> setWrites;
+	std::vector<vk::DescriptorBufferInfo> bufferInfos;
+	std::vector<vk::DescriptorImageInfo> samplerInfos;
+	// reserve enough elements so that the arrays won't be reallocated, we're storing addresses of elements below
+	size_t maxDescriptors = _resources.size() * ShaderKind::Count;
+	bufferInfos.reserve(maxDescriptors);
+	samplerInfos.reserve(maxDescriptors);
+
+	for (uint32_t r = 0; r < _resources.size(); ++r) {
+		ResourceData &resData = _resources[r];
+		RenderPipeline::ResourceInfo const &resInfo = pipelineVk->GetResourceInfos()[r];
+		switch (resInfo._kind) {
+			case Shader::Parameter::UniformBuffer: {
+				BufferData const *bufData = resData.GetBufferData();
+				BufferVk *bufferVk = static_cast<BufferVk*>(bufData->_buffer.get());
+				bufferInfos.emplace_back();
+				bufferInfos.back()
+					.setBuffer(*bufferVk->_buffer)
+					.setOffset(bufData->_offset)
+					.setRange(bufData->_size);
+
+				for (uint32_t i = 0; i < resInfo._binding.size(); ++i) {
+					if (resInfo._binding[i] == ~0ul)
+						break;
+					setWrites.emplace_back();
+					setWrites.back()
+						.setDstSet(*_descriptorSet)
+						.setDstBinding(resInfo._binding[i])
+						.setDstArrayElement(0)
+						.setDescriptorCount(1)
+						.setDescriptorType(vk::DescriptorType::eUniformBuffer)
+						.setPBufferInfo(&bufferInfos.back());
+				}
+				break;
+			}
+			case Shader::Parameter::Sampler: {
+				SamplerData const *samplerData = resData.GetSamplerData();
+				SamplerVk *samplerVk = static_cast<SamplerVk*>(samplerData->_sampler.get());
+				ImageVk *imageVk = static_cast<ImageVk*>(samplerData->_image.get());
+				samplerInfos.emplace_back();
+				samplerInfos.back()
+					.setSampler(*samplerVk->_sampler)
+					.setImageView(*imageVk->_view)
+					.setImageLayout(imageVk->GetStateInfo(ResourceState::ShaderRead)._layout);
+
+				for (uint32_t i = 0; i < resInfo._binding.size(); ++i) {
+					if (resInfo._binding[i] == ~0ul)
+						continue;
+					setWrites.emplace_back();
+					setWrites.back()
+						.setDstSet(*_descriptorSet)
+						.setDstBinding(resInfo._binding[i])
+						.setDstArrayElement(0)
+						.setDescriptorCount(1)
+						.setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+						.setPImageInfo(&samplerInfos.back());
+				}
+				break;
+			}
+		}
+	}
+	if (setWrites.size())
+		deviceVk->_device->updateDescriptorSets(setWrites, nullptr);
+
+	_descriptorSetValid = true;
+}
+
+DynamicState PipelineDrawCommandVk::GetDynamicState(CommandPrepareInfoVk &prepareInfo)
+{
+	DynamicState dynState;
+	RenderState::Viewport const &viewport = _pipeline->GetRenderState()->GetViewport();
+	if (!viewport._rect.IsEmpty()) {
+		dynState._viewport = RenderStateVk::GetVkViewport(viewport);
+	} else {
+		dynState._viewport = prepareInfo._viewport;
+	}
+	return dynState;
+}
+
+void PipelineDrawCommandVk::RecordDynamicState(DynamicState const &dynState)
+{
+	std::vector<vk::Viewport> viewports;
+	viewports.push_back(dynState._viewport);
+	_cmdDraw->setViewport(0, viewports);
+
+	_recordedDynState = dynState;
 }
 
 RenderDrawCommandVk::RenderDrawCommandVk(Device &device)

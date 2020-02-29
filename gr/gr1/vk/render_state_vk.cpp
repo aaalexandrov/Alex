@@ -171,16 +171,22 @@ void RenderStateVk::FillDynamicState(StateData const &data, vk::PipelineDynamicS
 		.setPDynamicStates(dynamicStates.data());
 }
 
+vk::Viewport RenderStateVk::GetVkViewport(Viewport const &viewport)
+{
+	vk::Viewport vkViewport;
+	vkViewport
+		.setX(viewport._rect._min.x)
+		.setY(viewport._rect._min.y)
+		.setWidth(viewport._rect.GetSize().x)
+		.setHeight(viewport._rect.GetSize().y)
+		.setMinDepth(viewport._minDepth)
+		.setMaxDepth(viewport._maxDepth);
+	return vk::Viewport();
+}
+
 void RenderStateVk::FillViewports(StateData const &data, std::vector<vk::Viewport> &viewports)
 {
-	viewports.emplace_back();
-	viewports.back()
-		.setX(data._viewport._rect._min.x)
-		.setY(data._viewport._rect._min.y)
-		.setWidth(data._viewport._rect.GetSize().x)
-		.setHeight(data._viewport._rect.GetSize().y)
-		.setMinDepth(data._viewport._minDepth)
-		.setMaxDepth(data._viewport._maxDepth);
+	viewports.emplace_back(GetVkViewport(data._viewport));
 }
 
 void RenderStateVk::FillStencilOpState(StencilFuncState const &src, vk::StencilOpState &dst)

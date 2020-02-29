@@ -5,17 +5,32 @@
 
 NAMESPACE_BEGIN(gr1)
 
+struct DynamicState {
+	vk::Viewport _viewport{};
+
+	bool operator==(DynamicState const &other)
+	{
+		return _viewport == other._viewport;
+	}
+};
+
 class PipelineDrawCommandVk : public PipelineDrawCommand {
 	RTTR_ENABLE(PipelineDrawCommand)
 public:
 	PipelineDrawCommandVk(Device &device);
 
-
 	void PrepareToRecord(CommandPrepareInfo &prepareInfo) override;
 	void Record(CommandRecordInfo &recordInfo) override;
 
 public:
+	void UpdateDescriptorSets();
+	DynamicState GetDynamicState(CommandPrepareInfoVk &prepareInfo);
+	void RecordDynamicState(DynamicState const &dynState);
 
+	CmdBufferVk _cmdDraw;
+	DescriptorSetVk _descriptorSet;
+	bool _descriptorSetValid;
+	DynamicState _recordedDynState;
 };
 
 class RenderDrawCommandVk : public RenderDrawCommand {

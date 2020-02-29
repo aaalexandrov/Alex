@@ -23,6 +23,8 @@ public:
 		 
 	virtual void Init(std::shared_ptr<Resource> const &resource, ResourceState srcState, ResourceState dstState);
 
+	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override;
+
 	template<typename ResourceType>
 	ResourceType* GetResource() { return static_cast<ResourceType*>(_resource.get()); }
 
