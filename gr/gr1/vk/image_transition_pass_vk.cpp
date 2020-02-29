@@ -81,7 +81,7 @@ void ImageTransitionPassVk::Prepare()
 	}
 }
 
-void ImageTransitionPassVk::Execute(PassDependencyTracker &dependencies)
+void ImageTransitionPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	ImageVk *img = GetResource<ImageVk>();

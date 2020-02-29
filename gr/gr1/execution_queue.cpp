@@ -44,6 +44,41 @@ bool PassDependencyTracker::HasDependencies(OutputPass *pass, DependencyType dep
 	return range.first != range.second;
 }
 
+void PassScheduler::AddPass(OutputPass *pass, util::SharedQueue<OutputPass*> &doneQueue)
+{
+	tf::Task task = GetPassTask(pass);
+	task.work([pass, queue=&doneQueue] {
+		pass->Prepare();
+		queue->PushBack(std::move(const_cast<OutputPass*>(pass)));
+	});
+}
+
+void PassScheduler::AddDependency(OutputPass *srcPass, OutputPass *dstPass)
+{
+	_passDependencies.AddDependency(srcPass, dstPass);
+
+	tf::Task srcTask = GetPassTask(srcPass);
+	tf::Task dstTask = GetPassTask(dstPass);
+	srcTask.precede(dstTask);
+}
+
+void PassScheduler::Clear()
+{
+	_passDependencies.Clear();
+	_pass2Task.clear();
+	_prepareTasks.clear();
+}
+
+tf::Task PassScheduler::GetPassTask(OutputPass *pass)
+{
+	auto it = _pass2Task.find(pass);
+	if (it == _pass2Task.end()) {
+		it = _pass2Task.insert(std::make_pair(pass, _prepareTasks.placeholder())).first;
+	}
+	return it->second;
+}
+
+
 ExecutionQueue::ExecutionQueue(Device &device) 
 	: _device(&device) 
 {
@@ -74,7 +109,7 @@ void ExecutionQueue::ExecutePasses()
 
 	Prepare();
 
-	Execute();
+	Submit();
 
 	WaitExecutionFinished();
 
@@ -84,15 +119,16 @@ void ExecutionQueue::ExecutePasses()
 
 void ExecutionQueue::Prepare()
 {
-	std::for_each(std::execution::par_unseq, _scheduledPasses.begin(), _scheduledPasses.end(), [](auto &&pass) {
-		pass->Prepare();
-	});
+	_taskExecutor.run(_passScheduler._prepareTasks);
 }
 
-void ExecutionQueue::Execute()
+void ExecutionQueue::Submit()
 {
-	for (uint32_t i = 0; i < _scheduledPasses.size(); ++i) {
-		_scheduledPasses[i]->Execute(_dependencyTracker);
+	while (true) {
+		OutputPass *pass = _submitQueue.PopFront();
+		pass->Submit(_passScheduler._passDependencies);
+		if (pass == _finalPass.get())
+			break;
 	}
 }
 
@@ -108,8 +144,8 @@ void ExecutionQueue::CleanupAfterExecution()
 	}
 	_resourceStates.clear();
 
-	_dependencyTracker.Clear();
-	_scheduledPasses.clear();
+	ASSERT(!_submitQueue.GetSize());
+	_passScheduler.Clear();
 	_dependencyPasses.clear();
 	_passes.clear();
 }
@@ -120,8 +156,10 @@ void ExecutionQueue::ProcessInputDependency(Resource *resource, ResourceState st
 	if (recordedData._state != state || recordedData._outputOfPass) {
 		bool shouldTransition = recordedData._state != state;
 		if (shouldTransition) {
+#if defined(_DEBUG)
 			ASSERT(resourcesInTransition.find(resource) == resourcesInTransition.end() && "Circular dependency in transitions!");
 			resourcesInTransition.insert(resource);
+#endif
 
 			std::shared_ptr<ResourceStateTransitionPass> transition = resource->CreateTransitionPass(recordedData._state, state);
 
@@ -131,20 +169,22 @@ void ExecutionQueue::ProcessInputDependency(Resource *resource, ResourceState st
 			transition->GetDependencies(DependencyType::Input, addTransitionDep);
 
 			if (recordedData._outputOfPass) {
-				_dependencyTracker.AddDependency(recordedData._outputOfPass, transition.get());
+				_passScheduler.AddDependency(recordedData._outputOfPass, transition.get());
 			}
 
-			_scheduledPasses.push_back(transition.get());
+			_passScheduler.AddPass(transition.get(), _submitQueue);
 
-			_dependencyTracker.AddDependency(transition.get(), pass);
+			_passScheduler.AddDependency(transition.get(), pass);
 			recordedData._outputOfPass = transition.get();
 
 			_dependencyPasses.push_back(std::move(transition));
 
+#if defined(_DEBUG)
 			resourcesInTransition.erase(resource);
+#endif
 		} else {
 			if (recordedData._outputOfPass) {
-				_dependencyTracker.AddDependency(recordedData._outputOfPass, pass);
+				_passScheduler.AddDependency(recordedData._outputOfPass, pass);
 			}
 		}
 
@@ -173,16 +213,16 @@ void ExecutionQueue::ProcessPassDependencies()
 
 		pass->GetDependencies(DependencyType::Output, addOutputDependency);
 
-		_scheduledPasses.push_back(pass);
+		_passScheduler.AddPass(pass, _submitQueue);
 	}
 
 	// all passes that don't have follow-up passes need to be added as input dependencies of the final pass so it waits for them to finish
 	// we only traverse user passes because transition passes always have a follow-up
 	for (int i = 0; i < _passes.size() - 1; ++i) {
 		auto pass = _passes[i].get();
-		if (_dependencyTracker.HasDependencies(pass, DependencyType::Output))
+		if (_passScheduler._passDependencies.HasDependencies(pass, DependencyType::Output))
 			continue;
-		_dependencyTracker.AddDependency(pass, _finalPass.get());
+		_passScheduler.AddDependency(pass, _finalPass.get());
 	}
 }
 

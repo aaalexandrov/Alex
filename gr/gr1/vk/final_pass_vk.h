@@ -11,7 +11,7 @@ public:
 	FinalPassVk(Device &device);
 
 	void Prepare() override;
-	void Execute(PassDependencyTracker &dependencies) override;
+	void Submit(PassDependencyTracker &dependencies) override;
 
 	vk::PipelineStageFlags GetPassDstStages() override { ASSERT(0); return vk::PipelineStageFlagBits::eTopOfPipe; }
 

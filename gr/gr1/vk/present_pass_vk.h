@@ -11,7 +11,7 @@ public:
 	PresentPassVk(Device &device);
 
 	void Prepare() override;
-	void Execute(PassDependencyTracker &dependencies) override;
+	void Submit(PassDependencyTracker &dependencies) override;
 
 	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eTransfer;	}
 protected:

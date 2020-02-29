@@ -146,6 +146,7 @@ if(gr_implementation STREQUAL VK)
 	)
 
 	set(third_party_LIBS
+		taskflow
 		vma
 		stb
 		rttr_core_lib

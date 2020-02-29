@@ -29,8 +29,8 @@ void BufferCopyPass::GetDependencies(DependencyType dependencyType, DependencyFu
 {
 	if (dependencyType == DependencyType::Input) {
 		addDependencyFunc(_src.get(), ResourceState::TransferRead);
-		addDependencyFunc(_dst.get(), ResourceState::TransferWrite);
 	}
+	addDependencyFunc(_dst.get(), ResourceState::TransferWrite);
 }
 
 
@@ -69,8 +69,8 @@ void ImageBufferCopyPass::GetDependencies(DependencyType dependencyType, Depende
 {
 	if (dependencyType == DependencyType::Input) {
 		addDependencyFunc(_buffer.get(), GetBufferState());
-		addDependencyFunc(_image.get(), GetImageState());
 	}
+	addDependencyFunc(_image.get(), GetImageState());
 }
 
 

@@ -1,12 +1,17 @@
 #pragma once
 
-#include "util/namespace.h"
+#include "definitions.h"
 #include "rttr/rttr_enable.h"
+#include "util/multithread.h"
+#include "util/utl.h"
+DISABLE_WARNING_PUSH
+DISABLE_WARNING_CONVERSION_TO_SMALLER_TYPE
+#include "taskflow/taskflow.hpp"
+DISABLE_WARNING_POP
 
 NAMESPACE_BEGIN(gr1)
 
 class OutputPass;
-enum class DependencyType;
 class PassDependency {
 	RTTR_ENABLE()
 public:
@@ -32,12 +37,22 @@ private:
 	std::unordered_multimap<OutputPass*, PassDependency*> _srcToDependency, _dstToDependency;
 };
 
+struct PassScheduler {
+	void AddPass(OutputPass *pass, util::SharedQueue<OutputPass*> &doneQueue);
+	void AddDependency(OutputPass *srcPass, OutputPass *dstPass);
+	void Clear();
+
+	tf::Task GetPassTask(OutputPass *pass);
+
+	PassDependencyTracker _passDependencies;
+	std::unordered_map<OutputPass*, tf::Task> _pass2Task;
+	tf::Taskflow _prepareTasks;
+};
+
 class Device;
 class OutputPass;
-enum class DependencyType;
 class Resource;
 class FinalPass;
-enum class ResourceState;
 class ExecutionQueue {
 	RTTR_ENABLE()
 public:
@@ -53,7 +68,7 @@ protected:
 	virtual void WaitExecutionFinished();
 	virtual void CleanupAfterExecution();
 	virtual void Prepare();
-	virtual void Execute();
+	virtual void Submit();
 
 	void ProcessInputDependency(Resource *resource, ResourceState state, OutputPass *pass, std::unordered_set<Resource*> &resourcesInTransition);
 	virtual void ProcessPassDependencies();
@@ -67,13 +82,15 @@ protected:
 
 	Device *_device;
 	std::shared_ptr<FinalPass> _finalPass;
+	tf::Executor _taskExecutor;
 
 	bool _executing = false;
+	util::SharedQueue<OutputPass*> _submitQueue;
+	PassScheduler _passScheduler;
+
 	std::vector<std::shared_ptr<OutputPass>> _passes;
 	std::vector<std::shared_ptr<OutputPass>> _dependencyPasses;
-	std::vector<OutputPass*> _scheduledPasses;
 	std::unordered_map<Resource*, ResourceStateData> _resourceStates;
-	PassDependencyTracker _dependencyTracker;
 };
 
 NAMESPACE_END(gr1)

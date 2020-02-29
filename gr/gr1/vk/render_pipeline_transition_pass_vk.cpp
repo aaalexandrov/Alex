@@ -2,7 +2,6 @@
 #include "device_vk.h"
 #include "rttr/registration.h"
 
-
 NAMESPACE_BEGIN(gr1)
 
 RTTR_REGISTRATION
@@ -37,7 +36,7 @@ void RenderPipelineTransitionPassVk::Prepare()
 	ASSERT(_srcState == ResourceState::ShaderRead);
 }
 
-void RenderPipelineTransitionPassVk::Execute(PassDependencyTracker &dependencies)
+void RenderPipelineTransitionPassVk::Submit(PassDependencyTracker &dependencies)
 {
 }
 

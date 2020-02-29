@@ -12,7 +12,7 @@ PassDependencyVk::PassDependencyVk(DeviceVk &deviceVk, OutputPass *srcPass, Outp
 ExecutionQueueVk::ExecutionQueueVk(DeviceVk &deviceVk)
 	: ExecutionQueue(deviceVk)
 {
-	_dependencyTracker.SetPassDependencyCreator([&deviceVk](OutputPass *srcPass, OutputPass *dstPass) { 
+	_passScheduler._passDependencies.SetPassDependencyCreator([&deviceVk](OutputPass *srcPass, OutputPass *dstPass) { 
 		return std::make_unique<PassDependencyVk>(deviceVk, srcPass, dstPass); 
 	});
 }

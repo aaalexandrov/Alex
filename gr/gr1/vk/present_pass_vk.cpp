@@ -31,7 +31,7 @@ void PresentPassVk::Prepare()
 {
 }
 
-void PresentPassVk::Execute(PassDependencyTracker &dependencies)
+void PresentPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	PresentationSurfaceVk *surfaceVk = static_cast<PresentationSurfaceVk*>(_surface.get());

@@ -29,7 +29,7 @@ void FinalPassVk::Prepare()
 {
 }
 
-void FinalPassVk::Execute(PassDependencyTracker &dependencies)
+void FinalPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 

@@ -53,7 +53,7 @@ void ImageBufferCopyPassVk::Prepare()
 	_cmdCopy->end();
 }
 
-void ImageBufferCopyPassVk::Execute(PassDependencyTracker &dependencies)
+void ImageBufferCopyPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 

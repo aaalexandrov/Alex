@@ -5,6 +5,8 @@ set_target_properties(glm_shared glm_static PROPERTIES
 	FOLDER glm
 )
 
+add_subdirectory(taskflow)
+
 add_subdirectory(vma)
 add_subdirectory(stb)
 

@@ -13,7 +13,7 @@ public:
 	virtual void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) = 0;
 
 	virtual void Prepare() = 0;
-	virtual void Execute(PassDependencyTracker &dependencies) = 0;
+	virtual void Submit(PassDependencyTracker &dependencies) = 0;
 };
 
 class ResourceStateTransitionPass : public OutputPass {

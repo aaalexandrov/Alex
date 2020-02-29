@@ -58,7 +58,7 @@ void RenderPassVk::Prepare()
 	RecordPassCommands();
 }
 
-void RenderPassVk::Execute(PassDependencyTracker &dependencies)
+void RenderPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 

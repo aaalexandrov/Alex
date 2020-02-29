@@ -13,7 +13,7 @@ public:
 	void GetDependencies(DependencyType dependencyType, DependencyFunc addDependencyFunc) override {}
 
 	void Prepare() override;
-	void Execute(PassDependencyTracker &dependencies) override;
+	void Submit(PassDependencyTracker &dependencies) override;
 
 	vk::PipelineStageFlags GetPassDstStages() override;
 

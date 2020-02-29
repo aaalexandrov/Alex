@@ -32,7 +32,7 @@ public:
 	void SetAttachmentImage(int attachmentIndex, std::shared_ptr<Image> const &img) override;
 
 	void Prepare() override;
-	void Execute(PassDependencyTracker &dependencies) override;
+	void Submit(PassDependencyTracker &dependencies) override;
 
 	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eColorAttachmentOutput; }
 

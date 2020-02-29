@@ -40,7 +40,7 @@ void BufferCopyPassVk::Prepare()
 	_cmdCopy->end();
 }
 
-void BufferCopyPassVk::Execute(PassDependencyTracker &dependencies)
+void BufferCopyPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 

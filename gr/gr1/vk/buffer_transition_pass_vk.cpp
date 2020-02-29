@@ -71,7 +71,7 @@ void BufferTransitionPassVk::Prepare()
 	}
 }
 
-void BufferTransitionPassVk::Execute(PassDependencyTracker &dependencies)
+void BufferTransitionPassVk::Submit(PassDependencyTracker &dependencies)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	BufferVk *buf = GetResource<BufferVk>();
