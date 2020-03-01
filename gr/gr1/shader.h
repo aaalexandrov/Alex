@@ -8,6 +8,34 @@
 
 NAMESPACE_BEGIN(gr1)
 
+struct ShaderSourceProvider {
+	using PathTranslate = std::function<std::string(std::string include, IncludeType incType, std::string requester)>;
+	using ShaderSource = std::function<std::vector<uint8_t>(std::string path)>;
+
+	std::string GetPath(std::string include, IncludeType incType, std::string requester);
+
+	std::shared_ptr<std::vector<uint8_t>> const &GetSource(std::string source);
+	void UnloadSource(std::string source);
+
+	void UnloadAllSources();
+
+	static std::string DefaultPathTranslate(std::string include, IncludeType incType, std::string requester);
+	static std::vector<uint8_t> DefaultShaderSource(std::string path);
+
+public:
+	PathTranslate _pathTranslate = DefaultPathTranslate;
+	ShaderSource _shaderSource = DefaultShaderSource;
+	std::mutex _mutex;
+	std::unordered_map<std::string, std::shared_ptr<std::vector<uint8_t>>> _loadedSources;
+};
+
+struct ShaderOptions {
+	ShaderOptions(std::shared_ptr<ShaderSourceProvider> const &shaderProvider = std::make_shared<ShaderSourceProvider>())
+		: _shaderSource(shaderProvider) {}
+
+	std::vector<std::pair<std::string, std::string>> _macros;
+	std::shared_ptr<ShaderSourceProvider> _shaderSource;
+};
 
 class Shader : public Resource {
 	RTTR_ENABLE(Resource)
@@ -36,8 +64,8 @@ public:
 
 	Shader(Device &device) : Resource(device) {}
 
-  virtual void Init(std::string name, ShaderKind::Enum shaderKind, std::vector<uint8_t> const &contents, std::string entryPoint = "main");
-	virtual void LoadShader(std::vector<uint8_t> const &contents) = 0;
+  virtual void Init(std::string name, ShaderKind::Enum shaderKind, ShaderOptions const *shaderOptions, std::string entryPoint = "main");
+	virtual void LoadShader(std::string name, ShaderOptions const &shaderOptions) = 0;
 
 	inline std::string const &GetName() const { return _name; }
 	inline ShaderKind::Enum GetShaderKind() const { return _kind; }

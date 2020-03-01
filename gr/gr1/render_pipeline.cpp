@@ -30,33 +30,15 @@ void RenderPipeline::ResourceInfo::AddUniqueBinding(uint32_t binding)
 	}
 }
 
-void RenderPipeline::InitParamShaders(ShaderKindsArray<std::shared_ptr<Shader>> const &shaders, PrimitiveKind primitiveKind)
+void RenderPipeline::Init(ShaderKindsArray<std::shared_ptr<Shader>> const &shaders, std::vector<VertexBufferLayout> const &vertexBufferLayouts, PrimitiveKind primitiveKind)
 {
-	ASSERT(std::find_if(_shaders.begin(), _shaders.end(), [](auto &s) { return s; }) == _shaders.end());
 	_shaders = shaders;
 	_primitiveKind = primitiveKind;
-}
 
-void RenderPipeline::InitParamVertexBufferLayout(util::StrId bufferId, std::shared_ptr<util::LayoutElement> const &bufferLayout, bool frequencyInstance)
-{
-	ASSERT(bufferId);
-	ASSERT(std::find_if(_vertexBufferLayouts.begin(), _vertexBufferLayouts.end(), [&](auto &l) { 
-			return 
-				l._bufferId == bufferId 
-				|| Shader::HasCommonVertexAttributes(l._bufferLayout.get(), bufferLayout.get(), nullptr); 
-		}) == _vertexBufferLayouts.end());
+	for (auto &vbLayout : vertexBufferLayouts) {
+		AddVertexBufferLayout(vbLayout);
+	}
 
-	ASSERT(_shaders[ShaderKind::Vertex]->HasCommonVertexAttributes(bufferLayout.get(), nullptr));
-
-	VertexBufferLayout vbLayout;
-	vbLayout._bufferLayout = bufferLayout;
-	vbLayout._bufferId = bufferId;
-	vbLayout._frequencyInstance = frequencyInstance;
-	_vertexBufferLayouts.push_back(vbLayout);
-}
-
-void RenderPipeline::Init()
-{
 	InitResourceInfos();
 }
 
@@ -83,6 +65,19 @@ ResourceState RenderPipeline::UpdateResourceStateForExecute()
 	return _state;
 }
 
+void RenderPipeline::AddVertexBufferLayout(VertexBufferLayout const &vbLayout)
+{
+	ASSERT(vbLayout._bufferId);
+	ASSERT(std::find_if(_vertexBufferLayouts.begin(), _vertexBufferLayouts.end(), [&](auto &l) {
+		return
+			l._bufferId == vbLayout._bufferId
+			|| Shader::HasCommonVertexAttributes(l._bufferLayout.get(), vbLayout._bufferLayout.get(), nullptr);
+	}) == _vertexBufferLayouts.end());
+
+	ASSERT(_shaders[ShaderKind::Vertex]->HasCommonVertexAttributes(vbLayout._bufferLayout.get(), nullptr));
+
+	_vertexBufferLayouts.push_back(vbLayout);
+}
 
 void RenderPipeline::AddResourceInfo(ResourceInfo &info)
 {

@@ -32,18 +32,20 @@ vk::ShaderStageFlags ShaderVk::GetShaderStageFlags(ShaderKind::Enum kind)
   return stageFlags;
 }
 
-void ShaderVk::LoadShader(std::vector<uint8_t> const &contents)
+void ShaderVk::LoadShader(std::string name, ShaderOptions const &shaderOptions)
 {
-  LoadModule(contents);
+	auto contents = shaderOptions._shaderSource->GetSource(name);
+  LoadModule(*contents, shaderOptions);
+	shaderOptions._shaderSource->UnloadSource(name);
 
 	_state = ResourceState::ShaderRead;
 }
 
-void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
+void ShaderVk::LoadModule(std::vector<uint8_t> const &contents, ShaderOptions const &shaderOptions)
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
   shaderc::Compiler compiler;
-  shaderc::CompileOptions options;
+  shaderc::CompileOptions options = GetShadercCompileOptions(shaderOptions);
 
 	ShaderKindInfo *kind = GetShaderKindInfo(_kind);
   shaderc::SpvCompilationResult res = 
@@ -68,6 +70,70 @@ void ShaderVk::LoadModule(std::vector<uint8_t> const &contents)
 
 	_parameters[Parameter::UniformBuffer] = GetUniformDescriptions(refl, refl.get_shader_resources().uniform_buffers);
 	_parameters[Parameter::Sampler] = GetUniformDescriptions(refl, refl.get_shader_resources().sampled_images);
+}
+
+IncludeType GetIncludeType(shaderc_include_type type)
+{
+	ASSERT(type == shaderc_include_type_relative || type == shaderc_include_type_standard);
+	return type == shaderc_include_type_relative ? IncludeType::Relative : IncludeType::Standard;
+}
+
+struct ShadercIncluder : public shaderc::CompileOptions::IncluderInterface {
+	ShadercIncluder(ShaderSourceProvider &srcProvider) : _srcProvider(&srcProvider) {}
+
+	shaderc_include_result* GetInclude(const char* requested_source,
+		shaderc_include_type type,
+		const char* requesting_source,
+		size_t include_depth) override 
+	{
+		SrcData data;
+		data.SetSource(_srcProvider->GetPath(std::string(requested_source), GetIncludeType(type), std::string(requesting_source)));
+		data.SetContent(_srcProvider->GetSource(data._source));
+		auto it = _includes.insert(std::make_pair(data._includeResult.get(), std::move(data))).first;
+		return it->first;
+	}
+
+	void ReleaseInclude(shaderc_include_result* data) override
+	{
+		// do nothing, leave included files loaded in case they're needed again
+	}
+
+	struct SrcData {
+		void SetSource(std::string source)
+		{
+			_source = source;
+			_includeResult->source_name = _source.c_str();
+			_includeResult->source_name_length = _source.size();
+		}
+
+		void SetContent(std::shared_ptr<std::vector<uint8_t>> const &content)
+		{
+			_content = content;
+			_includeResult->content = reinterpret_cast<char const *>(_content->data());
+			_includeResult->content_length = _content->size();
+		}
+
+		std::string _source;
+		std::shared_ptr<std::vector<uint8_t>> _content;
+		std::unique_ptr<shaderc_include_result> _includeResult = std::make_unique<shaderc_include_result>();
+	};
+
+	ShaderSourceProvider *_srcProvider;
+	std::unordered_map<shaderc_include_result*, SrcData> _includes;
+};
+
+shaderc::CompileOptions ShaderVk::GetShadercCompileOptions(ShaderOptions const &shaderOptions)
+{
+	shaderc::CompileOptions options;
+
+	for (auto &macro : shaderOptions._macros) {
+		options.AddMacroDefinition(macro.first, macro.second);
+	}
+
+	auto includer = std::make_unique<ShadercIncluder>(*shaderOptions._shaderSource);
+	options.SetIncluder(std::move(includer));
+
+	return options;
 }
 
 vk::PipelineShaderStageCreateInfo ShaderVk::GetPipelineShaderStageCreateInfo()

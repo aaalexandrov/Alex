@@ -1,13 +1,58 @@
 #include "shader.h"
+#include "util/file.h"
 
 NAMESPACE_BEGIN(gr1)
 
-void Shader::Init(std::string name, ShaderKind::Enum shaderKind, std::vector<uint8_t> const &contents, std::string entryPoint)
+std::string ShaderSourceProvider::GetPath(std::string include, IncludeType incType, std::string requester)
+{
+	return _pathTranslate(include, incType, requester);
+}
+
+std::shared_ptr<std::vector<uint8_t>> const &ShaderSourceProvider::GetSource(std::string source)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	auto it = _loadedSources.find(source);
+	if (it == _loadedSources.end()) {
+		auto src = std::make_shared<std::vector<uint8_t>>();
+		*src = _shaderSource(source);
+		it = _loadedSources.insert(std::make_pair(source, src)).first;
+	}
+	return it->second;
+}
+
+void ShaderSourceProvider::UnloadSource(std::string source)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	_loadedSources.erase(source);
+}
+
+void ShaderSourceProvider::UnloadAllSources()
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	_loadedSources.clear();
+}
+
+std::string ShaderSourceProvider::DefaultPathTranslate(std::string include, IncludeType incType, std::string requester)
+{
+	return util::GetPathDir(requester) + "/" + include;
+}
+
+std::vector<uint8_t> ShaderSourceProvider::DefaultShaderSource(std::string path)
+{
+	return util::ReadFile(path);
+}
+
+
+static ShaderOptions s_defaultShaderOptions;
+
+void Shader::Init(std::string name, ShaderKind::Enum shaderKind, ShaderOptions const *shaderOptions, std::string entryPoint)
 {
 	_name = name;
 	_entryPoint = entryPoint;
 	_kind = shaderKind;
-	LoadShader(contents);
+	if (!shaderOptions)
+		shaderOptions = &s_defaultShaderOptions;
+	LoadShader(name, *shaderOptions);
 }
 
 auto Shader::GetParamInfo(Parameter::Kind paramKind, util::StrId paramId) const -> Parameter const *

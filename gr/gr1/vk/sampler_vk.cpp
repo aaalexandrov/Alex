@@ -12,9 +12,9 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(policy::ctor::as_raw_ptr);
 }
 
-void SamplerVk::Init()
+void SamplerVk::Init(SamplerData const *samplerData)
 {
-	Sampler::Init();
+	Sampler::Init(samplerData);
 	_sampler = CreateVkSampler(_data);
 }
 

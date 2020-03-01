@@ -51,7 +51,7 @@ public:
 
 	Sampler(Device &device) : Resource(device) {}
 
-	virtual void Init();
+	virtual void Init(SamplerData const *samplerData = nullptr);
 
 	SamplerData const &GetSamplerData() const { return _data; }
 

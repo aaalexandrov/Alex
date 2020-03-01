@@ -32,9 +32,10 @@ public:
 
 	RenderPipeline(Device &device) : Resource(device) {}
 
-	virtual void InitParamShaders(ShaderKindsArray<std::shared_ptr<Shader>> const &shaders, PrimitiveKind primitiveKind = PrimitiveKind::TriangleList);
-	virtual void InitParamVertexBufferLayout(util::StrId bufferId, std::shared_ptr<util::LayoutElement> const &bufferLayout, bool frequencyInstance = false);
-	virtual void Init();
+	virtual void Init(
+		ShaderKindsArray<std::shared_ptr<Shader>> const &shaders, 
+		std::vector<VertexBufferLayout> const &vertexBufferLayouts, 
+		PrimitiveKind primitiveKind = PrimitiveKind::TriangleList);
 
 	ShaderKindsArray<std::shared_ptr<Shader>> const &GetShaders() const { return _shaders; }
 	PrimitiveKind GetPrimitiveKind() const { return _primitiveKind; };
@@ -51,11 +52,13 @@ public:
 
 	std::vector<int32_t> const &GetVertexBufferIndices() const { return _vertexBufferIndices; };
 	int32_t GetIndexBufferIndex() const { return _indexBufferIndex; }
+	int32_t GetFirstUniformResourceIndex() const { return _vertexBufferIndices.size() ? _vertexBufferIndices.back() + 1 : _indexBufferIndex + 1; }
 
 	static PipelineResource::Kind GetPipelineResourceKind(Shader::Parameter::Kind kind);
 
 	ResourceState UpdateResourceStateForExecute() override;
 protected:
+	void AddVertexBufferLayout(VertexBufferLayout const &vbLayout);
 	void InitResourceInfos();
 
 	void AddResourceInfo(ResourceInfo &info);

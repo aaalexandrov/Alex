@@ -34,8 +34,10 @@ bool Sampler::SamplerData::operator==(SamplerData const &other) const
 		&& _normalizedCoordinates == other._normalizedCoordinates;
 }
 
-void Sampler::Init()
+void Sampler::Init(SamplerData const *samplerData)
 {
+	if (samplerData)
+		_data = *samplerData;
 	_state = ResourceState::ShaderRead;
 }
 

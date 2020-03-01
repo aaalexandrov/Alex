@@ -59,11 +59,11 @@ using namespace gr1;
 
 shared_ptr<Shader> LoadShader(Device *device, std::string name)
 {
-	vector<uint8_t> contents = util::ReadFile(string("../data/") + name);
+	string path = string("../data/") + name;
 	string ext = name.substr(name.find_last_of('.'));
 	ShaderKind::Enum kind = ext == ".vert" ? ShaderKind::Vertex : ShaderKind::Fragment;
 	shared_ptr<Shader> shader = device->CreateResource<Shader>();
-	shader->Init(name, kind, contents);
+	shader->Init(path, kind, nullptr);
 	return shader;
 }
 

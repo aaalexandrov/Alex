@@ -109,7 +109,7 @@ void PipelineDrawCommandVk::UpdateDescriptorSets()
 	bufferInfos.reserve(maxDescriptors);
 	samplerInfos.reserve(maxDescriptors);
 
-	for (uint32_t r = 0; r < _resources.size(); ++r) {
+	for (uint32_t r = pipelineVk->GetFirstUniformResourceIndex(); r < _resources.size(); ++r) {
 		ResourceData &resData = _resources[r];
 		RenderPipeline::ResourceInfo const &resInfo = pipelineVk->GetResourceInfos()[r];
 		switch (resInfo._kind) {

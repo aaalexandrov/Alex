@@ -8,7 +8,7 @@ class SamplerVk : public Sampler {
 public:
 	SamplerVk(Device &device) : Sampler(device) {}
 
-	void Init() override;
+	void Init(SamplerData const *samplerData = nullptr) override;
 public:
 	vk::UniqueSampler CreateVkSampler(SamplerData &samplerData);
 

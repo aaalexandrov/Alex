@@ -1,5 +1,6 @@
 #include "file.h"
 #include <fstream>
+#include <filesystem>
 
 NAMESPACE_BEGIN(util)
 
@@ -18,6 +19,21 @@ std::vector<uint8_t> ReadFile(std::string const &path)
   file.close();
 
   return contents;
+}
+
+std::string GetPathDir(std::string path)
+{
+	return std::filesystem::path(path).parent_path().string();
+}
+
+std::string GetPathFilenameExt(std::string path)
+{
+	return std::filesystem::path(path).filename().string();
+}
+
+std::string GetPathExt(std::string path)
+{
+	return std::filesystem::path(path).extension().string();
 }
 
 NAMESPACE_END(util)

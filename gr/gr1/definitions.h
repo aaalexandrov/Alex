@@ -32,7 +32,12 @@ enum class ColorFormat {
 	D24S8,
 };
 
-struct ShaderKind {
+enum class IncludeType {
+	Relative, // "file"
+	Standard, // <file>
+};
+
+namespace ShaderKind {
 	enum Enum {
 		Vertex,
 		Fragment,

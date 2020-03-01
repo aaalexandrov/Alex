@@ -8,19 +8,20 @@ struct DrawCounts {
 	uint32_t _indexCount = 0, _firstIndex = 0, _instanceCount = 1, _firstInstance = 0, _vertexOffset = 0;
 };
 
+struct BufferData {
+	std::shared_ptr<Buffer> _buffer;
+	size_t _offset, _size;
+};
+
+struct SamplerData {
+	std::shared_ptr<Sampler> _sampler;
+	std::shared_ptr<Image> _image;
+};
+
 class RenderPipeline;
 class PipelineDrawCommand : public RenderCommand {
 	RTTR_ENABLE(RenderCommand)
 public:
-	struct BufferData {
-		std::shared_ptr<Buffer> _buffer;
-		size_t _offset, _size;
-	};
-
-	struct SamplerData {
-		std::shared_ptr<Sampler> _sampler;
-		std::shared_ptr<Image> _image;
-	};
 
 	struct ResourceData {
 		ResourceData(ResourceData const &other);
