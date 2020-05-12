@@ -1,0 +1,18 @@
+[package]
+name = "ray"
+version = "0.1.0"
+authors = ["alex <greyalex2003@yahoo.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+"nalgebra"="0.21.0"
+"nalgebra-glm"="0.7.0"
+approx="0.3.2"
+rand="0.7.3"
+rayon="1.3.0"
+
+[dependencies.sdl2]
+version = "0.33"
+features = ["bundled", "static-link"]

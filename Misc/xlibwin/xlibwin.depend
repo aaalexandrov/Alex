@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1552602381 source:/home/alex/xlibwin/main.cpp
+	<X11/Xlib.h>
+	<string.h>
+	<iostream>
+
