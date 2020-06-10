@@ -137,7 +137,7 @@ vk::PipelineStageFlags BufferTransitionPassVk::GetPassDstStages()
 {
 	BufferVk *buf = GetResource<BufferVk>();
 	BufferVk::StateInfo dstState = buf->GetStateInfo(_dstState);
-	return dstState._stages;
+	return dstState._stages & ~vk::PipelineStageFlagBits::eHost;
 }
 
 NAMESPACE_END(gr1)

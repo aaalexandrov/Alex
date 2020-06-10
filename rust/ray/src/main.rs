@@ -63,7 +63,7 @@ fn main() {
         &Vec3::new(0.0, 0.0, 1.0), 
         f32::consts::FRAC_PI_2);
 
-    const TILE_SIZE: u32 = 50;
+    const TILE_SIZE: u32 = 64;
 
     println!("Render scene starting...");
     let start = std::time::Instant::now();

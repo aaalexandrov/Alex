@@ -17,7 +17,7 @@ struct StrId {
 		AddToRepository,
 	};
 
-#if defined(_DEBUG)
+#if !defined(NDEBUG)
 	static constexpr InitParam _addToRepositoryDefault = AddToRepository;
 #else
 	static constexpr InitParam _addToRepositoryDefault = DontAddToRepository;

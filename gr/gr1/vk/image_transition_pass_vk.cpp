@@ -153,7 +153,7 @@ vk::PipelineStageFlags ImageTransitionPassVk::GetPassDstStages()
 {
 	ImageVk *img = GetResource<ImageVk>();
 	ImageVk::StateInfo dstState = img->GetStateInfo(_dstState);
-	return dstState._stages;
+	return dstState._stages & ~vk::PipelineStageFlagBits::eHost;
 }
 
 

@@ -7,7 +7,7 @@ NAMESPACE_BEGIN(util)
 
 #define ASSERT assert
 
-#if defined(_DEBUG)
+#if !defined(NDEBUG)
 #define LOG(...) util::LogLine(std::cerr, __VA_ARGS__)
 #else
 #define LOG(...)

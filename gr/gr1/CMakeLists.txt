@@ -150,19 +150,17 @@ if(gr_implementation STREQUAL VK)
 		vma
 		stb
 		rttr_core_lib
-		shaderc_shared
-		spirv-cross-glsl
-		spirv-cross-reflect
-		spirv-cross-core
 	)
-
-	set_target_properties(shaderc_shared PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 	target_include_directories(${BINARY} PRIVATE $ENV{VK_SDK_PATH}/Include)
 
 	set(vk_LIBS
 		vulkan-1
 		VkLayer_utils
+		shaderc_shared
+		spirv-cross-glsl
+		spirv-cross-reflect
+		spirv-cross-core
 	)
 
 	list(TRANSFORM vk_LIBS PREPEND $ENV{VK_SDK_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX})

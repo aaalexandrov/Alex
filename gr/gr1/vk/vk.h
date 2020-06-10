@@ -14,8 +14,8 @@
 #undef max
 
 #include "vma.h"
-#include "shaderc/libshaderc/include/shaderc/shaderc.hpp"
-#include "SPIRV-Cross/spirv_reflect.hpp"
+#include "shaderc/shaderc.hpp"
+#include "spirv_cross/spirv_reflect.hpp"
 
 #include "util/namespace.h"
 

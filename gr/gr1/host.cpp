@@ -31,7 +31,7 @@ Host::DeviceInfo Host::GetDeviceInfo(uint32_t deviceIndex)
 std::shared_ptr<Device> Host::CreateDevice(uint32_t deviceIndex, ValidationLevel validation)
 {
 	if (validation == ValidationLevel::Auto) {
-#ifdef _DEBUG
+#ifndef NDEBUG
 		validation = ValidationLevel::Full;
 #else
 		validation = ValidationLevel::None;

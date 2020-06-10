@@ -21,7 +21,7 @@
 #include "gr1/utl/font.h"
 #include <string>
 
-#if defined(_MSC_VER) && defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(NDEBUG)
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -456,7 +456,7 @@ int main()
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
-	surface->Init(surfaceData, PresentMode::Immediate);
+	surface->Init(surfaceData, PresentMode::Mailbox);
 	surface->Update(ri.GetSize().x, ri.GetSize().y);
 	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(ri.GetSize().x) / ri.GetSize().y, 0.1f, 100.0f);
 

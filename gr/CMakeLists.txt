@@ -6,9 +6,10 @@ include(IdeGrouping.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
 
+cmake_policy(SET CMP0091 NEW) #to enable the MSVC_RUNTIME_LIBRARY property
 project(gr)
 
-add_definitions(-DUNICODE -D_UNICODE)
+add_compile_definitions(UNICODE _UNICODE)
 
 add_subdirectory(third_party)
 
@@ -22,6 +23,8 @@ set(SOURCES
 set(BINARY grtest)
 
 add_executable(${BINARY} ${SOURCES})
+set_property(TARGET ${BINARY} PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
 
 target_link_libraries(${BINARY} PRIVATE glm_static tinygltf)
 
@@ -32,7 +35,7 @@ add_subdirectory(platform)
 add_subdirectory(gf)
 add_subdirectory(gr1)
 
-add_definitions(-DGR_${gr_implementation})
+add_compile_definitions(GR_${gr_implementation})
 
 add_precompiled_header(${BINARY} stdafx.h FORCEINCLUDE SOURCE_CXX stdafx.cpp)
 
