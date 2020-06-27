@@ -1,7 +1,7 @@
 #pragma once
 
 #include "resource.h"
-#include "util/rect.h"
+#include "util/geom.h"
 #include "util/enumutl.h"
 
 NAMESPACE_BEGIN(gr1)

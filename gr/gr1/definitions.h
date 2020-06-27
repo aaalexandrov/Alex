@@ -2,7 +2,7 @@
 
 #include "util/namespace.h"
 #include "util/enumutl.h"
-#include "util/rect.h"
+#include "util/geom.h"
 
 NAMESPACE_BEGIN(gr1)
 

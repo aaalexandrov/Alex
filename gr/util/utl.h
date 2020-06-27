@@ -42,6 +42,13 @@ NAMESPACE_END(std)
 
 NAMESPACE_BEGIN(util)
 
+template <typename Vector>
+void RemoveElement(Vector &v, int i)
+{
+	std::swap(v[i], v.back());
+	v.resize(v.size() - 1);
+}
+
 template <typename Type>
 size_t GetHash(Type const &val, size_t prevHash = 0)
 {

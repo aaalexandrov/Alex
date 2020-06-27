@@ -2,7 +2,7 @@
 
 #include <string>
 #include <functional>
-#include "util/rect.h"
+#include "util/geom.h"
 #include "resource.h"
 #include "input.h"
 #include "util/namespace.h"

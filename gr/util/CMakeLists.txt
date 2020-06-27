@@ -9,6 +9,9 @@ set(dir_SOURCES
 	file.h
 	file.cpp
 
+	geom.h
+	geom.cpp
+
 	layout.h
 	layout.cpp
 
@@ -23,8 +26,8 @@ set(dir_SOURCES
 
 	namespace.h
 
-	rect.h
-	rect.cpp
+	polytope.h
+	polytope.cpp
 
 	rtti.h
 	rtti.cpp

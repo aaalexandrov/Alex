@@ -1,7 +1,7 @@
 #pragma once
 
 #include "resource.h"
-#include "util/rect.h"
+#include "util/geom.h"
 #include "util/enumutl.h"
 
 NAMESPACE_BEGIN(gr1)
@@ -10,8 +10,8 @@ class RenderState : public Resource {
 	RTTR_ENABLE(Resource)
 public:
 	struct Viewport {
-		util::RectF _rect;
-		float _minDepth, _maxDepth;
+		util::RectF _rect{glm::vec2(0), glm::vec2(-1)};
+		float _minDepth = 0, _maxDepth = 0;
 
 		size_t GetHash() const;
 		bool operator==(Viewport const &other) const;

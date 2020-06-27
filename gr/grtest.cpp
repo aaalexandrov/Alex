@@ -4,7 +4,7 @@
 #include "glm/glm.hpp"
 #include "stb/stb_image.h"
 #include "tinygltf/tiny_gltf.h"
-#include "util/rect.h"
+#include "util/geom.h"
 #include "util/time.h"
 #include "util/file.h"
 #include "platform/platform.h"
