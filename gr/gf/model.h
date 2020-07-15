@@ -6,13 +6,18 @@
 NAMESPACE_BEGIN(gf)
 
 class Model : public std::enable_shared_from_this<Model> {
+	RTTR_ENABLE()
 public:
 
 public:
-	std::shared_ptr<Material> _material;
+	struct MaterialSlice {
+		util::IntervalI _indices;
+		std::shared_ptr<Material> _material;
+	};
+
+	std::vector<gr1::Buffer> _geometryBuffers;
+	std::vector<MaterialSlice> _materials;
 	gr1::PrimitiveKind _primitiveKind = gr1::PrimitiveKind::TriangleList;
-	std::unordered_map<util::StrId, gr1::BufferData> _geometryBuffers;
-	std::shared_ptr<gr1::RenderPipeline> _pipeline;
 };
 
 NAMESPACE_END(gf)

@@ -54,11 +54,17 @@ set(dir_SOURCES
 	shader.h
 	shader.cpp
 
+	utl/buffer_content.h
+	utl/buffer_content.cpp
+	
 	utl/font.h
 	utl/font.cpp
 
 	utl/gltf.h
 	utl/gltf.cpp
+
+	utl/shader_param_data.h
+	utl/shader_param_data.cpp
 )
 
 if (WIN32)

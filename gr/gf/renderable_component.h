@@ -9,11 +9,11 @@ class RenderableComponent : public SceneObjectComponent {
 	RTTR_ENABLE(SceneObjectComponent)
 public:
 
+	void SetModel(std::shared_ptr<Model> const &model);
+
 public:
 	std::shared_ptr<Model> _model;
-	std::shared_ptr<Material> _material;
-	
-	std::shared_ptr<gr1::PipelineDrawCommand> _renderCmd;
+	std::vector<std::shared_ptr<Material>> _overrideMaterials;
 };
 
 NAMESPACE_END(gf)

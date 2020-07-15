@@ -108,7 +108,7 @@ struct Box {
 	static constexpr Box GetUnitSymmetric() { return Box(Vec(-1), Vec(1)); }
 	static constexpr Box FromPoint(Vec const &v) { return Box(v, v); }
 	static constexpr Box FromMinSize(Vec const &min, Vec const &size) { return Box(min, min + size - Num(std::numeric_limits<Num>::is_integer)); }
-	static constexpr Box FromCenterHalfSize(Vec const &center, Vec const &halfSize) { return Box(center - halfSize, center + halfSize); }
+	static constexpr Box FromCenterHalfSize(Vec const &center, Vec const &halfSize) { return Box(center - halfSize, center + halfSize - Num(std::numeric_limits<Num>::is_integer)); }
 
 	constexpr Vec GetSize() const {	return _max - _min + Num(std::numeric_limits<Num>::is_integer); }
 	Box &SetSize(Vec const &size) { _max = _min + size - Num(std::numeric_limits<Num>::is_integer); return *this; }
@@ -739,6 +739,7 @@ struct SatTest {
 	}
 };
 
+using IntervalI = Box<int32_t>;
 using IntervalF = Box<float>;
 using RectF = Box<glm::vec2>;
 using RectI = Box<glm::ivec2>;
