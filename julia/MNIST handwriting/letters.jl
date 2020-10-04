@@ -110,7 +110,7 @@ function load_letters_nn(name, limit = -1)
     images, labels
 end
 
-function test_nn(;hiddenLayers = [40], dropOuts=[1=>0.5], alpha = 0.005, limitTrain = 1000, limitTest = 1000, trainRuns = 10)
+function test_nn(;hiddenLayers = [40], dropOuts=[1=>0.5], alpha = 0.005, limitTrain = 1000, limitTest = 1000, trainRuns = 10, batchSize = 1)
     trainImages, trainLabels = load_letters_nn("train", limitTrain)
     pixSize = size(trainImages, 1)
     numLabels = size(trainLabels, 1)
@@ -118,13 +118,13 @@ function test_nn(;hiddenLayers = [40], dropOuts=[1=>0.5], alpha = 0.005, limitTr
     for (l,d) in dropOuts
         nn.layers[l].dropOutRetainCoef = d
     end
-    NN.train(nn, trainImages, trainLabels; iterations = trainRuns)
+    NN.train(nn, trainImages, trainLabels; iterations = trainRuns, batchSize = batchSize)
     testImages, testLabels = load_letters_nn("t10k", limitTest)
     #testImages, testLabels = trainImages, trainLabels
     correct = 0
     for t = 1:size(testImages, 2)
-        out = NN.evaluate(nn, testImages[:, t])
-        outNum = findmax(out)[2]
+        out = NN.evaluate(nn, testImages[:, t:t])
+        outNum = findmax(out)[2][1]
         testNum = findmax(testLabels[:, t])[2]
         correct += outNum == testNum
     end
