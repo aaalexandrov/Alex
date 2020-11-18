@@ -1,5 +1,8 @@
 
 set(dir_SOURCES
+	box_tree.h
+	box_tree.cpp
+
 	dbg.h
 	dbg.cpp
 
@@ -11,6 +14,9 @@ set(dir_SOURCES
 
 	geom.h
 	geom.cpp
+
+	geom_primitive.h
+	geom_primitive.cpp
 
 	layout.h
 	layout.cpp

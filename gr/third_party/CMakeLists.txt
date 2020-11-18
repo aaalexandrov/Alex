@@ -11,6 +11,7 @@ add_subdirectory(taskflow)
 
 add_subdirectory(vma)
 add_subdirectory(stb)
+add_subdirectory(sdl2_import)
 
 add_subdirectory(tinygltf)
 set_property(TARGET tinygltf APPEND PROPERTY COMPILE_DEFINITIONS "_ITERATOR_DEBUG_LEVEL=0")

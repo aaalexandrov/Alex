@@ -26,12 +26,12 @@ add_executable(${BINARY} ${SOURCES})
 set_property(TARGET ${BINARY} PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
 
-target_link_libraries(${BINARY} PRIVATE glm_static tinygltf)
-
 target_include_directories(${BINARY} PRIVATE .)
 
+target_link_libraries(${BINARY} PRIVATE glm_static tinygltf sdl2_import)
+
 add_subdirectory(util)
-add_subdirectory(platform)
+#add_subdirectory(platform)
 add_subdirectory(gf)
 add_subdirectory(gr1)
 

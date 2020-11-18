@@ -21,6 +21,14 @@ end
 relu(x) = (x > 0) * x
 relu_derivative(x) = (x > 0)
 
+sigmoid(x) = 1/(1+exp(-x))
+function sigmoid_derivative(x)
+    e = exp(-x)
+    e / (1+e)^2
+end
+
+tanh_derivative(x) = 1-tanh(x)^2
+
 randsym(dims...) = rand(dims...) .* 2 .- 1
 
 function NNet(layerSizes::Vector{Int}, alpha::Num=Num(0.1), outFunc::Function=relu, outFuncDerivative::Function=relu_derivative; initFunc = randsym) where {Num <: Real}

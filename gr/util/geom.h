@@ -273,6 +273,8 @@ struct Sphere {
 	constexpr bool IsEmpty() const { return _radius < 0; }
 	constexpr bool IsFinite() const { return IsFinite(_center) && IsFinite(_radius); }
 
+	constexpr Box GetBox() const { return Box::FromCenterHalfSize(_center, Vec(_radius)); }
+
 	constexpr bool Contains(Vec const &v) const { return glm::distance2(v, _center) <= Sqr(_radius) && !IsEmpty(); }
 	constexpr bool Contains(Sphere const &other) const { return _radius >= other._radius && glm::distance2(_center, other._center) <= Sqr(_radius - other._radius) && !other.IsEmpty(); }
 

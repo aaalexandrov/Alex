@@ -7,7 +7,6 @@
 #include "util/geom.h"
 #include "util/time.h"
 #include "util/file.h"
-#include "platform/platform.h"
 #include "gr1/host.h"
 #include "gr1/device.h"
 #include "gr1/execution_queue.h"
@@ -19,6 +18,8 @@
 #include "gr1/render_state.h"
 #include "gr1/utl/gltf.h"
 #include "gr1/utl/font.h"
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_syswm.h"
 #include <string>
 
 #if defined(_MSC_VER) && !defined(NDEBUG)
@@ -28,33 +29,31 @@
 #include <crtdbg.h>
 
 static struct DbgInit {
-  DbgInit() 
-  {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	DbgInit() 
+	{
+	  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+	  _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+	  _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
 
-    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-    _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+	  _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+	  _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
 
-    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+	  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+	  _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
 
 		//_CrtSetBreakAlloc(19282);
-  }
+	}
 } dbgInit;
 
 #endif
 
 #if defined(_WIN32)
 #include "gr1/win32/presentation_surface_create_data_win32.h"
-#include "platform/win32/window_win32.h"
 #endif
 
 using namespace std;
 using namespace glm;
-using namespace platform;
 using namespace gr1;
 
 shared_ptr<Shader> LoadShader(Device *device, std::string name)
@@ -337,35 +336,37 @@ void UpdateTransforms(std::shared_ptr<Buffer> const &buffer, glm::mat4 model, gl
 	buffer->Unmap();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  auto platform = unique_ptr<Platform>(Platform::Create());
+	util::AutoFree<int> sdl(
+		SDL_Init(SDL_INIT_EVERYTHING), 
+		[](int) {
+			SDL_Quit(); 
+		});
 
-  cout << "Current execution directory: " << platform->CurrentDirectory() << endl;
+	util::AutoFree<SDL_Window*> sdlWindow(
+		SDL_CreateWindow("gr test SDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 300, 300, SDL_WINDOW_RESIZABLE), 
+		[](SDL_Window *window) {
+			SDL_DestroyWindow(window);
+		});
 
-  Window *window = platform->CreateWindow();
-
-  window->SetName("gr test");
-
-  auto ri = window->GetRect();
-  ri.SetSize(ivec2(300, 300));
-  window->SetRect(ri);
-
-  //window->SetStyle(Window::Style::Borderless);
-
-  window->SetShown(true);
-
-  ri = window->GetRect();
+	uint32_t sdlWindowId = SDL_GetWindowID(sdlWindow._data);
+	glm::ivec2 winSize;
+	SDL_GetWindowSize(sdlWindow._data, &winSize.x, &winSize.y);
 
 	Host host;
 	shared_ptr<Device> device = host.CreateDevice(0);
 
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(sdlWindow._data, &wmInfo);
 
 #if defined(_WIN32)
-  auto windowWin32 = dynamic_cast<WindowWin32*>(window);
-  PresentationSurfaceCreateDataWin32 surfaceData;
-  surfaceData._hInstance = windowWin32->GetPlatformWin32()->_hInstance;
-  surfaceData._hWnd = windowWin32->_hWnd;
+	PresentationSurfaceCreateDataWin32 surfaceData;
+	surfaceData._hInstance = wmInfo.info.win.hinstance;
+	surfaceData._hWnd = wmInfo.info.win.window;
+#else
+#	error Unsupported platform!
 #endif
 
 	auto vertShader = LoadShader(device.get(), "simple.vert");
@@ -378,7 +379,7 @@ int main()
 	auto font = LoadFont(device.get(), "Lato-Regular.ttf");
 	int fonts = Font::GetFontIndices(font->GetFontData());
 	auto fontDraw = InitFontDraw(device.get(), font, "font");
-	UpdateFontTransform(fontDraw, ri.GetSize(), glm::vec4(1));
+	UpdateFontTransform(fontDraw, winSize, glm::vec4(1));
 	glm::vec2 textPos(font->GetLineSpacing());
 	glm::vec2 measurePos = textPos;
 	std::string text(u8"The quick brown fox");
@@ -457,12 +458,12 @@ int main()
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData, PresentMode::Mailbox);
-	surface->Update(ri.GetSize().x, ri.GetSize().y);
-	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(ri.GetSize().x) / ri.GetSize().y, 0.1f, 100.0f);
+	surface->Update(winSize.x, winSize.y);
+	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(winSize.x) / winSize.y, 0.1f, 100.0f);
 
 
 	auto depthBuffer = device->CreateResource<Image>();
-	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(ri.GetSize().x, ri.GetSize().y, 0, 0), 1);
+	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(winSize.x, winSize.y, 0, 0), 1);
 
 	auto renderPass = device->CreateResource<RenderPass>();
 	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(0, 0, 1, 1));
@@ -475,37 +476,54 @@ int main()
 	auto presentPass = device->CreateResource<PresentPass>();
 	presentPass->Init(surface);
 
-
-	window->SetRectUpdatedFunc([&](Window *window, Window::Rect rect) {
-		LOG("Window rect changed ", util::ToString(rect._min), util::ToString(rect._max));
-		auto size = surface->GetSize();
-		if (size.x > 0 && size.y > 0) {
-			surface->Update(size.x, size.y);
-			proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
-			depthBuffer = device->CreateResource<Image>();
-			depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
-			renderPass->SetAttachmentImage(1, depthBuffer);
-			UpdateFontTransform(fontDraw, size, glm::vec4(1));
-		}
-	});
-
-  {
-    auto start = chrono::system_clock::now();
+	{
+		auto start = chrono::system_clock::now();
 		uint32_t frameNumber = 0;
 
-    while (!window->ShouldClose()) {
-      if (window->GetInput().IsJustPressed(Key::Enter)) {
-        auto newStyle = window->GetStyle() == Window::Style::CaptionedResizeable
-          ? Window::Style::BorderlessFullscreen
-          : Window::Style::CaptionedResizeable;
+		while (!SDL_QuitRequested()) {
+			SDL_Event event;
 
-        window->SetStyle(newStyle);
-      }
-
-      auto text = window->GetInput()._input;
-      if (text.size() > 0) {
-        LOG("Input ", text);
-      }
+			while (SDL_PollEvent(&event)) {
+				switch (event.type) {
+					case SDL_WINDOWEVENT: {
+						if (event.window.windowID == sdlWindowId) {
+							switch (event.window.event) {
+								case SDL_WINDOWEVENT_SIZE_CHANGED: {
+									LOG("Window rect changed (", std::to_string(event.window.data1), ", ", std::to_string(event.window.data2), ")");
+									auto size = surface->GetSize();
+									if (size.x > 0 && size.y > 0) {
+										surface->Update(size.x, size.y);
+										proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
+										depthBuffer = device->CreateResource<Image>();
+										depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
+										renderPass->SetAttachmentImage(1, depthBuffer);
+										UpdateFontTransform(fontDraw, size, glm::vec4(1));
+									}
+									break;
+								}
+								case SDL_WINDOWEVENT_CLOSE: {
+									event.type = SDL_QUIT;
+									SDL_PushEvent(&event);
+									break;
+								}
+							}
+						}
+						break;
+					}
+					case SDL_KEYDOWN: {
+						if (event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & (KMOD_LALT | KMOD_RALT))) {
+							if (SDL_GetWindowFlags(sdlWindow._data) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+								SDL_SetWindowBordered(sdlWindow._data, SDL_TRUE);
+								SDL_SetWindowFullscreen(sdlWindow._data, 0);
+							} else {
+								SDL_SetWindowFullscreen(sdlWindow._data, SDL_WINDOW_FULLSCREEN_DESKTOP);
+								SDL_SetWindowBordered(sdlWindow._data, SDL_FALSE);
+							}
+						}
+						break;
+					}
+				}
+			}
 
 			auto size = surface->GetSize();
 			if (size.x > 0 && size.y > 0) {
@@ -524,13 +542,12 @@ int main()
 				device->GetExecutionQueue().ExecutePasses();
 			}
 
-      platform->Update();
 			++frameNumber;
-    }
+		}
 
 		float seconds = util::ToSeconds(chrono::system_clock::now() - start);
 		cout << "Quitting after " << seconds << " seconds and " << frameNumber << " frames for " << frameNumber / seconds << " FPS" << endl;
-  }
+	}
 
-  return 0;
+	return 0;
 }
