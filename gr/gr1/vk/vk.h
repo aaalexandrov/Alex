@@ -1,21 +1,29 @@
 #pragma once
 
 #if defined(_WIN32)
-#define VK_USE_PLATFORM_WIN32_KHR
-#elif defined(linux)
-#define VK_USE_PLATFORM_XLIB_KHR
+	#define VK_USE_PLATFORM_WIN32_KHR
+	#define WIN32_LEAN_AND_MEAN
+	#define NOMINMAX
+#elif defined(__linux__)
+	#define VK_USE_PLATFORM_XLIB_KHR
 #else
-#error Unsupported platform!
+	#error Unsupported platform!
 #endif
 
 #include "vulkan/vulkan.hpp"
 
-#undef min
-#undef max
-
 #include "vma.h"
 #include "shaderc/shaderc.hpp"
 #include "spirv_cross/spirv_reflect.hpp"
+
+#if defined(_WIN32)
+	#undef CreateWindow
+	#undef CreateSemaphore
+	#undef LoadImage
+#elif defined(__linux__)
+	#undef None
+	#undef Always
+#endif
 
 #include "util/namespace.h"
 

@@ -8,13 +8,19 @@
 #include "util/mathutl.h"
 #include "util/enumutl.h"
 
+#if defined(_WIN32)
+#include "../win32//presentation_surface_create_data_win32.h"
+#elif defined(__linux__)
+#include "../x11/presentation_surface_create_data_xlib.h"
+#endif
+
 NAMESPACE_BEGIN(gr1)
 
 RTTR_REGISTRATION
 {
 	using namespace rttr;
 	registration::class_<DeviceVk>("DeviceVk")
-		.constructor<Host::DeviceInfo const &, ValidationLevel>()(rttr::policy::ctor::as_std_shared_ptr);
+		.constructor<Host::DeviceInfo const &, PresentationSurfaceCreateData const *, ValidationLevel>()(rttr::policy::ctor::as_std_shared_ptr);
 
 	registration::class_<HostPlatformVk>("HostPlatformVk")
 		.constructor<>()(rttr::policy::ctor::as_std_shared_ptr);
@@ -34,23 +40,23 @@ void HostPlatformVk::GetSupportedDevices(std::vector<Host::DeviceInfo> &deviceIn
 		vk::PhysicalDeviceProperties devProps = device.getProperties();
 		
 		Host::DeviceInfo info;
-		info._name = devProps.deviceName;
+		info._name = (char const *)devProps.deviceName;
 		info._version = DeviceVk::VersionToVector(devProps.apiVersion);
 		deviceInfos.emplace_back(std::move(info));
 	}
 }
 
-std::shared_ptr<Device> HostPlatformVk::CreateDevice(Host::DeviceInfo const & deviceInfo, ValidationLevel validation)
+std::shared_ptr<Device> HostPlatformVk::CreateDevice(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation)
 {
-	return std::make_shared<DeviceVk>(deviceInfo, validation);
+	return std::make_shared<DeviceVk>(deviceInfo, surfaceData, validation);
 }
 
 
-DeviceVk::DeviceVk(Host::DeviceInfo const &deviceInfo, ValidationLevel validation)
+DeviceVk::DeviceVk(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation)
 	: Device(deviceInfo, validation, rttr::type::get<DeviceVk>())
 {
 	CreateInstance();
-	CreatePhysicalDevice();
+	CreatePhysicalDevice(surfaceData);
 	CreateDevice();
 
 	_pipelineStore.Init(*this);
@@ -89,7 +95,9 @@ void DeviceVk::CreateInstance()
 	std::vector<char const *> extensionNames;
 
 	if (_validationLevel > ValidationLevel::None) {
+#if defined(_WIN32)		
 		AppendLayer(layerNames, instanceLayers, "VK_LAYER_LUNARG_standard_validation");
+#endif		
 		AppendLayer(layerNames, instanceLayers, "VK_LAYER_KHRONOS_validation");
 		AppendExtension(extensionNames, instanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
@@ -97,7 +105,7 @@ void DeviceVk::CreateInstance()
 	AppendExtension(extensionNames, instanceExtensions, VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(_WIN32)
 	AppendExtension(extensionNames, instanceExtensions, VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(linux)
+#elif defined(__linux__)
 	AppendExtension(extensionNames, instanceExtensions, VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #else
 	#error Unsupported platform!
@@ -128,7 +136,7 @@ void DeviceVk::CreateInstance()
 	}
 }
 
-void DeviceVk::CreatePhysicalDevice()
+void DeviceVk::CreatePhysicalDevice(PresentationSurfaceCreateData const *surfaceData)
 {
 	auto physDevices = _instance->enumeratePhysicalDevices();
 	auto it = std::find_if(physDevices.begin(), physDevices.end(), [this](vk::PhysicalDevice physDev) {
@@ -142,11 +150,12 @@ void DeviceVk::CreatePhysicalDevice()
 	QueueFamilyIndex(QueueRole::Compute) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eCompute);
 	QueueFamilyIndex(QueueRole::Transfer) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eTransfer);
 	QueueFamilyIndex(QueueRole::SparseOp) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eSparseBinding);
-	QueueFamilyIndex(QueueRole::Present) = GetSuitableQueueFamily(queueProps, vk::QueueFlags(), [this](int32_t q) {
+	QueueFamilyIndex(QueueRole::Present) = GetSuitableQueueFamily(queueProps, vk::QueueFlags(), [this, surfaceData](int32_t q)->bool {
 #if defined(_WIN32)
 		return _physicalDevice.getWin32PresentationSupportKHR(q);
-#elif defined (linux)
-		return _physicalDevice.getXcbPresentationSupportKHR(q);
+#elif defined (__linux__)
+		auto createXlib = rttr::rttr_cast<PresentationSurfaceCreateDataXlib const*>(surfaceData);
+		return _physicalDevice.getXlibPresentationSupportKHR(q, createXlib->_display, createXlib->GetVisualId());
 #else
 	#error Unsupported platform!
 #endif
@@ -161,7 +170,9 @@ void DeviceVk::CreateDevice()
 	std::vector<char const *> layerNames, extensionNames;
 
 	if (_validationLevel > ValidationLevel::None) {
+#if defined(_WIN32)		
 		AppendLayer(layerNames, deviceLayers, "VK_LAYER_LUNARG_standard_validation");
+#endif		
 	}
 
 	AppendExtension(extensionNames, deviceExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME);

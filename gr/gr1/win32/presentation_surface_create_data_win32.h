@@ -14,6 +14,8 @@ NAMESPACE_BEGIN(gr1)
 struct PresentationSurfaceCreateDataWin32 : public PresentationSurfaceCreateData {
 	RTTR_ENABLE(PresentationSurfaceCreateData)
 public:
+  PresentationSurfaceCreateDataWin32(HINSTANCE hInstance, HWND hWnd) : _hInstance(hInstance), _hWnd(hWnd) {}
+
   HINSTANCE _hInstance;
   HWND _hWnd;
 };

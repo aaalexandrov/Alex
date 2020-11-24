@@ -6,8 +6,6 @@
 
 #include "vk.h"
 
-#define VMA_ASSERT(cond) ASSERT(cond)
-
 #include "vma/vk_mem_alloc.h"
 #ifdef LoadImage
 #undef LoadImage

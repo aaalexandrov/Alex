@@ -95,7 +95,7 @@ template <typename HashValue, size_t BasisValue, size_t PrimeValue> struct HashF
 	static HashType ForEachFnv1(Iterator begin, Iterator end, HashType hash = BasisOffset)
 	{
 		for (; begin != end; ++begin) {
-			hash = Fnv1(*it, hash);
+			hash = Fnv1(*begin, hash);
 		}
 		return hash;
 	}
@@ -104,7 +104,7 @@ template <typename HashValue, size_t BasisValue, size_t PrimeValue> struct HashF
 	static HashType ForEachFnv1a(Iterator begin, Iterator end, HashType hash = BasisOffset)
 	{
 		for (; begin != end; ++begin) {
-			hash = Fnv1a(*it, hash);
+			hash = Fnv1a(*begin, hash);
 		}
 		return hash;
 	}

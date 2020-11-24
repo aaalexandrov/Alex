@@ -51,7 +51,7 @@ SceneObjectComponent *SceneObject::GetComponent(rttr::type componentType, SceneO
 
 int32_t SceneObject::GetComponentIndex(SceneObjectComponent *component) const
 {
-	auto &found = std::find_if(_components.begin(), _components.end(), [component](auto &cmp) { return component == cmp.get(); });
+	auto const &found = std::find_if(_components.begin(), _components.end(), [component](auto &cmp) { return component == cmp.get(); });
 	return found == _components.end() ? -1 : static_cast<int32_t>(std::distance(_components.begin(), found));
 }
 

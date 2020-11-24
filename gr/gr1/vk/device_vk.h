@@ -17,13 +17,13 @@ class HostPlatformVk : public HostPlatform {
 public:
 	~HostPlatformVk() override;
 	void GetSupportedDevices(std::vector<Host::DeviceInfo> &deviceInfos) override;
-	std::shared_ptr<Device> CreateDevice(Host::DeviceInfo const &deviceInfo, ValidationLevel validation) override;
+	std::shared_ptr<Device> CreateDevice(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation) override;
 };
 
 class DeviceVk : public Device {
 	RTTR_ENABLE(Device)
 public:
-	DeviceVk(Host::DeviceInfo const &deviceInfo, ValidationLevel validation);
+	DeviceVk(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation);
 	~DeviceVk() override;
 
 	static glm::uvec3 VersionToVector(uint32_t version);
@@ -43,7 +43,7 @@ public:
 
 protected:
 	void CreateInstance();
-	void CreatePhysicalDevice();
+	void CreatePhysicalDevice(PresentationSurfaceCreateData const *surfaceData);
 	void CreateDevice();
 
 	inline int32_t &QueueFamilyIndex(QueueRole role) { return _queueFamilyIndices[static_cast<int>(role)]; }

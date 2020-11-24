@@ -17,6 +17,7 @@ enum class ValidationLevel {
 
 enum class RttrDiscriminator { Tag };
 
+struct PresentationSurfaceCreateData;
 class Host {
 	RTTR_ENABLE()
 public:
@@ -31,7 +32,7 @@ public:
 	uint32_t GetDeviceCount();
 	DeviceInfo GetDeviceInfo(uint32_t deviceIndex);
 
-	std::shared_ptr<Device> CreateDevice(uint32_t deviceIndex, ValidationLevel validation = ValidationLevel::Auto);
+	std::shared_ptr<Device> CreateDevice(uint32_t deviceIndex, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation = ValidationLevel::Auto);
 
 private:
 	std::vector<DeviceInfo> _deviceInfos;
@@ -44,7 +45,7 @@ public:
 	virtual ~HostPlatform() {}
 
 	virtual void GetSupportedDevices(std::vector<Host::DeviceInfo> &deviceInfos) = 0;
-	virtual std::shared_ptr<Device> CreateDevice(Host::DeviceInfo const &deviceInfo, ValidationLevel validation) = 0;
+	virtual std::shared_ptr<Device> CreateDevice(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation) = 0;
 };
 
 NAMESPACE_END(gr1)

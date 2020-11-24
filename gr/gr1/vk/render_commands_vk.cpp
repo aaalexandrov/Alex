@@ -123,7 +123,7 @@ void PipelineDrawCommandVk::UpdateDescriptorSets()
 					.setRange(bufData->_size);
 
 				for (uint32_t i = 0; i < resInfo._binding.size(); ++i) {
-					if (resInfo._binding[i] == ~0ul)
+					if (resInfo._binding[i] == ~0u)
 						break;
 					setWrites.emplace_back();
 					setWrites.back()
@@ -147,7 +147,7 @@ void PipelineDrawCommandVk::UpdateDescriptorSets()
 					.setImageLayout(imageVk->GetStateInfo(ResourceState::ShaderRead)._layout);
 
 				for (uint32_t i = 0; i < resInfo._binding.size(); ++i) {
-					if (resInfo._binding[i] == ~0ul)
+					if (resInfo._binding[i] == ~0u)
 						continue;
 					setWrites.emplace_back();
 					setWrites.back()
@@ -414,7 +414,7 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 				.setRange(bufData.GetBufferLayout()->GetSize());
 
 			for (uint32_t i = 0; i < _shaders.size(); ++i) {
-				if (bufData._bindings[i] == ~0ul)
+				if (bufData._bindings[i] == ~0u)
 					continue;
 				setWrites.emplace_back();
 				setWrites.back()
@@ -440,7 +440,7 @@ void RenderDrawCommandVk::UpdateDescriptorSets()
 			.setImageLayout(imageVk->GetStateInfo(ResourceState::ShaderRead)._layout);
 
 		for (uint32_t i = 0; i < _shaders.size(); ++i) {
-			if (samplerData._bindings[i] == ~0ul)
+			if (samplerData._bindings[i] == ~0u)
 				continue;
 			setWrites.emplace_back();
 			setWrites.back()

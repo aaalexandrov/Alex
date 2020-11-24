@@ -1,6 +1,6 @@
 
 set(BUILD_STATIC_LIBS ON)
-set(GLM_DIR $ENV{VK_SDK_PATH}/Third-Party/Include/glm)
+set(GLM_DIR glm)
 add_subdirectory(${GLM_DIR} ${PROJECT_BINARY_DIR}/glm)
 set_target_properties(glm_static PROPERTIES 
 	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}" 
@@ -10,6 +10,9 @@ set_target_properties(glm_static PROPERTIES
 add_subdirectory(taskflow)
 
 add_subdirectory(vma)
+set_property(TARGET vma APPEND PROPERTY COMPILE_DEFINITIONS "_ITERATOR_DEBUG_LEVEL=0")
+set_property(TARGET vma PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+
 add_subdirectory(stb)
 add_subdirectory(sdl2_import)
 

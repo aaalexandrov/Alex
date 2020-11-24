@@ -9,8 +9,8 @@
 
 #if defined(_WIN32)
 #include "../win32/presentation_surface_create_data_win32.h"
-#elif defined(linux)
-#error Unimplemented
+#elif defined(__linux__)
+#include "../x11/presentation_surface_create_data_xlib.h"
 #else
 #error Unsupported platform
 #endif
@@ -29,7 +29,7 @@ void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData, Pres
 	PresentationSurface::Init(createData, presentMode);
 #if defined(_WIN32)
 	InitSurfaceWin32(&createData);
-#elif defined(linux)
+#elif defined(__linux__)
 	InitSurfaceXlib(&createData);
 #endif
 
@@ -53,11 +53,14 @@ void PresentationSurfaceVk::InitSurfaceWin32(PresentationSurfaceCreateData *crea
 	_surface = deviceVk->_instance->createWin32SurfaceKHRUnique(surfaceInfo, deviceVk->AllocationCallbacks());
 }
 
-#elif defined(linux)
+#elif defined(__linux__)
 
 void PresentationSurfaceVk::InitSurfaceXlib(PresentationSurfaceCreateData *createData)
 {
-#error Unimplemented
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	auto createXlib = rttr::rttr_cast<PresentationSurfaceCreateDataXlib*>(createData);
+	vk::XlibSurfaceCreateInfoKHR surfaceInfo(vk::XlibSurfaceCreateFlagsKHR(), createXlib->_display, createXlib->_window);
+	_surface = deviceVk->_instance->createXlibSurfaceKHRUnique(surfaceInfo, deviceVk->AllocationCallbacks());
 }
 
 #endif

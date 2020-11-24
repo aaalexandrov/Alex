@@ -9,15 +9,15 @@ struct Polytope {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
-	using Plane = Plane<Vec>;
-	using Line = Line<Vec>;
+	using PlaneV = Plane<Vec>;
+	using LineV = Line<Vec>;
 	using Interval = Box<Num>;
-	using Box = Box<Vec>;
-	using OBox = OrientedBox<Vec>;
-	using Sphere = Sphere<Vec>;
+	using BoxV = Box<Vec>;
+	using OBoxV = OrientedBox<Vec>;
+	using SphereV = Sphere<Vec>;
 
 	struct Edge {
-		Line _line;
+		LineV _line;
 		Interval _interval = Interval::GetMaximum();
 		std::array<int, 2> _sideIndices;
 
@@ -29,18 +29,18 @@ struct Polytope {
 		}
 	};
 
-	std::vector<Plane> _sides;
+	std::vector<PlaneV> _sides;
 	std::vector<Edge> _edges;
 	std::vector<Vec> _points;
 	std::vector<Vec> _sideDirections;
 	std::vector<Vec> _edgeDirections;
 
-	void AddSide(Plane const &side)
+	void AddSide(PlaneV const &side)
 	{
 		std::vector<Edge> newEdges;
 		for (int s = 0; s < _sides.size(); ++s) {
 			Edge edge;
-			edge._line = _side[s].GetIntersectionLine(sides).Normalized();
+			edge._line = _sides[s].GetIntersectionLine(side).Normalized();
 			ASSERT(edge._line.IsValid()); // otherwise we either have a repeating plane, or an empty polytope
 			edge._sideIndices = { s, _sides.size() };
 			newEdges.push_back(edge);
@@ -55,7 +55,7 @@ struct Polytope {
 		_sides.insert(_sides.end(), newEdges.begin(), newEdges.end());
 	}
 
-	static void IntersectEdges(std::vector<Edge> &edges, Plane const &side) 
+	static void IntersectEdges(std::vector<Edge> &edges, PlaneV const &side) 
 	{
 		for (int e = edges.size() - 1; e >= 0; --e) {
 			Interval intersect = edges[e]._line.GetIntersectionInterval(side);
@@ -112,10 +112,10 @@ struct PlaneEval<Polytope<VecType>> {
 	using Shape = Polytope<VecType>;
 	using Vec = typename Shape::Vec;
 	using Num = typename VecTraits<Vec>::ElemType;
-	using Plane = Plane<Vec>;
+	using PlaneV = Plane<Vec>;
 	using Interval = Box<Num>;
 
-	static constexpr Interval Eval(Plane const &plane, Shape const &polytope)
+	static constexpr Interval Eval(PlaneV const &plane, Shape const &polytope)
 	{
 		return plane.Eval(polytope._points);
 	}

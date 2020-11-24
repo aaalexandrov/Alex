@@ -180,7 +180,7 @@ bool RenderDrawCommand::BufferData::IsUniform() const
 
 bool RenderDrawCommand::SetBinding(ShaderKindsArray<uint32_t> &bindings, ShaderKind::Enum kind, uint32_t binding)
 {
-	ASSERT(binding != ~0ul);
+	ASSERT(binding != ~0u);
 	for (int i = 0; i < kind; ++i) {
 		if (bindings[i] == binding)
 			return false;
@@ -192,7 +192,7 @@ bool RenderDrawCommand::SetBinding(ShaderKindsArray<uint32_t> &bindings, ShaderK
 Shader::Parameter const *RenderDrawCommand::GetShaderParamFromBinding(ShaderKindsArray<uint32_t> &bindings, Shader::Parameter::Kind paramKind)
 {
 	for (int i = 0; i < bindings.size(); ++i) {
-		if (bindings[i] == ~0ul)
+		if (bindings[i] == ~0u)
 			continue;
 		Shader *shader = _shaders[i].get();
 		Shader::Parameter const *param = shader->GetParamInfo(paramKind, bindings[i]);
@@ -232,7 +232,7 @@ int RenderDrawCommand::AddBuffer(std::shared_ptr<Buffer> const &buffer, util::St
 	if (bufData.IsUniform()) {
 		bool used = false;
 		for (int i = 0; i < _shaders.size(); ++i) {
-			bufData._bindings[i] = ~0ul;
+			bufData._bindings[i] = ~0u;
 			if (!_shaders[i])
 				continue;
 			auto info = _shaders[i]->GetParamInfo(Shader::Parameter::UniformBuffer, shaderId);
@@ -270,7 +270,7 @@ int RenderDrawCommand::AddSampler(std::shared_ptr<Sampler> const &sampler, std::
 
 	bool used = false;
 	for (int i = 0; i < _shaders.size(); ++i) {
-		samplerData._bindings[i] = ~0ul;
+		samplerData._bindings[i] = ~0u;
 		if (!_shaders[i])
 			continue;
 		auto info = _shaders[i]->GetParamInfo(Shader::Parameter::Sampler, shaderId);

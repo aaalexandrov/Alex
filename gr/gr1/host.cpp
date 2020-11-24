@@ -28,7 +28,7 @@ Host::DeviceInfo Host::GetDeviceInfo(uint32_t deviceIndex)
 	return _deviceInfos[deviceIndex];
 }
 
-std::shared_ptr<Device> Host::CreateDevice(uint32_t deviceIndex, ValidationLevel validation)
+std::shared_ptr<Device> Host::CreateDevice(uint32_t deviceIndex, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation)
 {
 	if (validation == ValidationLevel::Auto) {
 #ifndef NDEBUG
@@ -40,7 +40,7 @@ std::shared_ptr<Device> Host::CreateDevice(uint32_t deviceIndex, ValidationLevel
 	auto itPlatform = std::find_if(_platforms.begin(), _platforms.end(), [&](auto plt) {
 		return _deviceInfos[deviceIndex]._platformType == rttr::type::get(*plt);
 	});
-	return (*itPlatform)->CreateDevice(_deviceInfos[deviceIndex], validation);
+	return (*itPlatform)->CreateDevice(_deviceInfos[deviceIndex], surfaceData, validation);
 }
 
 NAMESPACE_END(gr1)

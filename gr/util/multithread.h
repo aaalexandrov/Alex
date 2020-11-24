@@ -2,6 +2,7 @@
 
 #include "namespace.h"
 #include <mutex>
+#include <condition_variable>
 #include <memory>
 
 NAMESPACE_BEGIN(util)

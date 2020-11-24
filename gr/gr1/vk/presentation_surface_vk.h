@@ -25,7 +25,7 @@ public:
 
 #if defined(_WIN32)
 	void InitSurfaceWin32( PresentationSurfaceCreateData *createData);
-#elif defined(linux)
+#elif defined(__linux__)
 	void InitSurfaceXlib(PresentationSurfaceCreateData *createData);
 #endif
 

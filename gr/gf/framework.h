@@ -9,7 +9,7 @@ NAMESPACE_BEGIN(gf)
 
 class Framework {
 public:
-	Framework();
+	Framework(gr1::PresentationSurfaceCreateData const *surfaceData);
 
 	void SetDataRootPath(std::string path);
 	std::string const &GetDataRootPath() const { return _dataRootPath; }
@@ -19,8 +19,8 @@ public:
 
 
 public:
-	void Init();
-	void CreateDevice();
+	void Init(gr1::PresentationSurfaceCreateData const *surfaceData);
+	void CreateDevice(gr1::PresentationSurfaceCreateData const *surfaceData);
 
 	std::string GetDataPath(std::string path) const;
 

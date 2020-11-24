@@ -20,7 +20,7 @@ inline size_t MemSize(void *mem)
 #if defined(_WIN32)
   size = _msize(mem);
 #else
-  size = malloc_size(mem);
+  size = malloc_usable_size(mem);
 #endif
   return size;
 }

@@ -2,14 +2,14 @@
 
 NAMESPACE_BEGIN(gf)
 
-Framework::Framework()
+Framework::Framework(gr1::PresentationSurfaceCreateData const *surfaceData)
 {
-	Init();
+	Init(surfaceData);
 }
 
-void Framework::Init()
+void Framework::Init(gr1::PresentationSurfaceCreateData const *surfaceData)
 {
-	CreateDevice();
+	CreateDevice(surfaceData);
 	_shaderProvider = std::make_shared<gr1::ShaderSourceProvider>();
 	_defaultShaderOptions._shaderSource = _shaderProvider;
 }
@@ -40,9 +40,9 @@ std::shared_ptr<gr1::Shader> Framework::LoadShader(std::string path, gr1::Shader
 	return shader;
 }
 
-void Framework::CreateDevice()
+void Framework::CreateDevice(gr1::PresentationSurfaceCreateData const *surfaceData)
 {
-	_device = _host.CreateDevice(0);
+	_device = _host.CreateDevice(0, surfaceData);
 }
 
 

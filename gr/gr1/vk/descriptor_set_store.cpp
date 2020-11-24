@@ -5,10 +5,6 @@
 
 NAMESPACE_BEGIN(gr1)
 
-DescriptorSetVk::~DescriptorSetVk()
-{
-}
-
 void DescriptorSetStore::Init(DeviceVk &deviceVk, std::vector<vk::DescriptorSetLayoutBinding> const &layoutBindings, uint32_t maxDescriptorsInPool)
 {
 	Init(deviceVk, GetPoolSizes(layoutBindings, maxDescriptorsInPool), maxDescriptorsInPool);

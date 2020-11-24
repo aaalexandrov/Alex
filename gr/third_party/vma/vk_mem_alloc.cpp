@@ -1,1 +1,3 @@
-// dummy file so we can have a lib
+#define VMA_IMPLEMENTATION
+
+#include "vk_mem_alloc.h"

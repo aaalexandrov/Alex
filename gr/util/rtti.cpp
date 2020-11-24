@@ -28,6 +28,7 @@ TypeRegistry TypeRegistry::Instance;
 
 
 
+template <typename Class> struct CreatorTyped;
 
 struct CreatorBase {
   virtual ~CreatorBase() {}
@@ -62,7 +63,7 @@ struct Creator : CreatorTyped<Class> {
     if (!requiredArgs)
       return nullptr;
 
-    return requiredArgs->Call<Class*>(CreateInstance);
+    return requiredArgs->template Call<Class*>(CreateInstance);
   }
 
   static Class *CreateInstance(Args... args) 
@@ -135,7 +136,7 @@ void Test()
   auto na = GetTypeBind<A volatile const * volatile const>::Info::GetNameStatic();
   auto nb = GetTypeBind<B volatile const *  const>::Info::GetNameStatic();
 
-  type_info const &tv = typeid(void);
+  std::type_info const &tv = typeid(void);
 
   auto pack = ArgsPackImpl<>();
   auto packInt = ArgsPackImpl<int>(5);
@@ -158,7 +159,7 @@ void Test()
   auto bc = createB->Call<C*>();
 
   TypeDescription<A> desc;
-  desc.AddMember("_i", &A::_i);
+  desc.AddMember("_i", (int A::*)&A::_i);
   desc.AddMember("_s", &A::_s);
 
   A aInst;

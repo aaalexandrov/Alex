@@ -221,7 +221,7 @@ std::shared_ptr<PipelineVk> PipelineStore::AllocatePipeline(std::shared_ptr<Pipe
 		.setSubpass(pipelineInfo._subpass)
 		.setBasePipelineIndex(-1);
 
-	vk::UniquePipeline pipeline = _deviceVk->_device->createGraphicsPipelineUnique(*_pipelineCache, pipeCreateInfo, _deviceVk->AllocationCallbacks());
+	vk::UniquePipeline pipeline = _deviceVk->_device->createGraphicsPipelineUnique(*_pipelineCache, pipeCreateInfo, _deviceVk->AllocationCallbacks()).value;
 
 	return std::make_shared<PipelineVk>(std::move(pipelineLayout), std::move(pipeline));
 }

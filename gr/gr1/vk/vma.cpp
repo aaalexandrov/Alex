@@ -1,5 +1,3 @@
-#define VMA_IMPLEMENTATION
-
 #include "vma.h"
 #include "../graphics_exception.h"
 
@@ -26,7 +24,7 @@ UniqueVmaAllocation VmaAllocateMemoryUnique(VmaAllocator allocator, vk::MemoryRe
   allocInfo.requiredFlags = static_cast<VkMemoryPropertyFlags>(memPropFlags);
 
   VmaAllocation allocation;
-  VkResult err = vmaAllocateMemory(allocator, &static_cast<VkMemoryRequirements>(memReq), &allocInfo, &allocation, nullptr);
+  VkResult err = vmaAllocateMemory(allocator, reinterpret_cast<VkMemoryRequirements const*>(&memReq), &allocInfo, &allocation, nullptr);
   if (err != VK_SUCCESS)
     throw GraphicsException("vmaAllocateMemory() failed", err);
 

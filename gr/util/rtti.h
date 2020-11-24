@@ -88,9 +88,6 @@ protected:
 };
 
 template <typename Class, typename... Bases>
-struct TypeInfoImpl;
-
-template <typename Class, typename... Bases>
 struct TypeInfoImpl : TypeInfo {
   using Type = Class;
   using BasesTuple = std::tuple<Bases...>;
@@ -134,17 +131,12 @@ struct TypeInfoImpl : TypeInfo {
     return IsBaseStatic(other->SelfId());
   }
 
-  void CallForBases(std::function<void(TypeInfo const&)> func) const override
-  {
-    using expander = int[];
-    auto funcVal = [func](TypeInfo const& type) { func(type); return 0; };
-    static_cast<void>(expander { 0, funcVal(*TypeRegistry::Instance.GetTypeInfo<Bases>())... });
-  }
+  void CallForBases(std::function<void(TypeInfo const&)> func) const override;
 };
 
 template <typename Class>
 struct TypeInfoBind<Class*> {
-  using Info = typename TypeInfoImpl<typename GetTypeBind<Class>::Info::Type*>;
+  using Info = TypeInfoImpl<typename GetTypeBind<Class>::Info::Type*>;
 };
 
 
@@ -158,7 +150,7 @@ struct TypeRegistry {
   {
     auto index = GetTypeBind<Class>::Info::SelfIdStatic();
     ASSERT(_types.find(index) == _types.end());
-    auto it = _types.insert(std::make_pair(index, std::make_unique<GetTypeBind<Class>::Info>())).first;
+    auto it = _types.insert(std::make_pair(index, std::make_unique<typename GetTypeBind<Class>::Info>())).first;
 		return *it->second;
   }
 
@@ -169,12 +161,21 @@ struct TypeRegistry {
     auto found = _types.find(index);
     if (found != _types.end()) 
       return found->second.get();
-    auto &&added = _types.insert(std::make_pair(index, std::make_unique<GetTypeBind<Class>::Info>()));
+    auto &&added = _types.insert(std::make_pair(index, std::make_unique<typename GetTypeBind<Class>::Info>()));
     return added.first->second.get();
   }
 
   std::unordered_map<TypeInfo::TypeId, std::unique_ptr<TypeInfo>> _types;
 };
+
+template <typename Class, typename... Bases>
+void TypeInfoImpl<Class, Bases...>::CallForBases(std::function<void(TypeInfo const&)> func) const 
+{
+  using expander = int[];
+  auto funcVal = [func](TypeInfo const& type) { func(type); return 0; };
+  static_cast<void>(expander { 0, funcVal(*TypeRegistry::Instance.GetTypeInfo<Bases>())... });
+}
+
 
 template <typename Class>
 TypeInfo const *TypeInfo::Get()
@@ -197,23 +198,11 @@ public:
 		return CallExpansion(function, std::index_sequence_for<Args...>{});
 	}
 
-	template <>
-	void Call(std::function<void(Args...)> function)
-	{
-		CallExpansion(function, std::index_sequence_for<Args...>{});
-	}
-
 private:
 	template<typename Res, std::size_t... I>
 	Res CallExpansion(std::function<Res(Args...)> function, std::index_sequence<I...>)
 	{
 		return function(std::get<I>(_argsTuple)...);
-	}
-
-	template<std::size_t... I>
-	void CallExpansion(std::function<void(Args...)> function, std::index_sequence<I...>)
-	{
-		function(std::get<I>(_argsTuple)...);
 	}
 
 	std::tuple<Args...> _argsTuple;
@@ -279,7 +268,7 @@ struct TypeInfoRegisterer {
 
 #define STATIC_INIT STATIC_INIT1(CAT(InitFunc_, __LINE__), CAT(InitStruct, __LINE__))
 
-#define RTTI_BIND(T, ...)  template <> struct ::util::TypeInfoBind<T> { using Info = TypeInfoImpl<T, ##__VA_ARGS__>; };
+#define RTTI_BIND(T, ...)  template <> struct TypeInfoBind<T> { using Info = TypeInfoImpl<T, ##__VA_ARGS__>; };
 #define RTTI_REGISTER(T)   namespace { static inline ::util::TypeInfoRegisterer<T> CAT(Register_, __LINE__); }
 
 RTTI_BIND(void)

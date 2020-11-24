@@ -74,6 +74,13 @@ if (WIN32)
 	)
 endif()
 
+if (${LINUX})
+	list(APPEND dir_SOURCES 
+		x11/presentation_surface_create_data_xlib.h
+		x11/presentation_surface_create_data_xlib.cpp
+	)
+endif()
+
 if(gr_implementation STREQUAL VK)
 	list(APPEND dir_SOURCES
 		vk/buffer_copy_pass_vk.h
@@ -158,21 +165,43 @@ if(gr_implementation STREQUAL VK)
 		rttr_core_lib
 	)
 
-	target_include_directories(${BINARY} PRIVATE $ENV{VK_SDK_PATH}/Include)
+	if (WIN32)
+		set(VK_SDK_PATH $ENV{VK_SDK_PATH})
+	else()
+		set(VK_SDK_PATH $ENV{VULKAN_SDK})
+	endif()
 
-	set(vk_LIBS
-		vulkan-1
+	target_include_directories(${BINARY} PRIVATE ${VK_SDK_PATH}/include)
+
+	set(vk_LIBS_static
 		VkLayer_utils
-		shaderc_shared
 		spirv-cross-glsl
 		spirv-cross-reflect
 		spirv-cross-core
 	)
 
-	list(TRANSFORM vk_LIBS PREPEND $ENV{VK_SDK_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX})
-	list(TRANSFORM vk_LIBS APPEND ${CMAKE_STATIC_LIBRARY_SUFFIX})
+	set(vk_LIBS_shared
+	)
 
-	target_link_libraries(${BINARY} PRIVATE ${vk_LIBS} ${third_party_LIBS})
+	if (WIN32)
+		set(vk_LIBS_static ${vk_LIBS_static} 
+			vulkan-1 
+			shaderc_shared
+		)
+	else()
+		set(vk_LIBS_shared ${vk_LIBS_shared} 
+			vulkan 		
+			shaderc_shared
+		)
+	endif()
+
+	list(TRANSFORM vk_LIBS_static PREPEND ${VK_SDK_PATH}/lib/${CMAKE_STATIC_LIBRARY_PREFIX})
+	list(TRANSFORM vk_LIBS_static APPEND ${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+	list(TRANSFORM vk_LIBS_shared PREPEND ${VK_SDK_PATH}/lib/${CMAKE_SHARED_LIBRARY_PREFIX})
+	list(TRANSFORM vk_LIBS_shared APPEND ${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+	target_link_libraries(${BINARY} PRIVATE ${vk_LIBS_static} ${vk_LIBS_shared} ${third_party_LIBS})
 elseif(gr_implementation STREQUAL STUB)
 endif()
 

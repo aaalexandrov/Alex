@@ -50,6 +50,8 @@ static struct DbgInit {
 
 #if defined(_WIN32)
 #include "gr1/win32/presentation_surface_create_data_win32.h"
+#elif defined(__linux__)
+#include "gr1/x11/presentation_surface_create_data_xlib.h"
 #endif
 
 using namespace std;
@@ -126,17 +128,17 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 	return loadedModel;
 }
 
-std::shared_ptr<Font> LoadFont(Device *device, std::string name)
+std::shared_ptr<gr1::Font> LoadFont(Device *device, std::string name)
 {
 	string path = string("../data/fonts/") + name;
 	shared_ptr<vector<uint8_t>> fontData = make_shared<vector<uint8_t>>();
 	*fontData = util::ReadFile(path);
-	shared_ptr<Font> font = make_shared<Font>(*device);
+	shared_ptr<gr1::Font> font = make_shared<gr1::Font>(*device);
 	font->Init(fontData, 0, 32, { {32, 128} });
 	return font;
 }
 
-std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<Font> const &font, std::string shaderName)
+std::shared_ptr<RenderDrawCommand> InitFontDraw(Device *device, std::shared_ptr<gr1::Font> const &font, std::string shaderName)
 {
 	auto shaderVert = LoadShader(device, shaderName + ".vert");
 	auto shaderFrag = LoadShader(device, shaderName + ".frag");
@@ -345,7 +347,7 @@ int main(int argc, char *argv[])
 		});
 
 	util::AutoFree<SDL_Window*> sdlWindow(
-		SDL_CreateWindow("gr test SDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 300, 300, SDL_WINDOW_RESIZABLE), 
+		SDL_CreateWindow("gr test SDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 300, 300, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN), 
 		[](SDL_Window *window) {
 			SDL_DestroyWindow(window);
 		});
@@ -354,20 +356,19 @@ int main(int argc, char *argv[])
 	glm::ivec2 winSize;
 	SDL_GetWindowSize(sdlWindow._data, &winSize.x, &winSize.y);
 
-	Host host;
-	shared_ptr<Device> device = host.CreateDevice(0);
-
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	SDL_GetWindowWMInfo(sdlWindow._data, &wmInfo);
-
 #if defined(_WIN32)
-	PresentationSurfaceCreateDataWin32 surfaceData;
-	surfaceData._hInstance = wmInfo.info.win.hinstance;
-	surfaceData._hWnd = wmInfo.info.win.window;
+	PresentationSurfaceCreateDataWin32 surfaceData{wmInfo.info.win.hinstance, wmInfo.info.win.window};
+#elif defined(__linux__)	
+	PresentationSurfaceCreateDataXlib surfaceData{wmInfo.info.x11.display, wmInfo.info.x11.window};
 #else
 #	error Unsupported platform!
 #endif
+
+	Host host;
+	shared_ptr<Device> device = host.CreateDevice(0, &surfaceData);
 
 	auto vertShader = LoadShader(device.get(), "simple.vert");
 	auto fragShader = LoadShader(device.get(), "simple.frag");
@@ -377,7 +378,7 @@ int main(int argc, char *argv[])
 	auto mesh = LoadModel(device.get(), "Cube.gltf");
 	
 	auto font = LoadFont(device.get(), "Lato-Regular.ttf");
-	int fonts = Font::GetFontIndices(font->GetFontData());
+	int fonts = gr1::Font::GetFontIndices(font->GetFontData());
 	auto fontDraw = InitFontDraw(device.get(), font, "font");
 	UpdateFontTransform(fontDraw, winSize, glm::vec4(1));
 	glm::vec2 textPos(font->GetLineSpacing());
@@ -457,7 +458,11 @@ int main(int argc, char *argv[])
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
-	surface->Init(surfaceData, PresentMode::Mailbox);
+	PresentMode presentMode = PresentMode::Mailbox;
+#if defined(__linux__)
+	presentMode = PresentMode::Immediate;
+#endif
+	surface->Init(surfaceData, presentMode);
 	surface->Update(winSize.x, winSize.y);
 	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(winSize.x) / winSize.y, 0.1f, 100.0f);
 

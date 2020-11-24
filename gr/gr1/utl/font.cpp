@@ -32,7 +32,7 @@ void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontI
 	_fontIndex = fontIndex;
 
 	if (!stbtt_InitFont(&_stbFont, _fontData->data(), _fontIndex))
-		throw GraphicsException("Failed to load font", ~0ul);
+		throw GraphicsException("Failed to load font", ~0u);
 
 	_scale = stbtt_ScaleForPixelHeight(&_stbFont, pixelHeight);
 	
@@ -69,7 +69,7 @@ void Font::Init(std::shared_ptr<std::vector<uint8_t>> const &fontData, int fontI
 		auto &range = charRange.second;
 		int result = stbtt_PackFontRange(&packCtx, _fontData->data(), _fontIndex, pixelHeight, range._firstCodePoint, range._codePointCount, range._stbChars.data());
 		if (!result)
-			throw GraphicsException("Failed to render font to bitmap", ~0ul);
+			throw GraphicsException("Failed to render font to bitmap", ~0u);
 	}
 
 	stbtt_PackEnd(&packCtx);
