@@ -458,11 +458,9 @@ int main(int argc, char *argv[])
 	//renderTriangle->SetDrawCounts(static_cast<uint32_t>(vertexBuffer->GetBufferLayout()->GetArrayCount()));
 
 	auto surface = device->CreateResource<PresentationSurface>();
-	PresentMode presentMode = PresentMode::Mailbox;
-#if defined(__linux__)
-	presentMode = PresentMode::Immediate;
-#endif
-	surface->Init(surfaceData, presentMode);
+	surface->Init(surfaceData);
+	std::vector<PresentMode> desiredModes = { PresentMode::Immediate, PresentMode::Mailbox };
+	surface->SetPresentMode(surface->GetFirstAvailablePresentMode(desiredModes));
 	surface->Update(winSize.x, winSize.y);
 	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(winSize.x) / winSize.y, 0.1f, 100.0f);
 

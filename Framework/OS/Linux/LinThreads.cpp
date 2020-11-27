@@ -31,6 +31,7 @@ bool CThreadLin::Init(void *pParam, bool bCreateSuspended, UINT uiStackSize)
     pthread_attr_setstacksize(&kAttr, Util::Max<size_t>(uiStackSize, PTHREAD_STACK_MIN));
   pthread_create(&m_Thread, &kAttr, ThreadFunc, this);
   pthread_attr_destroy(&kAttr);
+  return true;
 }
 
 uintptr_t CThreadLin::GetID()
@@ -41,11 +42,13 @@ uintptr_t CThreadLin::GetID()
 int CThreadLin::Suspend()
 {
   ASSERT(!"Can't suspend in pthreads");
+  return -1;
 }
 
 int CThreadLin::Resume()
 {
   ASSERT(!"Can't resume in pthreads");
+  return -1;
 }
 
 bool CThreadLin::Terminate(uintptr_t uiExitcode)

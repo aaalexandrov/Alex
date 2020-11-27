@@ -112,10 +112,9 @@ struct SatTest {
 	using PlaneV = Plane<Vec>;
 	using LineV = Line<Vec>;
 
-	static constexpr bool Intersects(Shape0 const &shape0, Shape1 const &shape1)
+	static constexpr bool CheckShapeSides(Shape0 const &shape0, Shape1 const &shape1)
 	{
 		Vec p = shape0.GetPoint(0);
-
 		int dirs = shape0.GetNumSideDirections();
 		for (int i = 0; i < dirs; ++i) {
 			PlaneV axis(shape0.GetSideDirection(i), p);
@@ -124,16 +123,12 @@ struct SatTest {
 			if (!int0.Intersects(int1))
 				return false;
 		}
+		return true;
+	}
 
-		dirs = shape1.GetNumSideDirections();
-		for (int i = 0; i < dirs; ++i) {
-			PlaneV axis(shape1.GetSideDirection(i), p);
-			Interval int0 = PlaneEval<Shape0>::Eval(axis, shape0);
-			Interval int1 = PlaneEval<Shape1>::Eval(axis, shape1);
-			if (!int0.Intersects(int1))
-				return false;
-		}
-
+	static constexpr bool CheckEdgeDirectionCombinations(Shape0 const &shape0, Shape1 const &shape1)
+	{
+		Vec p = shape0.GetPoint(0);
 		int edgeDirs0 = shape0.GetNumEdgeDirections();
 		int edgeDirs1 = shape1.GetNumEdgeDirections();
 		for (int e0 = 0; e0 < edgeDirs0; ++e0) {
@@ -150,6 +145,73 @@ struct SatTest {
 					return false;
 			}
 		}
+		return true;
+	}
+
+	static constexpr bool CheckPointEdgeCombinations(Shape0 const &shape0, Shape1 const &shape1)
+	{
+		Vec p = shape0.GetPoint(0);
+		int numPoints0 = shape0.GetNumPoints();
+		int numEdges1 = shape1.GetNumEdges();
+		for (int p0 = 0; p0 < numPoints0; ++p0) {
+			Vec point0 = shape0.GetPoint(p0);
+			for (int e1 = 0; e1 < numEdges1; ++e1) {
+				LineV edge1 = shape1.GetEdge(e1);
+				Vec point1 = edge1.GetProjection(point0);
+				Vec dir = point1 - point0;
+				if (IsZero(dir))
+					continue;
+				PlaneV axis(dir, p);
+				Interval int0 = PlaneEval<Shape0>::Eval(axis, shape0);
+				Interval int1 = PlaneEval<Shape1>::Eval(axis, shape1);
+				if (!int0.Intersects(int1))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	static constexpr bool CheckPointCombinations(Shape0 const &shape0, Shape1 const &shape1)
+	{
+		Vec p = shape0.GetPoint(0);
+		int numPoints0 = shape0.GetNumPoints();
+		int numPoints1 = shape1.GetNumPoints();
+		for (int p0 = 0; p0 < numPoints0; ++p0) {
+			Vec point0 = shape0.GetPoint(p0);
+			for (int p1 = 0; p1 < numPoints1; ++p1) {
+				Vec point1 = shape1.GetPoint(p1);
+				Vec dir = p1 - p0;
+				if (IsZero(dir))
+					continue;
+				PlaneV axis(dir, p);
+				Interval int0 = PlaneEval<Shape0>::Eval(axis, shape0);
+				Interval int1 = PlaneEval<Shape1>::Eval(axis, shape1);
+				if (!int0.Intersects(int1))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	static constexpr bool Intersects(Shape0 const &shape0, Shape1 const &shape1)
+	{
+		if (!CheckShapeSides(shape0, shape1))
+			return false;
+
+		if (!CheckShapeSides(shape1, shape0))
+			return false;
+
+		if (!CheckEdgeDirectionCombinations(shape0, shape1))
+			return false;
+
+		if (Shape0::IsRound && !CheckPointEdgeCombinations(shape0, shape1))
+			return false;
+
+		if (Shape1::IsRound && !CheckPointEdgeCombinations(shape1, shape0))
+			return false;
+
+		if ((Shape0::IsRound || Shape1::IsRound) && !CheckPointCombinations(shape0, shape1))
+			return false;
 
 		return true;
 	}
@@ -163,6 +225,7 @@ struct Box {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using BVec = typename VecTraits<Vec>::template WithElemType<bool>;
 	using LineV = Line<Vec>;
 
@@ -234,6 +297,7 @@ struct OrientedBox {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using RotationV = Rotation<Vec>;
 	using Rot = typename RotationV::Rot;
 	using BoxV = Box<Vec>;
@@ -327,9 +391,11 @@ struct Sphere {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = true;
 	using BoxV = Box<Vec>;
 	using OBoxV = OrientedBox<Vec>;
 	using RigidTransformV = RigidTransform<Vec>;
+	using LineV = Line<Vec>;
 
 	Vec _center = Vec(0);
 	Num _radius = Num(-1);
@@ -341,6 +407,15 @@ struct Sphere {
 
 	constexpr bool IsEmpty() const { return _radius < 0; }
 	constexpr bool IsFinite() const { return IsFinite(_center) && IsFinite(_radius); }
+
+	constexpr int GetNumPoints() const { return 1; }
+	constexpr Vec GetPoint(int pointInd) const { return _center; }
+	constexpr int GetNumSideDirections() const { return 0; }
+	constexpr Vec GetSideDirection(int dirInd) const { return Vec(0); }
+	constexpr int GetNumEdges() const { return 0; }
+	constexpr LineV GetEdge(int edgeInd) const { return LineV(Vec(0), Vec(0)); }
+	constexpr int GetNumEdgeDirections() const { return 0; }
+	constexpr Vec GetEdgeDirection(int dirInd) const { return Vec(0); }
 
 	constexpr BoxV GetBox() const { return BoxV::FromCenterHalfSize(_center, Vec(_radius)); }
 
@@ -402,6 +477,7 @@ struct Plane {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using RotationV = Rotation<Vec>;
 	using BVec = glm::vec<Dim, bool>;
 	using Interval = Box<Num>;
@@ -409,7 +485,6 @@ struct Plane {
 	using OBoxV = OrientedBox<Vec>;
 	using SphereV = Sphere<Vec>;
 	using LineV = Line<Vec>;
-	using PolygonV = Polygon<Vec>;
 
 	Vec _normal;
 	Num _d;
@@ -532,6 +607,7 @@ struct Line {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using Interval = Box<Num>;
 	using PlaneV = Plane<Vec>;
 	using BoxV = Box<Vec>;
@@ -638,6 +714,7 @@ struct Polygon {
 	using Vec = typename PointsArray::value_type;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using VecArray = PointsArray;
 	using Interval = Box<Vec>;
 	using LineV = Line<Vec>;
@@ -719,11 +796,21 @@ struct Polygon {
 		return glm::distance(v, closest);
 	}
 
+	constexpr int GetNumPoints() const { return (int)_points.size(); }
+	constexpr Vec GetPoint(int ptInd) const { return _points[ptInd]; }
+
 	constexpr int GetNumEdgeDirections() const { return (int)_points.size(); }
-	constexpr int GetNumEdgeDirections(int dirInd) const 
+	constexpr Vec GetEdgeDirection(int dirInd) const 
 	{
 		int prev = dirInd > 0 ? dirInd - 1 : (int)_points.size() - 1;
 		return _points[dirInd] - _points[prev]; 
+	}
+
+	constexpr int GetNumEdges() const { return (int)_points.size(); }
+	constexpr LineV GetEdge(int edgeInd) const 
+	{
+		int prev = edgeInd > 0 ? edgeInd - 1 : (int)_points.size() - 1;
+		return LineV::FromPoints(_points[prev], _points[edgeInd]);
 	}
 
 	constexpr int GetNumSideDirections() const { return 1; }

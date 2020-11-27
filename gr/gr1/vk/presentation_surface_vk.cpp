@@ -24,9 +24,8 @@ RTTR_REGISTRATION
 		.constructor<Device&>()(rttr::policy::ctor::as_raw_ptr);
 }
 
-void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData, PresentMode presentMode)
+void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData)
 {
-	PresentationSurface::Init(createData, presentMode);
 #if defined(_WIN32)
 	InitSurfaceWin32(&createData);
 #elif defined(__linux__)
@@ -36,7 +35,7 @@ void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData, Pres
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	bool surfaceSupported = deviceVk->_physicalDevice.getSurfaceSupportKHR(deviceVk->PresentQueue()._family, *_surface);
 	if (!surfaceSupported)
-		throw GraphicsException("CreateSwapChain() failed, surface not supported for presentation on this device!", VK_ERROR_INITIALIZATION_FAILED);
+		throw GraphicsException("PresentationSurfaceVk::Init() failed, surface not supported for presentation on this device!", VK_ERROR_INITIALIZATION_FAILED);
 
 	_acquireSemaphore = deviceVk->CreateSemaphore();
 
@@ -150,12 +149,18 @@ vk::PresentModeKHR PresentationSurfaceVk::GetVkPresentMode()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	vk::PresentModeKHR mode = s_vk2PresentMode.ToSrc(_presentMode);
-	std::vector<vk::PresentModeKHR> modes = deviceVk->_physicalDevice.getSurfacePresentModesKHR(*_surface);
-	if (std::find(modes.begin(), modes.end(), mode) == modes.end()) {
-		ASSERT(!"Requested present mode not found, defaulting to first available!");
-		mode = modes[0];
-	}
 	return mode;
+}
+
+std::vector<PresentMode> PresentationSurfaceVk::GetSupportedPresentModes()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	std::vector<vk::PresentModeKHR> modesVk = deviceVk->_physicalDevice.getSurfacePresentModesKHR(*_surface);
+	std::vector<PresentMode> modes;
+	for (auto modeVk : modesVk) {
+		modes.push_back(s_vk2PresentMode.ToDst(modeVk));
+	}
+	return modes;
 }
 
 uint32_t PresentationSurfaceVk::GetImageIndex(std::shared_ptr<Image> const &image)

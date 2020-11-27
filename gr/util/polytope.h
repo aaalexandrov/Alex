@@ -9,6 +9,7 @@ struct Polytope {
 	using Vec = VecType;
 	using Num = typename VecTraits<Vec>::ElemType;
 	static constexpr int Dim = VecTraits<Vec>::Length;
+	static constexpr bool IsRound = false;
 	using PlaneV = Plane<Vec>;
 	using LineV = Line<Vec>;
 	using Interval = Box<Num>;
@@ -27,6 +28,8 @@ struct Polytope {
 			Interval shapeInt = _line.GetIntersection(shape);
 			return shapeInt.Intersects(_interval);
 		}
+
+		LineV LineFromEndPoints() const { return LineV::FromPoints(_line.GetPoint(_interval._min), _line.GetPoint(_interval._max)); }
 	};
 
 	std::vector<PlaneV> _sides;
@@ -34,6 +37,14 @@ struct Polytope {
 	std::vector<Vec> _points;
 	std::vector<Vec> _sideDirections;
 	std::vector<Vec> _edgeDirections;
+
+	void Init(std::vector<PlaneV> const &sides)
+	{
+		for (PlaneV &plane : sides) {
+			AddSide(plane);
+		}
+		UpdateAfterAddingSides();
+	}
 
 	void AddSide(PlaneV const &side)
 	{
@@ -99,6 +110,8 @@ struct Polytope {
 	constexpr Vec GetSideDirection(int dirInd) const { return _sideDirections[dirInd]; }
 	constexpr int GetNumEdgeDirections() const { return static_cast<int>(_edgeDirections.size()); }
 	constexpr Vec GetEdgeDirection(int dirInd) const { return _edgeDirections[dirInd]; }
+	constexpr int GetNumEdges() const { return static_cast<int>(_edges.size()); }
+	constexpr LineV GetEdge(int edgeInd) const { return _edges[edgeInd].LineFromEndpoints(); }
 
 	template <typename Shape>
 	bool Intersects(Shape const &shape) const

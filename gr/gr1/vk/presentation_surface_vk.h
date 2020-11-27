@@ -13,7 +13,9 @@ class PresentationSurfaceVk : public PresentationSurface {
 public:
 	PresentationSurfaceVk(Device &device) : PresentationSurface(device) {}
 
-	void Init(PresentationSurfaceCreateData &createData, PresentMode presentMode) override;
+	std::vector<PresentMode> GetSupportedPresentModes() override;
+
+	void Init(PresentationSurfaceCreateData &createData) override;
 
 	void Update(uint32_t width, uint32_t height) override;
 	glm::uvec2 GetSize() override;

@@ -24,15 +24,19 @@ class PresentationSurface : public Resource {
 public:
 	PresentationSurface(Device &device) : Resource(device) {}
 
-	virtual void Init(PresentationSurfaceCreateData &createData, PresentMode presentMode);
+	virtual void Init(PresentationSurfaceCreateData &createData) = 0;
 
-  virtual void Update(uint32_t width, uint32_t height) = 0;
+	virtual std::vector<PresentMode> GetSupportedPresentModes() = 0;
+	virtual void SetPresentMode(PresentMode mode);
+
+	virtual void Update(uint32_t width, uint32_t height) = 0;
 	virtual glm::uvec2 GetSize() = 0;
 
 	inline PresentMode GetPresentMode() { return _presentMode; }
 
 	virtual std::shared_ptr<Image> const &AcquireNextImage() = 0;
 
+	PresentMode GetFirstAvailablePresentMode(std::vector<PresentMode> const &desiredModes);
 protected:
 	PresentMode _presentMode;
 };
