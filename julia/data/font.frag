@@ -1,5 +1,3 @@
-#version 330
-
 in  vec4 vertColor;
 in  vec2 vertTexCoord;
 

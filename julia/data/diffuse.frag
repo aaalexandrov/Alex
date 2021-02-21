@@ -1,5 +1,3 @@
-#version 330
-
 in  vec3 fragNorm;
 in  vec2 fragTexCoord;
 
