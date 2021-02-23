@@ -8,6 +8,6 @@
 	],
 	"uniforms": {
 		"emissiveColor": [1.0, 1.0, 1.0, 1.0],
-		"diffuseTexture": "grid2"
+		"diffuseTexture": "leaves"
 	}
 }
