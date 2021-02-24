@@ -21,7 +21,7 @@ uniform PerInstance
 void main()
 {
 	vec3 N = normalize(fragNorm);
-	float NdotL = max(0, dot(N, sunDirection));
+	float NdotL = max(0.0, dot(N, sunDirection));
 	vec3 diffuse = NdotL * sunColor * diffuseMaterial;
 	fragColor = ambientColor * ambientMaterial + vec4(diffuse, 0);
 }
