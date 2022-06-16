@@ -96,7 +96,7 @@ void DeviceVk::CreateInstance()
 
 	if (_validationLevel > ValidationLevel::None) {
 #if defined(_WIN32)		
-		AppendLayer(layerNames, instanceLayers, "VK_LAYER_LUNARG_standard_validation");
+		//AppendLayer(layerNames, instanceLayers, "VK_LAYER_LUNARG_standard_validation");
 #endif		
 		AppendLayer(layerNames, instanceLayers, "VK_LAYER_KHRONOS_validation");
 		AppendExtension(extensionNames, instanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
@@ -171,7 +171,7 @@ void DeviceVk::CreateDevice()
 
 	if (_validationLevel > ValidationLevel::None) {
 #if defined(_WIN32)		
-		AppendLayer(layerNames, deviceLayers, "VK_LAYER_LUNARG_standard_validation");
+		//AppendLayer(layerNames, deviceLayers, "VK_LAYER_LUNARG_standard_validation");
 #endif		
 	}
 
