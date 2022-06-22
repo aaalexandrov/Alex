@@ -1,0 +1,84 @@
+Types:
+
+// types are first class
+
+// builtins
+// Address is an integer large enough to hold the largest address
+Type
+Address
+Ref{T}
+Storage{Bytes, Align}
+Tuple{Ts...}
+Array{T, Dims...}
+Func{Args..., Ret}
+Quote
+
+struct
+	Name: Type
+	...
+end
+
+// defined in lib
+Bool
+Int8, Int16, Int32, Int64
+Uint8, Uint16, Uint32, Uint64
+Slice{T} = struct 
+	arr: Ref{Array{T, typemax(Address)}}
+	size: Address
+end
+String = Slice{Uint8}
+
+
+Language constructs:
+
+module Name{Params...}
+	Definitions
+end
+
+import Name{Params...}...
+
+// all params are passed by value
+// functions can be overloaded and can be local
+// operators can be defined using e.g. func "+"(Int32 a, Int32 b): Int32 Operators end
+// lambdas can be defined by omitting the name altogether
+// lambdas, functions and local functions are first class and capture from enclosing scopes by value
+func Name(param: Type or anytype...): Type
+	Operators
+end
+
+// module level variables are initialized with compile-time expressions
+var Name: Type = Expr
+
+// compile time constant, doesn't have runtime storage
+const Name: Type = Expr
+
+if Expr
+	Operators
+else
+	Operators
+end
+
+while Expr
+	Operators
+end
+
+for Var in Range
+	Operators
+end
+
+// quote that is pasted into surrounding code at gen time
+// interpolation is done with $Value / $(Expr) syntax
+quote
+	Tokens
+end
+
+// executed at compile time, can see the definitions of surrounding code but not any non-constant non-gen values
+gen
+	Operators
+	Quotes
+end
+
+// TODO:
+literals ???
+switch/case/select/match ???
+generic params - should they have type constraints, or should validation be left to imperative code with reflection?
