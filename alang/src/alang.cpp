@@ -55,8 +55,9 @@ void TestUtf8()
 
 void ParseFile(std::string path)
 {
-	auto parser = alang::GetParser();
-	alang::Tokenizer tokens(path, parser->GetKeyStrings());
+	auto &rules = alang::AlangRules();
+	alang::Tokenizer tokens(path, rules.GetKeyStrings());
+	auto parser = std::make_unique<alang::Parser>(rules._rules);
 	cout << "File: " << tokens.GetFilePath() << " size: " << tokens.GetFileSize() << endl;
 	auto parsed = parser->Parse(tokens);
 	if (parsed) {

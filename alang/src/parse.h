@@ -5,18 +5,18 @@
 
 namespace alang {
 
+enum class MatchCombine {
+	Sequence,
+	Alternative,
+};
+
+enum class MatchRepeat {
+	One,
+	ZeroOne,
+	ZeroMany,
+};
+
 struct ParseRule {
-	enum class CombineMode {
-		Sequence,
-		Alternative,
-	};
-
-	enum class Repeat {
-		One,
-		ZeroOne,
-		ZeroMany,
-	};
-
 	struct Terminal {
 		Token::Class _class = Token::Class::Invalid;
 		String _str;
@@ -28,21 +28,21 @@ struct ParseRule {
 	};
 
 	struct Match {
-		Repeat _repeat = Repeat::One;
+		MatchRepeat _repeat = MatchRepeat::One;
 		std::variant<Terminal, RuleRef> _content;
 
-		Match(Token::Class cls, String str = "", Repeat rep = Repeat::One);
-		Match(String subruleId, Repeat rep = Repeat::One);
+		Match(Token::Class cls, String str = "", MatchRepeat rep = MatchRepeat::One);
+		Match(String subruleId, MatchRepeat rep = MatchRepeat::One);
 
 		Terminal const *GetTerminal() const { return std::get_if<Terminal>(&_content); }
 		RuleRef const *GetSubrule() const { return std::get_if<RuleRef>(&_content); }
 	};
 
 	String _id;
-	CombineMode _combine = CombineMode::Sequence;
+	MatchCombine _combine = MatchCombine::Sequence;
 	std::vector<Match> _matches;
 
-	ParseRule(String id, std::initializer_list<Match> matches, CombineMode combine = CombineMode::Sequence);
+	ParseRule(String id, std::initializer_list<Match> matches, MatchCombine combine = MatchCombine::Sequence);
 };
 
 struct Parser {
@@ -59,11 +59,9 @@ struct Parser {
 		Node const *GetSubnode(int32_t i) const { return std::holds_alternative<std::unique_ptr<Node>>(_content[i]) ? std::get<std::unique_ptr<Node>>(_content[i]).get() : nullptr; }
 	};
 
-	std::vector<ParseRule> _rules;
+	std::vector<ParseRule> const &_rules;
 
-	Parser(std::vector<ParseRule> &&rules);
-
-	std::vector<String> GetKeyStrings() const;
+	Parser(std::vector<ParseRule> const &rules);
 
 	std::unique_ptr<Node> Parse(Tokenizer &tokens) const;
 
@@ -73,6 +71,13 @@ protected:
 	std::unique_ptr<Node> MatchRule(Tokenizer &tokens, ParseRule const &rule) const;
 };
 
-std::unique_ptr<Parser> GetParser();
+struct ParseRulesHolder {
+	std::vector<ParseRule> _rules;
+
+	ParseRulesHolder(std::initializer_list<ParseRule> rules);
+	std::vector<String> GetKeyStrings() const;
+};
+
+ParseRulesHolder const &AlangRules();
 
 }
