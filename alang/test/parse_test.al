@@ -9,6 +9,9 @@ func main()
 	var f : F32 = c * 5.25
 	io.print("Hello, friend!")
 	io.print("$(a) + $(b) = $(c)")
+	if c % 2 == 0
+		c = -c*a - b^+2 + 1
+	end
 end
 
 end

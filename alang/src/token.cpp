@@ -50,7 +50,7 @@ std::string Token::Dump() const
 	std::string result;
 	result += std::string("Loc: ") + std::to_string(_filePos._line) + ":" + std::to_string(_filePos._posOnLine);
 	result += std::string(" Type: ") + GetTokenTypeName(_type);
-	result += std::string(" Str: ") + _str;
+	result += std::string(" Str: \"") + _str + "\"";
 	if (_type == Token::Type::Integer || _type == Token::Type::Char) {
 		result += std::string(" Int: ") + std::to_string(_integer);
 	} else if (_type == Token::Type::Double) {
@@ -60,7 +60,7 @@ std::string Token::Dump() const
 }
 
 
-std::vector<uint32_t> GetUniqueCPs(std::vector<String> const &strs)
+static std::vector<uint32_t> GetUniqueCPs(std::vector<String> const &strs)
 {
 	std::vector<uint32_t> result;
 	for (auto &s : strs) {

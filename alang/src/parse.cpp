@@ -6,21 +6,25 @@
 
 namespace alang {
 
-ParseRule::Match::Match(Token::Class cls, String str, MatchRepeat rep)
-	: _repeat{ rep }
+ParseRule::Match::Match(Token::Class cls, String str, MatchOptions opt)
+	: _opt{ opt }
 	, _content{ Terminal{cls, str} }
 {
+	if (_opt._output == Output::Auto)
+		_opt._output = (cls == Token::Class::Key) ? Output::Disable : Output::Enable;
 }
 
-ParseRule::Match::Match(String subruleId, MatchRepeat rep)
-	: _repeat{ rep }
+ParseRule::Match::Match(String subruleId, MatchOptions opt)
+	: _opt{ opt }
 	, _content{ RuleRef{ subruleId } }
 {
+	if (_opt._output == Output::Auto)
+		_opt._output = Output::Enable;
 }
 
-ParseRule::ParseRule(String id, std::initializer_list<Match> matches, MatchCombine combine)
+ParseRule::ParseRule(String id, std::initializer_list<Match> matches, ParseOptions opt)
 	: _id{ id }
-	, _combine{ combine }
+	, _opt{ opt }
 	, _matches{ matches }
 {
 }
@@ -74,7 +78,10 @@ auto Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule) const -> std::u
 			if (ParseRule::Terminal const *terminal = match.GetTerminal()) {
 				matchFound = tokens.Current().GetClass() == terminal->_class && (terminal->_str.empty() || tokens.Current()._str == terminal->_str);
 				if (matchFound) {
-					getNode()->_content.push_back(tokens.Current());
+					getNode();
+					if (match._opt._output == Output::Enable) {
+						node->_content.push_back(tokens.Current());
+					}
 					tokens.MoveNext();
 				}
 			} else {
@@ -82,20 +89,30 @@ auto Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule) const -> std::u
 				std::unique_ptr<Node> subNode = MatchRule(tokens, *sub);
 				matchFound = bool(subNode);
 				if (matchFound) {
-					getNode()->_content.push_back(std::move(subNode));
+					getNode();
+					if (sub->_opt._nodeOutput == NodeOutput::Own) {
+						node->_content.push_back(std::move(subNode));
+					} else {
+						ASSERT(sub->_opt._nodeOutput == NodeOutput::Parent);
+						node->_content.insert(
+							node->_content.end(), 
+							std::make_move_iterator(subNode->_content.begin()), 
+							std::make_move_iterator(subNode->_content.end()));
+					}
 				}
 			}
 			numMatches += matchFound;
-		} while (matchFound && match._repeat == MatchRepeat::ZeroMany);
+		} while (matchFound && match._opt._repeat == Repeat::ZeroMany);
 
-		if (numMatches > 0 && rule._combine == MatchCombine::Alternative)
-			return node;
-		if (numMatches == 0 && rule._combine == MatchCombine::Sequence && match._repeat == MatchRepeat::One)
+		if (numMatches > 0 && rule._opt._combine == Combine::Alternative)
+			break;
+		if (numMatches == 0 && rule._opt._combine == Combine::Sequence && match._opt._repeat == Repeat::One)
 			return nullptr;
 	}
 
-	if (rule._combine == MatchCombine::Alternative)
-		return nullptr;
+	if (rule._opt._rename == Rename::Disable && node && node->_content.size() == 1 && node->GetSubnode(0)) {
+		node = std::move(std::get<std::unique_ptr<Node>>(node->_content[0]));
+	}
 
 	return node;
 }
@@ -140,71 +157,73 @@ std::vector<String> ParseRulesHolder::GetKeyStrings() const
 ParseRulesHolder const &AlangRules()
 {
 	static ParseRulesHolder s_langRules{
-		{"MODULE", {{Token::Class::Key, "module"}, {Token::Class::Identifier}, {"DEFINITION", MatchRepeat::ZeroMany}, {Token::Class::Key, "end"}} },
+		{"MODULE", {{Token::Class::Key, "module"}, {Token::Class::Identifier}, {"DEFINITION", Repeat::ZeroMany}, {Token::Class::Key, "end"}} },
 
-		{"DEFINITION", {{"DEF_VALUE"}, {"DEF_FUNC"}, {"IMPORT"}, {"MODULE"}}, MatchCombine::Alternative},
+		{"DEFINITION", {{"DEF_VALUE"}, {"DEF_FUNC"}, {"IMPORT"}, {"MODULE"}}, {Combine::Alternative, Rename::Disable}},
 
-		{"QUALIFIED_NAME", {{Token::Class::Identifier}, {"DOT_IDENTIFIER", MatchRepeat::ZeroMany}}},
-		{"DOT_IDENTIFIER", {{Token::Class::Key, "."}, {Token::Class::Identifier}}},
+		{"QUALIFIED_NAME", {{Token::Class::Identifier}, {"SUBSCRIPT", Repeat::ZeroMany}}, NodeOutput::Parent},
+		{"SUBSCRIPT", {{Token::Class::Key, "."}, {Token::Class::Identifier}}},
 
-		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"IMPORT_TAIL", MatchRepeat::ZeroMany}}},
+		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"IMPORT_TAIL", Repeat::ZeroMany}}},
 		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}},
 
-		{"DEF_VALUE", {{"CONST_OR_VAR"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"EQ_EXPRESSION", MatchRepeat::ZeroOne}}},
-		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}},
-		{"CONST_OR_VAR", {{Token::Class::Key, "const"}, {Token::Class::Key, "var"}}, MatchCombine::Alternative},
+		{"DEF_VALUE", {{"CONST_OR_VAR"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"EQ_EXPRESSION", Repeat::ZeroOne}}},
+		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}, NodeOutput::Parent},
+		{"CONST_OR_VAR", {{Token::Class::Key, "const", Output::Enable}, {Token::Class::Key, "var", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"EQ_EXPRESSION", {{Token::Class::Key, "="}, {"EXPRESSION"}}},
 
 		{"TYPE", {{"QUALIFIED_NAME"}}},
 
-		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", MatchRepeat::ZeroOne}, {Token::Class::Key, ")"}, {"OF_TYPE", MatchRepeat::ZeroOne}, {"OPERATOR", MatchRepeat::ZeroMany}, {Token::Class::Key, "end"}}},
-		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", MatchRepeat::ZeroMany}}},
+		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"OF_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
+		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", Repeat::ZeroMany}}},
 		{"DEF_PARAM", {{Token::Class::Identifier}, {"OF_TYPE"}}},
 		{"DEF_PARAM_TAIL", {{Token::Class::Key, ","}, {"DEF_PARAM"}}},
 
-		{"OPERATOR", {{"DEF_VALUE"}, {"IF"}, {"WHILE"}, {"RETURN"}, {"ASSIGN_OR_CALL"}}, MatchCombine::Alternative},
+		{"OPERATOR", {{"DEF_VALUE"}, {"IF"}, {"WHILE"}, {"RETURN"}, {"ASSIGN_OR_CALL"}}, {Combine::Alternative, Rename::Disable}},
 
-		{"IF", {{Token::Class::Key, "if"}, {"EXPRESSION"}, {"OPERATOR", MatchRepeat::ZeroMany}, {"ELSE", MatchRepeat::ZeroOne}, {Token::Class::Key, "end"}}},
-		{"ELSE", {{Token::Class::Key, "if"}, {"OPERATOR", MatchRepeat::ZeroMany}}},
+		{"IF", {{Token::Class::Key, "if"}, {"EXPRESSION"}, {"OPERATOR", Repeat::ZeroMany}, {"ELSE", Repeat::ZeroOne}, {Token::Class::Key, "end"}}},
+		{"ELSE", {{Token::Class::Key, "if"}, {"OPERATOR", Repeat::ZeroMany}}},
 
-		{"WHILE", {{Token::Class::Key, "while"}, {"EXPRESSION"}, {"OPERATOR", MatchRepeat::ZeroMany}, {Token::Class::Key, "end"}}},
+		{"WHILE", {{Token::Class::Key, "while"}, {"EXPRESSION"}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
 
-		{"RETURN", {{Token::Class::Key, "return"}, {"EXPRESSION", MatchRepeat::ZeroOne}}},
+		{"RETURN", {{Token::Class::Key, "return"}, {"EXPRESSION", Repeat::ZeroOne}}},
 
 		{"ASSIGN_OR_CALL", {{Token::Class::Identifier}, {"ASSIGN_OR_CALL_TAIL"}}},
-		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_PARAMS_ASSGN_TAIL"}}, MatchCombine::Alternative},
-		{"DOT_IDENT_ASSGN_TAIL", {{"DOT_IDENTIFIER"}, {"ASSIGN_OR_CALL_TAIL"}}},
-		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}},
-		{"CALL_PARAMS_ASSGN_TAIL", {{"CALL_PARAMS"}, {"ASSIGN_OR_CALL_TAIL", MatchRepeat::ZeroOne}}},
+		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_PARAMS_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
+		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPT"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
+		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
+		{"CALL_PARAMS_ASSGN_TAIL", {{"CALL_PARAMS"}, {"ASSIGN_OR_CALL_TAIL", Repeat::ZeroOne}}, NodeOutput::Parent},
 
-		{"EXPRESSION", {{"COMPARISON"}}},
+		{"EXPRESSION", {{"COMPARISON"}}, Rename::Disable},
 
-		{"COMPARISON", {{"NEGATION"}, {"CMP_NEGATION", MatchRepeat::ZeroOne}}},
-		{"NEGATION", {{"NOT_VALUE"}, {"ADDITION"}}, MatchCombine::Alternative},
+		{"COMPARISON", {{"NEGATION"}, {"CMP_NEGATION", Repeat::ZeroOne}}, Rename::Disable},
+		{"NEGATION", {{"NOT_VALUE"}, {"ADDITION"}}, {Combine::Alternative, Rename::Disable}},
 		{"NOT_VALUE", {{Token::Class::Key, "!"}, {"VALUE"}}},
-		{"CMP_NEGATION", {{"CMP"}, {"NEGATION"}}},
-		{"CMP", {{Token::Class::Key, "=="}, {Token::Class::Key, "!="}, {Token::Class::Key, "<"}, {Token::Class::Key, ">"}, {Token::Class::Key, "<="}, {Token::Class::Key, ">="}}, MatchCombine::Alternative},
+		{"CMP_NEGATION", {{"CMP"}, {"NEGATION"}}, NodeOutput::Parent},
+		{"CMP", {{Token::Class::Key, "==", Output::Enable}, {Token::Class::Key, "!=", Output::Enable}, {Token::Class::Key, "<", Output::Enable}, {Token::Class::Key, ">", Output::Enable}, {Token::Class::Key, "<=", Output::Enable}, {Token::Class::Key, ">=", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
 
-		{"ADDITION", {{"PLUS_MINUS", MatchRepeat::ZeroOne}, {"MULTIPLICATION"}, {"ADDITION_TAIL", MatchRepeat::ZeroMany}}},
-		{"ADDITION_TAIL", {{"PLUS_MINUS"}, {"MULTIPLICATION"}}},
-		{"PLUS_MINUS", {{Token::Class::Key, "+"}, {Token::Class::Key, "-"}}, MatchCombine::Alternative},
+		{"ADDITION", {{"MULTIPLICATION"}, {"ADDITION_TAIL", Repeat::ZeroMany}}, Rename::Disable},
+		{"ADDITION_TAIL", {{"PLUS_MINUS"}, {"MULTIPLICATION"}}, NodeOutput::Parent},
+		{"PLUS_MINUS", {{Token::Class::Key, "+", Output::Enable}, {Token::Class::Key, "-", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
 
-		{"MULTIPLICATION", {{"POWER"}, {"MULTIPLICATION_TAIL", MatchRepeat::ZeroMany}}},
-		{"MULTIPLICATION_TAIL", {{"MUL_DIV_REM"}, {"POWER"}}},
-		{"MUL_DIV_REM", {{Token::Class::Key, "*"}, {Token::Class::Key, "/"}, {Token::Class::Key, "%"}}, MatchCombine::Alternative},
+		{"MULTIPLICATION", {{"POWER"}, {"MULTIPLICATION_TAIL", Repeat::ZeroMany}}, Rename::Disable},
+		{"MULTIPLICATION_TAIL", {{"MUL_DIV_REM"}, {"POWER"}}, NodeOutput::Parent},
+		{"MUL_DIV_REM", {{Token::Class::Key, "*", Output::Enable}, {Token::Class::Key, "/", Output::Enable}, {Token::Class::Key, "%", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
 
-		{"POWER", {{"VALUE"}, {"POWER_TAIL", MatchRepeat::ZeroMany}}},
-		{"POWER_TAIL", {{Token::Class::Key, "^"}, {"VALUE"}}},
+		{"POWER", {{"SIGNED"}, {"POWER_TAIL", Repeat::ZeroMany}}, Rename::Disable},
+		{"POWER_TAIL", {{Token::Class::Key, "^"}, {"SIGNED"}}, NodeOutput::Parent},
 
-		{"VALUE", {{Token::Class::Literal}, {"EXPR_IN_PAREN"}, {"VAR_CALL_INDEXED"}}, MatchCombine::Alternative},
-		{"EXPR_IN_PAREN", {{Token::Class::Key, "("}, {"EXPRESSION"}, {Token::Class::Key, ")"}}},
-		{"VAR_CALL_INDEXED", {{Token::Class::Identifier}, {"VALUE_QUALIFIERS", MatchRepeat::ZeroMany}}},
-		{"VALUE_QUALIFIERS", {{"DOT_IDENTIFIER"}, {"INDEX"}, {"CALL_PARAMS"}}, MatchCombine::Alternative},
+		{"SIGNED", {{"PLUS_MINUS", Repeat::ZeroOne}, {"VALUE"}}, Rename::Disable},
+
+		{"VALUE", {{Token::Class::Literal}, {"EXPR_IN_PAREN"}, {"VAR_CALL_INDEXED"}}, Combine::Alternative},
+		{"EXPR_IN_PAREN", {{Token::Class::Key, "("}, {"EXPRESSION"}, {Token::Class::Key, ")"}}, NodeOutput::Parent},
+		{"VAR_CALL_INDEXED", {{Token::Class::Identifier}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
+		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL_PARAMS"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}},
 		{"CALL_PARAMS", {{Token::Class::Key, "("}, {"EXPRESSION_LIST"}, {Token::Class::Key, ")"}}},
 
-		{"EXPRESSION_LIST", {{"EXPRESSION"}, {"COMMA_EXPRESSION", MatchRepeat::ZeroMany}}},
-		{"COMMA_EXPRESSION", {{Token::Class::Key, ","}, {"EXPRESSION"}}},
+		{"EXPRESSION_LIST", {{"EXPRESSION"}, {"COMMA_EXPRESSION", Repeat::ZeroMany}}, NodeOutput::Parent},
+		{"COMMA_EXPRESSION", {{Token::Class::Key, ","}, {"EXPRESSION"}}, NodeOutput::Parent},
 	};
 
 	return s_langRules;
