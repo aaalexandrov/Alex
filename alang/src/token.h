@@ -1,18 +1,10 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <fstream>
 #include "utf8.h"
+#include "common.h"
 
 namespace alang {
-
-using String = std::string;
-
-struct PosInFile {
-	uint32_t _line = -1;
-	uint32_t _posOnLine = -1;
-};
 
 struct Token {
 	enum class Type {
