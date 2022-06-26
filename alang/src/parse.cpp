@@ -172,7 +172,8 @@ ParseRulesHolder const &AlangRules()
 		{"CONST_OR_VAR", {{Token::Class::Key, "const", Output::Enable}, {Token::Class::Key, "var", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"EQ_EXPRESSION", {{Token::Class::Key, "="}, {"EXPRESSION"}}},
 
-		{"TYPE", {{"QUALIFIED_NAME"}}},
+		{"TYPE", {{"QUALIFIED_NAME"}, {"GENERIC_PARAMS", Repeat::ZeroOne}}},
+		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"EXPRESSION_LIST"}, {Token::Class::Key, "}"}}},
 
 		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"OF_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
 		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", Repeat::ZeroMany}}},
@@ -188,7 +189,7 @@ ParseRulesHolder const &AlangRules()
 
 		{"RETURN", {{Token::Class::Key, "return"}, {"EXPRESSION", Repeat::ZeroOne}}},
 
-		{"ASSIGN_OR_CALL", {{Token::Class::Identifier}, {"ASSIGN_OR_CALL_TAIL"}}},
+		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}},
 		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_PARAMS_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPT"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
@@ -215,9 +216,11 @@ ParseRulesHolder const &AlangRules()
 
 		{"SIGNED", {{"PLUS_MINUS", Repeat::ZeroOne}, {"VALUE"}}, Rename::Disable},
 
-		{"VALUE", {{Token::Class::Literal}, {"EXPR_IN_PAREN"}, {"VAR_CALL_INDEXED"}}, Combine::Alternative},
+		{"VALUE", {{Token::Class::Literal}, {"VAR_CALL_INDEXED"}}, Combine::Alternative},
+		{"VALUE_BASE", {{Token::Class::Key, "&", {Repeat::ZeroMany, Output::Enable}}, {"SUBEXPR_OR_IDENT"}}, NodeOutput::Parent},
+		{"SUBEXPR_OR_IDENT", {{"EXPR_IN_PAREN"}, {Token::Class::Identifier}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"EXPR_IN_PAREN", {{Token::Class::Key, "("}, {"EXPRESSION"}, {Token::Class::Key, ")"}}, NodeOutput::Parent},
-		{"VAR_CALL_INDEXED", {{Token::Class::Identifier}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
+		{"VAR_CALL_INDEXED", {{"VALUE_BASE"}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
 		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL_PARAMS"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}},
 		{"CALL_PARAMS", {{Token::Class::Key, "("}, {"EXPRESSION_LIST"}, {Token::Class::Key, ")"}}},
