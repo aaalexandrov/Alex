@@ -4,6 +4,6 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Add source to this project's executable.
-add_executable (alang "alang.cpp" "alang.h" "token.h" "token.cpp" "utf8.h" "utf8.cpp" "dbg.h" "dbg.cpp" "parse.h" "parse.cpp" "types.h" "types.cpp" "common.h" "module.h" "module.cpp")
+add_executable (alang "alang.cpp" "alang.h" "token.h" "token.cpp" "utf8.h" "utf8.cpp" "dbg.h" "dbg.cpp" "parse.h" "parse.cpp" "types.h" "types.cpp" "common.h" "module.h" "module.cpp" "core.h" "core.cpp")
 
 # TODO: Add tests and install targets if needed.

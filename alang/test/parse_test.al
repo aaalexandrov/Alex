@@ -9,6 +9,13 @@ func main()
 	var f : F32 = c * 5.25
 	var p : Ref{I32} = &a
 	var arr : Array{I32, 5}
+
+	arr[0] = c
+	var i : I32 = 1
+	while i < 5
+		arr[i] = arr[i - 1] + 1
+	end
+
 	io.print("Hello, friend!")
 	io.print("$(a) + $(b) = $(c)")
 	if c % 2 == 0

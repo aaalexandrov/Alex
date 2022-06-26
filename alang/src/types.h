@@ -14,16 +14,18 @@ struct Module;
 struct TypeDesc {
 	struct Member {
 		String _name;
-		TypeDesc *_type;
-		size_t _offset;
+		TypeDesc *_type = nullptr;
+		size_t _offset = 0;
 	};
 
 	String _name;
 	size_t _size, _align;
-	Module *_module;
-	TypeDesc *_genericDefinition;
+	Module *_module = nullptr;
+	TypeDesc *_genericDefinition = nullptr;
 	std::vector<Value> _params; // generic params
 	std::vector<Member> _members;
+
+	TypeDesc(String name, size_t size, size_t align);
 };
 
 }
