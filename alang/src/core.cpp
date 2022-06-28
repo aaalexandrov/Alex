@@ -26,6 +26,10 @@ static std::unique_ptr<Module> CreateCore()
 	
 	core->RegisterType(std::make_unique<TypeDesc>("Array", 0, 0));
 
+	core->RegisterType(std::make_unique<TypeDesc>("Const", 0, 0));
+
+	core->RegisterType(std::make_unique<TypeDesc>("Func", sizeof(void*), alignof(void*)));
+
 	return core;
 }
 
