@@ -183,7 +183,7 @@ ParseRulesHolder const &AlangRules()
 		{"DEF_VALUE", {{"CONST_OR_VAR"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"EQ_EXPRESSION", Repeat::ZeroOne}}},
 		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}, NodeOutput::Parent},
 		{"CONST_OR_VAR", {{Token::Class::Key, "const", Output::Enable}, {Token::Class::Key, "var", Output::Enable}}, {Combine::Alternative, NodeOutput::Parent}},
-		{"EQ_EXPRESSION", {{Token::Class::Key, "="}, {"EXPRESSION"}}},
+		{"EQ_EXPRESSION", {{Token::Class::Key, "="}, {"EXPRESSION"}}, NodeOutput::ReplaceInParent},
 
 		{"TYPE", {{"QUALIFIED_NAME"}, {"GENERIC_PARAMS", Repeat::ZeroOne}}},
 		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"EXPRESSION_LIST"}, {Token::Class::Key, "}"}}},
@@ -202,11 +202,11 @@ ParseRulesHolder const &AlangRules()
 
 		{"RETURN", {{Token::Class::Key, "return"}, {"EXPRESSION", Repeat::ZeroOne}}},
 
-		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}},
-		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_PARAMS_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
+		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}, Rename::Disable},
+		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPTS"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
-		{"CALL_PARAMS_ASSGN_TAIL", {{"CALL_PARAMS"}, {"ASSIGN_OR_CALL_TAIL", Repeat::ZeroOne}}, NodeOutput::Parent},
+		{"CALL_ASSGN_TAIL", {{"CALL"}, {"ASSIGN_OR_CALL_TAIL", Repeat::ZeroOne}}, NodeOutput::Parent},
 
 		{"EXPRESSION", {{"COMPARISON"}}, Rename::Disable},
 
@@ -234,9 +234,9 @@ ParseRulesHolder const &AlangRules()
 		{"SUBEXPR_OR_IDENT", {{"EXPR_IN_PAREN"}, {Token::Class::Identifier}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"EXPR_IN_PAREN", {{Token::Class::Key, "("}, {"EXPRESSION"}, {Token::Class::Key, ")"}}, NodeOutput::Parent},
 		{"VAR_CALL_INDEXED", {{"VALUE_BASE"}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
-		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL_PARAMS"}}, {Combine::Alternative, NodeOutput::Parent}},
-		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}},
-		{"CALL_PARAMS", {{Token::Class::Key, "("}, {"EXPRESSION_LIST"}, {Token::Class::Key, ")"}}},
+		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL"}}, {Combine::Alternative, NodeOutput::Parent}},
+		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}, NodeOutput::ReplaceInParent},
+		{"CALL", {{Token::Class::Key, "("}, {"EXPRESSION_LIST"}, {Token::Class::Key, ")"}}, NodeOutput::ReplaceInParent},
 
 		{"EXPRESSION_LIST", {{"EXPRESSION"}, {"COMMA_EXPRESSION", Repeat::ZeroMany}}, NodeOutput::Parent},
 		{"COMMA_EXPRESSION", {{Token::Class::Key, ","}, {"EXPRESSION"}}, NodeOutput::Parent},
