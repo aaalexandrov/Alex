@@ -37,11 +37,12 @@ enum class Rename : uint32_t {
 enum class NodeOutput : uint32_t {
 	Own,
 	Parent,
+	ReplaceInParent,
 };
 
 struct ParseOptions {
 	Combine _combine : 1;
-	NodeOutput _nodeOutput : 1;
+	NodeOutput _nodeOutput : 2;
 	Rename _rename : 1;
 
 	ParseOptions(Combine combine = Combine::Sequence, NodeOutput out = NodeOutput::Own, Rename ren = Rename::Enable)
@@ -106,7 +107,7 @@ struct Parser {
 	void Dump(Node const *node, int32_t indent = 0) const;
 
 protected:
-	std::unique_ptr<Node> MatchRule(Tokenizer &tokens, ParseRule const &rule) const;
+	bool MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<Node> &node) const;
 };
 
 struct ParseRulesHolder {

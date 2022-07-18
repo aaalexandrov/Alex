@@ -37,9 +37,11 @@ Parser::Parser(std::vector<ParseRule> const &rules)
 auto Parser::Parse(Tokenizer &tokens) const -> std::unique_ptr<Node>
 {
 	tokens.MoveNext();
-	std::unique_ptr<Node> node = MatchRule(tokens, _rules[0]);
+	auto &rootRule = _rules[0];
+	auto node = std::make_unique<Node>(&rootRule);
+	bool match = MatchRule(tokens, rootRule, node);
 	bool atEof = tokens.Current()._type == Token::Type::Invalid && tokens.Current()._str.empty();
-	if (atEof)
+	if (match && atEof)
 		return node;
 	return nullptr;
 }
@@ -60,25 +62,16 @@ void Parser::Dump(Node const *node, int32_t indent) const
 	}
 }
 
-auto Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule) const -> std::unique_ptr<Node>
+bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<Node> &node) const
 {
-	std::unique_ptr<Node> node;
-
-	auto getNode = [&]()->Node * {
-		if (!node)
-			node = std::make_unique<Node>(&rule);
-		return node.get();
-	};
-
+	bool anyMatch = false;
 	for (auto &match : rule._matches) {
-
 		bool matchFound;
 		int32_t numMatches = 0;
 		do {
 			if (ParseRule::Terminal const *terminal = match.GetTerminal()) {
 				matchFound = tokens.Current().GetClass() == terminal->_class && (terminal->_str.empty() || tokens.Current()._str == terminal->_str);
 				if (matchFound) {
-					getNode();
 					if (match._opt._output == Output::Enable) {
 						node->_content.push_back(tokens.Current());
 					}
@@ -86,35 +79,54 @@ auto Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule) const -> std::u
 				}
 			} else {
 				ParseRule *sub = match.GetSubrule()->_rule;
-				std::unique_ptr<Node> subNode = MatchRule(tokens, *sub);
-				matchFound = bool(subNode);
-				if (matchFound) {
-					getNode();
-					if (sub->_opt._nodeOutput == NodeOutput::Own) {
+				size_t contentSize = node->_content.size();
+				switch (sub->_opt._nodeOutput) {
+					case NodeOutput::Own:
+						node->_content.push_back(std::make_unique<Node>(sub));
+						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<Node>>(node->_content.back()));
+						break;
+					case NodeOutput::Parent:
+						matchFound = MatchRule(tokens, *sub, node);
+						break;
+					case NodeOutput::ReplaceInParent: {
+						auto subNode = std::make_unique<Node>(sub);
+						if (contentSize) {
+							subNode->_content.push_back(std::move(node->_content.back()));
+							node->_content.resize(contentSize - 1);
+						}
 						node->_content.push_back(std::move(subNode));
+						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<Node>>(node->_content.back()));
+					}
+						break;
+					default:
+						ASSERT(0);
+						matchFound = false;
+				}
+				if (!matchFound) {
+					if (sub->_opt._nodeOutput == NodeOutput::ReplaceInParent) {
+						ASSERT(node->_content.size() == contentSize);
+						auto subNode = std::move(std::get<std::unique_ptr<Node>>(node->_content.back()));
+						node->_content.back() = std::move(subNode->_content.front());
 					} else {
-						ASSERT(sub->_opt._nodeOutput == NodeOutput::Parent);
-						node->_content.insert(
-							node->_content.end(), 
-							std::make_move_iterator(subNode->_content.begin()), 
-							std::make_move_iterator(subNode->_content.end()));
+						node->_content.resize(contentSize);
 					}
 				}
 			}
 			numMatches += matchFound;
+			anyMatch |= matchFound;
 		} while (matchFound && match._opt._repeat == Repeat::ZeroMany);
 
 		if (numMatches > 0 && rule._opt._combine == Combine::Alternative)
 			break;
 		if (numMatches == 0 && rule._opt._combine == Combine::Sequence && match._opt._repeat == Repeat::One)
-			return nullptr;
+			return false;
 	}
 
 	if (rule._opt._rename == Rename::Disable && node && node->_content.size() == 1 && node->GetSubnode(0)) {
 		node = std::move(std::get<std::unique_ptr<Node>>(node->_content[0]));
 	}
 
-	return node;
+	return anyMatch;
 }
 
 ParseRulesHolder::ParseRulesHolder(std::initializer_list<ParseRule> rules)
@@ -161,8 +173,9 @@ ParseRulesHolder const &AlangRules()
 
 		{"DEFINITION", {{"DEF_VALUE"}, {"DEF_FUNC"}, {"IMPORT"}, {"MODULE"}}, {Combine::Alternative, Rename::Disable}},
 
-		{"QUALIFIED_NAME", {{Token::Class::Identifier}, {"SUBSCRIPT", Repeat::ZeroMany}}, NodeOutput::Parent},
-		{"SUBSCRIPT", {{Token::Class::Key, "."}, {Token::Class::Identifier}}},
+		{"QUALIFIED_NAME", {{Token::Class::Identifier}, {"SUBSCRIPTS", Repeat::ZeroOne}}, NodeOutput::Parent},
+		{"SUBSCRIPTS", {{"SUBSCRIPT", Repeat::ZeroMany}}, NodeOutput::ReplaceInParent},
+		{"SUBSCRIPT", {{Token::Class::Key, "."}, {Token::Class::Identifier}}, NodeOutput::Parent},
 
 		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"IMPORT_TAIL", Repeat::ZeroMany}}},
 		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}},
@@ -191,7 +204,7 @@ ParseRulesHolder const &AlangRules()
 
 		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}},
 		{"ASSIGN_OR_CALL_TAIL", {{"EQ_EXPRESSION"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_PARAMS_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
-		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPT"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
+		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPTS"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"CALL_PARAMS_ASSGN_TAIL", {{"CALL_PARAMS"}, {"ASSIGN_OR_CALL_TAIL", Repeat::ZeroOne}}, NodeOutput::Parent},
 

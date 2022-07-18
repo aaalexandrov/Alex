@@ -1,6 +1,6 @@
 module HelloWorld
 
-import io
+import std.core.io
 
 func main()
 	var a : I32 = 'a'
@@ -17,11 +17,12 @@ func main()
 	end
 
 	io.print("Hello, friend!")
-	io.print("$(a) + $(b) = $(c)")
+	std.core.io.debug("$(a) + $(b) = $(c)")
 	if c % 2 == 0
 		c = -c*a - b^+2 + 1
 	end
 	&p = &c
+	dump(5)
 end
 
 end
