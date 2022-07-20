@@ -18,8 +18,8 @@ func main()
 
 	io.print("Hello, friend!")
 	std.core.io.debug("$(a) + $(b) = $(c)")
-	if c % 2 == 0
-		c = -c*a - b^+2 + 1
+	if c % 2 == 0 && !(b > 32)
+		c = -c*a - b^+2^3 - b + 1
 	end
 	&p = &c
 	dump(5)
