@@ -50,7 +50,7 @@ void Parser::Dump(Node const *node, int32_t indent) const
 {
 	if (!node)
 		return;
-	std::cout << std::string(indent, ' ') << node->_rule->_id << std::endl;
+	std::cout << std::string(indent, ' ') << node->_label << " (" << node->_rule->_id << ")" << std::endl;
 	indent += 2;
 	for (int32_t i = 0; i < node->GetContentSize(); ++i) {
 		if (auto *token = node->GetToken(i)) {
@@ -75,6 +75,10 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 					if (match._opt._output == Output::Enable) {
 						node->_content.push_back(tokens.Current());
 					}
+					if (node->_label.empty() && tokens.Current().GetClass() == Token::Class::Key) {
+						node->_label = tokens.Current()._str;
+					}
+
 					tokens.MoveNext();
 				}
 			} else {

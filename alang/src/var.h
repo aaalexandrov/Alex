@@ -9,6 +9,7 @@ struct VarDef {
 	Module *_module = nullptr;
 	TypeDesc *_type = nullptr;
 	Value _value;
+	bool _const = false;
 };
 
 

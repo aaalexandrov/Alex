@@ -89,6 +89,7 @@ struct Parser {
 		using Content = std::variant<Token, std::unique_ptr<Node>>;
 
 		ParseRule const *_rule;
+		String _label;
 		std::vector<Content> _content;
 
 		Node(ParseRule const *rule) : _rule(rule) {}
