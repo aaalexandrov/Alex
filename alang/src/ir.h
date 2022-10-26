@@ -7,8 +7,7 @@ namespace alang {
 enum class OpCode : uint8_t {
 	Invalid,
 
-	ResolveNative,
-	CallNative,
+	CallExternal,
 
 	Call,
 	Copy,

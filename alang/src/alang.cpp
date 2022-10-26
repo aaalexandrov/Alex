@@ -1,7 +1,4 @@
-﻿// alang.cpp : Defines the entry point for the application.
-//
-
-#include "alang.h"
+﻿#include "alang.h"
 #include "dbg.h"
 #include "utf8.h"
 #include "token.h"

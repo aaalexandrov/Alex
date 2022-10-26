@@ -2,33 +2,16 @@
 
 namespace alang {
 
-
-
-Module::Module(String name, Module *parent)
-	: _name{ name }
-	, _parent{ parent }
+Module::Module(String name)
+	: Definition{ name }
 {
 }
 
-void Module::RegisterVar(std::unique_ptr<VarDef> &&var)
+void Module::RegisterDefinition(std::unique_ptr<Definition> &&def)
 {
-	auto name = var->_name;
-	var->_module = this;
-	_definitions.insert({ name, std::move(var) });
-}
-
-void Module::RegisterType(std::unique_ptr<TypeDesc> &&type)
-{
-	auto name = type->_name;
-	type->_module = this;
-	_definitions.insert({ name, std::move(type) });
-}
-
-void Module::RegisterSubmodule(std::unique_ptr<Module> &&submod)
-{
-	auto name = submod->_name;
-	submod->_parent = this;
-	_definitions.insert({ name, std::move(submod) });
+	auto name = def->_name;
+	def->_parentModule = this;
+	_definitions.insert({ name, std::move(def) });
 }
 
 }

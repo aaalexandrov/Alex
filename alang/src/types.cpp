@@ -1,4 +1,5 @@
 #include "types.h"
+#include <cstring>
 
 namespace alang {
 
@@ -52,7 +53,7 @@ void Value::Move(Value &&other)
 
 
 TypeDesc::TypeDesc(String name, size_t size, size_t align)
-	: _name{ name }
+	: Definition{ name }
 	, _size{ size }
 	, _align{ align }
 {

@@ -3,26 +3,18 @@
 #include "common.h"
 #include "types.h"
 #include "var.h"
+#include "func.h"
 #include <unordered_map>
 
 namespace alang {
 
-struct Module {
-	String _name;
-	Module *_parent = nullptr;
+struct Module : public Definition {
 
-	using Definition = std::variant<
-		std::unique_ptr<VarDef>, 
-		std::unique_ptr<TypeDesc>, 
-		std::unique_ptr<Module>>;
+	std::unordered_map<String, std::unique_ptr<Definition>> _definitions;
 
-	std::unordered_map<String, Definition> _definitions;
+	Module(String name);
 
-	Module(String name, Module *parent = nullptr);
-
-	void RegisterVar(std::unique_ptr<VarDef> &&var);
-	void RegisterType(std::unique_ptr<TypeDesc> &&type);
-	void RegisterSubmodule(std::unique_ptr<Module> &&submod);
+	void RegisterDefinition(std::unique_ptr<Definition> &&def);
 };
 
 }

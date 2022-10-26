@@ -4,12 +4,12 @@
 
 namespace alang {
 
-struct VarDef {
-	String _name;
-	Module *_module = nullptr;
+struct VarDef : public Definition {
 	TypeDesc *_type = nullptr;
 	Value _value;
 	bool _const = false;
+
+	VarDef(String _name, TypeDesc *type, bool isConst);
 };
 
 

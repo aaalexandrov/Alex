@@ -5,25 +5,26 @@
 
 namespace alang {
 
-struct FuncData {
-	String _name;
+struct FuncData : public Definition {
 	TypeDesc *_signature;
-	Module *_module;
+
+	FuncData(String name, TypeDesc *signature);
 };
 
-struct Func {
-	FuncData _func;
-
+struct Func : public FuncData {
 	std::vector<Instruction> _code;
 	std::vector<uint8_t> _constants;
 	size_t _stackSize = 0;
+
+	Func(String name, TypeDesc *signature);
 };
 
-struct NativeFunc {
-	FuncData _func;
-
+struct FuncExternal : public FuncData {
 	using FuncType = void (*)(uint8_t *params);
-	FuncType _nativeFunc;
+	FuncType _externalFunc;
+	uintptr_t _indirectionAddress;
+
+	FuncExternal(String name, TypeDesc *signature, FuncType externalFunc);
 };
 
 }

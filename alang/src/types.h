@@ -29,16 +29,14 @@ private:
 };
 
 struct Module;
-struct TypeDesc {
+struct TypeDesc : public Definition {
 	struct Member {
 		String _name;
 		TypeDesc *_type = nullptr;
 		size_t _offset = 0;
 	};
 
-	String _name;
 	size_t _size, _align;
-	Module *_module = nullptr;
 	TypeDesc *_genericDefinition = nullptr;
 	std::vector<Value> _params; // generic params
 	std::vector<Member> _members;

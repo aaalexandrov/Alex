@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <charconv>
-#include <share.h>
 #include "dbg.h"
 
 namespace alang {
@@ -85,7 +84,7 @@ Tokenizer::Tokenizer(std::string filePath, std::vector<String> const &keywordsSe
 
 	_buffer.resize(32768);
 	_file.rdbuf()->pubsetbuf((char*)_buffer.data(), _buffer.size());
-	_file.open(filePath, std::ios::binary | std::ios::ate, _SH_DENYNO);
+	_file.open(filePath, std::ios::binary | std::ios::ate | std::ios::in);
 	_fileSize = _file.tellg();
 	_file.seekg(0, std::ios::beg);
 
