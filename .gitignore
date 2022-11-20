@@ -21,6 +21,7 @@ SOS/Project
 julia/data
 julia/misc
 
+gr/out
 gr/project
 gr/project_linux
 

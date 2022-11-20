@@ -8,8 +8,8 @@ if (WIN32)
     list(TRANSFORM SDL_libs PREPEND "${CMAKE_STATIC_LIBRARY_PREFIX}")
     list(TRANSFORM SDL_libs APPEND ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-    set(SDL_path $ENV{VK_SDK_PATH}/Third-Party)
-    list(TRANSFORM SDL_libs PREPEND ${SDL_path}/Bin/)
+    set(SDL_path $ENV{VK_SDK_PATH})
+    list(TRANSFORM SDL_libs PREPEND ${SDL_path}/lib/)
 endif()
 
 target_link_libraries(${BINARY} INTERFACE ${SDL_libs})

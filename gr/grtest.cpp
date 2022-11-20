@@ -58,9 +58,11 @@ using namespace std;
 using namespace glm;
 using namespace gr1;
 
+static const string s_DataRoot("data/");
+
 shared_ptr<Shader> LoadShader(Device *device, std::string name)
 {
-	string path = string("../data/") + name;
+	string path = s_DataRoot + name;
 	string ext = name.substr(name.find_last_of('.'));
 	ShaderKind::Enum kind = ext == ".vert" ? ShaderKind::Vertex : ShaderKind::Fragment;
 	shared_ptr<Shader> shader = device->CreateResource<Shader>();
@@ -70,7 +72,7 @@ shared_ptr<Shader> LoadShader(Device *device, std::string name)
 
 shared_ptr<Image> LoadImage(Device *device, std::string name)
 {
-	std::string path = string("../data/") + name;
+	std::string path = s_DataRoot + name;
 	int width, height, channels;
 	uint8_t *data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 	ASSERT(channels == 4);
@@ -105,7 +107,7 @@ static util::StrId
 
 std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 {
-	std::string path = string("../data/models/") + name;
+	std::string path = s_DataRoot + string("models/") + name;
 	tinygltf::TinyGLTF loader;
 	tinygltf::Model model;
 	std::string err, warn;
@@ -130,7 +132,7 @@ std::shared_ptr<Model> LoadModel(Device *device, std::string name)
 
 std::shared_ptr<gr1::Font> LoadFont(Device *device, std::string name)
 {
-	string path = string("../data/fonts/") + name;
+	string path = s_DataRoot + string("fonts/") + name;
 	shared_ptr<vector<uint8_t>> fontData = make_shared<vector<uint8_t>>();
 	*fontData = util::ReadFile(path);
 	shared_ptr<gr1::Font> font = make_shared<gr1::Font>(*device);
