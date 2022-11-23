@@ -68,6 +68,11 @@ DeviceVk::~DeviceVk()
 	_queue.reset();
 }
 
+void DeviceVk::WaitIdle()
+{
+	_device->waitIdle();
+}
+
 glm::uvec3 DeviceVk::VersionToVector(uint32_t version)
 {
 	return glm::uvec3(VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version), VK_VERSION_PATCH(version));

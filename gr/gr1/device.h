@@ -20,6 +20,7 @@ public:
 	virtual ~Device() {}
 
 	virtual std::shared_ptr<ResourceBase> CreateResource(rttr::type resourceType);
+	virtual void WaitIdle() = 0;
 
 	template<typename ResourceType>
 	std::shared_ptr<ResourceType> CreateResource() { return std::static_pointer_cast<ResourceType>(CreateResource(rttr::type::get<ResourceType>())); }

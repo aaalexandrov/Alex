@@ -26,6 +26,8 @@ public:
 	DeviceVk(Host::DeviceInfo const &deviceInfo, PresentationSurfaceCreateData const *surfaceData, ValidationLevel validation);
 	~DeviceVk() override;
 
+	void WaitIdle() override;
+
 	static glm::uvec3 VersionToVector(uint32_t version);
 
 	vk::AllocationCallbacks *AllocationCallbacks();

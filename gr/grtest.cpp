@@ -554,5 +554,7 @@ int main(int argc, char *argv[])
 		cout << "Quitting after " << seconds << " seconds and " << frameNumber << " frames for " << frameNumber / seconds << " FPS" << endl;
 	}
 
+	device->WaitIdle();
+
 	return 0;
 }

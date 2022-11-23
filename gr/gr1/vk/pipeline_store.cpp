@@ -80,7 +80,7 @@ void PipelineStore::Init(DeviceVk &deviceVk)
 	_deviceVk = &deviceVk;
 
 	vk::PipelineCacheCreateInfo cacheInfo;
-	_deviceVk->_device->createPipelineCacheUnique(cacheInfo, _deviceVk->AllocationCallbacks());
+	_pipelineCache = _deviceVk->_device->createPipelineCacheUnique(cacheInfo, _deviceVk->AllocationCallbacks());
 }
 
 util::ValueRemapper<PrimitiveKind, vk::PrimitiveTopology> s_PrimitiveKind2Topology = { {
