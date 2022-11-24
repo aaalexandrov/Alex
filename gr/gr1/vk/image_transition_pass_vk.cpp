@@ -122,7 +122,7 @@ void ImageTransitionPassVk::Submit(PassDependencyTracker &dependencies)
 		waitSemaphores.clear();
 		waitStageFlags.clear();
 		waitSemaphores.push_back(*_queueTransitionSemaphore);
-		waitStageFlags.push_back(srcState._stages);
+		waitStageFlags.push_back(dstState._stages);
 
 		dstSubmit[0]
 			.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
