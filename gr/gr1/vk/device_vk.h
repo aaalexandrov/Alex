@@ -32,7 +32,7 @@ public:
 
 	vk::AllocationCallbacks *AllocationCallbacks();
 
-	inline QueueVk &Queue(QueueRole role) { return _queues[static_cast<int>(role)]; }
+	inline QueueVk &Queue(QueueRole role) { return _queues[_queueRoleData[static_cast<int>(role)]._queueIndex]; }
 
 	inline QueueVk &GraphicsQueue() { return Queue(QueueRole::Graphics); }
 	inline QueueVk &PresentQueue() { return Queue(QueueRole::Present); }
@@ -48,9 +48,14 @@ protected:
 	void CreatePhysicalDevice(PresentationSurfaceCreateData const *surfaceData);
 	void CreateDevice();
 
-	inline int32_t &QueueFamilyIndex(QueueRole role) { return _queueFamilyIndices[static_cast<int>(role)]; }
+	struct QueueRoleData {
+		int32_t _family = -1;
+		int32_t _queueIndex = -1;
+	};
+
+	inline QueueRoleData &QueueData(QueueRole role) { return _queueRoleData[static_cast<int>(role)]; }
 	void InitQueueFamiliesInfo(std::vector<vk::DeviceQueueCreateInfo> &queuesInfo, std::vector<float> &queuesPriorities);
-	void InitQueues();
+	void InitQueues(std::vector<vk::DeviceQueueCreateInfo> const &queuesInfo);
 
 	static vk::LayerProperties const *GetLayer(std::vector<vk::LayerProperties> const &layers, std::string const &layerName);
 	static vk::ExtensionProperties const *GetExtension(std::vector<vk::ExtensionProperties> const &extensions, std::string const &extensionName);
@@ -60,7 +65,7 @@ protected:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DbgReportFunc(VkFlags msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData);
 
-	static int32_t GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate = [](auto i) {return true; });
+	static int32_t GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties>& queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate = [](auto i) {return true; });
 
 	// Allocation tracker needs to appear before any Vulkan RAII resources
 	// Resources will be calling it during destruction, so the tracker has to outlive them
@@ -75,9 +80,9 @@ public:
 	using UniqueDebugReportCallbackEXT = vk::UniqueHandle<vk::DebugReportCallbackEXT, vk::DispatchLoaderDynamic>;
 	UniqueDebugReportCallbackEXT _debugReportCallback;
 
-	std::array<int32_t, static_cast<int>(QueueRole::Last)> _queueFamilyIndices;
 	vk::UniqueDevice _device;
 	UniqueVmaAllocator _allocator;
+	std::array<QueueRoleData, static_cast<int>(QueueRole::Last)> _queueRoleData;
 	std::array<QueueVk, static_cast<int>(QueueRole::Last)> _queues;
 	PipelineStore _pipelineStore;
 };

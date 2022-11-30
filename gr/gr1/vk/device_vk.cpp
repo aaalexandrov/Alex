@@ -151,11 +151,11 @@ void DeviceVk::CreatePhysicalDevice(PresentationSurfaceCreateData const *surface
 	_physicalDevice = *it;
 
 	std::vector<vk::QueueFamilyProperties> queueProps = _physicalDevice.getQueueFamilyProperties();
-	QueueFamilyIndex(QueueRole::Graphics) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eGraphics);
-	QueueFamilyIndex(QueueRole::Compute) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eCompute);
-	QueueFamilyIndex(QueueRole::Transfer) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eTransfer);
-	QueueFamilyIndex(QueueRole::SparseOp) = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eSparseBinding);
-	QueueFamilyIndex(QueueRole::Present) = GetSuitableQueueFamily(queueProps, vk::QueueFlags(), [this, surfaceData](int32_t q)->bool {
+	QueueData(QueueRole::Graphics)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eGraphics);
+	QueueData(QueueRole::Compute)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eCompute);
+	QueueData(QueueRole::Transfer)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eTransfer);
+	QueueData(QueueRole::SparseOp)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eSparseBinding);
+	QueueData(QueueRole::Present)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlags(), [this, surfaceData](int32_t q)->bool {
 #if defined(_WIN32)
 		return _physicalDevice.getWin32PresentationSupportKHR(q);
 #elif defined (__linux__)
@@ -200,51 +200,63 @@ void DeviceVk::CreateDevice()
 
 	_allocator = VmaAllocatorCreateUnique(_physicalDevice, *_device, AllocationCallbacks());
 
-	InitQueues();
+	InitQueues(queuesInfo);
 }
 
 void DeviceVk::InitQueueFamiliesInfo(std::vector<vk::DeviceQueueCreateInfo> &queuesInfo, std::vector<float> &queuesPriorities)
 {
-	if (QueueFamilyIndex(QueueRole::Present) < 0)
+	if (QueueData(QueueRole::Present)._family < 0)
 		throw GraphicsException("Physical device presentation queue family not initialized, you need to create a surface first!", VK_RESULT_MAX_ENUM);
 
-	std::vector<int32_t> families{ _queueFamilyIndices.begin(), _queueFamilyIndices.end() };
+	std::vector<int32_t> families;
 
-	families.erase(std::remove_if(families.begin(), families.end(), [](int32_t f)->bool { return f < 0; }), families.end());
+	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
+		int32_t familyForRole = QueueData(role)._family;
+		if (familyForRole >= 0)
+			families.push_back(familyForRole);
+	}
 
 	// reserve priority array so it doesn't get reallocated while we add to it
 	queuesPriorities.reserve(families.size());
 
-	while (families.size() > 0) {
-		int32_t family = families[0];
-		int32_t count = 0;
-		auto removeAndCount = [family, &count](int32_t f)->bool {
-			if (f != family)
-				return false;
-			++count;
-			return true;
-		};
-		families.erase(std::remove_if(families.begin(), families.end(), removeAndCount), families.end());
+	std::sort(families.begin(), families.end());
+
+	std::vector<vk::QueueFamilyProperties> queueProps = _physicalDevice.getQueueFamilyProperties();
+
+	for (int32_t i = 0; i < families.size(); ) {
+		int32_t endRange = i + 1;
+		for (; endRange < families.size() && families[i] == families[endRange]; ++endRange);
+		int32_t count = std::min<int32_t>(queueProps[families[i]].queueCount, endRange - i);
+
 		// initialize with equal priority of 0
 		std::fill_n(std::back_inserter(queuesPriorities), count, 0.0f);
+		queuesInfo.emplace_back(vk::DeviceQueueCreateFlags(), families[i], count, &queuesPriorities[queuesPriorities.size() - count]);
 
-		queuesInfo.emplace_back(vk::DeviceQueueCreateFlags(), family, count, &queuesPriorities[queuesPriorities.size() - count]);
+		i = endRange;
 	}
 }
 
-void DeviceVk::InitQueues()
+void DeviceVk::InitQueues(std::vector<vk::DeviceQueueCreateInfo> const &queuesInfo)
 {
-	std::unordered_map<int32_t, int32_t> usedQueues;
-	auto getQueue = [&](QueueVk &queue, int32_t queueFamily, QueueRole role)->void {
-		if (queueFamily < 0)
-			return;
-
-		auto count = usedQueues[queueFamily]++;
-		queue.Init(*this, queueFamily, count, role);
+	struct QueueFamilyData {
+		int32_t _startIndex, _count;
+		int32_t _usedCount = 0;
 	};
+	std::unordered_map<int32_t, QueueFamilyData> queueFamilyData;
+
+	int32_t numQueues = 0;
+	for (auto &qi : queuesInfo) {
+		for (int32_t i = 0; i < int32_t(qi.queueCount); ++i) {
+			_queues[numQueues + i].Init(*this, qi.queueFamilyIndex, i);
+		}
+		queueFamilyData[qi.queueFamilyIndex] = {numQueues, (int32_t)qi.queueCount};
+		numQueues += qi.queueCount;
+	}
 
 	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
-		getQueue(Queue(role), QueueFamilyIndex(role), role);
+		QueueFamilyData &familyData = queueFamilyData[QueueData(role)._family];
+		QueueData(role)._queueIndex = familyData._startIndex + (familyData._usedCount % familyData._count);
+		familyData._usedCount++;
 	}
 }
 
@@ -306,13 +318,14 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DeviceVk::DbgReportFunc(
 	return false;
 }
 
-int32_t DeviceVk::GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate)
+int32_t DeviceVk::GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> &queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate)
 {
 	int32_t best = -1;
 	for (auto i = 0; i < queueProps.size(); ++i) {
 		auto &queue = queueProps[i];
 		if ((queue.queueFlags & flags) != flags || !predicate(i))
 			continue;
+
 		if (best < 0 || util::CountSetBits(static_cast<uint32_t>(queue.queueFlags)) < util::CountSetBits(static_cast<uint32_t>(queueProps[best].queueFlags))) {
 			// a queue with less overall capabilities is better, that way we get a more dedicated queue for the function
 			best = i;
