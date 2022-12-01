@@ -178,10 +178,10 @@ int32_t DeviceVk::GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> 
 		const vk::QueueFlags graphicsCompute = vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute;
 
 		if (best < 0 ||
-			// we prefer a present queue that has compute or graphics to work around drivers erroneously returning present support on transfer queues, which fail to actually present
-			role == QueueRole::Present && (queue.queueFlags & graphicsCompute) && !(queueProps[best].queueFlags & graphicsCompute) ||
 			// a queue with less overall capabilities is better, that way we get a more dedicated queue for the function
-			util::CountSetBits(static_cast<uint32_t>(queue.queueFlags)) < util::CountSetBits(static_cast<uint32_t>(queueProps[best].queueFlags))) {
+			util::CountSetBits(static_cast<uint32_t>(queue.queueFlags)) < util::CountSetBits(static_cast<uint32_t>(queueProps[best].queueFlags)) && 
+			// we prefer a present queue that has compute or graphics to work around drivers erroneously returning present support on transfer queues, which fail to actually present
+			!(role == QueueRole::Present && !(queue.queueFlags & graphicsCompute) && (queueProps[best].queueFlags & graphicsCompute))) {
 			best = i;
 		}
 	}
