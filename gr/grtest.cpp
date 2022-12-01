@@ -466,9 +466,10 @@ int main(int argc, char *argv[])
 	surface->Update(winSize.x, winSize.y);
 	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(winSize.x) / winSize.y, 0.1f, 100.0f);
 
+	const ColorFormat depthFormat = ColorFormat::D32S8;
 
 	auto depthBuffer = device->CreateResource<Image>();
-	depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(winSize.x, winSize.y, 0, 0), 1);
+	depthBuffer->Init(Image::Usage::DepthBuffer, depthFormat, uvec4(winSize.x, winSize.y, 0, 0), 1);
 
 	auto renderPass = device->CreateResource<RenderPass>();
 	renderPass->AddAttachment(ContentTreatment::Clear, ContentTreatment::Keep, vec4(0, 0, 1, 1));
@@ -500,7 +501,7 @@ int main(int argc, char *argv[])
 										surface->Update(size.x, size.y);
 										proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
 										depthBuffer = device->CreateResource<Image>();
-										depthBuffer->Init(Image::Usage::DepthBuffer, ColorFormat::D24S8, uvec4(size.x, size.y, 0, 0), 1);
+										depthBuffer->Init(Image::Usage::DepthBuffer, depthFormat, uvec4(size.x, size.y, 0, 0), 1);
 										renderPass->SetAttachmentImage(1, depthBuffer);
 										UpdateFontTransform(fontDraw, size, glm::vec4(1));
 									}
