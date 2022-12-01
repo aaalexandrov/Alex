@@ -17,7 +17,7 @@ inline size_t MemSize(void *mem)
   if (!mem)
     return 0;
   size_t size;
-#if defined(_WIN32)
+#if defined(_MSC_VER)
   size = _msize(mem);
 #else
   size = malloc_usable_size(mem);
@@ -117,5 +117,11 @@ struct UniqueHandle {
   Owner _owner = TRAITS::NullOwner();
   Handle _handle = TRAITS::NullHandle();
 };
+
+void *AlignedAlloc(size_t alignment, size_t size);
+void *AlignedRealloc(void *mem, size_t alignment, size_t size);
+void AlignedFree(void *mem);
+size_t AlignedMemSize(void *mem);
+
 
 NAMESPACE_END(util)

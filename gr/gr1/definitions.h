@@ -30,6 +30,7 @@ enum class ColorFormat {
 	R8,
 
 	D24S8,
+	D32S8,
 };
 
 enum class IncludeType {

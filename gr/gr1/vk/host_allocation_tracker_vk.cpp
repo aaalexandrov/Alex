@@ -16,12 +16,12 @@ VKAPI_ATTR void *VKAPI_CALL HostAllocationTrackerVk::Allocate(void *pUserData, s
 {
   HostAllocationTrackerVk *tracker = static_cast<HostAllocationTrackerVk *>(pUserData);
 
-  void *mem = malloc(size);
+  void *mem = util::AlignedAlloc(alignment, size);
 
   ASSERT(IsAligned(mem, alignment));
 
   ++tracker->_allocations;
-  tracker->_sizeAllocated += util::MemSize(mem);
+  tracker->_sizeAllocated += util::AlignedMemSize(mem);
 
   return mem;
 }
@@ -30,13 +30,13 @@ VKAPI_ATTR void *VKAPI_CALL HostAllocationTrackerVk::Reallocate(void *pUserData,
 {
   HostAllocationTrackerVk *tracker = static_cast<HostAllocationTrackerVk *>(pUserData);
 
-  size_t prevSize = util::MemSize(pOriginal);
+  size_t prevSize = util::AlignedMemSize(pOriginal);
 
-  void *mem = realloc(pOriginal, size);
+  void *mem = util::AlignedRealloc(pOriginal, alignment, size);
   ASSERT(IsAligned(mem, alignment));
 
   ++tracker->_reallocations;
-  tracker->_sizeAllocated += util::MemSize(mem) - prevSize;
+  tracker->_sizeAllocated += util::AlignedMemSize(mem) - prevSize;
 
   return mem;
 }
@@ -46,9 +46,9 @@ VKAPI_ATTR void VKAPI_CALL HostAllocationTrackerVk::Free(void *pUserData, void *
   HostAllocationTrackerVk *tracker = static_cast<HostAllocationTrackerVk *>(pUserData);
 
   ++tracker->_deallocations;
-  tracker->_sizeAllocated -= util::MemSize(pMemory);
+  tracker->_sizeAllocated -= util::AlignedMemSize(pMemory);
 
-  free(pMemory);
+  util::AlignedFree(pMemory);
 }
 
 VKAPI_ATTR void VKAPI_CALL HostAllocationTrackerVk::InternalAllocationNotify(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope)

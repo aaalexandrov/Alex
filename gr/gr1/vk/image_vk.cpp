@@ -23,6 +23,7 @@ util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
 		{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8   },
 		{ vk::Format::eR8Unorm,            ColorFormat::R8         },
 		{ vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
+		{ vk::Format::eD32SfloatS8Uint,     ColorFormat::D32S8      },
 	} };
 
 void ImageVk::Init(Resource *owner, Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
