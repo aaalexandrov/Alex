@@ -5,8 +5,7 @@ NAMESPACE_BEGIN(util)
 void *AlignedAlloc(size_t alignment, size_t size)
 {
     alignment = std::max(alignment, alignof(void *));
-    size += alignment;
-    uint8_t *mem = (uint8_t *)malloc(size);
+    uint8_t *mem = (uint8_t *)malloc(size + alignment);
     uintptr_t extra = alignment - (uintptr_t(mem)) % alignment;
     uint8_t *aligned = mem + extra;
     ASSERT(aligned - mem >= sizeof(void *));

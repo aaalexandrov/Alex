@@ -57,6 +57,8 @@ protected:
 	void InitQueueFamiliesInfo(std::vector<vk::DeviceQueueCreateInfo> &queuesInfo, std::vector<float> &queuesPriorities);
 	void InitQueues(std::vector<vk::DeviceQueueCreateInfo> const &queuesInfo);
 
+	int32_t GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> &queueProps, QueueRole role, PresentationSurfaceCreateData const *surfaceData);
+
 	static vk::LayerProperties const *GetLayer(std::vector<vk::LayerProperties> const &layers, std::string const &layerName);
 	static vk::ExtensionProperties const *GetExtension(std::vector<vk::ExtensionProperties> const &extensions, std::string const &extensionName);
 
@@ -65,7 +67,6 @@ protected:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DbgReportFunc(VkFlags msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData);
 
-	static int32_t GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties>& queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate = [](auto i) {return true; });
 
 	// Allocation tracker needs to appear before any Vulkan RAII resources
 	// Resources will be calling it during destruction, so the tracker has to outlive them

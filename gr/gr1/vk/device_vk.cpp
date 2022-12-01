@@ -141,6 +141,54 @@ void DeviceVk::CreateInstance()
 	}
 }
 
+int32_t DeviceVk::GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> &queueProps, QueueRole role, PresentationSurfaceCreateData const *surfaceData)
+{
+	vk::QueueFlags flags;
+	switch (role) {
+		case QueueRole::Graphics:
+			flags = vk::QueueFlagBits::eGraphics; break;
+		case QueueRole::Compute:
+			flags = vk::QueueFlagBits::eCompute; break;
+		case QueueRole::Transfer:
+			flags = vk::QueueFlagBits::eTransfer; break;
+		case QueueRole::SparseOp:
+			flags = vk::QueueFlagBits::eSparseBinding; break;
+		case QueueRole::Present: 
+			break;
+		default: ASSERT(!"Unsupported queue role!");
+	}
+
+	auto familySupportsPresent = [this, surfaceData](int32_t q)->bool {
+#if defined(_WIN32)
+		return _physicalDevice.getWin32PresentationSupportKHR(q);
+#elif defined (__linux__)
+		auto createXlib = rttr::rttr_cast<PresentationSurfaceCreateDataXlib const *>(surfaceData);
+		return _physicalDevice.getXlibPresentationSupportKHR(q, createXlib->_display, createXlib->GetVisualId());
+#else
+#error Unsupported platform!
+#endif
+	};
+
+	int32_t best = -1;
+	for (auto i = 0; i < queueProps.size(); ++i) {
+		auto &queue = queueProps[i];
+		if ((queue.queueFlags & flags) != flags || role == QueueRole::Present && !familySupportsPresent(i))
+			continue;
+
+		const vk::QueueFlags graphicsCompute = vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute;
+
+		if (best < 0 ||
+			// we prefer a present queue that has compute or graphics to work around drivers erroneously returning present support on transfer queues, which fail to actually present
+			role == QueueRole::Present && (queue.queueFlags & graphicsCompute) && !(queueProps[best].queueFlags & graphicsCompute) ||
+			// a queue with less overall capabilities is better, that way we get a more dedicated queue for the function
+			util::CountSetBits(static_cast<uint32_t>(queue.queueFlags)) < util::CountSetBits(static_cast<uint32_t>(queueProps[best].queueFlags))) {
+			best = i;
+		}
+	}
+
+	return best;
+}
+
 void DeviceVk::CreatePhysicalDevice(PresentationSurfaceCreateData const *surfaceData)
 {
 	auto physDevices = _instance->enumeratePhysicalDevices();
@@ -151,20 +199,10 @@ void DeviceVk::CreatePhysicalDevice(PresentationSurfaceCreateData const *surface
 	_physicalDevice = *it;
 
 	std::vector<vk::QueueFamilyProperties> queueProps = _physicalDevice.getQueueFamilyProperties();
-	QueueData(QueueRole::Graphics)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eGraphics);
-	QueueData(QueueRole::Compute)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eCompute);
-	QueueData(QueueRole::Transfer)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eTransfer);
-	QueueData(QueueRole::SparseOp)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlagBits::eSparseBinding);
-	QueueData(QueueRole::Present)._family = GetSuitableQueueFamily(queueProps, vk::QueueFlags(), [this, surfaceData](int32_t q)->bool {
-#if defined(_WIN32)
-		return _physicalDevice.getWin32PresentationSupportKHR(q);
-#elif defined (__linux__)
-		auto createXlib = rttr::rttr_cast<PresentationSurfaceCreateDataXlib const*>(surfaceData);
-		return _physicalDevice.getXlibPresentationSupportKHR(q, createXlib->_display, createXlib->GetVisualId());
-#else
-	#error Unsupported platform!
-#endif
-	});
+
+	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
+		QueueData(role)._family = GetSuitableQueueFamily(queueProps, role, surfaceData);
+	}
 }
 
 void DeviceVk::CreateDevice()
@@ -316,23 +354,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DeviceVk::DbgReportFunc(
 	LOG("Vulkan debug ", flag, ", code: ", msgCode, ", layer: ", pLayerPrefix, ", msg: ", pMsg);
 
 	return false;
-}
-
-int32_t DeviceVk::GetSuitableQueueFamily(std::vector<vk::QueueFamilyProperties> &queueProps, vk::QueueFlags flags, std::function<bool(int32_t)> predicate)
-{
-	int32_t best = -1;
-	for (auto i = 0; i < queueProps.size(); ++i) {
-		auto &queue = queueProps[i];
-		if ((queue.queueFlags & flags) != flags || !predicate(i))
-			continue;
-
-		if (best < 0 || util::CountSetBits(static_cast<uint32_t>(queue.queueFlags)) < util::CountSetBits(static_cast<uint32_t>(queueProps[best].queueFlags))) {
-			// a queue with less overall capabilities is better, that way we get a more dedicated queue for the function
-			best = i;
-		}
-	}
-
-	return best;
 }
 
 
