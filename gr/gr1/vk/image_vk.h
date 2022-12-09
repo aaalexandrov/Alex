@@ -13,6 +13,8 @@ class ImageVk : public Image {
 public:
 	ImageVk(Device &device) : Image(device) {}
 
+	std::vector<ColorFormat> GetSupportedDepthStencilFormats() override;
+
 	void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels) override;
 	void Init(Resource *owner, Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels);
 
@@ -26,8 +28,8 @@ public:
 public:
 	void CreateView();
 
-  static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return s_vkFormat2ColorFormat.ToDst(vkFmt); }
-  static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return s_vkFormat2ColorFormat.ToSrc(clrFmt); }
+  static ColorFormat Vk2ColorFormat(vk::Format vkFmt) { return s_vkFormat2ColorFormat.ToDst(vkFmt, ColorFormat::Invalid); }
+  static vk::Format ColorFormat2Vk(ColorFormat clrFmt) { return s_vkFormat2ColorFormat.ToSrc(clrFmt, vk::Format::eUndefined); }
 
   vk::ImageViewType GetImageViewType();
   static vk::ImageType GetImageType(glm::uvec3 const &size);

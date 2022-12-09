@@ -26,11 +26,16 @@ enum class ResourceState {
 enum class ColorFormat {
 	Invalid,
 	R8G8B8A8,
+	R8G8B8A8_srgb,
 	B8G8R8A8,
+	B8G8R8A8_srgb,
 	R8,
 
 	D24S8,
 	D32S8,
+
+	First = Invalid,
+	Last = D32S8,
 };
 
 enum class IncludeType {
@@ -187,5 +192,18 @@ enum class PrimitiveKind {
 	TriangleStrip,
 };
 
+
+template<typename T>
+T GetFirstAvailableOption(std::vector<T> const &desiredOptions, std::vector<T> const &availableOptions)
+{
+	for (T desired : desiredOptions) {
+		if (std::find(availableOptions.begin(), availableOptions.end(), desired) != availableOptions.end()) {
+			return desired;
+		}
+	}
+	T first = availableOptions.front();
+	LOG("Desired option not found, defaulting to first available value: ", (std::underlying_type_t<T>)first);
+	return first;
+}
 
 NAMESPACE_END(gr1)

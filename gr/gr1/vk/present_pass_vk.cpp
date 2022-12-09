@@ -64,9 +64,15 @@ void PresentPassVk::Submit(PassDependencyTracker &dependencies)
 		.setPSwapchains(&*surfaceVk->_swapchain)
 		.setPImageIndices(&imageIndex)
 		.setPResults(&_presentResult);
-	vk::Result result = deviceVk->PresentQueue()._queue.presentKHR(presentInfo);
-	if (result != vk::Result::eSuccess)
-		throw GraphicsException("PresentPassVk::Execute() failed!", (uint32_t)result);
+	vk::Result result;
+	try {
+		result = deviceVk->PresentQueue()._queue.presentKHR(presentInfo);
+	} catch (vk::OutOfDateKHRError e) {
+		result = (vk::Result)e.code().value();
+	} catch (vk::SurfaceLostKHRError e) {
+		result = (vk::Result)e.code().value();
+	}
+	// except for success, in addition to the above errors result could also be vk::Result::eSuboptimalKHR
 }
 
 NAMESPACE_END(gr1)

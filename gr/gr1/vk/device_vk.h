@@ -83,8 +83,8 @@ public:
 
 	vk::UniqueDevice _device;
 	UniqueVmaAllocator _allocator;
-	std::array<QueueRoleData, static_cast<int>(QueueRole::Last)> _queueRoleData;
-	std::array<QueueVk, static_cast<int>(QueueRole::Last)> _queues;
+	std::array<QueueRoleData, static_cast<int>(QueueRole::Count)> _queueRoleData;
+	std::array<QueueVk, static_cast<int>(QueueRole::Count)> _queues;
 	PipelineStore _pipelineStore;
 };
 

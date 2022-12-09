@@ -1,0 +1,41 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x04\x00g\x00r)
+
+[CMake]
+Build Directory Count=1
+Current Build Directory Index-Host System=0
+
+[CMake][CMake Build Directory 0]
+Build Directory Path=/media/alex/4CB6F7F6B6F7DF00/Alex/gr/build
+Build Type=Debug
+CMake Binary=/usr/bin/cmake
+CMake Executable=/usr/bin/cmake
+Environment Profile=
+Extra Arguments=
+Install Directory=/media/alex/4CB6F7F6B6F7DF00/Alex/gr/build/third_party/rttr/install
+Runtime=Host System
+
+[Launch]
+Launch Configurations=Launch Configuration 0
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=grtest
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Arguments=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x02\x00\x00\x00\x04\x00g\x00r\x00\x00\x00\x0c\x00g\x00r\x00t\x00e\x00s\x00t)
+Dependency Action=Build
+EnvironmentGroup=
+Executable=file:///media/alex/4CB6F7F6B6F7DF00/Alex/gr
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+Kill Before Executing Again=4194304
+Project Target=gr,grtest
+Use External Terminal=false
+Working Directory=file:///media/alex/4CB6F7F6B6F7DF00/Alex/gr
+isExecutable=false
+
+[Project]
+VersionControlSupport=kdevgit

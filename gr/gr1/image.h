@@ -23,6 +23,9 @@ public:
 
   virtual void Init(Usage usage, ColorFormat format, glm::uvec4 size, uint32_t mipLevels);
 
+  virtual std::vector<ColorFormat> GetSupportedDepthStencilFormats() = 0;
+  ColorFormat GetFirstAvailableDepthStencilFormat(std::vector<ColorFormat> const &desiredFormats);
+
   ColorFormat GetColorFormat() const { return _format; }
   Usage GetUsage() const { return _usage; }
   glm::uvec4 GetSize() const { return _size; }

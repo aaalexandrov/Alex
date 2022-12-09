@@ -13,6 +13,7 @@ struct LayoutElement : public std::enable_shared_from_this<LayoutElement> {
 		Array,
 		Struct,
 	};
+	virtual ~LayoutElement() {}
 
 	virtual Kind GetKind() const = 0;
 	virtual size_t GetSize() const = 0;

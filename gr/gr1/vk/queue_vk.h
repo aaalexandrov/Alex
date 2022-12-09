@@ -12,7 +12,8 @@ enum class QueueRole {
 	Present,
 	Any,
 	First = Graphics,
-	Last = Any,
+	Last = Present,
+	Count = Last - First + 1,
 	Invalid,
 };
 

@@ -34,7 +34,7 @@ struct ValueRemapper {
   std::unordered_map<std::underlying_type_t<SRC>, DST> _src2dst;
   std::unordered_map<std::underlying_type_t<DST>, SRC> _dst2src;
 
-  ValueRemapper(std::vector<std::pair<SRC, DST>> const &pairs)
+  ValueRemapper(std::initializer_list<std::pair<SRC, DST>> const &pairs)
   {
     for (auto &pair : pairs) {
       _src2dst.insert(std::make_pair((std::underlying_type_t<SRC>)pair.first, pair.second));
@@ -51,6 +51,13 @@ struct ValueRemapper {
     return _src2dst.at((std::underlying_type_t<SRC>)src);
   }
 
+  DST ToDst(SRC src, DST dflt)
+  {
+	  static_assert(!BITMASK);
+	  auto it = _src2dst.find((std::underlying_type_t<SRC>)src);
+	  return it != _src2dst.end() ? it->second : dflt;
+  }
+
   SRC ToSrc(DST dst)
   {
 		if (BITMASK) {
@@ -58,6 +65,13 @@ struct ValueRemapper {
 		}
 
     return _dst2src.at((std::underlying_type_t<DST>)dst);
+  }
+
+  SRC ToSrc(DST dst, SRC dflt)
+  {
+	  static_assert(!BITMASK);
+	  auto it = _dst2src.find((std::underlying_type_t<DST>)dst);
+	  return it != _dst2src.end() ? it->second : dflt;
   }
 };
 

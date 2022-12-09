@@ -461,14 +461,17 @@ int main(int argc, char *argv[])
 
 	auto surface = device->CreateResource<PresentationSurface>();
 	surface->Init(surfaceData);
+	std::vector<ColorFormat> desiredFormats = { ColorFormat::B8G8R8A8, ColorFormat::R8G8B8A8, ColorFormat::B8G8R8A8_srgb, ColorFormat::R8G8B8A8_srgb };
+	surface->SetSurfaceFormat(surface->GetFirstAvailableSurfaceFormat(desiredFormats));
 	std::vector<PresentMode> desiredModes = { PresentMode::Immediate, PresentMode::Mailbox };
 	surface->SetPresentMode(surface->GetFirstAvailablePresentMode(desiredModes));
 	surface->Update(winSize.x, winSize.y);
 	proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(winSize.x) / winSize.y, 0.1f, 100.0f);
 
-	const ColorFormat depthFormat = ColorFormat::D32S8;
 
 	auto depthBuffer = device->CreateResource<Image>();
+	std::vector<ColorFormat> desiredDepthFormats = {ColorFormat::D24S8, ColorFormat::D32S8};
+	const ColorFormat depthFormat = depthBuffer->GetFirstAvailableDepthStencilFormat(desiredDepthFormats);
 	depthBuffer->Init(Image::Usage::DepthBuffer, depthFormat, uvec4(winSize.x, winSize.y, 0, 0), 1);
 
 	auto renderPass = device->CreateResource<RenderPass>();
@@ -494,19 +497,6 @@ int main(int argc, char *argv[])
 					case SDL_WINDOWEVENT: {
 						if (event.window.windowID == sdlWindowId) {
 							switch (event.window.event) {
-								case SDL_WINDOWEVENT_SIZE_CHANGED: {
-									LOG("Window rect changed (", std::to_string(event.window.data1), ", ", std::to_string(event.window.data2), ")");
-									auto size = surface->GetSize();
-									if (size.x > 0 && size.y > 0) {
-										surface->Update(size.x, size.y);
-										proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
-										depthBuffer = device->CreateResource<Image>();
-										depthBuffer->Init(Image::Usage::DepthBuffer, depthFormat, uvec4(size.x, size.y, 0, 0), 1);
-										renderPass->SetAttachmentImage(1, depthBuffer);
-										UpdateFontTransform(fontDraw, size, glm::vec4(1));
-									}
-									break;
-								}
 								case SDL_WINDOWEVENT_CLOSE: {
 									event.type = SDL_QUIT;
 									SDL_PushEvent(&event);
@@ -531,9 +521,25 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			auto size = surface->GetSize();
-			if (size.x > 0 && size.y > 0) {
-				auto backBuffer = surface->AcquireNextImage();
+			std::shared_ptr<Image> backBuffer;
+			if (auto size = surface->GetSize(); size.x > 0 && size.y > 0) {
+				backBuffer = surface->AcquireNextImage();
+				if (!backBuffer) {
+					size = surface->GetSize();
+					LOG("Surface rect changed (", std::to_string(size.x), ", ", std::to_string(size.y), ")");
+					if (size.x > 0 && size.y > 0) {
+						surface->Update(size.x, size.y);
+						proj = glm::perspectiveLH<float>(glm::pi<float>() / 3, static_cast<float>(size.x) / size.y, 0.1f, 100.0f);
+						depthBuffer = device->CreateResource<Image>();
+						depthBuffer->Init(Image::Usage::DepthBuffer, depthFormat, uvec4(size.x, size.y, 0, 0), 1);
+						renderPass->SetAttachmentImage(1, depthBuffer);
+						UpdateFontTransform(fontDraw, size, glm::vec4(1));
+						backBuffer = surface->AcquireNextImage();
+					}
+				}
+			}
+
+			if (backBuffer) {
 				renderPass->SetAttachmentImage(0, backBuffer);
 
 				presentPass->SetImageToPresent(backBuffer);

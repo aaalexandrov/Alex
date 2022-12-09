@@ -2,21 +2,24 @@
 
 NAMESPACE_BEGIN(gr1)
 
+void PresentationSurface::SetSurfaceFormat(ColorFormat format)
+{
+	_surfaceFormat = format;
+}
+
 void PresentationSurface::SetPresentMode(PresentMode presentMode)
 {
 	_presentMode = presentMode;
 }
 
+ColorFormat PresentationSurface::GetFirstAvailableSurfaceFormat(std::vector<ColorFormat> const &desiredFormats)
+{
+	return GetFirstAvailableOption(desiredFormats, GetSupportedSurfaceFormats());
+}
+
 PresentMode PresentationSurface::GetFirstAvailablePresentMode(std::vector<PresentMode> const &desiredModes)
 {
-	auto availableModes = GetSupportedPresentModes();
-	for (PresentMode desired : desiredModes) {
-		if (std::find(availableModes.begin(), availableModes.end(), desired) != availableModes.end()) {
-			return desired;
-		}
-	}
-	ASSERT(!"Requested present modes not found, defaulting to first available!");
-	return availableModes.front();
+	return GetFirstAvailableOption(desiredModes, GetSupportedPresentModes());
 }
 
 NAMESPACE_END(gr1)

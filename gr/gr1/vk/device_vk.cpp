@@ -201,7 +201,7 @@ void DeviceVk::CreatePhysicalDevice(PresentationSurfaceCreateData const *surface
 
 	std::vector<vk::QueueFamilyProperties> queueProps = _physicalDevice.getQueueFamilyProperties();
 
-	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
+	for (QueueRole role = QueueRole::First; role <= QueueRole::Last; role = util::EnumInc(role)) {
 		QueueData(role)._family = GetSuitableQueueFamily(queueProps, role, surfaceData);
 	}
 }
@@ -249,7 +249,7 @@ void DeviceVk::InitQueueFamiliesInfo(std::vector<vk::DeviceQueueCreateInfo> &que
 
 	std::vector<int32_t> families;
 
-	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
+	for (QueueRole role = QueueRole::First; role <= QueueRole::Last; role = util::EnumInc(role)) {
 		int32_t familyForRole = QueueData(role)._family;
 		if (familyForRole >= 0)
 			families.push_back(familyForRole);
@@ -292,7 +292,7 @@ void DeviceVk::InitQueues(std::vector<vk::DeviceQueueCreateInfo> const &queuesIn
 		numQueues += qi.queueCount;
 	}
 
-	for (QueueRole role = QueueRole::First; role < QueueRole::Last; role = util::EnumInc(role)) {
+	for (QueueRole role = QueueRole::First; role <= QueueRole::Last; role = util::EnumInc(role)) {
 		QueueFamilyData &familyData = queueFamilyData[QueueData(role)._family];
 		QueueData(role)._queueIndex = familyData._startIndex + (familyData._usedCount % familyData._count);
 		familyData._usedCount++;

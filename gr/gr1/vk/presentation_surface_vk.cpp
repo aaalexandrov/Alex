@@ -38,8 +38,6 @@ void PresentationSurfaceVk::Init(PresentationSurfaceCreateData &createData)
 		throw GraphicsException("PresentationSurfaceVk::Init() failed, surface not supported for presentation on this device!", VK_ERROR_INITIALIZATION_FAILED);
 
 	_acquireSemaphore = deviceVk->CreateSemaphore();
-
-	_surfaceFormat = GetSurfaceFormat();
 }
 
 #if defined(_WIN32)
@@ -80,9 +78,20 @@ std::shared_ptr<Image> const &PresentationSurfaceVk::AcquireNextImage()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
 	uint64_t timeout = std::numeric_limits<uint64_t>::max();
-	auto result = deviceVk->_device->acquireNextImageKHR(*_swapchain, timeout, *_acquireSemaphore, nullptr);
+
+	vk::ResultValue<uint32_t> result(vk::Result::eSuccess, (uint32_t)-1);
+	try {
+		result = deviceVk->_device->acquireNextImageKHR(*_swapchain, timeout, *_acquireSemaphore, nullptr);
+	} catch (vk::OutOfDateKHRError e) {
+		result.result = (vk::Result)e.code().value();
+	} catch (vk::SurfaceLostKHRError e) {
+		result.result = (vk::Result)e.code().value();
+	}
+	// except for success, in addition to the above errors result could also be vk::Result::eSuboptimalKHR
+
+	static std::shared_ptr<Image> empty;
 	if (result.result != vk::Result::eSuccess)
-		throw GraphicsException("AcquireNextImage() failed!", (uint32_t)result.result);
+		return empty;
 	uint32_t imageIndex = result.value;
 	_images[imageIndex]->SetResourceState(ResourceState::PresentAcquired);
 	return _images[imageIndex];
@@ -97,12 +106,14 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 	if (surfaceCaps.maxImageCount > 0)
 		imageCount = std::min(imageCount, surfaceCaps.maxImageCount);
 
+	vk::SurfaceFormatKHR khrFormat = GetVkSurfaceFormat();
+
 	vk::SwapchainCreateInfoKHR chainInfo;
 	chainInfo
 		.setSurface(*_surface)
 		.setMinImageCount(imageCount)
-		.setImageFormat(_surfaceFormat.format)
-		.setImageColorSpace(_surfaceFormat.colorSpace)
+		.setImageFormat(khrFormat.format)
+		.setImageColorSpace(khrFormat.colorSpace)
 		.setImageExtent(extent)
 		.setImageArrayLayers(1)
 		.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
@@ -124,18 +135,37 @@ void PresentationSurfaceVk::CreateSwapChain(uint32_t width, uint32_t height)
 	 for (auto img : chainImages) {
 		 _images.push_back(deviceVk->CreateResource<Image>());
 		 ImageVk *imageVk = static_cast<ImageVk*>(_images.back().get());
-		 imageVk->Init(this, Image::Usage::RenderTarget, img, GetSurfaceFormat().format, glm::uvec4(width, height, 0, 0), 1);
+		 imageVk->Init(this, Image::Usage::RenderTarget, img, khrFormat.format, glm::uvec4(width, height, 0, 0), 1);
 	 }
 }
 
-vk::SurfaceFormatKHR PresentationSurfaceVk::GetSurfaceFormat()
+vk::SurfaceFormatKHR PresentationSurfaceVk::GetVkSurfaceFormat()
 {
 	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	vk::Format surfFmt = ImageVk::ColorFormat2Vk(GetSurfaceFormat());
 	std::vector<vk::SurfaceFormatKHR> formats = deviceVk->_physicalDevice.getSurfaceFormatsKHR(*_surface);
+	for (auto &fmt : formats) {
+		if (fmt.format == surfFmt)
+			return fmt;
+	}
+
 	auto format = formats[0];
-	if (format.format == vk::Format::eUndefined)
-		format.format = vk::Format::eR8G8B8A8Unorm;
+	ASSERT(format.format != vk::Format::eUndefined);
 	return format;
+}
+
+std::vector<ColorFormat> PresentationSurfaceVk::GetSupportedSurfaceFormats()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	std::vector<ColorFormat> surfaceFormats;
+	std::vector<vk::SurfaceFormatKHR> vkFormats = deviceVk->_physicalDevice.getSurfaceFormatsKHR(*_surface);
+	for (auto &fmt : vkFormats) {
+		ColorFormat surfFmt = ImageVk::Vk2ColorFormat(fmt.format);
+		if (surfFmt != ColorFormat::Invalid)
+			surfaceFormats.push_back(surfFmt);
+	}
+	ASSERT(surfaceFormats.size());
+	return surfaceFormats;
 }
 
 util::ValueRemapper<vk::PresentModeKHR, PresentMode> PresentationSurfaceVk::s_vk2PresentMode{ {

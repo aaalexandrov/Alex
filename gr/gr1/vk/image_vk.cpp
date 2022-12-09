@@ -18,20 +18,36 @@ RTTR_REGISTRATION
 }
 
 util::ValueRemapper<vk::Format, ColorFormat> ImageVk::s_vkFormat2ColorFormat { {
-		{ vk::Format::eUndefined,          ColorFormat::Invalid    },
-		{ vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8   },
-		{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8   },
-		{ vk::Format::eR8Unorm,            ColorFormat::R8         },
-		{ vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8      },
-		{ vk::Format::eD32SfloatS8Uint,     ColorFormat::D32S8      },
+		{ vk::Format::eUndefined,          ColorFormat::Invalid       },
+		{ vk::Format::eR8G8B8A8Unorm,      ColorFormat::R8G8B8A8      },
+		{ vk::Format::eR8G8B8A8Srgb,       ColorFormat::R8G8B8A8_srgb },
+		{ vk::Format::eB8G8R8A8Unorm,      ColorFormat::B8G8R8A8      },
+		{ vk::Format::eB8G8R8A8Srgb,       ColorFormat::B8G8R8A8_srgb },
+		{ vk::Format::eR8Unorm,            ColorFormat::R8            },
+		{ vk::Format::eD24UnormS8Uint,     ColorFormat::D24S8         },
+		{ vk::Format::eD32SfloatS8Uint,    ColorFormat::D32S8         },
 	} };
+
+std::vector<ColorFormat> ImageVk::GetSupportedDepthStencilFormats()
+{
+	DeviceVk *deviceVk = GetDevice<DeviceVk>();
+	std::vector<ColorFormat> depthFormats;
+	for (ColorFormat fmt = ColorFormat::First; fmt <= ColorFormat::Last; fmt = util::EnumInc(fmt)) {
+		vk::Format vkFmt = ImageVk::ColorFormat2Vk(fmt);
+		vk::FormatProperties props = deviceVk->_physicalDevice.getFormatProperties(vkFmt);
+		if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+			depthFormats.push_back(fmt);
+		}
+	}
+	return depthFormats;
+}
 
 void ImageVk::Init(Resource *owner, Usage usage, vk::Image image, vk::Format format, glm::uvec4 size, uint32_t mipLevels)
 {
 	Image::Init(usage, Vk2ColorFormat(format), size, mipLevels);
 	_image = image;
 	_owner = owner;
-  CreateView();
+	CreateView();
 }
 
 std::shared_ptr<ResourceStateTransitionPass> ImageVk::CreateTransitionPass(ResourceState srcState, ResourceState dstState)

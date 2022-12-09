@@ -36,7 +36,10 @@ target_include_directories(${BINARY} PRIVATE .)
 target_link_libraries(${BINARY} PRIVATE glm_static tinygltf sdl2_import)
 
 if(${LINUX})
-	target_link_libraries(${BINARY} PRIVATE pthread tbb X11)
+	target_link_libraries(${BINARY} PRIVATE pthread X11)
+	if(NOT ${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+		target_link_libraries(${BINARY} PRIVATE tbb)
+	endif()
 endif()
 
 add_subdirectory(util)
