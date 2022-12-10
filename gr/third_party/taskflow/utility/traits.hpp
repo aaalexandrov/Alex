@@ -3,10 +3,14 @@
 #include <type_traits>
 #include <iterator>
 #include <iostream>
+#include <fstream>
 #include <mutex>
-#include <deque>
+#include <stack>
+#include <queue>
 #include <vector>
 #include <algorithm>
+#include <memory>
+#include <atomic>
 #include <thread>
 #include <future>
 #include <functional>
@@ -14,11 +18,15 @@
 #include <unordered_set>
 #include <sstream>
 #include <list>
-#include <forward_list>
 #include <numeric>
+#include <random>
 #include <iomanip>
 #include <cassert>
 #include <cmath>
+#include <array>
+#include <string>
+#include <variant>
+#include <optional>
 
 namespace tf {
 
@@ -26,35 +34,55 @@ namespace tf {
 // Traits
 //-----------------------------------------------------------------------------
 
-// Macro to check whether a class has a member function
-#define define_has_member(member_name)                                     \
-template <typename T>                                                      \
-class has_member_##member_name                                             \
-{                                                                          \
-  typedef char yes_type;                                                   \
-  typedef long no_type;                                                    \
-  template <typename U> static yes_type test(decltype(&U::member_name));   \
-  template <typename U> static no_type  test(...);                         \
-  public:                                                                  \
-    static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);  \
-}
+//// Struct: dependent_false
+//template <typename... T>
+//struct dependent_false {
+//  static constexpr bool value = false;
+//};
+//
+//template <typename... T>
+//constexpr auto dependent_false_v = dependent_false<T...>::value;
 
-#define has_member(class_, member_name)  has_member_##member_name<class_>::value
+template<typename> inline constexpr bool dependent_false_v = false;
 
-// Struct: dependent_false
-template <typename... T>
-struct dependent_false { 
-  static constexpr bool value = false; 
+// ----------------------------------------------------------------------------
+// is_pod
+//-----------------------------------------------------------------------------
+template <typename T>
+struct is_pod {
+  static const bool value = std::is_trivial_v<T> && 
+                            std::is_standard_layout_v<T>;
 };
 
-template <typename... T>
-constexpr auto dependent_false_v = dependent_false<T...>::value;
+template <typename T>
+constexpr bool is_pod_v = is_pod<T>::value;
+
+//-----------------------------------------------------------------------------
+// NoInit
+//-----------------------------------------------------------------------------
+
+template <typename T>
+struct NoInit {
+
+  //static_assert(is_pod_v<T>, "NoInit only supports POD type");
+
+  // constructor without initialization
+  NoInit () noexcept {}
+
+  // implicit conversion T -> NoInit<T>
+  constexpr  NoInit (T value) noexcept : v{value} {}
+
+  // implicit conversion NoInit<T> -> T
+  constexpr  operator T () const noexcept { return v; }
+
+  T v;
+};
 
 //-----------------------------------------------------------------------------
 // Move-On-Copy
 //-----------------------------------------------------------------------------
 
-// Struct: MoC
+// Struct: MoveOnCopyWrapper
 template <typename T>
 struct MoC {
 
@@ -62,8 +90,8 @@ struct MoC {
   MoC(const MoC& other) : object(std::move(other.object)) {}
 
   T& get() { return object; }
-  
-  mutable T object; 
+
+  mutable T object;
 };
 
 template <typename T>
@@ -72,175 +100,125 @@ auto make_moc(T&& m) {
 }
 
 //-----------------------------------------------------------------------------
-// Functors.
+// Visitors.
 //-----------------------------------------------------------------------------
 
 //// Overloadded.
 //template <typename... Ts>
-//struct Functors : Ts... { 
+//struct Visitors : Ts... {
 //  using Ts::operator()... ;
 //};
 //
 //template <typename... Ts>
-//Functors(Ts...) -> Functors<Ts...>;
+//Visitors(Ts...) -> Visitors<Ts...>;
 
 // ----------------------------------------------------------------------------
-// callable traits
+// std::variant
 // ----------------------------------------------------------------------------
+template <typename T, typename>
+struct get_index;
 
-template <typename F, typename... Args>
-struct is_invocable :
-  std::is_constructible<
-    std::function<void(Args ...)>,
-    std::reference_wrapper<typename std::remove_reference<F>::type>
-  > {
-};
+template <size_t I, typename... Ts>
+struct get_index_impl {};
 
-template <typename F, typename... Args>
-constexpr bool is_invocable_v = is_invocable<F, Args...>::value;
+template <size_t I, typename T, typename... Ts>
+struct get_index_impl<I, T, T, Ts...> : std::integral_constant<size_t, I>{};
 
-template <typename R, typename F, typename... Args>
-struct is_invocable_r :
-  std::is_constructible<
-    std::function<R(Args ...)>,
-    std::reference_wrapper<typename std::remove_reference<F>::type>
-  > {
-};
+template <size_t I, typename T, typename U, typename... Ts>
+struct get_index_impl<I, T, U, Ts...> : get_index_impl<I+1, T, Ts...>{};
 
-template <typename R, typename F, typename... Args>
-constexpr bool is_invocable_r_v = is_invocable_r<R, F, Args...>::value;
+template <typename T, typename... Ts>
+struct get_index<T, std::variant<Ts...>> : get_index_impl<0, T, Ts...>{};
 
+template <typename T, typename... Ts>
+constexpr auto get_index_v = get_index<T, Ts...>::value;
 
 // ----------------------------------------------------------------------------
-// Function Traits
-// reference: https://github.com/ros2/rclcpp
+// unwrap_reference
 // ----------------------------------------------------------------------------
 
-template<typename T>
-struct tuple_tail;
+template <class T>
+struct unwrap_reference { using type = T; };
 
-template<typename Head, typename ... Tail>
-struct tuple_tail<std::tuple<Head, Tail ...>> {
-  using type = std::tuple<Tail ...>;
+template <class U>
+struct unwrap_reference<std::reference_wrapper<U>> { using type = U&; };
+
+template<class T>
+using unwrap_reference_t = typename unwrap_reference<T>::type;
+
+template< class T >
+struct unwrap_ref_decay : unwrap_reference<std::decay_t<T>> {};
+
+template<class T>
+using unwrap_ref_decay_t = typename unwrap_ref_decay<T>::type;
+
+// ----------------------------------------------------------------------------
+// stateful iterators
+// ----------------------------------------------------------------------------
+
+// STL-styled iterator
+template <typename B, typename E>
+struct stateful_iterator {
+
+  using TB = std::decay_t<unwrap_ref_decay_t<B>>;
+  using TE = std::decay_t<unwrap_ref_decay_t<E>>;
+
+  static_assert(std::is_same_v<TB, TE>, "decayed iterator types must match");
+
+  using type = TB;
 };
 
-// std::function
-template<typename F>
-struct function_traits
-{
-  using arguments = typename tuple_tail<
-    typename function_traits<decltype(&F::operator())>::argument_tuple_type
-  >::type;
+template <typename B, typename E>
+using stateful_iterator_t = typename stateful_iterator<B, E>::type;
 
-  static constexpr size_t arity = std::tuple_size<arguments>::value;
+// raw integral index
+template <typename B, typename E, typename S>
+struct stateful_index {
 
-  template <size_t N>
-  struct argument {
-    static_assert(N < arity, "error: invalid parameter index.");
-    using type = std::tuple_element_t<N, arguments>;
-  };
-  
-  template <size_t N>
-  using argument_t = typename argument<N>::type;
+  using TB = std::decay_t<unwrap_ref_decay_t<B>>;
+  using TE = std::decay_t<unwrap_ref_decay_t<E>>;
+  using TS = std::decay_t<unwrap_ref_decay_t<S>>;
 
-  using return_type = typename function_traits<decltype(&F::operator())>::return_type;
+  static_assert(
+    std::is_integral_v<TB>, "decayed beg index must be an integral type"
+  );
+
+  static_assert(
+    std::is_integral_v<TE>, "decayed end index must be an integral type"
+  );
+
+  static_assert(
+    std::is_integral_v<TS>, "decayed step must be an integral type"
+  );
+
+  static_assert(
+    std::is_same_v<TB, TE> && std::is_same_v<TE, TS>,
+    "decayed index and step types must match"
+  );
+
+  using type = TB;
 };
 
-// Free functions
-template<typename R, typename... Args>
-struct function_traits<R(Args...)> {
+template <typename B, typename E, typename S>
+using stateful_index_t = typename stateful_index<B, E, S>::type;
 
-  using return_type = R;
-  using argument_tuple_type = std::tuple<Args...>;
- 
-  static constexpr size_t arity = sizeof...(Args);
- 
-  template <size_t N>
-  struct argument {
-    static_assert(N < arity, "error: invalid parameter index.");
-    using type = std::tuple_element_t<N, std::tuple<Args...>>;
-  };
+// ----------------------------------------------------------------------------
+// visit a tuple with a functor at runtime
+// ----------------------------------------------------------------------------
 
-  template <size_t N>
-  using argument_t = typename argument<N>::type;
-};
-
-// function pointer
-template<typename R, typename... Args>
-struct function_traits<R(*)(Args...)> : function_traits<R(Args...)> {
-};
-
-// function reference
-template<typename R, typename... Args>
-struct function_traits<R(&)(Args...)> : function_traits<R(Args...)> {
-};
-
-// immutable lambda
-template<typename C, typename R, typename ... Args>
-struct function_traits<R(C::*)(Args ...) const>
-  : function_traits<R(C &, Args ...)>
-{};
-
-// mutable lambda
-template<typename C, typename R, typename ... Args>
-struct function_traits<R(C::*)(Args ...)>
-  : function_traits<R(C &, Args ...)>
-{};
-
-/*// std::bind for object methods
-template<typename C, typename R, typename ... Args, typename ... FArgs>
-#if defined _LIBCPP_VERSION  // libc++ (Clang)
-struct function_traits<std::__bind<R (C::*)(Args ...), FArgs ...>>
-#elif defined _GLIBCXX_RELEASE  // glibc++ (GNU C++ >= 7.1)
-struct function_traits<std::_Bind<R(C::*(FArgs ...))(Args ...)>>
-#elif defined __GLIBCXX__  // glibc++ (GNU C++)
-struct function_traits<std::_Bind<std::_Mem_fn<R (C::*)(Args ...)>(FArgs ...)>>
-#elif defined _MSC_VER  // MS Visual Studio
-struct function_traits<
-  std::_Binder<std::_Unforced, R (C::*)(Args ...), FArgs ...>>
-#else
-#error "Unsupported C++ compiler / standard library"
-#endif
-  : function_traits<R(Args ...)>
-{};
-
-// std::bind for object const methods
-template<typename C, typename R, typename ... Args, typename ... FArgs>
-#if defined _LIBCPP_VERSION  // libc++ (Clang)
-struct function_traits<std::__bind<R (C::*)(Args ...) const, FArgs ...>>
-#elif defined _GLIBCXX_RELEASE  // glibc++ (GNU C++ >= 7.1)
-struct function_traits<std::_Bind<R(C::*(FArgs ...))(Args ...) const>>
-#elif defined __GLIBCXX__  // glibc++ (GNU C++)
-struct function_traits<std::_Bind<std::_Mem_fn<R (C::*)(Args ...) const>(FArgs ...)>>
-#elif defined _MSC_VER  // MS Visual Studio
-struct function_traits<
-  std::_Binder<std::_Unforced, R (C::*)(Args ...) const, FArgs ...>>
-#else
-#error "Unsupported C++ compiler / standard library"
-#endif
-  : function_traits<R(Args ...)>
-{};
-
-// std::bind for free functions
-template<typename R, typename ... Args, typename ... FArgs>
-#if defined _LIBCPP_VERSION  // libc++ (Clang)
-struct function_traits<std::__bind<R( &)(Args ...), FArgs ...>>
-#elif defined __GLIBCXX__  // glibc++ (GNU C++)
-struct function_traits<std::_Bind<R(*(FArgs ...))(Args ...)>>
-#elif defined _MSC_VER  // MS Visual Studio
-struct function_traits<std::_Binder<std::_Unforced, R( &)(Args ...), FArgs ...>>
-#else
-#error "Unsupported C++ compiler / standard library"
-#endif
-  : function_traits<R(Args ...)>
-{}; */
-
-// decay to the raw type
-template <typename F>
-struct function_traits<F&> : function_traits<F> {};
-
-template <typename F>
-struct function_traits<F&&> : function_traits<F> {};
+template <typename Func, typename Tuple, size_t N = 0>
+void visit_tuple(Func func, Tuple& tup, size_t idx) {
+  if (N == idx) {
+    std::invoke(func, std::get<N>(tup));
+    return;
+  }
+  if constexpr (N + 1 < std::tuple_size_v<Tuple>) {
+    return visit_tuple<Func, Tuple, N + 1>(func, tup, idx);
+  }
+}
 
 
-}  // end of namespace tf. ---------------------------------------------------
+}  // end of namespace tf. ----------------------------------------------------
+
+
+
