@@ -100,9 +100,6 @@ void DeviceVk::CreateInstance()
 	std::vector<char const *> extensionNames;
 
 	if (_validationLevel > ValidationLevel::None) {
-#if defined(_WIN32)		
-		//AppendLayer(layerNames, instanceLayers, "VK_LAYER_LUNARG_standard_validation");
-#endif		
 		AppendLayer(layerNames, instanceLayers, "VK_LAYER_KHRONOS_validation");
 		AppendExtension(extensionNames, instanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
@@ -320,8 +317,10 @@ vk::ExtensionProperties const *DeviceVk::GetExtension(std::vector<vk::ExtensionP
 void DeviceVk::AppendLayer(std::vector<char const *> &layers, std::vector<vk::LayerProperties> const &availableLayers, std::string const &layerName)
 {
 	auto layer = GetLayer(availableLayers, layerName);
-	if (!layer)
-		throw GraphicsException("GraphicsVk::AppendLayer() failed to find layer " + layerName, VK_RESULT_MAX_ENUM);
+	if (!layer) {
+		LOG("GraphicsVk::AppendLayer() failed to find layer ", layerName);
+		return;
+	}
 	layers.push_back(layer->layerName);
 }
 

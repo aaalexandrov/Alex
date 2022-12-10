@@ -542,6 +542,11 @@ int main(int argc, char *argv[])
 			if (backBuffer) {
 				renderPass->SetAttachmentImage(0, backBuffer);
 
+#if defined(__aarch64__)
+				// workaround for rapsberry pi returning eOutOfHostMemory if we reuse the present pass
+				presentPass = device->CreateResource<PresentPass>();
+				presentPass->Init(surface);
+#endif
 				presentPass->SetImageToPresent(backBuffer);
 
 				auto time = util::ToSeconds(chrono::system_clock::now() - start);
