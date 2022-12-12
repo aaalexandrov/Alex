@@ -18,13 +18,6 @@ RTTR_REGISTRATION
 PresentPassVk::PresentPassVk(Device &device)
 	: PresentPass(device)
 {
-	DeviceVk *deviceVk = GetDevice<DeviceVk>();
-	_beforePresent = deviceVk->CreateSemaphore();
-
-	_cmdSignal = deviceVk->PresentQueue().AllocateCmdBuffer();
-	std::lock_guard<CmdBufferVk> signalLock(_cmdSignal);
-	_cmdSignal->begin(vk::CommandBufferBeginInfo());
-	_cmdSignal->end();
 }
 
 void PresentPassVk::Prepare()
@@ -41,25 +34,13 @@ void PresentPassVk::Submit(PassDependencyTracker &dependencies)
 	FillDependencySemaphores(dependencies, DependencyType::Input, waitSemaphores, &waitStageFlags);
 	std::vector<vk::Semaphore> signalSemaphores;
 	FillDependencySemaphores(dependencies, DependencyType::Output, signalSemaphores);
-	signalSemaphores.push_back(*_beforePresent);
-
-	std::array<vk::SubmitInfo, 1> submit;
-	submit[0]
-		.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
-		.setPWaitSemaphores(waitSemaphores.data())
-		.setPWaitDstStageMask(waitStageFlags.data())
-		.setCommandBufferCount(1)
-		.setPCommandBuffers(&*_cmdSignal)
-		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
-		.setPSignalSemaphores(signalSemaphores.data());
-	deviceVk->PresentQueue()._queue.submit(submit, nullptr);
 
 	uint32_t imageIndex = surfaceVk->GetImageIndex(_surfaceImage);
 	ASSERT(imageIndex != ~0);
 	vk::PresentInfoKHR presentInfo;
 	presentInfo
-		.setWaitSemaphoreCount(1)
-		.setPWaitSemaphores(&*_beforePresent)
+		.setWaitSemaphoreCount(static_cast<uint32_t>(waitSemaphores.size()))
+		.setPWaitSemaphores(waitSemaphores.data())
 		.setSwapchainCount(1)
 		.setPSwapchains(&*surfaceVk->_swapchain)
 		.setPImageIndices(&imageIndex)
@@ -73,6 +54,12 @@ void PresentPassVk::Submit(PassDependencyTracker &dependencies)
 		result = (vk::Result)e.code().value();
 	}
 	// except for success, in addition to the above errors result could also be vk::Result::eSuboptimalKHR
+
+	std::array<vk::SubmitInfo, 1> submit;
+	submit[0]
+		.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size()))
+		.setPSignalSemaphores(signalSemaphores.data());
+	deviceVk->PresentQueue()._queue.submit(submit, nullptr);
 }
 
 NAMESPACE_END(gr1)

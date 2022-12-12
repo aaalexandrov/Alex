@@ -16,8 +16,6 @@ public:
 	vk::PipelineStageFlags GetPassDstStages() override { return vk::PipelineStageFlagBits::eTransfer;	}
 protected:
 	vk::Result _presentResult;
-	CmdBufferVk _cmdSignal;
-	vk::UniqueSemaphore _beforePresent;
 };
 
 NAMESPACE_END(gr1)
