@@ -22,6 +22,8 @@ set(LLVM_LINK_COMPONENTS
 set(SOURCES 
 	"alang.cpp" 
 	"alang.h" 
+	"analyze.h"
+	"analyze.cpp"
 	"token.h" 
 	"token.cpp" 
 	"utf8.h" 
@@ -39,8 +41,6 @@ set(SOURCES
 	"core.cpp" 
 	"func.h" 
 	"func.cpp" 
-	"ir.h" 
-	"ir.cpp" 
 	"var.h" 
 	"var.cpp" 
 	"rtti.h" 
