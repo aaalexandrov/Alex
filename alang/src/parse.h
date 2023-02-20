@@ -91,8 +91,9 @@ struct Parser {
 		ParseRule const *_rule;
 		String _label;
 		std::vector<Content> _content;
+		PosInFile _filePos;
 
-		Node(ParseRule const *rule) : _rule(rule) {}
+		Node(ParseRule const *rule, PosInFile filePos) : _rule(rule), _filePos(filePos) {}
 
 		int32_t GetContentSize() const { return int32_t(_content.size()); }
 		Token const *GetToken(int32_t i) const { return std::get_if<Token>(&_content[i]); }

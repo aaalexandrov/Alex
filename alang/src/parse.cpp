@@ -38,7 +38,7 @@ auto Parser::Parse(Tokenizer &tokens) const -> std::unique_ptr<Node>
 {
 	tokens.MoveNext();
 	auto &rootRule = _rules[0];
-	auto node = std::make_unique<Node>(&rootRule);
+	auto node = std::make_unique<Node>(&rootRule, tokens.Current()._filePos);
 	bool match = MatchRule(tokens, rootRule, node);
 	bool atEof = tokens.Current()._type == Token::Type::Invalid && tokens.Current()._str.empty();
 	if (match && atEof)
@@ -86,14 +86,14 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 				size_t contentSize = node->_content.size();
 				switch (sub->_opt._nodeOutput) {
 					case NodeOutput::Own:
-						node->_content.push_back(std::make_unique<Node>(sub));
+						node->_content.push_back(std::make_unique<Node>(sub, tokens.Current()._filePos));
 						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<Node>>(node->_content.back()));
 						break;
 					case NodeOutput::Parent:
 						matchFound = MatchRule(tokens, *sub, node);
 						break;
 					case NodeOutput::ReplaceInParent: {
-						auto subNode = std::make_unique<Node>(sub);
+						auto subNode = std::make_unique<Node>(sub, tokens.Current()._filePos);
 						if (contentSize) {
 							subNode->_content.push_back(std::move(node->_content.back()));
 							node->_content.resize(contentSize - 1);
@@ -182,7 +182,7 @@ ParseRulesHolder const &AlangRules()
 		{"SUBSCRIPT", {{Token::Class::Key, "."}, {Token::Class::Identifier}}, NodeOutput::Parent},
 
 		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"IMPORT_TAIL", Repeat::ZeroMany}}},
-		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}},
+		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}, NodeOutput::Parent},
 
 		{"DEF_VALUE", {{"DEF_CONST"}, {"DEF_VAR"}}, {Combine::Alternative, Rename::Disable}},
 		{"DEF_CONST", {{Token::Class::Key, "const"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"ASSIGN"}}},

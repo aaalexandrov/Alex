@@ -30,6 +30,8 @@ set(SOURCES
 	"utf8.cpp" 
 	"dbg.h" 
 	"dbg.cpp" 
+	"error.h"
+	"error.cpp"
 	"parse.h" 
 	"parse.cpp" 
 	"types.h" 

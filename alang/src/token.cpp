@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <charconv>
 #include "dbg.h"
+#include "error.h"
 
 namespace alang {
 
@@ -139,13 +140,13 @@ bool Tokenizer::ParseToken(Token &token)
 				token._str.clear();
 			} else {
 				token._type = Token::Type::Invalid;
-				token._str = "Invalid UTF-8 input";
+				token._str = Err::InvalidUtf8;
 			}
 		} else if (_curCP == '#') {
 			if (SkipComment())
 				continue;
 			token._type = Token::Type::Invalid;
-			token._str = "Non-closed comment";
+			token._str = Err::NonClosedComment;
 		} else if (IsWhitespace(_curCP)) {
 			if (SkipWhitespace())
 				continue;
@@ -159,17 +160,17 @@ bool Tokenizer::ParseToken(Token &token)
 		} else if (IsSeparator(_curCP)) {
 			if (!ParseSeparator(token)) {
 				token._type = Token::Type::Invalid;
-				token._str = "Unrecognized separator";
+				token._str = Err::UnrecognizedSeparator;
 			}
 		} else if (_curCP == '\'') {
 			if (!ParseChar(token)) {
 				token._type = Token::Type::Invalid;
-				token._str = "Invalid Char literal";
+				token._str = Err::InvalidCharLiteral;
 			}
 		} else if (_curCP == '"') {
 			if (!ParseString(token)) {
 				token._type = Token::Type::Invalid;
-				token._str = "Invalid String literal";
+				token._str = Err::InvalidStringLiteral;
 			}
 		}
 

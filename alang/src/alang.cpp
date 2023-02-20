@@ -3,6 +3,7 @@
 #include "utf8.h"
 #include "token.h"
 #include "parse.h"
+#include "analyze.h"
 
 #include <vector>
 #include <fstream>
@@ -62,6 +63,14 @@ void ParseFile(std::string path)
 	}
 	if (!tokens.GetError().empty()) {
 		cout << "Parsing error: " << tokens.GetError() << " at pos " << tokens.GetPosInFile()._line << ":" << tokens.GetPosInFile()._posOnLine << endl;
+		return;
+	}
+
+	alang::Analyzer analyzer;
+	auto error = analyzer.AnalyzeDefinitions(parsed.get(), nullptr);
+	if (!error._error.empty()) {
+		alang::PosInFile errPos = error._location->_filePos;
+		cout << "Semantic error: " << error._error << " at pos " << errPos._line << ":" << errPos._posOnLine << endl;
 	}
 }
 

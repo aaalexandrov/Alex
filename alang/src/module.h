@@ -8,9 +8,19 @@
 
 namespace alang {
 
+struct Module;
+struct Import {
+	std::vector<String> _qualifiedName;
+	Module *_module = nullptr;
+
+	Import() = default;
+	Import(String name) : _qualifiedName{ {name} } {}
+};
+
 struct Module : public Definition {
 
 	std::unordered_map<String, std::unique_ptr<Definition>> _definitions;
+	std::vector<Import> _imports;
 
 	Module(String name);
 

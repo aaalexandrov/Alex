@@ -1,6 +1,6 @@
 module HelloWorld
 
-import std.core.io
+import std.core.io, dump
 
 func main()
 	var a : I32 = 'a'
