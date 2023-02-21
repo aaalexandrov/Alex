@@ -22,9 +22,15 @@ struct Module : public Definition {
 	std::unordered_map<String, std::unique_ptr<Definition>> _definitions;
 	std::vector<Import> _imports;
 
-	Module(String name);
+	Module(String name, ParseNode const *node);
 
 	void RegisterDefinition(std::unique_ptr<Definition> &&def);
+
+	template <typename Def>
+	void RegisterDefinition(std::unique_ptr<Def> &&def)
+	{
+		RegisterDefinition(std::unique_ptr<Definition>(def.release()));
+	}
 };
 
 }

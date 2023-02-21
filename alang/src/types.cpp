@@ -52,8 +52,8 @@ void Value::Move(Value &&other)
 }
 
 
-TypeDesc::TypeDesc(String name, size_t size, size_t align)
-	: Definition{ name }
+TypeDesc::TypeDesc(String name, ParseNode const *node, size_t size, size_t align)
+	: Definition{ name, node }
 	, _size{ size }
 	, _align{ align }
 {

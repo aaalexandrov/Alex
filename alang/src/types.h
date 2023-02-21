@@ -41,7 +41,7 @@ struct TypeDesc : public Definition {
 	std::vector<Value> _params; // generic params
 	std::vector<Member> _members;
 
-	TypeDesc(String name, size_t size, size_t align);
+	TypeDesc(String name, ParseNode const *node, size_t size, size_t align);
 };
 
 }

@@ -2,8 +2,8 @@
 
 namespace alang {
 
-Module::Module(String name)
-	: Definition{ name }
+Module::Module(String name, ParseNode const *node)
+	: Definition{ name, node }
 {
 }
 

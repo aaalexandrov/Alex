@@ -84,32 +84,40 @@ struct ParseRule {
 	ParseRule(String id, std::initializer_list<Match> matches, ParseOptions opt = {});
 };
 
-struct Parser {
-	struct Node {
-		using Content = std::variant<Token, std::unique_ptr<Node>>;
+struct ParseNode {
+	struct Content {
+		std::variant<Token, std::unique_ptr<ParseNode>> _tokenOrNode;
+		Token const *GetToken() const { return std::get_if<Token>(&_tokenOrNode); }
+		ParseNode const *GetNode() const { return std::holds_alternative<std::unique_ptr<ParseNode>>(_tokenOrNode) ? std::get<std::unique_ptr<ParseNode>>(_tokenOrNode).get() : nullptr; }
 
-		ParseRule const *_rule;
-		String _label;
-		std::vector<Content> _content;
-		PosInFile _filePos;
-
-		Node(ParseRule const *rule, PosInFile filePos) : _rule(rule), _filePos(filePos) {}
-
-		int32_t GetContentSize() const { return int32_t(_content.size()); }
-		Token const *GetToken(int32_t i) const { return std::get_if<Token>(&_content[i]); }
-		Node const *GetSubnode(int32_t i) const { return std::holds_alternative<std::unique_ptr<Node>>(_content[i]) ? std::get<std::unique_ptr<Node>>(_content[i]).get() : nullptr; }
+		Content() = default;
+		Content(Token const &token) : _tokenOrNode(token) {}
+		Content(std::unique_ptr<ParseNode> &&node) : _tokenOrNode(std::move(node)) {}
 	};
 
+	ParseRule const *_rule;
+	String _label;
+	std::vector<Content> _content;
+	PosInFile _filePos;
+
+	ParseNode(ParseRule const *rule, PosInFile filePos) : _rule(rule), _filePos(filePos) {}
+
+	int32_t GetContentSize() const { return int32_t(_content.size()); }
+	Token const *GetToken(int32_t i) const { return _content[i].GetToken(); }
+	ParseNode const *GetSubnode(int32_t i) const { return _content[i].GetNode(); }
+};
+
+struct Parser {
 	std::vector<ParseRule> const &_rules;
 
 	Parser(std::vector<ParseRule> const &rules);
 
-	std::unique_ptr<Node> Parse(Tokenizer &tokens) const;
+	std::unique_ptr<ParseNode> Parse(Tokenizer &tokens) const;
 
-	void Dump(Node const *node, int32_t indent = 0) const;
+	void Dump(ParseNode const *node, int32_t indent = 0) const;
 
 protected:
-	bool MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<Node> &node) const;
+	bool MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<ParseNode> &node) const;
 };
 
 struct ParseRulesHolder {

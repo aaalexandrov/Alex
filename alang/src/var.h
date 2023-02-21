@@ -9,7 +9,7 @@ struct VarDef : public Definition {
 	Value _value;
 	bool _const = false;
 
-	VarDef(String _name, TypeDesc *type, bool isConst);
+	VarDef(String name, ParseNode const *node, TypeDesc *type, bool isConst);
 };
 
 

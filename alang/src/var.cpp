@@ -2,8 +2,8 @@
 
 namespace alang {
 
-VarDef::VarDef(String _name, TypeDesc *type, bool isConst)
-	: Definition(_name)
+VarDef::VarDef(String name, ParseNode const *node, TypeDesc *type, bool isConst)
+	: Definition(name, node)
 	, _type(type)
 	, _const(isConst)
 {

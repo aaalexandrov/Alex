@@ -2,6 +2,18 @@ module HelloWorld
 
 import std.core.io, dump
 
+func one() : I32
+	return 1
+end
+
+func inc(x : Ref{I32})
+	x = x + 1
+end
+
+func add1(x : I32) : I32
+	return x + 1
+end
+
 func main()
 	var a : I32 = 'a'
 	const b : I32 = 42 # the ANSWER
@@ -9,6 +21,7 @@ func main()
 	var f : F32 = c * 5.25
 	var p : Ref{I32} = &a
 	var arr : Array{I32, 5}
+	const o : I32 = one()
 
 	arr[0] = c
 	var i : I32 = 1

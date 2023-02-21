@@ -37,6 +37,7 @@ set(SOURCES
 	"types.h" 
 	"types.cpp" 
 	"common.h" 
+	"common.cpp"
 	"module.h" 
 	"module.cpp" 
 	"core.h" 

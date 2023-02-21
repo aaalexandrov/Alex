@@ -16,11 +16,13 @@ struct PosInFile {
 };
 
 struct Module;
+struct ParseNode;
 struct Definition {
 	String _name;
 	Module *_parentModule = nullptr;
+	ParseNode const *_node = nullptr;
 
-	Definition(String name) : _name(name) {}
+	Definition(String name, ParseNode const *node);
 };
 
 }

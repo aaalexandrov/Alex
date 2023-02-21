@@ -34,11 +34,11 @@ Parser::Parser(std::vector<ParseRule> const &rules)
 {
 }
 
-auto Parser::Parse(Tokenizer &tokens) const -> std::unique_ptr<Node>
+auto Parser::Parse(Tokenizer &tokens) const -> std::unique_ptr<ParseNode>
 {
 	tokens.MoveNext();
 	auto &rootRule = _rules[0];
-	auto node = std::make_unique<Node>(&rootRule, tokens.Current()._filePos);
+	auto node = std::make_unique<ParseNode>(&rootRule, tokens.Current()._filePos);
 	bool match = MatchRule(tokens, rootRule, node);
 	bool atEof = tokens.Current()._type == Token::Type::Invalid && tokens.Current()._str.empty();
 	if (match && atEof)
@@ -46,7 +46,7 @@ auto Parser::Parse(Tokenizer &tokens) const -> std::unique_ptr<Node>
 	return nullptr;
 }
 
-void Parser::Dump(Node const *node, int32_t indent) const
+void Parser::Dump(ParseNode const *node, int32_t indent) const
 {
 	if (!node)
 		return;
@@ -62,7 +62,7 @@ void Parser::Dump(Node const *node, int32_t indent) const
 	}
 }
 
-bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<Node> &node) const
+bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr<ParseNode> &node) const
 {
 	bool anyMatch = false;
 	for (auto &match : rule._matches) {
@@ -73,7 +73,7 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 				matchFound = tokens.Current().GetClass() == terminal->_class && (terminal->_str.empty() || tokens.Current()._str == terminal->_str);
 				if (matchFound) {
 					if (match._opt._output == Output::Enable) {
-						node->_content.push_back(tokens.Current());
+						node->_content.emplace_back(tokens.Current());
 					}
 					if (node->_label.empty() && tokens.Current().GetClass() == Token::Class::Key) {
 						node->_label = tokens.Current()._str;
@@ -86,20 +86,20 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 				size_t contentSize = node->_content.size();
 				switch (sub->_opt._nodeOutput) {
 					case NodeOutput::Own:
-						node->_content.push_back(std::make_unique<Node>(sub, tokens.Current()._filePos));
-						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<Node>>(node->_content.back()));
+						node->_content.push_back(std::make_unique<ParseNode>(sub, tokens.Current()._filePos));
+						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<ParseNode>>(node->_content.back()._tokenOrNode));
 						break;
 					case NodeOutput::Parent:
 						matchFound = MatchRule(tokens, *sub, node);
 						break;
 					case NodeOutput::ReplaceInParent: {
-						auto subNode = std::make_unique<Node>(sub, tokens.Current()._filePos);
+						auto subNode = std::make_unique<ParseNode>(sub, tokens.Current()._filePos);
 						if (contentSize) {
 							subNode->_content.push_back(std::move(node->_content.back()));
 							node->_content.resize(contentSize - 1);
 						}
 						node->_content.push_back(std::move(subNode));
-						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<Node>>(node->_content.back()));
+						matchFound = MatchRule(tokens, *sub, std::get<std::unique_ptr<ParseNode>>(node->_content.back()._tokenOrNode));
 					}
 						break;
 					default:
@@ -109,7 +109,7 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 				if (!matchFound) {
 					if (sub->_opt._nodeOutput == NodeOutput::ReplaceInParent) {
 						ASSERT(node->_content.size() == contentSize);
-						auto subNode = std::move(std::get<std::unique_ptr<Node>>(node->_content.back()));
+						auto subNode = std::move(std::get<std::unique_ptr<ParseNode>>(node->_content.back()._tokenOrNode));
 						node->_content.back() = std::move(subNode->_content.front());
 					} else {
 						node->_content.resize(contentSize);
@@ -127,7 +127,7 @@ bool Parser::MatchRule(Tokenizer &tokens, ParseRule const &rule, std::unique_ptr
 	}
 
 	if (rule._opt._rename == Rename::Disable && node && node->_content.size() == 1 && node->GetSubnode(0)) {
-		node = std::move(std::get<std::unique_ptr<Node>>(node->_content[0]));
+		node = std::move(std::get<std::unique_ptr<ParseNode>>(node->_content[0]._tokenOrNode));
 	}
 
 	return anyMatch;
@@ -193,10 +193,11 @@ ParseRulesHolder const &AlangRules()
 		{"TYPE", {{"QUALIFIED_NAME"}, {"GENERIC_PARAMS", Repeat::ZeroOne}}, NodeOutput::Parent},
 		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"EXPRESSION_LIST"}, {Token::Class::Key, "}"}}},
 
-		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"OF_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
-		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", Repeat::ZeroMany}}},
-		{"DEF_PARAM", {{Token::Class::Identifier}, {"OF_TYPE"}}},
-		{"DEF_PARAM_TAIL", {{Token::Class::Key, ","}, {"DEF_PARAM"}}},
+		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"RETURN_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
+		{"RETURN_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}},
+		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", Repeat::ZeroMany}}, NodeOutput::Parent},
+		{"DEF_PARAM", {{Token::Class::Identifier}, {"OF_TYPE"}}, NodeOutput::Parent},
+		{"DEF_PARAM_TAIL", {{Token::Class::Key, ","}, {"DEF_PARAM"}}, NodeOutput::Parent},
 
 		{"OPERATOR", {{"DEF_VALUE"}, {"IF"}, {"WHILE"}, {"RETURN"}, {"ASSIGN_OR_CALL"}}, {Combine::Alternative, Rename::Disable}},
 
@@ -267,7 +268,7 @@ ParseRulesHolder const &AlangRules()
 		{"VAR_CALL_INDEXED", {{"VALUE_BASE"}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
 		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}, NodeOutput::ReplaceInParent},
-		{"CALL", {{Token::Class::Key, "("}, {"EXPRESSION_LIST"}, {Token::Class::Key, ")"}}, NodeOutput::ReplaceInParent},
+		{"CALL", {{Token::Class::Key, "("}, {"EXPRESSION_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}}, NodeOutput::ReplaceInParent},
 
 		{"EXPRESSION_LIST", {{"EXPRESSION"}, {"COMMA_EXPRESSION", Repeat::ZeroMany}}, NodeOutput::Parent},
 		{"COMMA_EXPRESSION", {{Token::Class::Key, ","}, {"EXPRESSION"}}, NodeOutput::Parent},

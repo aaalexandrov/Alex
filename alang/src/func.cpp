@@ -2,19 +2,19 @@
 
 namespace alang {
 
-FuncData::FuncData(String name, TypeDesc *signature)
-	: Definition(name)
+FuncData::FuncData(String name, ParseNode const *node, TypeDesc *signature)
+	: Definition(name, node)
 	, _signature(signature)
 {
 }
 
-Func::Func(String name, TypeDesc *signature)
-	: FuncData(name, signature)
+Func::Func(String name, ParseNode const *node, TypeDesc *signature)
+	: FuncData(name, node, signature)
 {
 }
 
-FuncExternal::FuncExternal(String name, TypeDesc *signature, FuncType externalFunc)
-	: FuncData(name, signature)
+FuncExternal::FuncExternal(String name, ParseNode const *node, TypeDesc *signature, FuncType externalFunc)
+	: FuncData(name, node, signature)
 	, _externalFunc(externalFunc)
 {
 }

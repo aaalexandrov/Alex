@@ -3,46 +3,76 @@
 
 namespace alang {
 
-auto Analyzer::AnalyzeDefinitions(Parser::Node const *ast, Module *parent) -> Error
+auto Analyzer::AnalyzeDefinitions(ParseNode const *ast, Module *parent) -> Error
 {
-	Error err = AnalyzeModuleDefinitions(ast, parent);
-	return err;
-}
+	Error err;
+	std::unique_ptr<Module> module = AnalyzeModuleDefinitions(ast, err);
+	if (!module)
+		return err;
 
-auto Analyzer::AnalyzeModuleDefinitions(Parser::Node const *mod, Module *parent) -> Error
-{
-	if (mod->_label != "module")
-		return Error(Err::ExpectedModule, mod);
-
-	auto modPtr = std::make_unique<Module>(mod->GetToken(0)->_str);
-	Module *module = modPtr.get();
 	if (parent)
-		parent->RegisterDefinition(std::unique_ptr<Definition>(modPtr.release()));
+		parent->RegisterDefinition(std::move(module));
 	else
-		_modules[module->_name] = std::move(modPtr);
-
-	for (int i = 1; i < mod->GetContentSize(); ++i) {
-		Error error;
-		Parser::Node const *sub = mod->GetSubnode(i);
-		if (sub->_label == "import")
-			error = AnalyzeImport(sub, module);
-		else if (sub->_label == "var" || sub->_label == "const")
-			error = AnalyzeValueDefinition(sub, module);
-		else if (sub->_label == "func")
-			error = AnalyzeFuncDefinition(sub, module);
-		else if (sub->_label == "module")
-			error = AnalyzeModuleDefinitions(mod, module);
-		else
-			error = Error(Err::UnexpectedDefinition, sub);
-
-		if (!error._error.empty())
-			return error;
-	}
+		_modules[module->_name] = std::move(module);
 
 	return Error();
 }
 
-auto Analyzer::AnalyzeImport(Parser::Node const *import, Module *parent) -> Error
+std::unique_ptr<Module> Analyzer::AnalyzeModuleDefinitions(ParseNode const *mod, Error &err)
+{
+	if (mod->_label != "module") {
+		err = Error(Err::ExpectedModule, mod);
+		return nullptr;
+	}
+
+	auto module = std::make_unique<Module>(mod->GetToken(0)->_str, mod);
+
+	for (int i = 1; i < mod->GetContentSize(); ++i) {
+		ParseNode const *sub = mod->GetSubnode(i);
+		if (sub->_label == "import") {
+			err = AnalyzeImport(sub, module->_imports);
+		} else if (sub->_label == "var" || sub->_label == "const") {
+			auto val = AnalyzeValueDefinition(sub, err);
+			if (!val)
+				return nullptr;
+			module->RegisterDefinition(std::move(val));
+		} else if (sub->_label == "func") {
+			auto func = AnalyzeFuncDefinition(sub, err);
+			if (!func)
+				return nullptr;
+			module->RegisterDefinition(std::move(func));
+		} else if (sub->_label == "module") {
+			auto subMod = AnalyzeModuleDefinitions(mod, err);
+			if (!subMod)
+				return nullptr;
+			module->RegisterDefinition(std::move(subMod));
+		} else {
+			err = Error(Err::UnexpectedDefinition, sub);
+			return nullptr;
+		}
+	}
+
+	return module;
+}
+
+std::unique_ptr<VarDef> Analyzer::AnalyzeValueDefinition(ParseNode const *val, Error &err)
+{
+	return nullptr;
+}
+
+std::unique_ptr<FuncData> Analyzer::AnalyzeFuncDefinition(ParseNode const *func, Error &err)
+{
+	if (func->_label != "func") {
+		err = Error(Err::ExpectedFunc, func);
+		return nullptr;
+	}
+
+	std::unique_ptr<FuncData> funcData;
+
+	return funcData;
+}
+
+auto Analyzer::AnalyzeImport(ParseNode const *import, std::vector<Import> &imports) -> Error
 {
 	if (import->_label != "import")
 		return Error(Err::ExpectedImport, import);
@@ -52,35 +82,20 @@ auto Analyzer::AnalyzeImport(Parser::Node const *import, Module *parent) -> Erro
 		Error err = ReadQualifiedName(imp._qualifiedName, import->_content[i]);
 		if (!err._error.empty())
 			return err;
-		parent->_imports.push_back(imp);
+		imports.push_back(imp);
 	}
 
 	return Error();
 }
 
-auto Analyzer::AnalyzeValueDefinition(Parser::Node const *value, Module *parent) -> Error
+auto Analyzer::ReadQualifiedName(std::vector<String> &qualifiedName, ParseNode::Content const &name) -> Error
 {
-	return Error();
-}
-
-auto Analyzer::AnalyzeFuncDefinition(Parser::Node const *func, Module *parent) -> Error
-{
-	if (func->_label != "func")
-		return Error(Err::ExpectedFunc, func);
-
-
-
-	return Error();
-}
-
-auto Analyzer::ReadQualifiedName(std::vector<String> &qualifiedName, Parser::Node::Content const &name) -> Error
-{
-	if (auto *tok = std::get_if<Token>(&name)) {
+	if (auto *tok = name.GetToken()) {
 		qualifiedName.push_back(tok->_str);
 		return Error();
 	}
 
-	auto *sub = std::get<std::unique_ptr<Parser::Node>>(name).get();
+	auto *sub = name.GetNode();
 	if (sub->_label != ".")
 		return Error(Err::ExpectedQualifiedName, sub);
 	for (int j = 0; j < sub->GetContentSize(); ++j) {
