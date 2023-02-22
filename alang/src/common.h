@@ -23,6 +23,9 @@ struct Definition {
 	ParseNode const *_node = nullptr;
 
 	Definition(String name, ParseNode const *node);
+	virtual ~Definition() {}
+
+	String GetQualifiedName() const;
 };
 
 }

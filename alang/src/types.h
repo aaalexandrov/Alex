@@ -21,6 +21,8 @@ struct Value {
 
 	void *GetValue() const;
 
+	String ToString() const;
+
 private:
 	void Delete();
 	void Init(TypeDesc *type, void *val);
@@ -42,6 +44,9 @@ struct TypeDesc : public Definition {
 	std::vector<Member> _members;
 
 	TypeDesc(String name, ParseNode const *node, size_t size, size_t align);
+	TypeDesc(ParseNode const *node, TypeDesc *genericDef, std::vector<Value> const &params);
+
+	static String GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params);
 };
 
 }

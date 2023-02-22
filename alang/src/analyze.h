@@ -25,7 +25,7 @@ protected:
 
 	Error AnalyzeImport(ParseNode const *import, std::vector<Import> &imports);
 
-	Error ReadQualifiedName(std::vector<String> &qualifiedName, ParseNode::Content const &name);
+	Error ReadQualifiedName(String &qualifiedName, ParseNode::Content const &name);
 };
 
 }

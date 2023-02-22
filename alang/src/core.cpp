@@ -6,6 +6,8 @@ static std::unique_ptr<Module> CreateCore()
 {
 	auto core = std::make_unique<Module>("Core", nullptr);
 
+	core->RegisterDefinition(std::make_unique<TypeDesc>("TypeDesc", nullptr, sizeof(void*), alignof(void*)));
+
 	core->RegisterDefinition(std::make_unique<TypeDesc>("I8", nullptr, sizeof(int8_t), alignof(int8_t)));
 	core->RegisterDefinition(std::make_unique<TypeDesc>("I16", nullptr, sizeof(int16_t), alignof(int16_t)));
 	core->RegisterDefinition(std::make_unique<TypeDesc>("I32", nullptr, sizeof(int32_t), alignof(int32_t)));

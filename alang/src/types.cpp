@@ -1,5 +1,6 @@
 #include "types.h"
 #include <cstring>
+#include "core.h"
 
 namespace alang {
 
@@ -8,6 +9,16 @@ void *Value::GetValue() const
 	if (!_type)
 		return nullptr;
 	return _type->_size > sizeof(_value) ? (void *)_value : (void *)&_value; 
+}
+
+String Value::ToString() const
+{
+	if (_type == CoreModule->GetDefinition<TypeDesc>("TypeDesc")) {
+		auto *val = reinterpret_cast<TypeDesc const *>(_value);
+		return val->GetQualifiedName();
+	}
+	ASSERT("Unimplemented!");
+	return String();
 }
 
 void Value::Delete()
@@ -57,6 +68,27 @@ TypeDesc::TypeDesc(String name, ParseNode const *node, size_t size, size_t align
 	, _size{ size }
 	, _align{ align }
 {
+}
+
+TypeDesc::TypeDesc(ParseNode const *node, TypeDesc *genericDef, std::vector<Value> const &params)
+	: Definition(GetGenericName(genericDef, params), node)
+	, _size(genericDef->_size)
+	, _align(genericDef->_align)
+	, _genericDefinition(genericDef)
+	, _params(params.begin(), params.end())
+{
+}
+
+String TypeDesc::GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params)
+{
+	String name = genericDef->GetQualifiedName() + "{";
+	for (int i = 0; i < params.size(); ++i) {
+		if (i > 0)
+			name += ",";
+		name += params[i].ToString();
+	}
+	name += "}";
+	return name;
 }
 
 }

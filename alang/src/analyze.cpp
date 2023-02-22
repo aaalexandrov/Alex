@@ -67,6 +67,15 @@ std::unique_ptr<FuncData> Analyzer::AnalyzeFuncDefinition(ParseNode const *func,
 		return nullptr;
 	}
 
+	std::unique_ptr<TypeDesc> funcSignature;
+	for (int i = 1; i < func->GetContentSize(); ++i) {
+		ParseNode const *sub = func->GetSubnode(i);
+		if (!sub || sub->_label != ":")
+			break;
+
+
+	}
+
 	std::unique_ptr<FuncData> funcData;
 
 	return funcData;
@@ -88,10 +97,11 @@ auto Analyzer::AnalyzeImport(ParseNode const *import, std::vector<Import> &impor
 	return Error();
 }
 
-auto Analyzer::ReadQualifiedName(std::vector<String> &qualifiedName, ParseNode::Content const &name) -> Error
+auto Analyzer::ReadQualifiedName(String &qualifiedName, ParseNode::Content const &name) -> Error
 {
+	ASSERT(qualifiedName.empty());
 	if (auto *tok = name.GetToken()) {
-		qualifiedName.push_back(tok->_str);
+		qualifiedName = tok->_str;
 		return Error();
 	}
 
@@ -99,7 +109,9 @@ auto Analyzer::ReadQualifiedName(std::vector<String> &qualifiedName, ParseNode::
 	if (sub->_label != ".")
 		return Error(Err::ExpectedQualifiedName, sub);
 	for (int j = 0; j < sub->GetContentSize(); ++j) {
-		qualifiedName.push_back(sub->GetToken(j)->_str);
+		if (!qualifiedName.empty())
+			qualifiedName += ".";
+		qualifiedName += sub->GetToken(j)->_str;
 	}
 
 	return Error();
