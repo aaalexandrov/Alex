@@ -9,7 +9,9 @@ struct VarDef : public Definition {
 	Value _value;
 	bool _const = false;
 
-	VarDef(String name, ParseNode const *node, TypeDesc *type, bool isConst);
+	VarDef(ParseNode const *node);
+
+	Error Analyze() override;
 };
 
 

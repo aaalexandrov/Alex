@@ -2,11 +2,14 @@
 
 namespace alang {
 
-VarDef::VarDef(String name, ParseNode const *node, TypeDesc *type, bool isConst)
-	: Definition(name, node)
-	, _type(type)
-	, _const(isConst)
+VarDef::VarDef(ParseNode const *node)
+	: Definition(node)
 {
+}
+
+Error VarDef::Analyze()
+{
+	return Error();
 }
 
 }

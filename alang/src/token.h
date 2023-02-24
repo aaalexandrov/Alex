@@ -40,14 +40,13 @@ struct Token {
 struct Tokenizer {
 	Tokenizer(std::string filePath, std::vector<String> const &keywordsSeparators);
 
-	std::string const &GetFilePath() const { return _filePath; }
+	String const &GetFilePath() const { return _error._location._fileName; }
 	std::streamsize GetFileSize() const { return _fileSize; }
-	PosInFile GetPosInFile() const { return _filePos; }
 
 	Token const &Current() const;
 	bool MoveNext();
 
-	String GetError() const;
+	Error const &GetError() const { return _error; }
 
 protected:
 	void InitKeywordsSeparators(std::vector<String> const &keywordsSeparators);
@@ -82,9 +81,8 @@ protected:
 	Token _curToken;
 
 	uint32_t _curCP = utf8::InvalidCP;
-	PosInFile _filePos{0, 0};
+	Error _error;
 
-	String _filePath;
 	std::ifstream _file;
 	std::streamsize _fileSize = 0;
 	std::vector<uint8_t> _buffer;

@@ -6,14 +6,6 @@
 namespace alang {
 
 struct Analyzer {
-	struct Error {
-		String _error;
-		ParseNode const *_location = nullptr;
-
-		Error() = default;
-		Error(String err, ParseNode const *loc) : _error(err), _location(loc) {}
-	};
-
 	std::unordered_map<String, std::unique_ptr<Module>> _modules;
 
 	Error AnalyzeDefinitions(ParseNode const *ast, Module *parent);

@@ -79,7 +79,7 @@ static std::vector<uint32_t> GetUniqueCPs(std::vector<String> const &strs)
 
 
 Tokenizer::Tokenizer(std::string filePath, std::vector<String> const &keywordsSeparators)
-	: _filePath(filePath)
+	: _error(String(), {filePath, 0, 0})
 {
 	InitKeywordsSeparators(keywordsSeparators);
 
@@ -93,7 +93,7 @@ Tokenizer::Tokenizer(std::string filePath, std::vector<String> const &keywordsSe
 	if (_curCP == utf8::BomCP) {
 		NextCP();
 	}
-	_filePos._posOnLine = 0;
+	_error._location._posOnLine = 0;
 }
 
 Token const &Tokenizer::Current() const
@@ -105,13 +105,6 @@ bool Tokenizer::MoveNext()
 {
 	ParseToken(_curToken);
 	return _curToken._type != Token::Type::Invalid;
-}
-
-String Tokenizer::GetError() const
-{
-	if (_curToken._type == Token::Type::Invalid && !_curToken._str.empty())
-		return _curToken._str;
-	return String();
 }
 
 void Tokenizer::InitKeywordsSeparators(std::vector<String> const &keywordsSeparators)
@@ -133,14 +126,14 @@ bool Tokenizer::ParseToken(Token &token)
 {
 	PosInFile startPos;
 	while (true) {
-		startPos = _filePos;
+		startPos = _error._location;
 		if (_curCP == utf8::InvalidCP) {
 			if (_file.eof()) {
 				token._type = Token::Type::Invalid;
 				token._str.clear();
 			} else {
 				token._type = Token::Type::Invalid;
-				token._str = Err::InvalidUtf8;
+				token._str = _error._error;
 			}
 		} else if (_curCP == '#') {
 			if (SkipComment())
@@ -176,6 +169,8 @@ bool Tokenizer::ParseToken(Token &token)
 
 		break;
 	}
+	if (token._type == Token::Type::Invalid)
+		_error._error = token._str;
 	token._filePos = startPos;
 	return token._type != Token::Type::Invalid;
 }
@@ -320,12 +315,12 @@ uint32_t Tokenizer::NextCP()
 		return _curCP = utf8::InvalidCP;
 
 	if (_curCP == '\n') {
-		++_filePos._line;
-		_filePos._posOnLine = 0;
+		++_error._location._line;
+		_error._location._posOnLine = 0;
 	} else if (_curCP == '\r') {
-		_filePos._posOnLine = 0;
+		_error._location._posOnLine = 0;
 	} else {
-		++_filePos._posOnLine;
+		++_error._location._posOnLine;
 	}
 
 	_curCP = cp;

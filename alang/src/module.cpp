@@ -3,22 +3,27 @@
 
 namespace alang {
 
-Import::Import(String name) 
-	: _qualifiedName(name) 
-{
-}
-
 Import::Import(Module *mod) 
-	: _qualifiedName(mod->GetQualifiedName())
-	, _module(mod) 
+	: _module(mod) 
 {
 }
 
 
-Module::Module(String name, ParseNode const *node)
-	: Definition{ name, node }
+Module::Module(String name)
+	: Definition{ name }
+{
+}
+
+Module::Module(ParseNode const *node)
+	: Definition{ node }
 {
 	_imports.emplace_back(CoreModule.get());
+}
+
+
+Error Module::Analyze()
+{
+	return Error();
 }
 
 void Module::RegisterDefinition(std::unique_ptr<Definition> &&def)

@@ -63,20 +63,21 @@ void Value::Move(Value &&other)
 }
 
 
-TypeDesc::TypeDesc(String name, ParseNode const *node, size_t size, size_t align)
-	: Definition{ name, node }
+TypeDesc::TypeDesc(String name, size_t size, size_t align)
+	: Definition{ name }
 	, _size{ size }
 	, _align{ align }
 {
 }
 
-TypeDesc::TypeDesc(ParseNode const *node, TypeDesc *genericDef, std::vector<Value> const &params)
-	: Definition(GetGenericName(genericDef, params), node)
-	, _size(genericDef->_size)
-	, _align(genericDef->_align)
-	, _genericDefinition(genericDef)
-	, _params(params.begin(), params.end())
+TypeDesc::TypeDesc(ParseNode const *node)
+	: Definition(node)
 {
+}
+
+Error TypeDesc::Analyze()
+{
+	return Error();
 }
 
 String TypeDesc::GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params)

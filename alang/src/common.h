@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <vector>
 #include <string>
+#include <vector>
 #include <memory>
 #include "dbg.h"
 
@@ -11,9 +11,25 @@ namespace alang {
 using String = std::string;
 
 struct PosInFile {
-	uint32_t _line = -1;
-	uint32_t _posOnLine = -1;
+	String _fileName;
+	uint32_t _line = ~0u;
+	uint32_t _posOnLine = ~0u;
+
+	String ToString() const;
 };
+
+struct Error {
+	String _error;
+	PosInFile _location;
+
+	Error() = default;
+	Error(String err, PosInFile const &loc) : _error(err), _location(loc) {}
+
+	operator bool() const { return !_error.empty(); }
+
+	String ToString() const;
+};
+
 
 struct Module;
 struct ParseNode;
@@ -22,10 +38,13 @@ struct Definition {
 	Module *_parentModule = nullptr;
 	ParseNode const *_node = nullptr;
 
-	Definition(String name, ParseNode const *node);
+	Definition(String name);
+	Definition(ParseNode const *node);
 	virtual ~Definition() {}
 
 	String GetQualifiedName() const;
+
+	virtual Error Analyze() = 0;
 };
 
 }

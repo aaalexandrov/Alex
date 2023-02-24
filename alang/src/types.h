@@ -38,13 +38,15 @@ struct TypeDesc : public Definition {
 		size_t _offset = 0;
 	};
 
-	size_t _size, _align;
+	size_t _size = 0, _align = 0;
 	TypeDesc *_genericDefinition = nullptr;
 	std::vector<Value> _params; // generic params
 	std::vector<Member> _members;
 
-	TypeDesc(String name, ParseNode const *node, size_t size, size_t align);
-	TypeDesc(ParseNode const *node, TypeDesc *genericDef, std::vector<Value> const &params);
+	TypeDesc(String name, size_t size, size_t align);
+	TypeDesc(ParseNode const *node);
+
+	Error Analyze() override;
 
 	static String GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params);
 };

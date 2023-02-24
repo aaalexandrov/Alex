@@ -61,15 +61,15 @@ void ParseFile(std::string path)
 	if (parsed) {
 		parser->Dump(parsed.get());
 	}
-	if (!tokens.GetError().empty()) {
-		cout << "Parsing error: " << tokens.GetError() << " at pos " << tokens.GetPosInFile()._line << ":" << tokens.GetPosInFile()._posOnLine << endl;
+	if (tokens.GetError()) {
+		cout << "Parsing error: " << tokens.GetError().ToString() << endl;
 		return;
 	}
 
 	alang::Analyzer analyzer;
 	auto error = analyzer.AnalyzeDefinitions(parsed.get(), nullptr);
 	if (!error._error.empty()) {
-		alang::PosInFile errPos = error._location->_filePos;
+		alang::PosInFile errPos = error._location;
 		cout << "Semantic error: " << error._error << " at pos " << errPos._line << ":" << errPos._posOnLine << endl;
 	}
 }

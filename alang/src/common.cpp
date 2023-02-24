@@ -1,13 +1,30 @@
 #include "common.h"
 #include "module.h"
+#include "parse.h"
 
 namespace alang {
 
-Definition::Definition(String name, ParseNode const *node) 
+String PosInFile::ToString() const
+{
+	return _fileName + ":" + std::to_string(_line) + ":" + std::to_string(_posOnLine);
+}
+
+String Error::ToString() const
+{
+	return _location.ToString() + " - " + _error;
+}
+
+Definition::Definition(String name) 
 	: _name(name)
-	, _node(node) 
 {
 }
+
+Definition::Definition(ParseNode const *node)
+	: _name(node->GetToken(0)->_str)
+	, _node(node)
+{
+}
+
 
 String Definition::GetQualifiedName() const
 {
