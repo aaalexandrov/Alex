@@ -1,6 +1,6 @@
 module HelloWorld
 
-import std.core.io, dump
+import std.io
 
 func one() : I32
 	return 1
@@ -29,13 +29,13 @@ func main()
 		arr[i] = arr[i - 1] + 1
 	end
 
-	io.print("Hello, friend!")
-	std.core.io.debug("$(a) + $(b) = $(c)")
+	print("Hello, friend!")
+	std.io.print("$(a) + $(b) = $(c)")
 	if c % 2 == 0 && !(b > 32)
 		c = -c*a - b^+2^3 - b + 1
 	end
 	&p = &c
-	dump(5)
+	add1(5)
 end
 
 end

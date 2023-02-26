@@ -7,6 +7,7 @@ namespace alang {
 
 String Compiler::GetFilePathForModule(std::vector<String> const &qualifiedName)
 {
+
 	return String();
 }
 
@@ -19,6 +20,9 @@ Error Compiler::ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed)
 		parsed = nullptr;
 		return tokens.GetError();
 	}
+
+	parser->Dump(parsed.get());
+
 	return Error();
 }
 
