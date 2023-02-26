@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include "dbg.h"
+#include "rtti.h"
 
 namespace alang {
 
@@ -33,7 +34,7 @@ struct Error {
 
 struct Module;
 struct ParseNode;
-struct Definition {
+struct Definition: public rtti::Any {
 	String _name;
 	Module *_parentModule = nullptr;
 	ParseNode const *_node = nullptr;
@@ -43,8 +44,15 @@ struct Definition {
 	virtual ~Definition() {}
 
 	String GetQualifiedName() const;
+	void GetQualifiedName(std::vector<String> &name) const;
+
+	rtti::TypeInfo const *GetTypeInfo() const override;
 
 	virtual Error Analyze() = 0;
 };
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::Definition>();
 }

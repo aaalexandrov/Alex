@@ -9,6 +9,8 @@ struct FuncData : public Definition {
 
 	FuncData(String name, TypeDesc *signature);
 	FuncData(ParseNode const *node);
+
+	rtti::TypeInfo const *GetTypeInfo() const override;
 };
 
 struct Func : public FuncData {
@@ -17,6 +19,8 @@ struct Func : public FuncData {
 
 	Func(String name, TypeDesc *signature);
 	Func(ParseNode const *node);
+
+	rtti::TypeInfo const *GetTypeInfo() const override;
 
 	Error Analyze() override;
 };
@@ -28,7 +32,15 @@ struct FuncExternal : public FuncData {
 	FuncExternal(String name, TypeDesc *signature, FuncType externalFunc);
 	FuncExternal(ParseNode const *node);
 
+	rtti::TypeInfo const *GetTypeInfo() const override;
+
 	Error Analyze() override;
 };
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::FuncData>();
+template <> TypeInfo const *Get<alang::Func>();
+template <> TypeInfo const *Get<alang::FuncExternal>();
 }

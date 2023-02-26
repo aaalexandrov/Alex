@@ -46,9 +46,15 @@ struct TypeDesc : public Definition {
 	TypeDesc(String name, size_t size, size_t align);
 	TypeDesc(ParseNode const *node);
 
+	rtti::TypeInfo const *GetTypeInfo() const override;
+
 	Error Analyze() override;
 
 	static String GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params);
 };
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::TypeDesc>();
 }

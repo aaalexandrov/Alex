@@ -5,6 +5,7 @@
 #include <functional>
 #include <cstddef>
 #include <memory>
+#include "dbg.h"
 
 namespace rtti {
 
@@ -43,12 +44,12 @@ struct Func {
 struct TypeInfo {
 	char const *_name;
 	size_t _size, _align;
-	std::vector<TypeInfo *> _bases;
+	std::vector<TypeInfo const *> _bases;
 	std::unique_ptr<Func> _constructor;
 };
 
 template <typename T>
-TypeInfo const *Get()
+TypeInfo const *GetDefault()
 {
 	size_t size, align;
 	if constexpr (std::is_same_v<T, void>) {
@@ -62,11 +63,36 @@ TypeInfo const *Get()
 	return &typeInfo;
 }
 
+inline TypeInfo const *SetBasesConstructor(TypeInfo const *typeInfo, TypeInfo const **baseInfos, std::unique_ptr<Func> &&constructor = std::unique_ptr<Func>())
+{
+	TypeInfo *info = const_cast<TypeInfo *>(typeInfo);
+	ASSERT(info->_bases.empty());
+	ASSERT(!info->_constructor);
+	if (baseInfos) {
+		for (int i = 0; baseInfos[i]; ++i)
+			info->_bases.push_back(baseInfos[i]);
+	}
+	info->_constructor = std::move(constructor);
+	return info;
+}
+
+template <typename T>
+TypeInfo const *Get()
+{
+	return GetDefault<T>();
+}
+
 template <typename... Tn>
 TypeInfo const **GetTypeInfos()
 {
 	static TypeInfo const *typeInfos[sizeof...(Tn) + 1] = { Get<Tn>()..., nullptr };
 	return typeInfos;
+}
+
+template <typename T, typename... Bases>
+TypeInfo const *GetBases()
+{
+	return SetBasesConstructor(GetDefault<T>(), GetTypeInfos<Bases...>());
 }
 
 template <typename R, typename... Tn>
@@ -96,12 +122,41 @@ R Func::Invoke(Tn... args) const
 
 
 struct Any {
-	virtual TypeInfo *GetTypeInfo() const = 0;
+	virtual TypeInfo const *GetTypeInfo() const = 0;
 };
 
 template <typename T>
-struct AnyImpl : public Any {
-	TypeInfo *GetTypeInfo() const override { return Get<T>(); };
-};
+bool IsType(Any *obj)
+{
+	return obj && IsSameType(obj->GetTypeInfo(), Get<T>());
+}
+
+inline bool CanCast(TypeInfo const *src, TypeInfo const *dst)
+{
+	ASSERT(src);
+	ASSERT(dst);
+	if (IsSameType(src, dst))
+		return true;
+	for (auto base : src->_bases) {
+		if (CanCast(base, dst))
+			return true;
+	}
+	return false;
+}
+
+template <typename T>
+T *Cast(Any *obj)
+{
+	if (obj && CanCast(obj->GetTypeInfo(), Get<T>()))
+		return static_cast<T *>(obj);
+	return nullptr;
+}
+
+template <typename T>
+T const *Cast(Any const *obj)
+{
+	return Cast(const_cast<T *>(obj));
+}
+
 
 }

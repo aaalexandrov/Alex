@@ -9,20 +9,15 @@
 namespace alang {
 
 struct Module;
-struct Import {
-	Module *_module = nullptr;
-
-	Import() = default;
-	Import(Module *mod);
-};
-
 struct Module : public Definition {
 
 	std::unordered_map<String, std::unique_ptr<Definition>> _definitions;
-	std::vector<Import> _imports;
+	std::vector<Module *> _imports;
 
 	Module(String name);
 	Module(ParseNode const *node);
+
+	rtti::TypeInfo const *GetTypeInfo() const override;
 
 	Error Analyze() override;
 
@@ -40,9 +35,12 @@ struct Module : public Definition {
 	Def *GetDefinition(String name)
 	{
 		Definition *def = GetDefinition(name);
-		ASSERT(!def || dynamic_cast<Def*>(def));
-		return static_cast<Def*>(def);
+		return rtti::Cast<Def>(def);
 	}
 };
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::Module>();
 }

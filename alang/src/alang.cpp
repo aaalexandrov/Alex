@@ -1,9 +1,7 @@
 ﻿#include "alang.h"
 #include "dbg.h"
 #include "utf8.h"
-#include "token.h"
-#include "parse.h"
-#include "analyze.h"
+#include "compile.h"
 
 #include <vector>
 #include <fstream>
@@ -53,25 +51,12 @@ void TestUtf8()
 
 void ParseFile(std::string path)
 {
-	auto &rules = alang::AlangRules();
-	alang::Tokenizer tokens(path, rules.GetKeyStrings());
-	auto parser = std::make_unique<alang::Parser>(rules._rules);
-	cout << "File: " << tokens.GetFilePath() << " size: " << tokens.GetFileSize() << endl;
-	auto parsed = parser->Parse(tokens);
-	if (parsed) {
-		parser->Dump(parsed.get());
-	}
-	if (tokens.GetError()) {
-		cout << "Parsing error: " << tokens.GetError().ToString() << endl;
-		return;
-	}
+	cout << "Compiling " << path << endl;
 
-	alang::Analyzer analyzer;
-	auto error = analyzer.AnalyzeDefinitions(parsed.get(), nullptr);
-	if (!error._error.empty()) {
-		alang::PosInFile errPos = error._location;
-		cout << "Semantic error: " << error._error << " at pos " << errPos._line << ":" << errPos._posOnLine << endl;
-	}
+	alang::Compiler compiler;
+	alang::Error err = compiler.CompileFile(path);
+
+	cout << "Result: " << err.ToString() << endl;
 }
 
 int main()

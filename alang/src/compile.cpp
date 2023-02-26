@@ -1,4 +1,7 @@
 #include "compile.h"
+#include "module.h"
+#include "analyze.h"
+#include "error.h"
 
 namespace alang {
 
@@ -19,17 +22,73 @@ Error Compiler::ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed)
 	return Error();
 }
 
-Error Compiler::ScanModule(ParseNode const *mod)
+Error Compiler::ScanModule(ParseNode const *mod, Module *parent)
 {
-	return Error();
+	if (mod->_label != "module")
+		return Error(Err::ExpectedModule, mod->_filePos);
+
+	Analyzer analyzer(this);
+
+	std::vector<String> modName;
+	if (parent)
+		parent->GetQualifiedName(modName);
+	modName.push_back(mod->GetToken(0)->_str);
+	Module *module;
+	Error err = GetOrCreateModule(modName, module);
+	if (err)
+		return err;
+	ASSERT(module->_parentModule == parent);
+	module->_node = mod;
+
+	err = analyzer.ScanModule(module);
+
+	return err;
 }
 
 Error Compiler::CompileFile(String filePath)
 {
 	std::unique_ptr<ParseNode> mod;
 	Error err = ParseFile(filePath, mod);
+	if (err)
+		return err;
 
+	err = ScanModule(mod.get(), nullptr);
+	if (err)
+		return err;
 
+	for (auto &[n, m] : _modules) {
+		err = m->Analyze();
+		if (err)
+			return err;
+	}
+
+	return Error();
+}
+
+Error Compiler::GetOrCreateModule(std::vector<String> const &qualifiedName, Module *&mod)
+{
+	mod = nullptr;
+	auto &top = _modules[qualifiedName[0]];
+	if (!top)
+		top = std::make_unique<Module>(qualifiedName[0]);
+	Module *parent = top.get();
+	for (int i = 1; i < qualifiedName.size(); ++i) {
+		Definition *def = parent->GetDefinition(qualifiedName[i]);
+		Module *defMod;
+		if (!def) {
+			defMod = new Module(qualifiedName[i]);
+			parent->RegisterDefinition(std::unique_ptr<Definition>(defMod));
+			parent = defMod;
+			continue;
+		}
+
+		parent = rtti::Cast<Module>(def);
+		if (def && !parent) 
+			return Error(Err::DefinitionNotModule, def->_node->_filePos);
+	}
+
+	mod = parent;
+	return Error();
 }
 
 }

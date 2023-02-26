@@ -11,8 +11,14 @@ struct VarDef : public Definition {
 
 	VarDef(ParseNode const *node);
 
+	rtti::TypeInfo const *GetTypeInfo() const override;
+
 	Error Analyze() override;
 };
 
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::VarDef>();
 }

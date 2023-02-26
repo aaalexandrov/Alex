@@ -11,6 +11,8 @@ String PosInFile::ToString() const
 
 String Error::ToString() const
 {
+	if (_error.empty())
+		return "No error";
 	return _location.ToString() + " - " + _error;
 }
 
@@ -34,4 +36,20 @@ String Definition::GetQualifiedName() const
 	return qualified;
 }
 
+void Definition::GetQualifiedName(std::vector<String> &name) const
+{
+	if (_parentModule)
+		_parentModule->GetQualifiedName(name);
+	name.push_back(_name);
+}
+
+rtti::TypeInfo const *Definition::GetTypeInfo() const
+{
+	return rtti::Get<Definition>();
+}
+
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::Definition>() { return GetDefault<alang::Definition>(); }
 }

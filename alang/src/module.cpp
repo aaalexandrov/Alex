@@ -3,12 +3,6 @@
 
 namespace alang {
 
-Import::Import(Module *mod) 
-	: _module(mod) 
-{
-}
-
-
 Module::Module(String name)
 	: Definition{ name }
 {
@@ -18,6 +12,11 @@ Module::Module(ParseNode const *node)
 	: Definition{ node }
 {
 	_imports.emplace_back(CoreModule.get());
+}
+
+rtti::TypeInfo const *Module::GetTypeInfo() const
+{
+	return rtti::Get<Module>();
 }
 
 
@@ -35,8 +34,12 @@ void Module::RegisterDefinition(std::unique_ptr<Definition> &&def)
 
 Definition *Module::GetDefinition(String name)
 {
-	
-	return nullptr;
+	auto it = _definitions.find(name);
+	return it != _definitions.end() ? it->second.get() : nullptr;
 }
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::Module>() { return GetBases<alang::Module, alang::Definition>(); }
 }

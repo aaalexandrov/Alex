@@ -75,6 +75,11 @@ TypeDesc::TypeDesc(ParseNode const *node)
 {
 }
 
+rtti::TypeInfo const *TypeDesc::GetTypeInfo() const
+{
+	return rtti::Get<TypeDesc>();
+}
+
 Error TypeDesc::Analyze()
 {
 	return Error();
@@ -92,4 +97,8 @@ String TypeDesc::GetGenericName(TypeDesc *genericDef, std::vector<Value> const &
 	return name;
 }
 
+}
+
+namespace rtti {
+template <> TypeInfo const *Get<alang::TypeDesc>() { return GetBases<alang::TypeDesc, alang::Definition>(); }
 }
