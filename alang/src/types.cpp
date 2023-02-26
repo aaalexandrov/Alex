@@ -99,6 +99,3 @@ String TypeDesc::GetGenericName(TypeDesc *genericDef, std::vector<Value> const &
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::TypeDesc>() { return GetBases<alang::TypeDesc, alang::Definition>(); }
-}

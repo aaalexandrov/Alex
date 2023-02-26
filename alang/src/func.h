@@ -40,7 +40,7 @@ struct FuncExternal : public FuncData {
 }
 
 namespace rtti {
-template <> TypeInfo const *Get<alang::FuncData>();
-template <> TypeInfo const *Get<alang::Func>();
-template <> TypeInfo const *Get<alang::FuncExternal>();
+template <> inline TypeInfo const *Get<alang::FuncData>() { return GetBases<alang::FuncData, alang::Definition>(); }
+template <> inline TypeInfo const *Get<alang::Func>() { return GetBases<alang::Func, alang::FuncData>(); }
+template <> inline TypeInfo const *Get<alang::FuncExternal>() { return GetBases<alang::FuncExternal, alang::FuncData>(); }
 }

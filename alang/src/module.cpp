@@ -40,6 +40,3 @@ Definition *Module::GetDefinition(String name)
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::Module>() { return GetBases<alang::Module, alang::Definition>(); }
-}

@@ -62,8 +62,3 @@ Error FuncExternal::Analyze()
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::FuncData>() { return GetBases<alang::FuncData, alang::Definition>(); }
-template <> TypeInfo const *Get<alang::Func>() { return GetBases<alang::Func, alang::FuncData>(); }
-template <> TypeInfo const *Get<alang::FuncExternal>() { return GetBases<alang::FuncExternal, alang::FuncData>(); }
-}

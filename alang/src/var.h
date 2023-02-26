@@ -20,5 +20,5 @@ struct VarDef : public Definition {
 }
 
 namespace rtti {
-template <> TypeInfo const *Get<alang::VarDef>();
+template <> inline TypeInfo const *Get<alang::VarDef>() { return GetBases<alang::VarDef, alang::Definition>(); }
 }

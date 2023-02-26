@@ -19,6 +19,3 @@ Error VarDef::Analyze()
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::VarDef>() { return GetBases<alang::VarDef, alang::Definition>(); }
-}

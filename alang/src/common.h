@@ -53,6 +53,3 @@ struct Definition: public rtti::Any {
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::Definition>();
-}

@@ -50,6 +50,3 @@ rtti::TypeInfo const *Definition::GetTypeInfo() const
 
 }
 
-namespace rtti {
-template <> TypeInfo const *Get<alang::Definition>() { return GetDefault<alang::Definition>(); }
-}

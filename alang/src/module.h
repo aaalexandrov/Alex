@@ -42,5 +42,5 @@ struct Module : public Definition {
 }
 
 namespace rtti {
-template <> TypeInfo const *Get<alang::Module>();
+template <> inline TypeInfo const *Get<alang::Module>() { return GetBases<alang::Module, alang::Definition>(); }
 }

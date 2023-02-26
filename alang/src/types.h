@@ -56,5 +56,5 @@ struct TypeDesc : public Definition {
 }
 
 namespace rtti {
-template <> TypeInfo const *Get<alang::TypeDesc>();
+template <> inline TypeInfo const *Get<alang::TypeDesc>() { return GetBases<alang::TypeDesc, alang::Definition>(); }
 }
