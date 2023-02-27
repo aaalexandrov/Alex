@@ -18,8 +18,11 @@ struct Compiler {
 
 	Error GetOrCreateModule(std::vector<String> const &qualifiedName, Module *&mod);
 
+	String GetAlangExtension() const { return ".al"; }
+
 	ParseRulesHolder const &_alangRules = AlangRules();
 	std::unordered_map<String, std::unique_ptr<Module>> _modules;
+	std::vector<String> _sourceFolders;
 };
 
 }

@@ -2,12 +2,35 @@
 #include "module.h"
 #include "analyze.h"
 #include "error.h"
+#include <filesystem>
 
 namespace alang {
 
 String Compiler::GetFilePathForModule(std::vector<String> const &qualifiedName)
 {
+	auto checkPath = [&](int numNames) -> String {
+		ASSERT(numNames > 0);
+		for (auto &folder : _sourceFolders) {
+			std::filesystem::path path(folder);
+			String name = qualifiedName[0];
+			for (int i = 1; i < numNames; ++i) {
+				name += ".";
+				name += qualifiedName[i];
+			}
+			name += GetAlangExtension();
+			path.append(name);
+			if (std::filesystem::exists(path))
+				return path.string();
+		}
+		return String();
+	};
 
+	String modPath;
+	for (int numNames = (int)qualifiedName.size(); numNames > 0; --numNames) {
+		String path = checkPath(numNames);
+		if (!path.empty())
+			return path;
+	}
 	return String();
 }
 
@@ -51,6 +74,10 @@ Error Compiler::ScanModule(ParseNode const *mod, Module *parent)
 
 Error Compiler::CompileFile(String filePath)
 {
+	std::filesystem::path path(filePath);
+	path.remove_filename();
+	_sourceFolders.push_back(path.string());
+
 	std::unique_ptr<ParseNode> mod;
 	Error err = ParseFile(filePath, mod);
 	if (err)
@@ -65,6 +92,8 @@ Error Compiler::CompileFile(String filePath)
 		if (err)
 			return err;
 	}
+
+	_sourceFolders.pop_back();
 
 	return Error();
 }
