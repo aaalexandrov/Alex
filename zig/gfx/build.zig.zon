@@ -1,0 +1,18 @@
+.{
+    .name = "mypkg",
+    .version = "0.1.0",
+    .dependencies = .{
+        .mach_glfw = .{
+            .url = "https://github.com/hexops/mach-glfw/archive/49110c5b543b3a1990895d63bcde50ce6b979e14.tar.gz",
+            .hash = "1220747a28abe319187941ea4f89af7623d38cc4634f8b727ee7e25b73b76169be12",
+        },
+        .glfw = .{
+            .url = "https://pkg.machengine.org/glfw/9cdc810bae1bd89fa7273000f21f7fd17c886a9d.tar.gz",
+            .hash = "1220c3ecdec5413142a7ee7ec07ca0d86e4455550145ccf398835fa8bcf8be3df169",
+        },
+        .vulkan_headers = .{
+            .url = "https://pkg.machengine.org/vulkan-headers/778dc5815d2901fc7ac82288c207428e8a74201e.tar.gz",
+            .hash = "12205b5d6d1281995d0d402d2675c8989f2b096035f7216fe039e1a20dd7cf67c447",
+        },
+    },
+}
