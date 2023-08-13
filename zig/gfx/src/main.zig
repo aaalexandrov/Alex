@@ -5,19 +5,6 @@ const rhi = @import("rhi.zig");
 
 const app_name = "gfx";
 
-fn setAll(comptime T: type, v: anytype) T {
-    const fields = std.meta.fields(T);
-
-    var result: T = undefined;
-    inline for (fields) |field| {
-        @field(result, field.name) = if (comptime field.type == @TypeOf(v))
-            v
-        else
-            std.mem.zeroes(field.type);
-    }
-    return result;
-}
-
 pub fn main() !void {
     glfw.setErrorCallback(errorCallback);
 

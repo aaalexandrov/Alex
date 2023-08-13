@@ -3,6 +3,7 @@ const vk = @import("vk.zig");
 const glfw = @import("glfw");
 
 const BaseDispatch = vk.BaseWrapper(.{
+    .enumerateInstanceLayerProperties = true,
     .createInstance = true,
     .getInstanceProcAddr = true,
 });
@@ -57,6 +58,13 @@ pub const Vk = struct {
         self.alloc = alloc;
         self.allocCB = null;
         self.baseFn = try BaseDispatch.load(@as(vk.PfnGetInstanceProcAddr, @ptrCast(&glfw.getInstanceProcAddress)));
+
+        const layers = try self.getInstanceLayers();
+        defer self.alloc.free(layers);
+        for (layers) |layerProps| {
+            std.log.info("{s}, ver{}: {s}", .{ layerProps.layer_name, layerProps.spec_version, layerProps.description });
+        }
+
         const reqExtensions = glfw.getRequiredInstanceExtensions() orelse {
             return error.ExtensionNotPresent;
         };
@@ -180,6 +188,15 @@ pub const Vk = struct {
         return !missingExt;
     }
 
+    fn getInstanceLayers(self: Vk) ![]vk.LayerProperties {
+        var numLayers: u32 = undefined;
+        _ = try self.baseFn.enumerateInstanceLayerProperties(&numLayers, null);
+        var layers = try self.alloc.alloc(vk.LayerProperties, numLayers);
+        errdefer self.alloc.free(layers);
+        _ = try self.baseFn.enumerateInstanceLayerProperties(&numLayers, layers.ptr);
+        return layers;
+    }
+
     fn checkSurfaceSupported(self: Vk, surface: vk.SurfaceKHR, physDevice: vk.PhysicalDevice) !bool {
         var surfaceFormats: u32 = undefined;
         _ = try self.instFn.getPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &surfaceFormats, null);
@@ -206,5 +223,13 @@ pub const Vk = struct {
             .{ .universal = universal.?, .present = present.? }
         else
             error.FeatureNotPresent;
+    }
+
+    fn findMemoryTypeIndex(self: Vk, validTypesMask: u32, flags: vk.MemoryPropertyFlags) !u32 {
+        for (0..self.memProps.memory_type_count) |i| {
+            if ((validTypesMask & (@as(u32, 1) << @truncate(i))) != 0 and self.memProps.memory_types[i].property_flags.contains(flags))
+                return @truncate(i);
+        }
+        return error.OutOfDeviceMemory;
     }
 };
