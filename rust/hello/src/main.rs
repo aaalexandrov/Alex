@@ -6,29 +6,103 @@ use winit::{
 
 use std::sync::Arc;
 
+use bytemuck::Pod;
+
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
     sync::{self, GpuFuture},
     swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo},
     instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
     device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo},
-    memory::allocator::{StandardMemoryAllocator},
+    memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
     command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo},
-    image::{ImageUsage, Image, view::ImageView},
+    image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
         graphics::{
-            viewport::{Viewport,}
-        }
+            viewport::{Viewport, ViewportState,}, GraphicsPipelineCreateInfo, vertex_input::VertexInputState, input_assembly::{InputAssemblyState, PrimitiveTopology}, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState, subpass::PipelineRenderingCreateInfo
+        }, Pipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline, compute::ComputePipelineCreateInfo, PipelineLayout, PipelineBindPoint, GraphicsPipeline, PartialStateMode
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents}, format::Format, 
 };
+
+mod cs {
+    vulkano_shaders::shader! {
+        ty: "compute",
+        src: r"
+            #version 450
+            
+            layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+            
+            layout(set = 0, binding = 0) uniform Data {
+                vec4 pix_value;
+            };
+            
+            layout(set = 0, binding = 1, rgba8) uniform image2D Output;
+            
+            void main() {
+                ivec2 pixCoord = ivec2(gl_GlobalInvocationID.xy);
+
+                ivec2 sq = (pixCoord / 16);
+                float w = (sq.x + sq.y) % 2;
+
+                imageStore(Output, pixCoord, pix_value * w);
+            }
+        ",
+    }
+}
+
+mod vs {
+    vulkano_shaders::shader! {
+        ty: "vertex",
+        src: r"
+            #version 450
+
+            layout(location = 0) out vec2 tc;
+
+            void main() {
+                tc = vec2(
+                    gl_VertexIndex % 2,
+                    gl_VertexIndex / 2
+                );
+                gl_Position = vec4(
+                    mix(-1, 1, tc.x),
+                    mix(-1, 1, tc.y),
+                    0,
+                    1
+                );
+            }
+        ",
+    }
+}
+
+mod fs {
+    vulkano_shaders::shader! {
+        ty: "fragment",
+        src: r"
+            #version 450
+
+            layout(location = 0) in vec2 tc;
+            layout(location = 0) out vec4 color;
+
+            layout (set = 0, binding = 0) uniform sampler samp;
+            layout (set = 0, binding = 1) uniform texture2D tex;
+            
+            void main() {
+                color = texture(sampler2D(tex, samp), tc);
+            }
+        ",
+    }
+}
 
 fn main() {
     let event_loop = EventLoop::new();
 
     let library = VulkanLibrary::new().unwrap();
 
-    let surface_extensions = Surface::required_extensions(&event_loop);
+    let surface_extensions = vulkano::instance::InstanceExtensions {
+        //ext_swapchain_colorspace = true,
+        ..Surface::required_extensions(&event_loop)
+    };
 
     let instance = Instance::new(
         library,
@@ -72,6 +146,31 @@ fn main() {
 
     let queue = queues.next().unwrap();
 
+    let memory_allocator = StandardMemoryAllocator::new_default(device.clone());
+
+    // for (fmt, clr_space) in device.physical_device().surface_formats(&surface, Default::default()).unwrap() {
+    //     println!("Surface format {fmt:?}, colorspace {clr_space:?}");
+    // }
+
+    #[repr(C)]
+    #[derive(BufferContents)]
+    struct DataBuffer {
+        pix_value: [f32; 4],
+    }
+
+    let data_buffer = Buffer::from_data(
+        &memory_allocator,
+        BufferCreateInfo{
+            usage: BufferUsage::UNIFORM_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        DataBuffer{pix_value:[1.0, 1.0, 0.0, 1.0]}
+    ).unwrap();
+
     let (mut swapchain, mut swapchain_images) = {
         let surface_caps = device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
         let image_format = device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
@@ -82,13 +181,16 @@ fn main() {
                 min_image_count: surface_caps.min_image_count.max(2), 
                 image_format, 
                 image_extent: window.inner_size().into(), 
-                image_usage: ImageUsage::COLOR_ATTACHMENT, 
+                image_usage: ImageUsage::COLOR_ATTACHMENT | ImageUsage::STORAGE, 
                 composite_alpha: surface_caps.supported_composite_alpha.into_iter().next().unwrap(), 
                 ..Default::default() }
         ).unwrap()
     };
 
-    let allocator = StandardMemoryAllocator::new_default(device.clone());
+    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
+
+    let compute_pipeline = load_compute_pipeline(device.clone(), cs::load(device.clone()).unwrap());
+    let graphics_pipeline = load_graphics_pipeline(device.clone(), vs::load(device.clone()).unwrap(), fs::load(device.clone()).unwrap(), &[swapchain_images[0].format()]);
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -97,12 +199,50 @@ fn main() {
     };
 
     let mut swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport);
+    
+    let sampler_linear = Sampler::new(
+        device.clone(),
+        SamplerCreateInfo {
+            mag_filter: Filter::Linear,
+            min_filter: Filter::Linear,
+            mipmap_mode: SamplerMipmapMode::Linear,
+            ..SamplerCreateInfo::default()
+        }
+    ).unwrap();
+    let mut storage_image = create_storage_image(&memory_allocator, [1024, 768, 1]);
+    let mut storage_image_view = ImageView::new(
+        storage_image.clone(), 
+        ImageViewCreateInfo {
+            usage: ImageUsage::STORAGE,
+            ..ImageViewCreateInfo::from_image(&storage_image)
+        }).unwrap();
+    let mut storage_image_view_sampled = ImageView::new(
+        storage_image.clone(), 
+        ImageViewCreateInfo {
+            usage: ImageUsage::SAMPLED,
+            ..ImageViewCreateInfo::from_image(&storage_image)
+        }).unwrap();
+    let mut compute_descriptor_set = PersistentDescriptorSet::new(
+        &descriptor_set_allocator,
+        compute_pipeline.layout().set_layouts()[0].clone(),
+        [WriteDescriptorSet::buffer(0, data_buffer),
+        WriteDescriptorSet::image_view(1, storage_image_view),],
+        []
+    ).unwrap();
+    let mut graphics_descriptor_set = PersistentDescriptorSet::new(
+        &descriptor_set_allocator,
+        graphics_pipeline.layout().set_layouts()[0].clone(),
+        [WriteDescriptorSet::sampler(0, sampler_linear),
+        WriteDescriptorSet::image_view(1, storage_image_view_sampled),],
+        []
+    ).unwrap();
 
     let cmd_buffer_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
 
     let mut recreate_swapchain = false;
 
     let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
+
 
     event_loop.run(move |event, _, control_flow| {
         control_flow.set_wait();
@@ -128,6 +268,7 @@ fn main() {
                     swapchain = new_swapchain;
                     swapchain_images = new_images;
                     swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport);
+                    viewport.extent = [window_extent[0] as f32, window_extent[1] as f32];
                     recreate_swapchain = false;
                 }
                 let (image_index, suboptimal, acquire_future) = 
@@ -145,6 +286,10 @@ fn main() {
 
                 let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
                 cmd_builder
+                    .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
+                    .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
+                    .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
+
                     .begin_rendering(vulkano::command_buffer::RenderingInfo { color_attachments: vec![Some(RenderingAttachmentInfo{
                         load_op: AttachmentLoadOp::Clear,
                         store_op: AttachmentStoreOp::Store,
@@ -152,7 +297,13 @@ fn main() {
                         ..RenderingAttachmentInfo::image_view(swapchain_image_views[image_index as usize].clone())
                         })], ..Default::default() }).unwrap()
 
-                    // real rendering goes here
+                    .bind_pipeline_graphics(graphics_pipeline.clone()).unwrap()
+                    .set_viewport(
+                        0, 
+                        [viewport.clone()].into_iter().collect()
+                    ).unwrap()
+                    .bind_descriptor_sets(PipelineBindPoint::Graphics, graphics_pipeline.layout().clone(), 0, graphics_descriptor_set.clone()).unwrap()
+                    .draw(4, 1, 0, 0).unwrap()
 
                     .end_rendering().unwrap();
 
@@ -183,6 +334,10 @@ fn main() {
     })
 }
 
+fn div_ceil(num: u32, denom: u32) -> u32 {
+    (num + denom - 1) / denom
+}
+
 fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport) -> Vec<Arc<ImageView>> {
     let extent = images[0].extent();
     viewport.extent = [extent[0] as f32, extent[1] as f32];
@@ -192,4 +347,68 @@ fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport) -> Vec<
         .map(
             |image| ImageView::new_default(image.clone()).unwrap())
         .collect::<Vec<_>>()
+}
+
+fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u32; 3]) -> Arc<Image> {
+    Image::new(
+        mem_alloc,
+        ImageCreateInfo {
+            format: Format::R8G8B8A8_UNORM,
+            extent,
+            usage: ImageUsage::STORAGE | ImageUsage::SAMPLED,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            .. Default::default()
+        }
+    ).unwrap()
+}
+
+fn load_compute_pipeline(device: Arc<Device>, shader_module: Arc<ShaderModule>) -> Arc<ComputePipeline> {
+    let cs = shader_module.entry_point("main").unwrap();
+    let stage = PipelineShaderStageCreateInfo::new(cs);
+    let layout = PipelineLayout::new(
+        device.clone(),
+        PipelineDescriptorSetLayoutCreateInfo::from_stages([&stage]).into_pipeline_layout_create_info(device.clone()).unwrap())
+        .unwrap();
+    ComputePipeline::new(device, None, ComputePipelineCreateInfo::stage_layout(stage, layout)).unwrap()
+}
+
+fn load_graphics_pipeline(device: Arc<Device>, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> {
+    let vs = vs_module.entry_point("main").unwrap();
+    let fs = fs_module.entry_point("main").unwrap();
+    let stages = [
+        PipelineShaderStageCreateInfo::new(vs),
+        PipelineShaderStageCreateInfo::new(fs),
+    ];
+    let layout = PipelineLayout::new(
+        device.clone(),
+        PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
+            .into_pipeline_layout_create_info(device.clone())
+            .unwrap()
+    ).unwrap();
+
+    let subpass = PipelineRenderingCreateInfo{
+        color_attachment_formats: attachment_formats.iter().map(|f| Some(*f)).collect(),
+        ..Default::default()
+    };
+
+    GraphicsPipeline::new(
+        device,
+        None,
+        GraphicsPipelineCreateInfo {
+            stages: stages.into_iter().collect(),
+            vertex_input_state: Some(VertexInputState::default()),
+            input_assembly_state: Some(InputAssemblyState {
+                topology: PartialStateMode::Fixed(PrimitiveTopology::TriangleStrip),
+                ..InputAssemblyState::default()
+            }),
+            viewport_state: Some(ViewportState::viewport_dynamic_scissor_irrelevant()),
+            rasterization_state: Some(RasterizationState::default()),
+            multisample_state: Some(MultisampleState::default()),
+            color_blend_state: Some(ColorBlendState::new(attachment_formats.len() as u32)),
+            subpass: Some(subpass.into()),
+            ..GraphicsPipelineCreateInfo::layout(layout)
+        },
+    ).unwrap()
 }
