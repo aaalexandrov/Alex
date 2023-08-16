@@ -6,8 +6,6 @@ use winit::{
 
 use std::sync::Arc;
 
-use bytemuck::Pod;
-
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
     sync::{self, GpuFuture},
@@ -28,69 +26,21 @@ use vulkano::{
 mod cs {
     vulkano_shaders::shader! {
         ty: "compute",
-        src: r"
-            #version 450
-            
-            layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-            
-            layout(set = 0, binding = 0) uniform Data {
-                vec4 pix_value;
-            };
-            
-            layout(set = 0, binding = 1, rgba8) uniform image2D Output;
-            
-            void main() {
-                ivec2 pixCoord = ivec2(gl_GlobalInvocationID.xy);
-
-                ivec2 sq = (pixCoord / 16);
-                float w = (sq.x + sq.y) % 2;
-
-                imageStore(Output, pixCoord, pix_value * w);
-            }
-        ",
+        path: "src/gen.comp",
     }
 }
 
 mod vs {
     vulkano_shaders::shader! {
         ty: "vertex",
-        src: r"
-            #version 450
-
-            layout(location = 0) out vec2 tc;
-
-            void main() {
-                tc = vec2(
-                    gl_VertexIndex % 2,
-                    gl_VertexIndex / 2
-                );
-                gl_Position = vec4(
-                    mix(-1, 1, tc.x),
-                    mix(-1, 1, tc.y),
-                    0,
-                    1
-                );
-            }
-        ",
+        path: "src/fullscreen.vert",
     }
 }
 
 mod fs {
     vulkano_shaders::shader! {
         ty: "fragment",
-        src: r"
-            #version 450
-
-            layout(location = 0) in vec2 tc;
-            layout(location = 0) out vec4 color;
-
-            layout (set = 0, binding = 0) uniform sampler samp;
-            layout (set = 0, binding = 1) uniform texture2D tex;
-            
-            void main() {
-                color = texture(sampler2D(tex, samp), tc);
-            }
-        ",
+        path: "src/fullscreen.frag",
     }
 }
 
