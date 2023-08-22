@@ -1,10 +1,10 @@
 use winit::{
-    event::{Event, WindowEvent},
+    event::{Event, WindowEvent, KeyboardInput, ElementState, VirtualKeyCode},
     event_loop::EventLoop,
     window::WindowBuilder,
 };
 
-use std::sync::Arc;
+use std::{sync::Arc, ops::DerefMut};
 
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
@@ -13,15 +13,22 @@ use vulkano::{
     instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
     device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo},
     memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
-    command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo},
+    command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
         graphics::{
             viewport::{Viewport, ViewportState,}, GraphicsPipelineCreateInfo, vertex_input::VertexInputState, input_assembly::{InputAssemblyState, PrimitiveTopology}, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState, subpass::PipelineRenderingCreateInfo
         }, Pipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline, compute::ComputePipelineCreateInfo, PipelineLayout, PipelineBindPoint, GraphicsPipeline, PartialStateMode
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents}, format::Format, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, 
 };
+
+use glam::{Mat4, Vec3, Quat};
+
+mod cam;
+use cam::Camera;
+
+use std::f32::consts::PI;
 
 mod cs {
     vulkano_shaders::shader! {
@@ -42,6 +49,13 @@ mod fs {
         ty: "fragment",
         path: "src/fullscreen.frag",
     }
+}
+
+#[repr(C)]
+#[derive(BufferContents)]
+struct UniformBuffer {
+    view_proj: [f32; 16],
+    pix_value: [f32; 4],
 }
 
 fn main() {
@@ -102,23 +116,23 @@ fn main() {
     //     println!("Surface format {fmt:?}, colorspace {clr_space:?}");
     // }
 
-    #[repr(C)]
-    #[derive(BufferContents)]
-    struct DataBuffer {
-        pix_value: [f32; 4],
-    }
+    let mut camera = Camera{
+        transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)), 
+        //projection: Mat4::perspective_lh(PI / 3.0, 800.0 / 600.0, 0.1, 100.0)
+        projection: Mat4::IDENTITY,
+    };
 
-    let data_buffer = Buffer::from_data(
+    let uniform_buffer = Buffer::new_slice::<UniformBuffer>(
         &memory_allocator,
         BufferCreateInfo{
-            usage: BufferUsage::UNIFORM_BUFFER,
+            usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
         },
         AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
             ..Default::default()
         },
-        DataBuffer{pix_value:[1.0, 1.0, 0.0, 1.0]}
+        1
     ).unwrap();
 
     let (mut swapchain, mut swapchain_images) = {
@@ -148,7 +162,7 @@ fn main() {
         depth_range: 0.0..=1.0,
     };
 
-    let mut swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport);
+    let mut swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
     
     let sampler_linear = Sampler::new(
         device.clone(),
@@ -175,7 +189,7 @@ fn main() {
     let mut compute_descriptor_set = PersistentDescriptorSet::new(
         &descriptor_set_allocator,
         compute_pipeline.layout().set_layouts()[0].clone(),
-        [WriteDescriptorSet::buffer(0, data_buffer),
+        [WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
         WriteDescriptorSet::image_view(1, storage_image_view),],
         []
     ).unwrap();
@@ -205,6 +219,33 @@ fn main() {
                 event: WindowEvent::Resized(_),
                 ..
             } => { recreate_swapchain = true; },
+            Event::WindowEvent{
+                event: WindowEvent::KeyboardInput { device_id: _, input: KeyboardInput{ scancode: _, state: ElementState::Pressed, virtual_keycode: Some(vk), modifiers: _}, is_synthetic: _ },
+                window_id,
+            } if window_id == window.id() => {
+                let dpos = 0.2 as f32;
+                let drot = PI / 90.0;
+                let mut delta_pos = Vec3::ZERO;
+                let mut delta_rot = Quat::IDENTITY;
+                match vk {
+                    VirtualKeyCode::A => { delta_pos.x -= dpos; },
+                    VirtualKeyCode::D => { delta_pos.x += dpos; },
+                    VirtualKeyCode::R => { delta_pos.y -= dpos; },
+                    VirtualKeyCode::F => { delta_pos.y += dpos; },
+                    VirtualKeyCode::W => { delta_pos.z += dpos; },
+                    VirtualKeyCode::S => { delta_pos.z -= dpos; },
+
+                    VirtualKeyCode::Q => { delta_rot *= Quat::from_axis_angle(Vec3::Y, -drot); }
+                    VirtualKeyCode::E => { delta_rot *= Quat::from_axis_angle(Vec3::Y, drot); }
+                    VirtualKeyCode::T => { delta_rot *= Quat::from_axis_angle(Vec3::X, drot); }
+                    VirtualKeyCode::G => { delta_rot *= Quat::from_axis_angle(Vec3::X, -drot); }
+                    VirtualKeyCode::Z => { delta_rot *= Quat::from_axis_angle(Vec3::Z, -drot); }
+                    VirtualKeyCode::C => { delta_rot *= Quat::from_axis_angle(Vec3::Z, drot); }
+
+                    _ => {}
+                }
+                camera.modify_transform(delta_pos, delta_rot);
+            },
             Event::RedrawEventsCleared => {
                 let window_extent: [u32; 2] = window.inner_size().into();
                 if window_extent.contains(&0) {
@@ -217,7 +258,7 @@ fn main() {
                         .expect("Failed to recreate swapchain");
                     swapchain = new_swapchain;
                     swapchain_images = new_images;
-                    swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport);
+                    swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
                     viewport.extent = [window_extent[0] as f32, window_extent[1] as f32];
                     recreate_swapchain = false;
                 }
@@ -236,6 +277,7 @@ fn main() {
 
                 let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
                 cmd_builder
+                    .copy_buffer(CopyBufferInfo::buffers(get_staging_uniform(&memory_allocator, &camera), uniform_buffer.clone())).unwrap()
                     .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
                     .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
                     .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -288,9 +330,11 @@ fn div_ceil(num: u32, denom: u32) -> u32 {
     (num + denom - 1) / denom
 }
 
-fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport) -> Vec<Arc<ImageView>> {
+fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport, camera: &mut Camera) -> Vec<Arc<ImageView>> {
     let extent = images[0].extent();
     viewport.extent = [extent[0] as f32, extent[1] as f32];
+
+    camera.projection = Mat4::perspective_lh(PI / 3.0, viewport.extent[0] / viewport.extent[1], 0.1, 100.0);
 
     images
         .iter()
@@ -360,5 +404,20 @@ fn load_graphics_pipeline(device: Arc<Device>, vs_module: Arc<ShaderModule>, fs_
             subpass: Some(subpass.into()),
             ..GraphicsPipelineCreateInfo::layout(layout)
         },
+    ).unwrap()
+}
+
+fn get_staging_uniform(mem_alloc: &(impl MemoryAllocator + ?Sized), camera: &Camera) -> Subbuffer<UniformBuffer> {
+    Buffer::from_data(
+        mem_alloc,
+        BufferCreateInfo{
+            usage: BufferUsage::TRANSFER_SRC,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        UniformBuffer{view_proj: camera.view_proj().to_cols_array(), pix_value:[1.0, 1.0, 0.0, 1.0]}
     ).unwrap()
 }
