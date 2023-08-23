@@ -1,10 +1,10 @@
 use winit::{
-    event::{Event, WindowEvent, KeyboardInput, ElementState, VirtualKeyCode},
+    event::{Event, WindowEvent, KeyboardInput, ElementState, VirtualKeyCode, ModifiersState},
     event_loop::EventLoop,
     window::WindowBuilder,
 };
 
-use std::{sync::Arc, ops::DerefMut};
+use std::{sync::Arc};
 
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
@@ -27,6 +27,9 @@ use glam::{Mat4, Vec3, Quat};
 
 mod cam;
 use cam::Camera;
+
+mod model;
+use model::Model;
 
 use std::f32::consts::PI;
 
@@ -56,6 +59,8 @@ mod fs {
 struct UniformBuffer {
     view_proj: [f32; 16],
     pix_value: [f32; 4],
+    num_tri_indices: u32,
+    num_vertices: u32,
 }
 
 fn main() {
@@ -118,9 +123,10 @@ fn main() {
 
     let mut camera = Camera{
         transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)), 
-        //projection: Mat4::perspective_lh(PI / 3.0, 800.0 / 600.0, 0.1, 100.0)
         projection: Mat4::IDENTITY,
     };
+
+    let model = Model::load_obj("data/magnolia.obj", 0);
 
     let uniform_buffer = Buffer::new_slice::<UniformBuffer>(
         &memory_allocator,
@@ -133,6 +139,32 @@ fn main() {
             ..Default::default()
         },
         1
+    ).unwrap();
+
+    let vertices_buffer = Buffer::new_slice::<f32>(
+        &memory_allocator,
+        BufferCreateInfo{
+            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+            ..Default::default()
+        },
+        model.vertices.len() as u64
+    ).unwrap();
+
+    let triangles_buffer = Buffer::new_slice::<u32>(
+        &memory_allocator,
+        BufferCreateInfo{
+            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+            ..Default::default()
+        },
+        model.triangles.len() as u64
     ).unwrap();
 
     let (mut swapchain, mut swapchain_images) = {
@@ -186,27 +218,63 @@ fn main() {
             usage: ImageUsage::SAMPLED,
             ..ImageViewCreateInfo::from_image(&storage_image)
         }).unwrap();
-    let mut compute_descriptor_set = PersistentDescriptorSet::new(
+    let compute_descriptor_set = PersistentDescriptorSet::new(
         &descriptor_set_allocator,
         compute_pipeline.layout().set_layouts()[0].clone(),
-        [WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
-        WriteDescriptorSet::image_view(1, storage_image_view),],
+        [
+            WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
+            WriteDescriptorSet::image_view(1, storage_image_view),
+            WriteDescriptorSet::buffer(2, vertices_buffer.clone()),
+            WriteDescriptorSet::buffer(3, triangles_buffer.clone()),],
         []
     ).unwrap();
-    let mut graphics_descriptor_set = PersistentDescriptorSet::new(
+    let graphics_descriptor_set = PersistentDescriptorSet::new(
         &descriptor_set_allocator,
         graphics_pipeline.layout().set_layouts()[0].clone(),
-        [WriteDescriptorSet::sampler(0, sampler_linear),
-        WriteDescriptorSet::image_view(1, storage_image_view_sampled),],
+        [
+            WriteDescriptorSet::sampler(0, sampler_linear),
+            WriteDescriptorSet::image_view(1, storage_image_view_sampled),],
         []
     ).unwrap();
 
     let cmd_buffer_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
 
+    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+    upload_builder
+        .copy_buffer(CopyBufferInfo::buffers(
+            Buffer::from_iter(
+                &memory_allocator,
+                BufferCreateInfo{
+                    usage: BufferUsage::TRANSFER_SRC,
+                    ..Default::default()
+                },
+                AllocationCreateInfo{
+                    memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                    ..Default::default()
+                },
+                model.vertices.clone()).unwrap(), 
+            vertices_buffer.clone())).unwrap()
+        .copy_buffer(CopyBufferInfo::buffers(
+            Buffer::from_iter(
+                &memory_allocator,
+                BufferCreateInfo{
+                    usage: BufferUsage::TRANSFER_SRC,
+                    ..Default::default()
+                },
+                AllocationCreateInfo{
+                    memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                    ..Default::default()
+                },
+                model.triangles.clone()).unwrap(), 
+            triangles_buffer.clone())).unwrap();
+
+    let upload_buffer = upload_builder.build().unwrap();
+
+    let mut previous_frame_end: Option<Box<dyn GpuFuture>> = Some(sync::now(device.clone()).boxed()
+            .then_execute(queue.clone(), upload_buffer).unwrap()
+            .then_signal_fence_and_flush().unwrap().boxed());
+
     let mut recreate_swapchain = false;
-
-    let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
-
 
     event_loop.run(move |event, _, control_flow| {
         control_flow.set_wait();
@@ -220,11 +288,17 @@ fn main() {
                 ..
             } => { recreate_swapchain = true; },
             Event::WindowEvent{
-                event: WindowEvent::KeyboardInput { device_id: _, input: KeyboardInput{ scancode: _, state: ElementState::Pressed, virtual_keycode: Some(vk), modifiers: _}, is_synthetic: _ },
+                event: WindowEvent::KeyboardInput { device_id: _, input: KeyboardInput{ scancode: _, state: ElementState::Pressed, virtual_keycode: Some(vk), modifiers}, is_synthetic: _ },
                 window_id,
             } if window_id == window.id() => {
-                let dpos = 0.2 as f32;
-                let drot = PI / 90.0;
+                let mut dpos = 0.2 as f32;
+                let mut drot = PI / 90.0;
+
+                if modifiers.contains(ModifiersState::SHIFT) {
+                    dpos *= 10.0;
+                    drot *= 3.0;
+                }
+
                 let mut delta_pos = Vec3::ZERO;
                 let mut delta_rot = Quat::IDENTITY;
                 match vk {
@@ -244,7 +318,7 @@ fn main() {
 
                     _ => {}
                 }
-                camera.modify_transform(delta_pos, delta_rot);
+                camera.modify_transform(camera.transform.transform_vector3(delta_pos), delta_rot);
             },
             Event::RedrawEventsCleared => {
                 let window_extent: [u32; 2] = window.inner_size().into();
@@ -277,7 +351,7 @@ fn main() {
 
                 let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
                 cmd_builder
-                    .copy_buffer(CopyBufferInfo::buffers(get_staging_uniform(&memory_allocator, &camera), uniform_buffer.clone())).unwrap()
+                    .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&memory_allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
                     .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
                     .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
                     .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -407,7 +481,16 @@ fn load_graphics_pipeline(device: Arc<Device>, vs_module: Arc<ShaderModule>, fs_
     ).unwrap()
 }
 
-fn get_staging_uniform(mem_alloc: &(impl MemoryAllocator + ?Sized), camera: &Camera) -> Subbuffer<UniformBuffer> {
+fn get_uniform_contents(camera: &Camera, model: &Model) -> UniformBuffer {
+    UniformBuffer{
+        view_proj: camera.view_proj().to_cols_array(), 
+        pix_value:[1.0, 1.0, 0.0, 1.0],
+        num_tri_indices: model.triangles.len() as u32,
+        num_vertices: model.vertices.len() as u32,
+    }
+}
+
+fn get_staging_buffer<T: BufferContents>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: T) -> Subbuffer<T> {
     Buffer::from_data(
         mem_alloc,
         BufferCreateInfo{
@@ -418,6 +501,6 @@ fn get_staging_uniform(mem_alloc: &(impl MemoryAllocator + ?Sized), camera: &Cam
             memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
-        UniformBuffer{view_proj: camera.view_proj().to_cols_array(), pix_value:[1.0, 1.0, 0.0, 1.0]}
+        data,
     ).unwrap()
 }
