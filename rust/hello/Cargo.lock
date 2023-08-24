@@ -343,6 +343,9 @@ name = "glam"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42218cb640844e3872cc3c153dc975229e080a6c4733b34709ef445610550226"
+dependencies = [
+ "bytemuck",
+]
 
 [[package]]
 name = "half"
@@ -377,6 +380,7 @@ dependencies = [
  "vulkano",
  "vulkano-shaders",
  "winit",
+ "winit_input_helper",
 ]
 
 [[package]]
@@ -1483,6 +1487,15 @@ dependencies = [
  "web-sys",
  "windows-sys 0.45.0",
  "x11-dl",
+]
+
+[[package]]
+name = "winit_input_helper"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de0485e86aa2ee87d2d4c373a908c9548357bc65c5bce19fd884c8ea9eac4d7"
+dependencies = [
+ "winit",
 ]
 
 [[package]]

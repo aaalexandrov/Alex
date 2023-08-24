@@ -4,6 +4,8 @@ use winit::{
     window::WindowBuilder,
 };
 
+use winit_input_helper::WinitInputHelper;
+
 use std::{sync::Arc};
 
 use vulkano::{
@@ -20,10 +22,12 @@ use vulkano::{
             viewport::{Viewport, ViewportState,}, GraphicsPipelineCreateInfo, vertex_input::VertexInputState, input_assembly::{InputAssemblyState, PrimitiveTopology}, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState, subpass::PipelineRenderingCreateInfo
         }, Pipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline, compute::ComputePipelineCreateInfo, PipelineLayout, PipelineBindPoint, GraphicsPipeline, PartialStateMode
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, 
 };
 
 use glam::{Mat4, Vec3, Quat};
+
+mod geom;
 
 mod cam;
 use cam::Camera;
@@ -64,6 +68,9 @@ struct UniformBuffer {
 }
 
 fn main() {
+    //println!("Vec3 align: {}, size: {}", std::mem::align_of::<Vec3>(), std::mem::size_of::<Vec3>());
+
+    let mut input = WinitInputHelper::new();
     let event_loop = EventLoop::new();
 
     let library = VulkanLibrary::new().unwrap();
@@ -126,7 +133,7 @@ fn main() {
         projection: Mat4::IDENTITY,
     };
 
-    let model = Model::load_obj("data/magnolia.obj", 0);
+    let model = Model::load_obj("data/magnolia.obj", usize::MAX);
 
     let uniform_buffer = Buffer::new_slice::<UniformBuffer>(
         &memory_allocator,
@@ -151,7 +158,7 @@ fn main() {
             memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
             ..Default::default()
         },
-        model.vertices.len() as u64
+        model.vertices.len() as DeviceSize
     ).unwrap();
 
     let triangles_buffer = Buffer::new_slice::<u32>(
@@ -164,7 +171,7 @@ fn main() {
             memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
             ..Default::default()
         },
-        model.triangles.len() as u64
+        model.triangles.len() as DeviceSize
     ).unwrap();
 
     let (mut swapchain, mut swapchain_images) = {
@@ -242,30 +249,10 @@ fn main() {
     let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
     upload_builder
         .copy_buffer(CopyBufferInfo::buffers(
-            Buffer::from_iter(
-                &memory_allocator,
-                BufferCreateInfo{
-                    usage: BufferUsage::TRANSFER_SRC,
-                    ..Default::default()
-                },
-                AllocationCreateInfo{
-                    memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                    ..Default::default()
-                },
-                model.vertices.clone()).unwrap(), 
+            get_staging_slice(&memory_allocator, model.vertices.as_slice()), 
             vertices_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            Buffer::from_iter(
-                &memory_allocator,
-                BufferCreateInfo{
-                    usage: BufferUsage::TRANSFER_SRC,
-                    ..Default::default()
-                },
-                AllocationCreateInfo{
-                    memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-                    ..Default::default()
-                },
-                model.triangles.clone()).unwrap(), 
+            get_staging_slice(&memory_allocator, model.triangles.as_slice()), 
             triangles_buffer.clone())).unwrap();
 
     let upload_buffer = upload_builder.build().unwrap();
@@ -277,125 +264,90 @@ fn main() {
     let mut recreate_swapchain = false;
 
     event_loop.run(move |event, _, control_flow| {
-        control_flow.set_wait();
-        match event {
-            Event::WindowEvent{
-                event: WindowEvent::CloseRequested,
-                window_id,
-            } if window_id == window.id() => control_flow.set_exit(),
-            Event::WindowEvent{
-                event: WindowEvent::Resized(_),
-                ..
-            } => { recreate_swapchain = true; },
-            Event::WindowEvent{
-                event: WindowEvent::KeyboardInput { device_id: _, input: KeyboardInput{ scancode: _, state: ElementState::Pressed, virtual_keycode: Some(vk), modifiers}, is_synthetic: _ },
-                window_id,
-            } if window_id == window.id() => {
-                let mut dpos = 0.2 as f32;
-                let mut drot = PI / 90.0;
+        if !input.update(&event) {
+            return;
+        }
 
-                if modifiers.contains(ModifiersState::SHIFT) {
-                    dpos *= 10.0;
-                    drot *= 3.0;
-                }
+        if input.close_requested() || input.destroyed() {
+            control_flow.set_exit();
+            return;
+        }
 
-                let mut delta_pos = Vec3::ZERO;
-                let mut delta_rot = Quat::IDENTITY;
-                match vk {
-                    VirtualKeyCode::A => { delta_pos.x -= dpos; },
-                    VirtualKeyCode::D => { delta_pos.x += dpos; },
-                    VirtualKeyCode::R => { delta_pos.y -= dpos; },
-                    VirtualKeyCode::F => { delta_pos.y += dpos; },
-                    VirtualKeyCode::W => { delta_pos.z += dpos; },
-                    VirtualKeyCode::S => { delta_pos.z -= dpos; },
+        process_camera_input(&mut input, &mut camera);
 
-                    VirtualKeyCode::Q => { delta_rot *= Quat::from_axis_angle(Vec3::Y, -drot); }
-                    VirtualKeyCode::E => { delta_rot *= Quat::from_axis_angle(Vec3::Y, drot); }
-                    VirtualKeyCode::T => { delta_rot *= Quat::from_axis_angle(Vec3::X, drot); }
-                    VirtualKeyCode::G => { delta_rot *= Quat::from_axis_angle(Vec3::X, -drot); }
-                    VirtualKeyCode::Z => { delta_rot *= Quat::from_axis_angle(Vec3::Z, -drot); }
-                    VirtualKeyCode::C => { delta_rot *= Quat::from_axis_angle(Vec3::Z, drot); }
-
-                    _ => {}
-                }
-                camera.modify_transform(camera.transform.transform_vector3(delta_pos), delta_rot);
-            },
-            Event::RedrawEventsCleared => {
-                let window_extent: [u32; 2] = window.inner_size().into();
-                if window_extent.contains(&0) {
-                    // don't draw on empty window
-                    return;
-                }
-                previous_frame_end.as_mut().unwrap().cleanup_finished();
-                if recreate_swapchain {
-                    let (new_swapchain, new_images) = swapchain.recreate(SwapchainCreateInfo { image_extent: window_extent, ..swapchain.create_info() })
-                        .expect("Failed to recreate swapchain");
-                    swapchain = new_swapchain;
-                    swapchain_images = new_images;
-                    swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
-                    viewport.extent = [window_extent[0] as f32, window_extent[1] as f32];
-                    recreate_swapchain = false;
-                }
-                let (image_index, suboptimal, acquire_future) = 
-                    match acquire_next_image(swapchain.clone(), None).map_err(Validated::unwrap) {
-                        Ok(r) => r,
-                        Err(VulkanError::OutOfDate) => {
-                            recreate_swapchain = true;
-                            return;
-                        },
-                        Err(e) => panic!("Failed to acquire swapchain image {e}"),
-                    };
-                if suboptimal {
+        // render
+        let window_extent: [u32; 2] = window.inner_size().into();
+        if window_extent.contains(&0) {
+            // don't draw on empty window
+            return;
+        }
+        previous_frame_end.as_mut().unwrap().cleanup_finished();
+        if recreate_swapchain {
+            let (new_swapchain, new_images) = swapchain.recreate(SwapchainCreateInfo { image_extent: window_extent, ..swapchain.create_info() })
+                .expect("Failed to recreate swapchain");
+            swapchain = new_swapchain;
+            swapchain_images = new_images;
+            swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
+            viewport.extent = [window_extent[0] as f32, window_extent[1] as f32];
+            recreate_swapchain = false;
+        }
+        let (image_index, suboptimal, acquire_future) = 
+            match acquire_next_image(swapchain.clone(), None).map_err(Validated::unwrap) {
+                Ok(r) => r,
+                Err(VulkanError::OutOfDate) => {
                     recreate_swapchain = true;
-                }
+                    return;
+                },
+                Err(e) => panic!("Failed to acquire swapchain image {e}"),
+            };
+        if suboptimal {
+            recreate_swapchain = true;
+        }
 
-                let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
-                cmd_builder
-                    .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&memory_allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
-                    .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
-                    .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
-                    .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
+        let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+        cmd_builder
+            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&memory_allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
+            .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
+            .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
+            .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
 
-                    .begin_rendering(vulkano::command_buffer::RenderingInfo { color_attachments: vec![Some(RenderingAttachmentInfo{
-                        load_op: AttachmentLoadOp::Clear,
-                        store_op: AttachmentStoreOp::Store,
-                        clear_value: Some([0.0, 0.0, 1.0, 1.0].into()),
-                        ..RenderingAttachmentInfo::image_view(swapchain_image_views[image_index as usize].clone())
-                        })], ..Default::default() }).unwrap()
+            .begin_rendering(vulkano::command_buffer::RenderingInfo { color_attachments: vec![Some(RenderingAttachmentInfo{
+                load_op: AttachmentLoadOp::Clear,
+                store_op: AttachmentStoreOp::Store,
+                clear_value: Some([0.0, 0.0, 1.0, 1.0].into()),
+                ..RenderingAttachmentInfo::image_view(swapchain_image_views[image_index as usize].clone())
+                })], ..Default::default() }).unwrap()
 
-                    .bind_pipeline_graphics(graphics_pipeline.clone()).unwrap()
-                    .set_viewport(
-                        0, 
-                        [viewport.clone()].into_iter().collect()
-                    ).unwrap()
-                    .bind_descriptor_sets(PipelineBindPoint::Graphics, graphics_pipeline.layout().clone(), 0, graphics_descriptor_set.clone()).unwrap()
-                    .draw(4, 1, 0, 0).unwrap()
+            .bind_pipeline_graphics(graphics_pipeline.clone()).unwrap()
+            .set_viewport(
+                0, 
+                [viewport.clone()].into_iter().collect()
+            ).unwrap()
+            .bind_descriptor_sets(PipelineBindPoint::Graphics, graphics_pipeline.layout().clone(), 0, graphics_descriptor_set.clone()).unwrap()
+            .draw(4, 1, 0, 0).unwrap()
 
-                    .end_rendering().unwrap();
+            .end_rendering().unwrap();
 
-                let cmd_buffer = cmd_builder.build().unwrap();
+        let cmd_buffer = cmd_builder.build().unwrap();
 
-                let future = previous_frame_end
-                        .take().unwrap()
-                        .join(acquire_future)
-                        .then_execute(queue.clone(), cmd_buffer).unwrap()
-                        .then_swapchain_present(queue.clone(), SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index))
-                        .then_signal_fence_and_flush();
-                match future.map_err(Validated::unwrap) {
-                    Ok(future) => {
-                        previous_frame_end = Some(future.boxed());
-                    },
-                    Err(VulkanError::OutOfDate) => {
-                        recreate_swapchain = true;
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
-                    },
-                    Err(e) => {
-                        println!("Failed to flush future {e}");
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
-                    },
-                }
+        let future = previous_frame_end
+                .take().unwrap()
+                .join(acquire_future)
+                .then_execute(queue.clone(), cmd_buffer).unwrap()
+                .then_swapchain_present(queue.clone(), SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index))
+                .then_signal_fence_and_flush();
+        match future.map_err(Validated::unwrap) {
+            Ok(future) => {
+                previous_frame_end = Some(future.boxed());
             },
-            _ => ()
+            Err(VulkanError::OutOfDate) => {
+                recreate_swapchain = true;
+                previous_frame_end = Some(sync::now(device.clone()).boxed());
+            },
+            Err(e) => {
+                println!("Failed to flush future {e}");
+                previous_frame_end = Some(sync::now(device.clone()).boxed());
+            },
         }
     })
 }
@@ -415,6 +367,61 @@ fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport, camera:
         .map(
             |image| ImageView::new_default(image.clone()).unwrap())
         .collect::<Vec<_>>()
+}
+
+fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera) {
+
+    let mut dpos = 0.2 as f32;
+    let mut drot = PI / 90.0;
+
+    if input.held_shift() {
+        dpos *= 10.0;
+        drot *= 3.0;
+    }
+
+    let mut delta_pos = Vec3::ZERO;
+    let mut delta_rot = Quat::IDENTITY;
+
+    if input.key_held(VirtualKeyCode::A) {
+        delta_pos.x -= dpos;
+    }
+    if input.key_held(VirtualKeyCode::D) {
+        delta_pos.x += dpos;
+    }
+    if input.key_held(VirtualKeyCode::R) {
+        delta_pos.y -= dpos;
+    }
+    if input.key_held(VirtualKeyCode::F) {
+        delta_pos.y += dpos;
+    }
+    if input.key_held(VirtualKeyCode::W) {
+        delta_pos.z += dpos;
+    }
+    if input.key_held(VirtualKeyCode::S) {
+        delta_pos.z -= dpos;
+    }
+
+    if input.key_held(VirtualKeyCode::Q) {
+        delta_rot *= Quat::from_axis_angle(Vec3::Y, -drot);
+    }
+    if input.key_held(VirtualKeyCode::E) {
+        delta_rot *= Quat::from_axis_angle(Vec3::Y, drot);
+    }
+    if input.key_held(VirtualKeyCode::T) {
+        delta_rot *= Quat::from_axis_angle(Vec3::X, drot);
+    }
+    if input.key_held(VirtualKeyCode::G) {
+        delta_rot *= Quat::from_axis_angle(Vec3::X, -drot);
+    }
+    if input.key_held(VirtualKeyCode::Z) {
+        delta_rot *= Quat::from_axis_angle(Vec3::Z, -drot);
+    }
+    if input.key_held(VirtualKeyCode::C) {
+        delta_rot *= Quat::from_axis_angle(Vec3::Z, drot);
+    }
+
+    camera.modify_transform(camera.transform.transform_vector3(delta_pos), delta_rot);
+
 }
 
 fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u32; 3]) -> Arc<Image> {
@@ -503,4 +510,28 @@ fn get_staging_buffer<T: BufferContents>(mem_alloc: &(impl MemoryAllocator + ?Si
         },
         data,
     ).unwrap()
+}
+
+fn get_staging_slice<T: Send + Sync + bytemuck::Pod>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: &[T]) -> Subbuffer<[T]> {
+    let buffer = Buffer::new_slice(
+        mem_alloc,
+        BufferCreateInfo{
+            usage: BufferUsage::TRANSFER_SRC,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        data.len() as DeviceSize,
+    ).unwrap();
+
+    {
+        let mut writer = buffer.write().unwrap();
+        for i in 0..data.len() {
+            writer[i] = data[i];
+        }
+    }
+
+    buffer
 }

@@ -7,8 +7,9 @@ edition = "2021"
 
 [dependencies]
 bytemuck = "1.13.1"
-glam = "0.24.1"
+glam = { version = "0.24.1", features = ["bytemuck"] }
 tobj = "4.0.0"
 vulkano = {git = "https://github.com/vulkano-rs/vulkano"}
 vulkano-shaders = {git = "https://github.com/vulkano-rs/vulkano"}
 winit = "0.28.6"
+winit_input_helper = "0.14.1"
