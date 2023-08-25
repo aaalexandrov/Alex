@@ -25,7 +25,7 @@ use vulkano::{
     render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, 
 };
 
-use glam::{Mat4, Vec3, Quat};
+use glam::{Mat4, Vec3, Quat, uvec2, UVec2};
 
 mod geom;
 
@@ -65,7 +65,20 @@ struct UniformBuffer {
     pix_value: [f32; 4],
     num_tri_indices: u32,
     num_vertices: u32,
+    num_bvh_nodes: u32,
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
+struct BvhNode {
+    box_min: Vec3, 
+    tri_start: u32,
+    box_max: Vec3,
+    tri_end: u32,
+    child: [u32; 2],
+    _pad: [u32; 2],
+}
+
 
 fn main() {
     //println!("Vec3 align: {}, size: {}", std::mem::align_of::<Vec3>(), std::mem::size_of::<Vec3>());
@@ -76,7 +89,6 @@ fn main() {
     let library = VulkanLibrary::new().unwrap();
 
     let surface_extensions = vulkano::instance::InstanceExtensions {
-        //ext_swapchain_colorspace = true,
         ..Surface::required_extensions(&event_loop)
     };
 
@@ -85,9 +97,11 @@ fn main() {
         InstanceCreateInfo { flags: InstanceCreateFlags::ENUMERATE_PORTABILITY, enabled_extensions: surface_extensions, ..Default::default() }
     ).unwrap();
 
+    const RENDER_SIZE: UVec2 = uvec2(1024, 768);
+
     let window = Arc::new(WindowBuilder::new()
         .with_title("Hello window")
-        .with_inner_size(winit::dpi::LogicalSize::new(800.0, 600.0))
+        .with_inner_size(winit::dpi::LogicalSize::new(RENDER_SIZE.x as f32, RENDER_SIZE.y as f32))
         .build(&event_loop)
         .unwrap());
 
@@ -129,11 +143,12 @@ fn main() {
     // }
 
     let mut camera = Camera{
-        transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)), 
+        transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
         projection: Mat4::IDENTITY,
     };
 
-    let model = Model::load_obj("data/magnolia.obj", usize::MAX);
+    let mut model = Model::load_obj("data/cessna.obj", usize::MAX);
+    model.invert_triangle_order();
 
     let uniform_buffer = Buffer::new_slice::<UniformBuffer>(
         &memory_allocator,
@@ -174,6 +189,20 @@ fn main() {
         model.triangles.len() as DeviceSize
     ).unwrap();
 
+    let bvh_buffer = Buffer::new_slice::<BvhNode>(
+        &memory_allocator,
+        BufferCreateInfo{
+            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
+            ..Default::default()
+        },
+        AllocationCreateInfo{
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+            ..Default::default()
+        },
+        model.bvh.len() as DeviceSize
+    ).unwrap();
+
+
     let (mut swapchain, mut swapchain_images) = {
         let surface_caps = device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
         let image_format = device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
@@ -212,7 +241,7 @@ fn main() {
             ..SamplerCreateInfo::default()
         }
     ).unwrap();
-    let mut storage_image = create_storage_image(&memory_allocator, [1024, 768, 1]);
+    let mut storage_image = create_storage_image(&memory_allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
     let mut storage_image_view = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
@@ -232,7 +261,8 @@ fn main() {
             WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
             WriteDescriptorSet::image_view(1, storage_image_view),
             WriteDescriptorSet::buffer(2, vertices_buffer.clone()),
-            WriteDescriptorSet::buffer(3, triangles_buffer.clone()),],
+            WriteDescriptorSet::buffer(3, triangles_buffer.clone()),
+            WriteDescriptorSet::buffer(4, bvh_buffer.clone()),],
         []
     ).unwrap();
     let graphics_descriptor_set = PersistentDescriptorSet::new(
@@ -253,7 +283,19 @@ fn main() {
             vertices_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
             get_staging_slice(&memory_allocator, model.triangles.as_slice()), 
-            triangles_buffer.clone())).unwrap();
+            triangles_buffer.clone())).unwrap()
+        .copy_buffer(CopyBufferInfo::buffers(
+            get_staging_slice(&memory_allocator, model.bvh.iter().map(|b| 
+                BvhNode {
+                    box_min: b.bound.min, 
+                    tri_start: b.tri_start,
+                    box_max: b.bound.max,
+                    tri_end: b.tri_end,
+                    child: b.child_ind,
+                    _pad: [0; 2],
+                }
+            ).collect::<Vec<_>>().as_slice()), 
+            bvh_buffer.clone())).unwrap();
 
     let upload_buffer = upload_builder.build().unwrap();
 
@@ -494,6 +536,7 @@ fn get_uniform_contents(camera: &Camera, model: &Model) -> UniformBuffer {
         pix_value:[1.0, 1.0, 0.0, 1.0],
         num_tri_indices: model.triangles.len() as u32,
         num_vertices: model.vertices.len() as u32,
+        num_bvh_nodes: model.bvh.len() as u32,
     }
 }
 

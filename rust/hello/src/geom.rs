@@ -1,6 +1,8 @@
 use glam::{Vec3};
 
 #[allow(dead_code)]
+#[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Box3 {
     pub min: Vec3,
     pub max: Vec3,
@@ -8,23 +10,25 @@ pub struct Box3 {
 
 #[allow(dead_code)]
 impl Box3 {
+    pub const EMPTY: Self  = Box3 { min: Vec3::INFINITY, max: Vec3::NEG_INFINITY, };
+
     #[inline]
-    pub fn new_empty() -> Box3 {
-        Box3 { min: Vec3::INFINITY, max: Vec3::NEG_INFINITY, }
+    pub fn new(min: Vec3, max: Vec3) -> Box3 {
+        Box3 {min, max}
     }
 
     #[inline]
-    pub fn from_min_and_size(min: &Vec3, size: &Vec3) -> Box3 {
-        Box3 { min: *min, max: *min + *size }
+    pub fn from_min_and_size(min: Vec3, size: Vec3) -> Box3 {
+        Box3 { min: min, max: min + size }
     }
 
     #[inline]
-    pub fn from_center_half_size(center: &Vec3, half_size: &Vec3) -> Box3 {
-        Box3 { min: *center - *half_size, max: *center + *half_size }
+    pub fn from_center_half_size(center: Vec3, half_size: Vec3) -> Box3 {
+        Box3 { min: center - half_size, max: center + half_size }
     }
 
     #[inline]
-    pub fn empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.min.cmpgt(self.max).any()
     }
 
@@ -51,7 +55,7 @@ impl Box3 {
 
     #[inline]
     pub fn intersects(&self, rhs: &Self) -> bool {
-        !self.intersection(rhs).empty()
+        !self.intersection(rhs).is_empty()
     }
 
     #[inline]
@@ -60,22 +64,23 @@ impl Box3 {
     }
 
     #[inline]
-    pub fn union_point(&self, p: &Vec3) -> Box3 {
-        Box3 { min: self.min.min(*p), max: self.max.max(*p) }
+    pub fn union_point(&self, p: Vec3) -> Box3 {
+        Box3 { min: self.min.min(p), max: self.max.max(p) }
     }
 
     #[inline]
     pub fn contains(&self, rhs: &Self) -> bool {
-        self.min.cmple(rhs.min).all() && rhs.max.cmple(self.max).all() && !rhs.empty()
+        self.min.cmple(rhs.min).all() && rhs.max.cmple(self.max).all() && !rhs.is_empty()
     }
 
     #[inline]
-    pub fn contains_point(&self, p: &Vec3) -> bool {
-        self.min.cmple(*p).all() && p.cmple(self.max).all()
+    pub fn contains_point(&self, p: Vec3) -> bool {
+        self.min.cmple(p).all() && p.cmple(self.max).all()
     }
 
 }
 
+#[allow(dead_code)]
 pub fn min_elem_index(v: Vec3) -> u32 {
     let mut ind = 2 as u32;
     if v.x <= v.y {
@@ -91,6 +96,7 @@ pub fn min_elem_index(v: Vec3) -> u32 {
     ind
 }
 
+#[allow(dead_code)]
 pub fn max_elem_index(v: Vec3) -> u32 {
     let mut ind = 2 as u32;
     if v.x >= v.y {

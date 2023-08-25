@@ -1,10 +1,11 @@
 use tobj;
 
-use std::vec::Vec;
+use std::{vec::Vec, cmp::Ordering};
 
-use glam::{Vec3, vec3};
+use glam::{Vec3, vec3, UVec3, uvec3};
 use super::geom::{Box3, max_elem_index};
 
+#[repr(C)]
 pub struct BoundNode {
     pub bound: Box3,
     pub tri_start: u32,
@@ -36,32 +37,81 @@ impl Model {
             model.vertices.extend_from_slice(&mesh.positions);
         }
 
+        model.build_bvh();
+
         model
+    }
+
+    pub fn invert_triangle_order(&mut self) {
+        self.triangles = self.triangles.chunks_exact(3).map(|t| [t[1], t[0], t[2]]).flatten().collect();
+    }
+
+    fn vertex(&self, index: u32) -> Vec3 {
+        vec3(
+            self.vertices[(index * 3 + 0) as usize], 
+            self.vertices[(index * 3 + 1) as usize], 
+            self.vertices[(index * 3 + 2) as usize])
+    }
+
+    fn triangle_bound(&self, tri: &UVec3) -> Box3 {
+        Box3::from_min_and_size(self.vertex(tri[0]), Vec3::ZERO)
+            .union_point(self.vertex(tri[1]))
+            .union_point(self.vertex(tri[2]))
     }
 
     fn build_bvh(&mut self) {
         assert_eq!(self.bvh.len(), 0);
-        self.create_bvh_node(0, self.triangles.len() as u32);
+
+        let mut tris = self.triangles
+            .chunks_exact(3)
+            .map(|t| UVec3::from_slice(t))
+            .collect::<Vec<_>>();
+
+        self.create_bvh_node(&mut tris, 0, 8);
+
+        self.triangles = tris
+            .iter()
+            .flat_map(|t| t.to_array())
+            .collect();
     }
 
-    fn vertex(&self, index: u32) -> Vec3 {
-        vec3(self.vertices[(index * 3 + 0) as usize], self.vertices[(index * 3 + 1) as usize], self.vertices[(index * 3 + 2) as usize])
-    }
-
-    fn create_bvh_node(&mut self, tris_begin: u32, tris_end: u32) -> Option<u32> {
-        assert_eq!((tris_end - tris_begin) % 3, 0);
-        if tris_begin >= tris_end {
+    fn create_bvh_node(&mut self, tris: &mut [UVec3], tri_start: u32, num_leaf_tris: u32) -> Option<u32> {
+        if tris.is_empty() {
             return None;
         }
-        let mut bound = Box3::new_empty();
-        for t in tris_begin..tris_end {
-            bound = bound.union_point(&self.vertex(self.triangles[t as usize]));
+        let mut bound = Box3::EMPTY;
+        for tri in tris.iter() {
+            bound = bound.union(&self.triangle_bound(tri));
         }
 
-        let dim = max_elem_index(bound.size());
+        let bound_index = self.bvh.len();
+        self.bvh.push(BoundNode { bound, tri_start, tri_end: tri_start, child_ind: [u32::MAX; 2] });
+
+        if tris.len() <= num_leaf_tris as usize {
+            self.bvh[bound_index].tri_end = tri_start + tris.len() as u32;
+            return Some(bound_index as u32);
+        }
+
+        let dim = max_elem_index(bound.size()) as usize;
+
+        tris.select_nth_unstable_by(tris.len() / 2, |a, b| {
+            let bound_a = self.triangle_bound(a);
+            let bound_b = self.triangle_bound(b);
+
+            let mut ord = bound_a.min[dim].partial_cmp(&bound_b.min[dim]).unwrap();
+            if ord == Ordering::Equal {
+                ord = bound_a.max[dim].partial_cmp(&bound_b.max[dim]).unwrap();
+            }
+            ord
+        });
+
+        let (left, right) = tris.split_at_mut(tris.len() / 2);
 
 
+        self.bvh[bound_index].child_ind = [
+            self.create_bvh_node(left, tri_start, num_leaf_tris).unwrap_or(u32::MAX),
+            self.create_bvh_node(right, tri_start + left.len() as u32, num_leaf_tris).unwrap_or(u32::MAX)];
 
-        return Some(u32::MAX);
+        return Some(bound_index as u32);
     }
 }
