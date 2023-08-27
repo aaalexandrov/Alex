@@ -11,5 +11,5 @@ glam = { version = "0.24.1", features = ["bytemuck"] }
 tobj = "4.0.0"
 vulkano = {git = "https://github.com/vulkano-rs/vulkano"}
 vulkano-shaders = {git = "https://github.com/vulkano-rs/vulkano"}
-winit = "0.28.6"
+winit = {version = "0.28.6", default-features = false, features = ["x11"] }
 winit_input_helper = "0.14.1"

@@ -13,7 +13,7 @@ use vulkano::{
     sync::{self, GpuFuture},
     swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo},
     instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
-    device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo},
+    device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo, physical::{PhysicalDevice, PhysicalDeviceType}},
     memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
     command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
@@ -107,23 +107,15 @@ fn main() {
 
     let surface = Surface::from_window(instance.clone(), window.clone()).unwrap();
 
-    let mut device_extensions = DeviceExtensions {
+    let device_extensions = DeviceExtensions {
         khr_swapchain: true,
         ..DeviceExtensions::empty()
     };
 
-    // todo: filter physical devices properly
-    let physical_device = instance.enumerate_physical_devices().unwrap().next()
-        .expect("No physycal devices found");
-
-    let queue_family = physical_device.queue_family_properties().iter().enumerate().position(|(_i, q)| q.queue_flags.contains(QueueFlags::GRAPHICS | QueueFlags::COMPUTE))
-        .expect("No suitable queue family found") as u32;
+    let (physical_device, device_extensions, queue_family) = select_physical_device_and_queue_family(&instance, &device_extensions, &surface)
+        .expect("Np physical device with queue support found");
 
     println!("Using device {} (type: {:?})", physical_device.properties().device_name, physical_device.properties().device_type);
-
-    if physical_device.api_version() < Version::V1_3 {
-        device_extensions.khr_dynamic_rendering = true;
-    }
 
     let (device, mut queues) = Device::new(
         physical_device,
@@ -577,4 +569,41 @@ fn get_staging_slice<T: Send + Sync + bytemuck::Pod>(mem_alloc: &(impl MemoryAll
     }
 
     buffer
+}
+
+fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, surface: &Surface) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)> {
+    instance.enumerate_physical_devices().unwrap()
+        .filter_map(|p| {
+            let extensions = DeviceExtensions {
+                khr_dynamic_rendering: p.api_version() < Version::V1_3,
+                ..*device_extensions
+            };
+            if p.supported_extensions().contains(&extensions) {
+                Some((p, extensions))
+            } else {
+                None
+            }
+        })
+        .filter_map(|(p,extensions)| {
+            let queue_index = p.queue_family_properties().iter().enumerate()
+                .position(|(i, q)| {
+                    q.queue_flags.contains(QueueFlags::GRAPHICS | QueueFlags::COMPUTE) && p.surface_support(i as u32, surface).unwrap_or(false)
+                });
+            if let Some(index) = queue_index {
+                Some((p, extensions, index as u32))
+            } else {
+                None
+            }
+        })
+        .min_by_key(|(p,_,_)| {
+            match p.properties().device_type {
+                PhysicalDeviceType::DiscreteGpu => 0,
+                PhysicalDeviceType::IntegratedGpu => 1,
+                PhysicalDeviceType::VirtualGpu => 2,
+                PhysicalDeviceType::Cpu => 3,
+                PhysicalDeviceType::Other => 4,
+                _ => 5,
+            }
+        })
+
 }
