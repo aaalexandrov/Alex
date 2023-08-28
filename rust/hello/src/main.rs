@@ -1,12 +1,12 @@
 use winit::{
-    event::{Event, WindowEvent, KeyboardInput, ElementState, VirtualKeyCode, ModifiersState},
+    event::{VirtualKeyCode},
     event_loop::EventLoop,
     window::WindowBuilder,
 };
 
 use winit_input_helper::WinitInputHelper;
 
-use std::{sync::Arc, env};
+use std::{sync::Arc, env, time::{SystemTime}};
 
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
@@ -22,10 +22,10 @@ use vulkano::{
             viewport::{Viewport, ViewportState,}, GraphicsPipelineCreateInfo, vertex_input::VertexInputState, input_assembly::{InputAssemblyState, PrimitiveTopology}, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState, subpass::PipelineRenderingCreateInfo
         }, Pipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline, compute::ComputePipelineCreateInfo, PipelineLayout, PipelineBindPoint, GraphicsPipeline, PartialStateMode
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, padded::Padded, 
 };
 
-use glam::{Mat4, Vec3, Quat, uvec2, UVec2};
+use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
 
 mod geom;
 
@@ -57,28 +57,6 @@ mod fs {
         path: "src/fullscreen.frag",
     }
 }
-
-#[repr(C)]
-#[derive(BufferContents)]
-struct UniformBuffer {
-    view_proj: [f32; 16],
-    pix_value: [f32; 4],
-    num_tri_indices: u32,
-    num_vertices: u32,
-    num_bvh_nodes: u32,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
-struct BvhNode {
-    box_min: Vec3, 
-    tri_start: u32,
-    box_max: Vec3,
-    tri_end: u32,
-    child: [u32; 2],
-    _pad: [u32; 2],
-}
-
 
 fn main() {
     //println!("Vec3 align: {}, size: {}", std::mem::align_of::<Vec3>(), std::mem::size_of::<Vec3>());
@@ -112,7 +90,7 @@ fn main() {
         ..DeviceExtensions::empty()
     };
 
-    let device_index: usize = env::args().nth(1).unwrap_or("0".to_string()).parse().unwrap();
+    let device_index: usize = if let Some(num) = env::args().nth(1) { num.parse().unwrap() } else { 0 };
 
     let (physical_device, device_extensions, queue_family) = select_physical_device_and_queue_family(&instance, &device_extensions, &surface, device_index)
         .expect("Np physical device with queue support found");
@@ -144,7 +122,7 @@ fn main() {
     let mut model = Model::load_obj("data/cessna.obj", usize::MAX);
     model.invert_triangle_order();
 
-    let uniform_buffer = Buffer::new_slice::<UniformBuffer>(
+    let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
         &memory_allocator,
         BufferCreateInfo{
             usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
@@ -183,7 +161,7 @@ fn main() {
         model.triangles.len() as DeviceSize
     ).unwrap();
 
-    let bvh_buffer = Buffer::new_slice::<BvhNode>(
+    let bvh_buffer = Buffer::new_slice::<cs::BvhNode>(
         &memory_allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
@@ -235,14 +213,14 @@ fn main() {
             ..SamplerCreateInfo::default()
         }
     ).unwrap();
-    let mut storage_image = create_storage_image(&memory_allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
-    let mut storage_image_view = ImageView::new(
+    let storage_image = create_storage_image(&memory_allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
+    let storage_image_view = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
             usage: ImageUsage::STORAGE,
             ..ImageViewCreateInfo::from_image(&storage_image)
         }).unwrap();
-    let mut storage_image_view_sampled = ImageView::new(
+    let storage_image_view_sampled = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
             usage: ImageUsage::SAMPLED,
@@ -280,10 +258,10 @@ fn main() {
             triangles_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
             get_staging_slice(&memory_allocator, model.bvh.iter().map(|b| 
-                BvhNode {
-                    box_min: b.bound.min, 
+                cs::BvhNode {
+                    box_min: b.bound.min.to_array(), 
                     tri_start: b.tri_start,
-                    box_max: b.bound.max,
+                    box_max: b.bound.max.to_array(),
                     tri_end: b.tri_end,
                     child: b.child_ind,
                     _pad: [0; 2],
@@ -299,6 +277,8 @@ fn main() {
 
     let mut recreate_swapchain = false;
 
+    let mut poll_time = SystemTime::now();
+
     event_loop.run(move |event, _, control_flow| {
         if !input.update(&event) {
             return;
@@ -309,7 +289,7 @@ fn main() {
             return;
         }
 
-        process_camera_input(&mut input, &mut camera);
+        process_camera_input(&mut input, &mut camera, &mut poll_time);
 
         // render
         let window_extent: [u32; 2] = window.inner_size().into();
@@ -405,10 +385,14 @@ fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport, camera:
         .collect::<Vec<_>>()
 }
 
-fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera) {
+fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, time: &mut SystemTime) {
 
-    let mut dpos = 0.2 as f32;
-    let mut drot = PI / 90.0;
+    let now = SystemTime::now();
+    let delta = now.duration_since(*time).unwrap();
+    *time = now;
+
+    let mut dpos = 12 as f32 * delta.as_secs_f32();
+    let mut drot = PI / 1.5 * delta.as_secs_f32();
 
     if input.held_shift() {
         dpos *= 10.0;
@@ -524,13 +508,16 @@ fn load_graphics_pipeline(device: Arc<Device>, vs_module: Arc<ShaderModule>, fs_
     ).unwrap()
 }
 
-fn get_uniform_contents(camera: &Camera, model: &Model) -> UniformBuffer {
-    UniformBuffer{
-        view_proj: camera.view_proj().to_cols_array(), 
-        pix_value:[1.0, 1.0, 0.0, 1.0],
+fn get_uniform_contents(camera: &Camera, model: &Model) -> cs::UniformData {
+    cs::UniformData {
+        view_proj: camera.view_proj().to_cols_array_2d(),
+        background_color: [0.0, 0.0, 1.0, 1.0],
+        camera_pos: camera.transform.w_axis.xyz().to_array(),
         num_tri_indices: model.triangles.len() as u32,
         num_vertices: model.vertices.len() as u32,
-        num_bvh_nodes: model.bvh.len() as u32,
+        num_bvh_nodes: Padded(model.bvh.len() as u32),
+        material: cs::MaterialData { albedo: [0.8; 3], refraction_index: 1.5, power: 30.0 },
+        sun: Padded(cs::DirectionalLight { dir: Padded([1.0 / f32::sqrt(3.0); 3]), color: Padded([252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0]), ambient: [0.2; 3] }),
     }
 }
 
@@ -549,7 +536,7 @@ fn get_staging_buffer<T: BufferContents>(mem_alloc: &(impl MemoryAllocator + ?Si
     ).unwrap()
 }
 
-fn get_staging_slice<T: Send + Sync + bytemuck::Pod>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: &[T]) -> Subbuffer<[T]> {
+fn get_staging_slice<T: BufferContents + Clone>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: &[T]) -> Subbuffer<[T]> {
     let buffer = Buffer::new_slice(
         mem_alloc,
         BufferCreateInfo{
@@ -566,7 +553,7 @@ fn get_staging_slice<T: Send + Sync + bytemuck::Pod>(mem_alloc: &(impl MemoryAll
     {
         let mut writer = buffer.write().unwrap();
         for i in 0..data.len() {
-            writer[i] = data[i];
+            writer[i] = data[i].clone();
         }
     }
 

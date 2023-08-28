@@ -1,13 +1,28 @@
 #version 450
 
+struct DirectionalLight {
+    vec3 dir;
+    vec3 color;
+    vec3 ambient;
+};
+
+struct MaterialData {
+    vec3 albedo;
+    float refraction_index;
+    float power;
+};
+
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-layout(set = 0, binding = 0, std140) uniform Data {
+layout(set = 0, binding = 0, std140) uniform UniformData {
     mat4 view_proj;
-    vec4 pix_value;
+    vec4 background_color;
+    vec3 camera_pos;
     uint num_tri_indices;
     uint num_vertices;
     uint num_bvh_nodes;
+    DirectionalLight sun;
+    MaterialData material;
 };
 
 layout(set = 0, binding = 1, rgba8) uniform image2D Output;
@@ -117,25 +132,90 @@ vec4 intersect(vec3 v0, vec3 v1, vec3 v2, Ray r) {
     return vec4(bc, t);
 }
 
-vec4 intersect_tri(uint tri_index_index, Ray r) {
+vec3[3] get_tri(uint tri_index_index) {
     uint i = tri_index_index;
-    vec3 v0 = vec3(
+    vec3 v[3];
+    v[0] = vec3(
         vert[tri_indices[i + 0] * 3 + 0],
         vert[tri_indices[i + 0] * 3 + 1],
         vert[tri_indices[i + 0] * 3 + 2]);
 
-    vec3 v1 = vec3(
+    v[1] = vec3(
         vert[tri_indices[i + 1] * 3 + 0],
         vert[tri_indices[i + 1] * 3 + 1],
         vert[tri_indices[i + 1] * 3 + 2]);
 
-    vec3 v2 = vec3(
+    v[2] = vec3(
         vert[tri_indices[i + 2] * 3 + 0],
         vert[tri_indices[i + 2] * 3 + 1],
         vert[tri_indices[i + 2] * 3 + 2]);
 
-    vec4 bc_tri = intersect(v0, v1, v2, r);
+    return v;
+}
+
+vec4 intersect_tri(uint tri_index_index, Ray r) {
+    vec3 v[3] = get_tri(tri_index_index);
+    vec4 bc_tri = intersect(v[0], v[1], v[2], r);
     return bc_tri;    
+}
+
+bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind) {
+    bc = vec4(-1, -1, -1, inf);
+    tri_ind = ~0;
+    
+    uint num_node_indices = 1;
+    uint node_indices[32];
+    node_indices[0] = 0;
+
+    while (num_node_indices > 0) {
+        uint b = node_indices[--num_node_indices];
+
+        BvhNode node = bvh_nodes[b];
+        Box box;
+        box.min = node.box_min;
+        box.max = node.box_max;
+        vec2 ray_int = intersect_box(box, r);
+        if (ray_int[0] > ray_int[1])
+            continue;
+
+        for (uint t = node.tri_start; t < node.tri_end; ++t) {
+            vec4 bc_tri = intersect_tri(t * 3, r);
+            if (all(greaterThanEqual(bc_tri, vec4(0.0))) && bc_tri.w < bc.w) {
+                bc = bc_tri;
+                tri_ind = t * 3;
+            }
+        }
+
+        for (uint c = 0; c < 2; ++c) {
+            if (node.child[c] > num_bvh_nodes)
+                continue;
+            node_indices[num_node_indices++] = node.child[c];
+        }
+    }
+
+    return all(greaterThanEqual(bc, vec4(0.0)));
+}
+
+vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, DirectionalLight dir_light, MaterialData material) {
+    vec3 V = normalize(cam_pos - pos);
+    float NdotL = max(0, dot(normal, dir_light.dir));
+
+    if (NdotL > 0) {
+        uint tri_ind;
+        vec4 bc;
+        Ray rShadow;
+        rShadow.o = pos + dir_light.dir * 0.001;
+        rShadow.d = dir_light.dir;
+        bool shadow = get_tri_intersection(rShadow, bc, tri_ind);
+        if (shadow)
+            NdotL = 0;
+    }
+
+    vec3 diffuse = NdotL * material.albedo;
+    vec3 H = normalize(dir_light.dir + V);
+    float spec = pow(max(0, dot(normal, H)), material.power) * NdotL;
+    vec3 color = (diffuse + spec) * dir_light.color + dir_light.ambient;
+    return color;
 }
 
 void main() {
@@ -153,49 +233,16 @@ void main() {
     r.o = o.xyz;
     r.d = normalize((p - o).xyz);
 
-    vec4 bc = vec4(-1, -1, -1, inf);
-    
-    uint num_node_indices = 1;
-    uint node_indices[32];
-    node_indices[0] = 0;
+    vec4 bc;
+    uint tri_ind;
 
-    uint visited_nodes = 0;
-    uint rejected_tri_boxes = 0;
-
-
-    while (num_node_indices > 0) {
-        ++visited_nodes;
-
-        uint b = node_indices[--num_node_indices];
-
-        BvhNode node = bvh_nodes[b];
-        Box box;
-        box.min = node.box_min;
-        box.max = node.box_max;
-        vec2 ray_int = intersect_box(box, r);
-        if (ray_int[0] > ray_int[1])
-            continue;
-
-        for (uint t = node.tri_start; t < node.tri_end; ++t) {
-            vec4 bc_tri = intersect_tri(t * 3, r);
-            if (bc_tri == vec4(-2))
-                ++rejected_tri_boxes;
-            if (all(greaterThanEqual(bc_tri, vec4(0.0))) && bc_tri.w < bc.w) {
-                bc = bc_tri;
-            }
-        }
-
-        for (uint c = 0; c < 2; ++c) {
-            if (node.child[c] > num_bvh_nodes)
-                continue;
-            node_indices[num_node_indices++] = node.child[c];
-        }
+    vec4 color = background_color;
+    if (get_tri_intersection(r, bc, tri_ind)) {
+        vec3 pos = r.o + bc.w * r.d;
+        vec3 tri[3] = get_tri(tri_ind);
+        vec3 norm = normalize(cross(tri[0] - tri[1], tri[2] - tri[0]));
+        color.xyz = GetLighting(camera_pos, pos, norm, sun, material);
     }
 
-    float w = float(all(greaterThanEqual(bc, vec4(0.0))));
-
-    imageStore(Output, pixCoord, vec4(w*bc.xyz, pix_value.a));
-    //imageStore(Output, pixCoord, vec4(vec3(visited_nodes / float(num_bvh_nodes)), pix_value.a));
-    //imageStore(Output, pixCoord, vec4(vec3(rejected_tri_boxes / float(num_tri_indices / 3)), pix_value.a));
-    //imageStore(Output, pixCoord, vec4(vec3(rejected_tri_boxes / float(1000)), pix_value.a));
+    imageStore(Output, pixCoord, color);
 }

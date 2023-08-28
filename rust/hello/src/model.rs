@@ -2,10 +2,9 @@ use tobj;
 
 use std::{vec::Vec, cmp::Ordering};
 
-use glam::{Vec3, vec3, UVec3, uvec3};
+use glam::{Vec3, vec3, UVec3};
 use super::geom::{Box3, max_elem_index};
 
-#[repr(C)]
 pub struct BoundNode {
     pub bound: Box3,
     pub tri_start: u32,
