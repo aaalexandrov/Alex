@@ -6,7 +6,7 @@ use winit::{
 
 use winit_input_helper::WinitInputHelper;
 
-use std::{sync::Arc};
+use std::{sync::Arc, env};
 
 use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
@@ -112,7 +112,9 @@ fn main() {
         ..DeviceExtensions::empty()
     };
 
-    let (physical_device, device_extensions, queue_family) = select_physical_device_and_queue_family(&instance, &device_extensions, &surface)
+    let device_index: usize = env::args().nth(1).unwrap_or("0".to_string()).parse().unwrap();
+
+    let (physical_device, device_extensions, queue_family) = select_physical_device_and_queue_family(&instance, &device_extensions, &surface, device_index)
         .expect("Np physical device with queue support found");
 
     println!("Using device {} (type: {:?})", physical_device.properties().device_name, physical_device.properties().device_type);
@@ -571,8 +573,8 @@ fn get_staging_slice<T: Send + Sync + bytemuck::Pod>(mem_alloc: &(impl MemoryAll
     buffer
 }
 
-fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, surface: &Surface) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)> {
-    instance.enumerate_physical_devices().unwrap()
+fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, surface: &Surface, device_index: usize) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)> {
+    let mut devices: Vec<_> = instance.enumerate_physical_devices().unwrap()
         .filter_map(|p| {
             let extensions = DeviceExtensions {
                 khr_dynamic_rendering: p.api_version() < Version::V1_3,
@@ -594,8 +596,8 @@ fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_exte
             } else {
                 None
             }
-        })
-        .min_by_key(|(p,_,_)| {
+        }).collect();
+        devices.sort_by_key(|(p,_,_)| {
             match p.properties().device_type {
                 PhysicalDeviceType::DiscreteGpu => 0,
                 PhysicalDeviceType::IntegratedGpu => 1,
@@ -604,6 +606,6 @@ fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_exte
                 PhysicalDeviceType::Other => 4,
                 _ => 5,
             }
-        })
-
+        });
+        devices.into_iter().nth(device_index)
 }
