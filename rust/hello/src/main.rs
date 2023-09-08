@@ -12,7 +12,7 @@ use vulkano::{
     VulkanLibrary, Version, VulkanError, Validated,
     sync::{self, GpuFuture},
     swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo},
-    instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
+    instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions},
     device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo, physical::{PhysicalDevice, PhysicalDeviceType}},
     memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
     command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
@@ -27,6 +27,9 @@ use vulkano::{
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
 
+mod app;
+use app::Renderer;
+
 mod geom;
 
 mod cam;
@@ -34,6 +37,9 @@ use cam::Camera;
 
 mod model;
 use model::Model;
+
+mod font;
+use font::FixedFont;
 
 use std::f32::consts::PI;
 
@@ -64,17 +70,6 @@ fn main() {
     let mut input = WinitInputHelper::new();
     let event_loop = EventLoop::new();
 
-    let library = VulkanLibrary::new().unwrap();
-
-    let surface_extensions = vulkano::instance::InstanceExtensions {
-        ..Surface::required_extensions(&event_loop)
-    };
-
-    let instance = Instance::new(
-        library,
-        InstanceCreateInfo { flags: InstanceCreateFlags::ENUMERATE_PORTABILITY, enabled_extensions: surface_extensions, ..Default::default() }
-    ).unwrap();
-
     const RENDER_SIZE: UVec2 = uvec2(1024, 768);
 
     let window = Arc::new(WindowBuilder::new()
@@ -83,36 +78,32 @@ fn main() {
         .build(&event_loop)
         .unwrap());
 
-    let surface = Surface::from_window(instance.clone(), window.clone()).unwrap();
-
+    let surface_extensions = InstanceExtensions {
+        ..Surface::required_extensions(&event_loop)
+    };
     let device_extensions = DeviceExtensions {
         khr_swapchain: true,
         ..DeviceExtensions::empty()
     };
 
+    let mut surface : Option<Arc<Surface>> = None;
+
     let device_index: usize = if let Some(num) = env::args().nth(1) { num.parse().unwrap() } else { 0 };
+    let renderer = Renderer::new(&surface_extensions, &device_extensions, |p, i| {
+        if surface.is_none() {
+            surface = Some(Surface::from_window(p.instance().clone(), window.clone()).unwrap());
+        }
+        p.surface_support(i as u32, &surface.as_ref().unwrap()).unwrap_or(false)
+    }, device_index);
 
-    let (physical_device, device_extensions, queue_family) = select_physical_device_and_queue_family(&instance, &device_extensions, &surface, device_index)
-        .expect("Np physical device with queue support found");
 
-    println!("Using device {} (type: {:?})", physical_device.properties().device_name, physical_device.properties().device_type);
-
-    let (device, mut queues) = Device::new(
-        physical_device,
-        DeviceCreateInfo { queue_create_infos: vec![
-            QueueCreateInfo { queue_family_index: queue_family, ..Default::default() }], 
-        enabled_extensions: device_extensions, 
-        enabled_features: Features{dynamic_rendering: true, ..Features::empty()},
-        ..Default::default() 
-    }).unwrap();
-
-    let queue = queues.next().unwrap();
-
-    let memory_allocator = StandardMemoryAllocator::new_default(device.clone());
+    let surface = surface.unwrap();
 
     // for (fmt, clr_space) in device.physical_device().surface_formats(&surface, Default::default()).unwrap() {
     //     println!("Surface format {fmt:?}, colorspace {clr_space:?}");
     // }
+
+    let font = FixedFont::from_file("data/font_10x20.png");
 
     let mut camera = Camera{
         transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
@@ -123,7 +114,7 @@ fn main() {
     model.invert_triangle_order();
 
     let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
-        &memory_allocator,
+        &*renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -136,7 +127,7 @@ fn main() {
     ).unwrap();
 
     let vertices_buffer = Buffer::new_slice::<f32>(
-        &memory_allocator,
+        &*renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -149,7 +140,7 @@ fn main() {
     ).unwrap();
 
     let triangles_buffer = Buffer::new_slice::<u32>(
-        &memory_allocator,
+        &*renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -162,7 +153,7 @@ fn main() {
     ).unwrap();
 
     let bvh_buffer = Buffer::new_slice::<cs::BvhNode>(
-        &memory_allocator,
+        &*renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -176,10 +167,10 @@ fn main() {
 
 
     let (mut swapchain, mut swapchain_images) = {
-        let surface_caps = device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
-        let image_format = device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
+        let surface_caps = renderer.device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
+        let image_format = renderer.device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
         Swapchain::new(
-            device.clone(),
+            renderer.device.clone(),
             surface,
             SwapchainCreateInfo { 
                 min_image_count: surface_caps.min_image_count.max(2), 
@@ -191,10 +182,10 @@ fn main() {
         ).unwrap()
     };
 
-    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
+    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(renderer.device.clone());
 
-    let compute_pipeline = load_compute_pipeline(device.clone(), cs::load(device.clone()).unwrap());
-    let graphics_pipeline = load_graphics_pipeline(device.clone(), vs::load(device.clone()).unwrap(), fs::load(device.clone()).unwrap(), &[swapchain_images[0].format()]);
+    let compute_pipeline = load_compute_pipeline(renderer.device.clone(), cs::load(renderer.device.clone()).unwrap());
+    let graphics_pipeline = load_graphics_pipeline(renderer.device.clone(), vs::load(renderer.device.clone()).unwrap(), fs::load(renderer.device.clone()).unwrap(), &[swapchain_images[0].format()]);
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -205,7 +196,7 @@ fn main() {
     let mut swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
     
     let sampler_linear = Sampler::new(
-        device.clone(),
+        renderer.device.clone(),
         SamplerCreateInfo {
             mag_filter: Filter::Linear,
             min_filter: Filter::Linear,
@@ -213,7 +204,7 @@ fn main() {
             ..SamplerCreateInfo::default()
         }
     ).unwrap();
-    let storage_image = create_storage_image(&memory_allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
+    let storage_image = create_storage_image(&*renderer.allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
     let storage_image_view = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
@@ -246,18 +237,18 @@ fn main() {
         []
     ).unwrap();
 
-    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
+    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(renderer.device.clone(), Default::default());
 
-    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
     upload_builder
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&memory_allocator, model.vertices.as_slice()), 
+            get_staging_slice(&*renderer.allocator, model.vertices.as_slice()), 
             vertices_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&memory_allocator, model.triangles.as_slice()), 
+            get_staging_slice(&*renderer.allocator, model.triangles.as_slice()), 
             triangles_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&memory_allocator, model.bvh.iter().map(|b| 
+            get_staging_slice(&*renderer.allocator, model.bvh.iter().map(|b| 
                 cs::BvhNode {
                     box_min: b.bound.min.to_array(), 
                     tri_start: b.tri_start,
@@ -271,8 +262,8 @@ fn main() {
 
     let upload_buffer = upload_builder.build().unwrap();
 
-    let mut previous_frame_end: Option<Box<dyn GpuFuture>> = Some(sync::now(device.clone()).boxed()
-            .then_execute(queue.clone(), upload_buffer).unwrap()
+    let mut previous_frame_end: Option<Box<dyn GpuFuture>> = Some(sync::now(renderer.device.clone()).boxed()
+            .then_execute(renderer.queue.clone(), upload_buffer).unwrap()
             .then_signal_fence_and_flush().unwrap().boxed());
 
     let mut recreate_swapchain = false;
@@ -320,9 +311,9 @@ fn main() {
             recreate_swapchain = true;
         }
 
-        let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+        let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
-            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&memory_allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
+            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&*renderer.allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
             .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
             .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -349,8 +340,8 @@ fn main() {
         let future = previous_frame_end
                 .take().unwrap()
                 .join(acquire_future)
-                .then_execute(queue.clone(), cmd_buffer).unwrap()
-                .then_swapchain_present(queue.clone(), SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index))
+                .then_execute(renderer.queue.clone(), cmd_buffer).unwrap()
+                .then_swapchain_present(renderer.queue.clone(), SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index))
                 .then_signal_fence_and_flush();
         match future.map_err(Validated::unwrap) {
             Ok(future) => {
@@ -358,11 +349,11 @@ fn main() {
             },
             Err(VulkanError::OutOfDate) => {
                 recreate_swapchain = true;
-                previous_frame_end = Some(sync::now(device.clone()).boxed());
+                previous_frame_end = Some(sync::now(renderer.device.clone()).boxed());
             },
             Err(e) => {
                 println!("Failed to flush future {e}");
-                previous_frame_end = Some(sync::now(device.clone()).boxed());
+                previous_frame_end = Some(sync::now(renderer.device.clone()).boxed());
             },
         }
     })
@@ -558,41 +549,4 @@ fn get_staging_slice<T: BufferContents + Clone>(mem_alloc: &(impl MemoryAllocato
     }
 
     buffer
-}
-
-fn select_physical_device_and_queue_family(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, surface: &Surface, device_index: usize) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)> {
-    let mut devices: Vec<_> = instance.enumerate_physical_devices().unwrap()
-        .filter_map(|p| {
-            let extensions = DeviceExtensions {
-                khr_dynamic_rendering: p.api_version() < Version::V1_3,
-                ..*device_extensions
-            };
-            if p.supported_extensions().contains(&extensions) {
-                Some((p, extensions))
-            } else {
-                None
-            }
-        })
-        .filter_map(|(p,extensions)| {
-            let queue_index = p.queue_family_properties().iter().enumerate()
-                .position(|(i, q)| {
-                    q.queue_flags.contains(QueueFlags::GRAPHICS | QueueFlags::COMPUTE) && p.surface_support(i as u32, surface).unwrap_or(false)
-                });
-            if let Some(index) = queue_index {
-                Some((p, extensions, index as u32))
-            } else {
-                None
-            }
-        }).collect();
-        devices.sort_by_key(|(p,_,_)| {
-            match p.properties().device_type {
-                PhysicalDeviceType::DiscreteGpu => 0,
-                PhysicalDeviceType::IntegratedGpu => 1,
-                PhysicalDeviceType::VirtualGpu => 2,
-                PhysicalDeviceType::Cpu => 3,
-                PhysicalDeviceType::Other => 4,
-                _ => 5,
-            }
-        });
-        devices.into_iter().nth(device_index)
 }
