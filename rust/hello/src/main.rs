@@ -7,16 +7,15 @@ use winit_input_helper::WinitInputHelper;
 use std::{sync::Arc, env, time::{SystemTime}};
 
 use vulkano::{
-    device::{Device},
     memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
     command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
         graphics::{
-            viewport::{Viewport, ViewportState,}, GraphicsPipelineCreateInfo, vertex_input::VertexInputState, input_assembly::{InputAssemblyState, PrimitiveTopology}, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState, subpass::PipelineRenderingCreateInfo
-        }, Pipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, ComputePipeline, compute::ComputePipelineCreateInfo, PipelineLayout, PipelineBindPoint, GraphicsPipeline, PartialStateMode
+            viewport::{Viewport, }, 
+        }, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, shader::ShaderModule, descriptor_set::{allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, padded::Padded, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, padded::Padded, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -32,6 +31,8 @@ use cam::Camera;
 mod model;
 use model::Model;
 
+mod solid;
+
 mod font;
 use font::FixedFont;
 
@@ -44,19 +45,6 @@ mod cs {
     }
 }
 
-mod vs {
-    vulkano_shaders::shader! {
-        ty: "vertex",
-        path: "src/fullscreen.vert",
-    }
-}
-
-mod fs {
-    vulkano_shaders::shader! {
-        ty: "fragment",
-        path: "src/fullscreen.frag",
-    }
-}
 
 fn main() {
     const RENDER_SIZE: UVec2 = uvec2(1024, 768);
@@ -130,10 +118,8 @@ fn main() {
 
 
 
-    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(app.renderer.device.clone());
-
-    let compute_pipeline = load_compute_pipeline(app.renderer.device.clone(), cs::load(app.renderer.device.clone()).unwrap());
-    let graphics_pipeline = load_graphics_pipeline(app.renderer.device.clone(), vs::load(app.renderer.device.clone()).unwrap(), fs::load(app.renderer.device.clone()).unwrap(), &[app.swapchain_image_views[0].format()]);
+    let compute_pipeline = app.renderer.load_compute_pipeline(cs::load(app.renderer.device.clone()).unwrap());
+    let solid_pipeline = solid::load_pipeline(&app.renderer, app.swapchain_image_views[0].format());
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -166,7 +152,7 @@ fn main() {
             ..ImageViewCreateInfo::from_image(&storage_image)
         }).unwrap();
     let compute_descriptor_set = PersistentDescriptorSet::new(
-        &descriptor_set_allocator,
+        &app.renderer.descriptor_set_allocator,
         compute_pipeline.layout().set_layouts()[0].clone(),
         [
             WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
@@ -176,12 +162,55 @@ fn main() {
             WriteDescriptorSet::buffer(4, bvh_buffer.clone()),],
         []
     ).unwrap();
-    let graphics_descriptor_set = PersistentDescriptorSet::new(
-        &descriptor_set_allocator,
-        graphics_pipeline.layout().set_layouts()[0].clone(),
+
+    let fullscreen_vertex_buffer = Buffer::from_iter(
+        app.renderer.allocator.as_ref(),
+        BufferCreateInfo {
+            usage: BufferUsage::VERTEX_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        solid::FULLSCREEN_QUAD_VERTICES,
+    ).unwrap();
+    let fullscreen_index_buffer = Buffer::from_iter(
+        app.renderer.allocator.as_ref(),
+        BufferCreateInfo {
+            usage: BufferUsage::INDEX_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        solid::QUAD_INDICES,
+    ).unwrap();
+    let fullscreen_uniform_buffer = Buffer::from_data(
+        app.renderer.allocator.as_ref(),
+        BufferCreateInfo {
+            usage: BufferUsage::UNIFORM_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        solid::UniformData{ view_proj: Mat4::IDENTITY.to_cols_array_2d() }
+    ).unwrap();
+
+
+    let solid_descriptor_set = PersistentDescriptorSet::new(
+        &app.renderer.descriptor_set_allocator,
+        solid_pipeline.layout().set_layouts()[0].clone(),
         [
-            WriteDescriptorSet::sampler(0, sampler_linear),
-            WriteDescriptorSet::image_view(1, storage_image_view_sampled),],
+            WriteDescriptorSet::buffer(0, fullscreen_uniform_buffer),
+            WriteDescriptorSet::sampler(1, sampler_linear),
+            WriteDescriptorSet::image_view(2, storage_image_view_sampled),],
         []
     ).unwrap();
 
@@ -234,13 +263,15 @@ fn main() {
                 ..RenderingAttachmentInfo::image_view(swapchain_image_view.clone())
                 })], ..Default::default() }).unwrap()
 
-            .bind_pipeline_graphics(graphics_pipeline.clone()).unwrap()
+            .bind_pipeline_graphics(solid_pipeline.clone()).unwrap()
             .set_viewport(
                 0, 
                 [viewport.clone()].into_iter().collect()
             ).unwrap()
-            .bind_descriptor_sets(PipelineBindPoint::Graphics, graphics_pipeline.layout().clone(), 0, graphics_descriptor_set.clone()).unwrap()
-            .draw(4, 1, 0, 0).unwrap()
+            .bind_descriptor_sets(PipelineBindPoint::Graphics, solid_pipeline.layout().clone(), 0, solid_descriptor_set.clone()).unwrap()
+            .bind_vertex_buffers(0, fullscreen_vertex_buffer.clone()).unwrap()
+            .bind_index_buffer(fullscreen_index_buffer.clone()).unwrap()
+            .draw_indexed(fullscreen_index_buffer.len() as u32, 1, 0, 0, 0).unwrap()
 
             .end_rendering().unwrap();
 
@@ -331,55 +362,6 @@ fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u3
         AllocationCreateInfo {
             .. Default::default()
         }
-    ).unwrap()
-}
-
-fn load_compute_pipeline(device: Arc<Device>, shader_module: Arc<ShaderModule>) -> Arc<ComputePipeline> {
-    let cs = shader_module.entry_point("main").unwrap();
-    let stage = PipelineShaderStageCreateInfo::new(cs);
-    let layout = PipelineLayout::new(
-        device.clone(),
-        PipelineDescriptorSetLayoutCreateInfo::from_stages([&stage]).into_pipeline_layout_create_info(device.clone()).unwrap())
-        .unwrap();
-    ComputePipeline::new(device, None, ComputePipelineCreateInfo::stage_layout(stage, layout)).unwrap()
-}
-
-fn load_graphics_pipeline(device: Arc<Device>, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> {
-    let vs = vs_module.entry_point("main").unwrap();
-    let fs = fs_module.entry_point("main").unwrap();
-    let stages = [
-        PipelineShaderStageCreateInfo::new(vs),
-        PipelineShaderStageCreateInfo::new(fs),
-    ];
-    let layout = PipelineLayout::new(
-        device.clone(),
-        PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
-            .into_pipeline_layout_create_info(device.clone())
-            .unwrap()
-    ).unwrap();
-
-    let subpass = PipelineRenderingCreateInfo{
-        color_attachment_formats: attachment_formats.iter().map(|f| Some(*f)).collect(),
-        ..Default::default()
-    };
-
-    GraphicsPipeline::new(
-        device,
-        None,
-        GraphicsPipelineCreateInfo {
-            stages: stages.into_iter().collect(),
-            vertex_input_state: Some(VertexInputState::default()),
-            input_assembly_state: Some(InputAssemblyState {
-                topology: PartialStateMode::Fixed(PrimitiveTopology::TriangleStrip),
-                ..InputAssemblyState::default()
-            }),
-            viewport_state: Some(ViewportState::viewport_dynamic_scissor_irrelevant()),
-            rasterization_state: Some(RasterizationState::default()),
-            multisample_state: Some(MultisampleState::default()),
-            color_blend_state: Some(ColorBlendState::new(attachment_formats.len() as u32)),
-            subpass: Some(subpass.into()),
-            ..GraphicsPipelineCreateInfo::layout(layout)
-        },
     ).unwrap()
 }
 

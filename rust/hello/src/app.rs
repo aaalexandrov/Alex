@@ -4,7 +4,11 @@ use vulkano::{
     image::{view::ImageView, ImageUsage, Image}, 
     instance::{InstanceExtensions, Instance, InstanceCreateInfo, InstanceCreateFlags}, 
     memory::allocator::{MemoryAllocator, StandardMemoryAllocator}, 
-    VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError};
+    VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError, shader::ShaderModule, 
+    pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, 
+        graphics::{subpass::PipelineRenderingCreateInfo, GraphicsPipelineCreateInfo, vertex_input::{VertexInputState, Vertex, VertexDefinition}, input_assembly::{InputAssemblyState, PrimitiveTopology}, 
+        viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState}, PartialStateMode}, format::Format, 
+        descriptor_set::allocator::{StandardDescriptorSetAllocator}};
 use std::sync::Arc;
 
 use winit::{
@@ -19,6 +23,7 @@ pub struct Renderer {
     pub device: Arc<Device>,
     pub queue: Arc<Queue>,
     pub allocator: Box<dyn MemoryAllocator>,
+    pub descriptor_set_allocator: StandardDescriptorSetAllocator,
 }
 
 impl Renderer {
@@ -48,12 +53,72 @@ impl Renderer {
         let queue = queues.next().unwrap();
     
         let allocator: Box<dyn MemoryAllocator> = Box::new(StandardMemoryAllocator::new_default(device.clone()));
-            
+
+        let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
+
         Renderer {
             device,
             queue,
             allocator,
+            descriptor_set_allocator,
         }
+    }
+
+    pub fn load_compute_pipeline(&self, shader_module: Arc<ShaderModule>) -> Arc<ComputePipeline> {
+        let cs = shader_module.entry_point("main").unwrap();
+        let stage = PipelineShaderStageCreateInfo::new(cs);
+        let layout = PipelineLayout::new(
+            self.device.clone(),
+            PipelineDescriptorSetLayoutCreateInfo::from_stages([&stage]).into_pipeline_layout_create_info(self.device.clone()).unwrap())
+            .unwrap();
+        ComputePipeline::new(self.device.clone(), None, ComputePipelineCreateInfo::stage_layout(stage, layout)).unwrap()
+    }
+    
+    pub fn load_graphics_pipeline_vertex(&self, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, vertex_input_state: Option<VertexInputState>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> {
+        let vs = vs_module.entry_point("main").unwrap();
+        let fs = fs_module.entry_point("main").unwrap();
+        let stages = [
+            PipelineShaderStageCreateInfo::new(vs),
+            PipelineShaderStageCreateInfo::new(fs),
+        ];
+        let layout = PipelineLayout::new(
+            self.device.clone(),
+            PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
+                .into_pipeline_layout_create_info(self.device.clone())
+                .unwrap()
+        ).unwrap();
+    
+        let subpass = PipelineRenderingCreateInfo{
+            color_attachment_formats: attachment_formats.iter().map(|f| Some(*f)).collect(),
+            ..Default::default()
+        };
+    
+        GraphicsPipeline::new(
+            self.device.clone(),
+            None,
+            GraphicsPipelineCreateInfo {
+                stages: stages.into_iter().collect(),
+                vertex_input_state,
+                input_assembly_state: Some(InputAssemblyState {
+                    topology: PartialStateMode::Fixed(PrimitiveTopology::TriangleList),
+                    ..InputAssemblyState::default()
+                }),
+                viewport_state: Some(ViewportState::viewport_dynamic_scissor_irrelevant()),
+                rasterization_state: Some(RasterizationState::default()),
+                multisample_state: Some(MultisampleState::default()),
+                color_blend_state: Some(ColorBlendState::new(attachment_formats.len() as u32)),
+                subpass: Some(subpass.into()),
+                ..GraphicsPipelineCreateInfo::layout(layout)
+            },
+        ).unwrap()
+    }
+    
+    pub fn load_graphics_pipeline<VertexStruct>(&self, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> 
+        where VertexStruct: Vertex {
+        let vertex_input_state = [VertexStruct::per_vertex()]
+            .definition(&vs_module.entry_point("main").unwrap().info().input_interface)
+            .unwrap();
+        self.load_graphics_pipeline_vertex(vs_module, fs_module, Some(vertex_input_state), attachment_formats)
     }
 
     fn select_physical_device_and_queue_family<QueuePred>(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, mut queue_pred: QueuePred, device_index: usize) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)>
@@ -112,7 +177,7 @@ impl App {
         
         let window = Arc::new(WindowBuilder::new()
             .with_title(app_name)
-            .with_inner_size(winit::dpi::LogicalSize::new(win_size[0] as f32, win_size[0] as f32))
+            .with_inner_size(winit::dpi::LogicalSize::new(win_size[0] as f32, win_size[1] as f32))
             .build(event_loop.as_ref().unwrap())
             .unwrap());
     
