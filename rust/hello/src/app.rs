@@ -52,7 +52,7 @@ impl Renderer {
     
         let queue = queues.next().unwrap();
     
-        let allocator: Box<dyn MemoryAllocator> = Box::new(StandardMemoryAllocator::new_default(device.clone()));
+        let allocator = Box::new(StandardMemoryAllocator::new_default(device.clone()));
 
         let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
 

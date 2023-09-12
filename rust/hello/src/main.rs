@@ -54,7 +54,7 @@ fn main() {
     let app = App::new("Rayz", [RENDER_SIZE.x, RENDER_SIZE.y], device_index);
 
 
-    let font = FixedFont::from_file("data/font_10x20.png");
+    let font = FixedFont::from_file("data/font_10x20.png", &app.renderer);
 
     let mut camera = Camera{
         transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
@@ -359,9 +359,7 @@ fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u3
             usage: ImageUsage::STORAGE | ImageUsage::SAMPLED,
             ..Default::default()
         },
-        AllocationCreateInfo {
-            .. Default::default()
-        }
+        AllocationCreateInfo::default()
     ).unwrap()
 }
 

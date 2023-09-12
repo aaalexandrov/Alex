@@ -1,16 +1,17 @@
 use image::*;
-use vulkano::image::Image;
+use vulkano::{image::{Image, ImageCreateInfo, ImageUsage}, memory::allocator::AllocationCreateInfo, format::Format};
 use glam::*;
 use std::sync::Arc;
 
+use crate::app::Renderer;
+
 pub struct FixedFont {
     pub char_size: UVec2,
-    pub tex_size: UVec2,
     pub texture: Arc<Image>,
 }
 
 impl FixedFont {
-    pub fn from_file(file: &str) -> Result<FixedFont, ImageError> {
+    pub fn from_file(file: &str, renderer: &Renderer) -> Result<FixedFont, ImageError> {
         let img = image::io::Reader::open(&file)?.decode()?;
         //println!("{img:?}");
         let DynamicImage::ImageLuma8(gray_img) = img else {
@@ -28,12 +29,27 @@ impl FixedFont {
         let char_cells = img_size / char_size;
         assert_eq!(char_cells.x * char_cells.y, num_chars);
 
-        
+        let img_size = char_cells * (char_size + 1);
+        let Ok(texture) = Image::new(
+            renderer.allocator.as_ref(),
+            ImageCreateInfo{
+                format: Format::R8_UNORM,
+                extent: [img_size.x, img_size.y, 1],
+                usage: ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+                ..Default::default()
+            },
+            AllocationCreateInfo::default()
+        ) else {
+            return Result::Err(ImageError::Unsupported(error::UnsupportedError::from_format_and_kind(
+                error::ImageFormatHint::Unknown, 
+                error::UnsupportedErrorKind::Format(error::ImageFormatHint::Unknown))));    
+        };
 
-        //let mut font = FixedFont {
-          //  char_size: uvec2
-        //}
+        // TODO: Upload characters!
 
-        Result::Err(ImageError::Limits(error::LimitError::from_kind(error::LimitErrorKind::InsufficientMemory)))
+        Ok(FixedFont {
+            char_size,
+            texture,
+        })
     }
 }
