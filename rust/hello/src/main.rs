@@ -1,7 +1,5 @@
 use winit::{
     event::{VirtualKeyCode},
-    event_loop::EventLoop,
-    window::WindowBuilder,
 };
 
 use winit_input_helper::WinitInputHelper;
@@ -9,12 +7,8 @@ use winit_input_helper::WinitInputHelper;
 use std::{sync::Arc, env, time::{SystemTime}};
 
 use vulkano::{
-    VulkanLibrary, Version, VulkanError, Validated,
-    sync::{self, GpuFuture},
-    swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo},
-    instance::{Instance, InstanceCreateFlags, InstanceCreateInfo, InstanceExtensions},
-    device::{Device, DeviceCreateInfo, DeviceExtensions, Features, QueueFlags, QueueCreateInfo, physical::{PhysicalDevice, PhysicalDeviceType}},
-    memory::allocator::{StandardMemoryAllocator, AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
+    device::{Device},
+    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
     command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
@@ -28,7 +22,7 @@ use vulkano::{
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
 
 mod app;
-use app::Renderer;
+use app::{App};
 
 mod geom;
 
@@ -65,43 +59,12 @@ mod fs {
 }
 
 fn main() {
-    //println!("Vec3 align: {}, size: {}", std::mem::align_of::<Vec3>(), std::mem::size_of::<Vec3>());
-
-    let mut input = WinitInputHelper::new();
-    let event_loop = EventLoop::new();
-
     const RENDER_SIZE: UVec2 = uvec2(1024, 768);
 
-    let window = Arc::new(WindowBuilder::new()
-        .with_title("Hello window")
-        .with_inner_size(winit::dpi::LogicalSize::new(RENDER_SIZE.x as f32, RENDER_SIZE.y as f32))
-        .build(&event_loop)
-        .unwrap());
-
-    let surface_extensions = InstanceExtensions {
-        ..Surface::required_extensions(&event_loop)
-    };
-    let device_extensions = DeviceExtensions {
-        khr_swapchain: true,
-        ..DeviceExtensions::empty()
-    };
-
-    let mut surface : Option<Arc<Surface>> = None;
-
     let device_index: usize = if let Some(num) = env::args().nth(1) { num.parse().unwrap() } else { 0 };
-    let renderer = Renderer::new(&surface_extensions, &device_extensions, |p, i| {
-        if surface.is_none() {
-            surface = Some(Surface::from_window(p.instance().clone(), window.clone()).unwrap());
-        }
-        p.surface_support(i as u32, &surface.as_ref().unwrap()).unwrap_or(false)
-    }, device_index);
 
+    let app = App::new("Rayz", [RENDER_SIZE.x, RENDER_SIZE.y], device_index);
 
-    let surface = surface.unwrap();
-
-    // for (fmt, clr_space) in device.physical_device().surface_formats(&surface, Default::default()).unwrap() {
-    //     println!("Surface format {fmt:?}, colorspace {clr_space:?}");
-    // }
 
     let font = FixedFont::from_file("data/font_10x20.png");
 
@@ -114,7 +77,7 @@ fn main() {
     model.invert_triangle_order();
 
     let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
-        &*renderer.allocator,
+        app.renderer.allocator.as_ref(),
         BufferCreateInfo{
             usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -127,7 +90,7 @@ fn main() {
     ).unwrap();
 
     let vertices_buffer = Buffer::new_slice::<f32>(
-        &*renderer.allocator,
+        &*app.renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -140,7 +103,7 @@ fn main() {
     ).unwrap();
 
     let triangles_buffer = Buffer::new_slice::<u32>(
-        &*renderer.allocator,
+        &*app.renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -153,7 +116,7 @@ fn main() {
     ).unwrap();
 
     let bvh_buffer = Buffer::new_slice::<cs::BvhNode>(
-        &*renderer.allocator,
+        &*app.renderer.allocator,
         BufferCreateInfo{
             usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -166,26 +129,11 @@ fn main() {
     ).unwrap();
 
 
-    let (mut swapchain, mut swapchain_images) = {
-        let surface_caps = renderer.device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
-        let image_format = renderer.device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
-        Swapchain::new(
-            renderer.device.clone(),
-            surface,
-            SwapchainCreateInfo { 
-                min_image_count: surface_caps.min_image_count.max(2), 
-                image_format, 
-                image_extent: window.inner_size().into(), 
-                image_usage: ImageUsage::COLOR_ATTACHMENT | ImageUsage::STORAGE, 
-                composite_alpha: surface_caps.supported_composite_alpha.into_iter().next().unwrap(), 
-                ..Default::default() }
-        ).unwrap()
-    };
 
-    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(renderer.device.clone());
+    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(app.renderer.device.clone());
 
-    let compute_pipeline = load_compute_pipeline(renderer.device.clone(), cs::load(renderer.device.clone()).unwrap());
-    let graphics_pipeline = load_graphics_pipeline(renderer.device.clone(), vs::load(renderer.device.clone()).unwrap(), fs::load(renderer.device.clone()).unwrap(), &[swapchain_images[0].format()]);
+    let compute_pipeline = load_compute_pipeline(app.renderer.device.clone(), cs::load(app.renderer.device.clone()).unwrap());
+    let graphics_pipeline = load_graphics_pipeline(app.renderer.device.clone(), vs::load(app.renderer.device.clone()).unwrap(), fs::load(app.renderer.device.clone()).unwrap(), &[app.swapchain_image_views[0].format()]);
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -193,10 +141,10 @@ fn main() {
         depth_range: 0.0..=1.0,
     };
 
-    let mut swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
+    setup_for_window_size(app.swapchain_image_views[0].image().extent(), &mut viewport, &mut camera);
     
     let sampler_linear = Sampler::new(
-        renderer.device.clone(),
+        app.renderer.device.clone(),
         SamplerCreateInfo {
             mag_filter: Filter::Linear,
             min_filter: Filter::Linear,
@@ -204,7 +152,7 @@ fn main() {
             ..SamplerCreateInfo::default()
         }
     ).unwrap();
-    let storage_image = create_storage_image(&*renderer.allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
+    let storage_image = create_storage_image(&*app.renderer.allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
     let storage_image_view = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
@@ -237,18 +185,18 @@ fn main() {
         []
     ).unwrap();
 
-    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(renderer.device.clone(), Default::default());
+    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(app.renderer.device.clone(), Default::default());
 
-    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
     upload_builder
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*renderer.allocator, model.vertices.as_slice()), 
+            get_staging_slice(&*app.renderer.allocator, model.vertices.as_slice()), 
             vertices_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*renderer.allocator, model.triangles.as_slice()), 
+            get_staging_slice(&*app.renderer.allocator, model.triangles.as_slice()), 
             triangles_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*renderer.allocator, model.bvh.iter().map(|b| 
+            get_staging_slice(&*app.renderer.allocator, model.bvh.iter().map(|b| 
                 cs::BvhNode {
                     box_min: b.bound.min.to_array(), 
                     tri_start: b.tri_start,
@@ -262,58 +210,19 @@ fn main() {
 
     let upload_buffer = upload_builder.build().unwrap();
 
-    let mut previous_frame_end: Option<Box<dyn GpuFuture>> = Some(sync::now(renderer.device.clone()).boxed()
-            .then_execute(renderer.queue.clone(), upload_buffer).unwrap()
-            .then_signal_fence_and_flush().unwrap().boxed());
-
-    let mut recreate_swapchain = false;
-
     let mut poll_time = SystemTime::now();
 
-    event_loop.run(move |event, _, control_flow| {
-        if !input.update(&event) {
-            return;
+    app.run(upload_buffer, move |app, swapchain_image_view| {
+        process_camera_input(&mut app.input, &mut camera, &mut poll_time);
+
+        let window_extent = swapchain_image_view.image().extent();
+        if window_extent[0] as f32 != viewport.extent[0] || window_extent[1] as f32 != viewport.extent[1] {
+            setup_for_window_size(window_extent, &mut viewport, &mut camera)
         }
 
-        if input.close_requested() || input.destroyed() {
-            control_flow.set_exit();
-            return;
-        }
-
-        process_camera_input(&mut input, &mut camera, &mut poll_time);
-
-        // render
-        let window_extent: [u32; 2] = window.inner_size().into();
-        if window_extent.contains(&0) {
-            // don't draw on empty window
-            return;
-        }
-        previous_frame_end.as_mut().unwrap().cleanup_finished();
-        if recreate_swapchain {
-            let (new_swapchain, new_images) = swapchain.recreate(SwapchainCreateInfo { image_extent: window_extent, ..swapchain.create_info() })
-                .expect("Failed to recreate swapchain");
-            swapchain = new_swapchain;
-            swapchain_images = new_images;
-            swapchain_image_views = setup_for_window_size(&swapchain_images, &mut viewport, &mut camera);
-            viewport.extent = [window_extent[0] as f32, window_extent[1] as f32];
-            recreate_swapchain = false;
-        }
-        let (image_index, suboptimal, acquire_future) = 
-            match acquire_next_image(swapchain.clone(), None).map_err(Validated::unwrap) {
-                Ok(r) => r,
-                Err(VulkanError::OutOfDate) => {
-                    recreate_swapchain = true;
-                    return;
-                },
-                Err(e) => panic!("Failed to acquire swapchain image {e}"),
-            };
-        if suboptimal {
-            recreate_swapchain = true;
-        }
-
-        let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
+        let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
-            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&*renderer.allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
+            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&*app.renderer.allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
             .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
             .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -322,7 +231,7 @@ fn main() {
                 load_op: AttachmentLoadOp::Clear,
                 store_op: AttachmentStoreOp::Store,
                 clear_value: Some([0.0, 0.0, 1.0, 1.0].into()),
-                ..RenderingAttachmentInfo::image_view(swapchain_image_views[image_index as usize].clone())
+                ..RenderingAttachmentInfo::image_view(swapchain_image_view.clone())
                 })], ..Default::default() }).unwrap()
 
             .bind_pipeline_graphics(graphics_pipeline.clone()).unwrap()
@@ -336,26 +245,8 @@ fn main() {
             .end_rendering().unwrap();
 
         let cmd_buffer = cmd_builder.build().unwrap();
-
-        let future = previous_frame_end
-                .take().unwrap()
-                .join(acquire_future)
-                .then_execute(renderer.queue.clone(), cmd_buffer).unwrap()
-                .then_swapchain_present(renderer.queue.clone(), SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index))
-                .then_signal_fence_and_flush();
-        match future.map_err(Validated::unwrap) {
-            Ok(future) => {
-                previous_frame_end = Some(future.boxed());
-            },
-            Err(VulkanError::OutOfDate) => {
-                recreate_swapchain = true;
-                previous_frame_end = Some(sync::now(renderer.device.clone()).boxed());
-            },
-            Err(e) => {
-                println!("Failed to flush future {e}");
-                previous_frame_end = Some(sync::now(renderer.device.clone()).boxed());
-            },
-        }
+        
+        cmd_buffer
     })
 }
 
@@ -363,17 +254,10 @@ fn div_ceil(num: u32, denom: u32) -> u32 {
     (num + denom - 1) / denom
 }
 
-fn setup_for_window_size(images: &[Arc<Image>], viewport: &mut Viewport, camera: &mut Camera) -> Vec<Arc<ImageView>> {
-    let extent = images[0].extent();
+fn setup_for_window_size(extent: [u32; 3], viewport: &mut Viewport, camera: &mut Camera) {
     viewport.extent = [extent[0] as f32, extent[1] as f32];
 
     camera.projection = Mat4::perspective_lh(PI / 3.0, viewport.extent[0] / viewport.extent[1], 0.1, 100.0);
-
-    images
-        .iter()
-        .map(
-            |image| ImageView::new_default(image.clone()).unwrap())
-        .collect::<Vec<_>>()
 }
 
 fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, time: &mut SystemTime) {

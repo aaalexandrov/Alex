@@ -1,14 +1,13 @@
 use vulkano::{
     device::{Device, Queue, DeviceExtensions, DeviceCreateInfo, QueueCreateInfo, Features, QueueFlags, physical::{PhysicalDeviceType, PhysicalDevice}}, 
-    swapchain::{Surface, Swapchain}, 
-    image::view::ImageView, 
+    swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo}, 
+    image::{view::ImageView, ImageUsage, Image}, 
     instance::{InstanceExtensions, Instance, InstanceCreateInfo, InstanceCreateFlags}, 
     memory::allocator::{MemoryAllocator, StandardMemoryAllocator}, 
-    VulkanLibrary, Version};
+    VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError};
 use std::sync::Arc;
 
 use winit::{
-    event::{VirtualKeyCode},
     event_loop::EventLoop,
     window::{WindowBuilder, Window},
 };
@@ -22,18 +21,8 @@ pub struct Renderer {
     pub allocator: Box<dyn MemoryAllocator>,
 }
 
-pub struct App {
-    renderer: Renderer,
-    event_loop: EventLoop<()>,
-    input: WinitInputHelper,
-    window: Arc<Window>,
-    surface: Arc<Surface>,
-    swapchain: Arc<Swapchain>,
-    swapchain_image_views: Vec<Arc<ImageView>>,
-}
-
 impl Renderer {
-    pub fn new<QueuePred>(instance_extensions: &InstanceExtensions, device_extensions: &DeviceExtensions, mut queue_pred: QueuePred, device_index: usize) -> Renderer 
+    pub fn new<QueuePred>(instance_extensions: &InstanceExtensions, device_extensions: &DeviceExtensions, queue_pred: QueuePred, device_index: usize) -> Renderer 
         where QueuePred: FnMut(Arc<PhysicalDevice>, usize) -> bool {
         let library = VulkanLibrary::new().unwrap();
     
@@ -106,6 +95,153 @@ impl Renderer {
     }    
 }
 
-impl App {
+pub struct App {
+    pub renderer: Renderer,
+    pub event_loop: Option<EventLoop<()>>,
+    pub input: WinitInputHelper,
+    pub window: Arc<Window>,
+    pub surface: Arc<Surface>,
+    pub swapchain: Arc<Swapchain>,
+    pub swapchain_image_views: Vec<Arc<ImageView>>,
+}
 
+impl App {
+    pub fn new(app_name: &str, win_size: [u32; 2], device_index: usize) -> App {
+        let input = WinitInputHelper::new();
+        let event_loop = Some(EventLoop::new());
+        
+        let window = Arc::new(WindowBuilder::new()
+            .with_title(app_name)
+            .with_inner_size(winit::dpi::LogicalSize::new(win_size[0] as f32, win_size[0] as f32))
+            .build(event_loop.as_ref().unwrap())
+            .unwrap());
+    
+        let surface_extensions = InstanceExtensions {
+            ..Surface::required_extensions(event_loop.as_ref().unwrap())
+        };
+        let device_extensions = DeviceExtensions {
+            khr_swapchain: true,
+            ..DeviceExtensions::empty()
+        };
+    
+        let mut surface : Option<Arc<Surface>> = None;
+    
+        let renderer = Renderer::new(&surface_extensions, &device_extensions, |p, i| {
+            if surface.is_none() {
+                surface = Some(Surface::from_window(p.instance().clone(), window.clone()).unwrap());
+            }
+            p.surface_support(i as u32, &surface.as_ref().unwrap()).unwrap_or(false)
+        }, device_index);
+    
+        let surface = surface.unwrap();
+
+        let (swapchain, swapchain_images) = {
+            let surface_caps = renderer.device.physical_device().surface_capabilities(&surface, Default::default()).unwrap();
+            let image_format = renderer.device.physical_device().surface_formats(&surface, Default::default()).unwrap()[0].0;
+            Swapchain::new(
+                renderer.device.clone(),
+                surface.clone(),
+                SwapchainCreateInfo { 
+                    min_image_count: surface_caps.min_image_count.max(2), 
+                    image_format, 
+                    image_extent: window.inner_size().into(), 
+                    image_usage: ImageUsage::COLOR_ATTACHMENT | ImageUsage::STORAGE, 
+                    composite_alpha: surface_caps.supported_composite_alpha.into_iter().next().unwrap(), 
+                    ..Default::default() }
+            ).unwrap()
+        };
+    
+        let swapchain_image_views = App::create_image_views(&swapchain_images);
+
+        App {
+            renderer,
+            event_loop,
+            input,
+            window,
+            surface,
+            swapchain,
+            swapchain_image_views
+        }
+    }
+
+    pub fn run<LoopFn>(mut self, init_cmd_buffer: Arc<PrimaryAutoCommandBuffer>, mut loop_fn: LoopFn) -> !
+        where LoopFn: 'static + FnMut(&mut Self, Arc<ImageView>) -> Arc<PrimaryAutoCommandBuffer> {
+
+        let mut recreate_swapchain = false;
+
+        let mut previous_frame_end: Option<Box<dyn GpuFuture>> = Some(sync::now(self.renderer.device.clone()).boxed()
+            .then_execute(self.renderer.queue.clone(), init_cmd_buffer).unwrap()
+            .then_signal_fence_and_flush().unwrap().boxed());
+
+
+        let event_loop = self.event_loop.take().unwrap();
+        event_loop.run(move |event, _, control_flow| {
+            if !self.input.update(&event) {
+                return;
+            }
+    
+            if self.input.close_requested() || self.input.destroyed() {
+                control_flow.set_exit();
+                return;
+            }
+    
+            // render
+            let window_extent: [u32; 2] = self.window.inner_size().into();
+            if window_extent.contains(&0) {
+                // don't draw on empty window
+                return;
+            }
+            previous_frame_end.as_mut().unwrap().cleanup_finished();
+            if recreate_swapchain {
+                let (new_swapchain, new_images) = self.swapchain.recreate(SwapchainCreateInfo { image_extent: window_extent, ..self.swapchain.create_info() })
+                    .expect("Failed to recreate swapchain");
+                self.swapchain = new_swapchain;
+                self.swapchain_image_views = App::create_image_views(&new_images);
+                recreate_swapchain = false;
+            }
+            let (image_index, suboptimal, acquire_future) = 
+                match acquire_next_image(self.swapchain.clone(), None).map_err(Validated::unwrap) {
+                    Ok(r) => r,
+                    Err(VulkanError::OutOfDate) => {
+                        recreate_swapchain = true;
+                        return;
+                    },
+                    Err(e) => panic!("Failed to acquire swapchain image {e}"),
+                };
+            if suboptimal {
+                recreate_swapchain = true;
+            }
+    
+            let img_view = self.swapchain_image_views[image_index as usize].clone();
+            let cmd_buffer = loop_fn(&mut self, img_view);
+    
+            let future = previous_frame_end
+                    .take().unwrap()
+                    .join(acquire_future)
+                    .then_execute(self.renderer.queue.clone(), cmd_buffer).unwrap()
+                    .then_swapchain_present(self.renderer.queue.clone(), SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(), image_index))
+                    .then_signal_fence_and_flush();
+            match future.map_err(Validated::unwrap) {
+                Ok(future) => {
+                    previous_frame_end = Some(future.boxed());
+                },
+                Err(VulkanError::OutOfDate) => {
+                    recreate_swapchain = true;
+                    previous_frame_end = Some(sync::now(self.renderer.device.clone()).boxed());
+                },
+                Err(e) => {
+                    println!("Failed to flush future {e}");
+                    previous_frame_end = Some(sync::now(self.renderer.device.clone()).boxed());
+                },
+            }
+        })
+    }
+
+    fn create_image_views(images: &[Arc<Image>]) -> Vec<Arc<ImageView>> {
+        images
+            .iter()
+            .map(
+                |image| ImageView::new_default(image.clone()).unwrap())
+            .collect::<Vec<_>>()
+    }
 }
