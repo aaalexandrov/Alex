@@ -1,14 +1,14 @@
 use vulkano::{
     device::{Device, Queue, DeviceExtensions, DeviceCreateInfo, QueueCreateInfo, Features, QueueFlags, physical::{PhysicalDeviceType, PhysicalDevice}}, 
-    swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo}, 
+    swapchain::{Surface, Swapchain, SwapchainCreateInfo, acquire_next_image, SwapchainPresentInfo, PresentMode}, 
     image::{view::ImageView, ImageUsage, Image}, 
     instance::{InstanceExtensions, Instance, InstanceCreateInfo, InstanceCreateFlags}, 
-    memory::allocator::{MemoryAllocator, StandardMemoryAllocator}, 
+    memory::allocator::{MemoryAllocator, StandardMemoryAllocator, MemoryTypeFilter, AllocationCreateInfo}, 
     VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError, shader::ShaderModule, 
     pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, 
         graphics::{subpass::PipelineRenderingCreateInfo, GraphicsPipelineCreateInfo, vertex_input::{VertexInputState, Vertex, VertexDefinition}, input_assembly::{InputAssemblyState, PrimitiveTopology}, 
         viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState}, PartialStateMode}, format::Format, 
-        descriptor_set::allocator::{StandardDescriptorSetAllocator}};
+        descriptor_set::allocator::{StandardDescriptorSetAllocator}, buffer::{Buffer, BufferContents, Subbuffer, BufferCreateInfo, BufferUsage}, DeviceSize};
 use std::sync::Arc;
 
 use winit::{
@@ -121,6 +121,58 @@ impl Renderer {
         self.load_graphics_pipeline_vertex(vs_module, fs_module, Some(vertex_input_state), attachment_formats)
     }
 
+    fn get_memory_preference(usage: BufferUsage) -> MemoryTypeFilter {
+        if usage == BufferUsage::TRANSFER_SRC { 
+            MemoryTypeFilter::PREFER_HOST 
+        } else { 
+            MemoryTypeFilter::PREFER_DEVICE 
+        }
+    }
+
+    pub fn get_buffer_data<T: BufferContents>(&self, usage: BufferUsage, data: T) -> Subbuffer<T> {
+        Buffer::from_data(
+            self.allocator.as_ref(),
+            BufferCreateInfo{
+                usage,
+                ..Default::default()
+            },
+            AllocationCreateInfo{
+                memory_type_filter: Self::get_memory_preference(usage) | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                ..Default::default()
+            },
+            data,
+        ).unwrap()
+    }
+    
+    pub fn get_buffer_write<T, WriteFunc>(&self, usage: BufferUsage, elements: DeviceSize, write_fn: WriteFunc) -> Subbuffer<[T]>
+        where T: BufferContents + Sized, WriteFunc: Fn(&mut [T]) {
+            let buffer = Buffer::new_slice(
+                self.allocator.as_ref(),
+                BufferCreateInfo{
+                    usage,
+                    ..Default::default()
+                },
+                AllocationCreateInfo{
+                    memory_type_filter: Self::get_memory_preference(usage) | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+                    ..Default::default()
+                },
+                elements,
+            ).unwrap();
+        
+            {
+                let mut writer = buffer.write().unwrap();
+                write_fn(&mut *writer);
+            }
+        
+            buffer
+    }
+
+    pub fn get_buffer_slice<T: BufferContents + Clone>(&self, usage: BufferUsage, data: &[T]) -> Subbuffer<[T]> {
+        self.get_buffer_write(usage, data.len() as DeviceSize, |slice| {
+            slice.clone_from_slice(data);
+        })
+    }
+
     fn select_physical_device_and_queue_family<QueuePred>(instance: &Arc<Instance>, device_extensions: &DeviceExtensions, mut queue_pred: QueuePred, device_index: usize) -> Option<(Arc<PhysicalDevice>, DeviceExtensions, u32)>
         where QueuePred: FnMut(Arc<PhysicalDevice>, usize) -> bool {
         let mut devices: Vec<_> = instance.enumerate_physical_devices().unwrap()
@@ -168,6 +220,7 @@ pub struct App {
     pub surface: Arc<Surface>,
     pub swapchain: Arc<Swapchain>,
     pub swapchain_image_views: Vec<Arc<ImageView>>,
+    pub present_mode: Option<PresentMode>,
 }
 
 impl App {
@@ -177,7 +230,7 @@ impl App {
         
         let window = Arc::new(WindowBuilder::new()
             .with_title(app_name)
-            .with_inner_size(winit::dpi::LogicalSize::new(win_size[0] as f32, win_size[1] as f32))
+            .with_inner_size(winit::dpi::PhysicalSize::new(win_size[0], win_size[1]))
             .build(event_loop.as_ref().unwrap())
             .unwrap());
     
@@ -225,7 +278,8 @@ impl App {
             window,
             surface,
             swapchain,
-            swapchain_image_views
+            swapchain_image_views,
+            present_mode: None,
         }
     }
 
@@ -284,7 +338,13 @@ impl App {
                     .take().unwrap()
                     .join(acquire_future)
                     .then_execute(self.renderer.queue.clone(), cmd_buffer).unwrap()
-                    .then_swapchain_present(self.renderer.queue.clone(), SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(), image_index))
+                    .then_swapchain_present(
+                        self.renderer.queue.clone(), 
+                        SwapchainPresentInfo {
+                            present_mode: self.present_mode,
+                            ..SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(), image_index)
+                        }
+                    )
                     .then_signal_fence_and_flush();
             match future.map_err(Validated::unwrap) {
                 Ok(future) => {

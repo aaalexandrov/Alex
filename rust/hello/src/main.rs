@@ -15,7 +15,7 @@ use vulkano::{
             viewport::{Viewport, }, 
         }, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, BufferContents, Subbuffer}, format::Format, DeviceSize, padded::Padded, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, padded::Padded, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -34,7 +34,7 @@ use model::Model;
 mod solid;
 
 mod font;
-use font::FixedFont;
+use font::{FixedFontData, FixedFont};
 
 use std::f32::consts::PI;
 
@@ -53,8 +53,10 @@ fn main() {
 
     let app = App::new("Rayz", [RENDER_SIZE.x, RENDER_SIZE.y], device_index);
 
+    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(app.renderer.device.clone(), Default::default());
+    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
 
-    let font = FixedFont::from_file("data/font_10x20.png", &app.renderer);
+    let mut font = FixedFont::new(FixedFontData::from_file("data/font_10x20.png", &app.renderer, app.swapchain_image_views[0].format(), &mut upload_builder));
 
     let mut camera = Camera{
         transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
@@ -119,7 +121,7 @@ fn main() {
 
 
     let compute_pipeline = app.renderer.load_compute_pipeline(cs::load(app.renderer.device.clone()).unwrap());
-    let solid_pipeline = solid::load_pipeline(&app.renderer, app.swapchain_image_views[0].format());
+    let solid_pipeline = font.data.pipeline.clone();
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -189,19 +191,7 @@ fn main() {
         },
         solid::QUAD_INDICES,
     ).unwrap();
-    let fullscreen_uniform_buffer = Buffer::from_data(
-        app.renderer.allocator.as_ref(),
-        BufferCreateInfo {
-            usage: BufferUsage::UNIFORM_BUFFER,
-            ..Default::default()
-        },
-        AllocationCreateInfo {
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-            ..Default::default()
-        },
-        solid::UniformData{ view_proj: Mat4::IDENTITY.to_cols_array_2d() }
-    ).unwrap();
+    let fullscreen_uniform_buffer = font.data.uniform_buffer.clone();
 
 
     let solid_descriptor_set = PersistentDescriptorSet::new(
@@ -210,22 +200,21 @@ fn main() {
         [
             WriteDescriptorSet::buffer(0, fullscreen_uniform_buffer),
             WriteDescriptorSet::sampler(1, sampler_linear),
-            WriteDescriptorSet::image_view(2, storage_image_view_sampled),],
+            WriteDescriptorSet::image_view(2, storage_image_view_sampled),
+            //WriteDescriptorSet::image_view(2, font.data.texture_view.clone()),
+        ],
         []
     ).unwrap();
 
-    let cmd_buffer_allocator = StandardCommandBufferAllocator::new(app.renderer.device.clone(), Default::default());
-
-    let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
     upload_builder
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*app.renderer.allocator, model.vertices.as_slice()), 
+            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.vertices.as_slice()), 
             vertices_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*app.renderer.allocator, model.triangles.as_slice()), 
+            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.triangles.as_slice()), 
             triangles_buffer.clone())).unwrap()
         .copy_buffer(CopyBufferInfo::buffers(
-            get_staging_slice(&*app.renderer.allocator, model.bvh.iter().map(|b| 
+            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.bvh.iter().map(|b| 
                 cs::BvhNode {
                     box_min: b.bound.min.to_array(), 
                     tri_start: b.tri_start,
@@ -249,9 +238,13 @@ fn main() {
             setup_for_window_size(window_extent, &mut viewport, &mut camera)
         }
 
+        font.clear();
+        font.add_str_pix(uvec2(200, 200), UVec2::from_slice(&window_extent) / 2, "Hello, hi, 123??!".into(), solid::WHITE);
+        font.add_str_pix(uvec2(200, 250), UVec2::from_slice(&window_extent), " !\"#$%&'()*+,-./0123456789".into(), solid::WHITE);
+
         let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
-            .copy_buffer(CopyBufferInfo::buffers(get_staging_buffer(&*app.renderer.allocator, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
+            .copy_buffer(CopyBufferInfo::buffers(app.renderer.get_buffer_data(BufferUsage::TRANSFER_SRC, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
             .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
             .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -262,17 +255,21 @@ fn main() {
                 clear_value: Some([0.0, 0.0, 1.0, 1.0].into()),
                 ..RenderingAttachmentInfo::image_view(swapchain_image_view.clone())
                 })], ..Default::default() }).unwrap()
-
-            .bind_pipeline_graphics(solid_pipeline.clone()).unwrap()
             .set_viewport(
                 0, 
                 [viewport.clone()].into_iter().collect()
-            ).unwrap()
+            ).unwrap();
+    
+        cmd_builder
+            .bind_pipeline_graphics(solid_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Graphics, solid_pipeline.layout().clone(), 0, solid_descriptor_set.clone()).unwrap()
             .bind_vertex_buffers(0, fullscreen_vertex_buffer.clone()).unwrap()
             .bind_index_buffer(fullscreen_index_buffer.clone()).unwrap()
-            .draw_indexed(fullscreen_index_buffer.len() as u32, 1, 0, 0, 0).unwrap()
+            .draw_indexed(fullscreen_index_buffer.len() as u32, 1, 0, 0, 0).unwrap();
 
+        font.render(&app.renderer, &mut cmd_builder);
+
+        cmd_builder
             .end_rendering().unwrap();
 
         let cmd_buffer = cmd_builder.build().unwrap();
@@ -376,41 +373,3 @@ fn get_uniform_contents(camera: &Camera, model: &Model) -> cs::UniformData {
     }
 }
 
-fn get_staging_buffer<T: BufferContents>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: T) -> Subbuffer<T> {
-    Buffer::from_data(
-        mem_alloc,
-        BufferCreateInfo{
-            usage: BufferUsage::TRANSFER_SRC,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-            ..Default::default()
-        },
-        data,
-    ).unwrap()
-}
-
-fn get_staging_slice<T: BufferContents + Clone>(mem_alloc: &(impl MemoryAllocator + ?Sized), data: &[T]) -> Subbuffer<[T]> {
-    let buffer = Buffer::new_slice(
-        mem_alloc,
-        BufferCreateInfo{
-            usage: BufferUsage::TRANSFER_SRC,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_HOST | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-            ..Default::default()
-        },
-        data.len() as DeviceSize,
-    ).unwrap();
-
-    {
-        let mut writer = buffer.write().unwrap();
-        for i in 0..data.len() {
-            writer[i] = data[i].clone();
-        }
-    }
-
-    buffer
-}
