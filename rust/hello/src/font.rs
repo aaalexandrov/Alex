@@ -95,7 +95,7 @@ impl FixedFontData {
                 ..ImageViewCreateInfo::from_image(&texture)
             }).unwrap();
 
-        let pipeline = crate::solid::load_pipeline(&renderer, attachment_format);
+        let pipeline = crate::solid::load_pipeline(&renderer, true, attachment_format);
 
         let desc_set = PersistentDescriptorSet::new(
             &renderer.descriptor_set_allocator,

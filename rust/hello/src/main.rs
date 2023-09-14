@@ -4,7 +4,7 @@ use winit::{
 
 use winit_input_helper::WinitInputHelper;
 
-use std::{sync::Arc, env, time::{SystemTime}};
+use std::{sync::{Arc, Mutex}, env, time::{SystemTime, Duration}};
 
 use vulkano::{
     memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
@@ -15,7 +15,7 @@ use vulkano::{
             viewport::{Viewport, }, 
         }, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, padded::Padded, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, padded::Padded, swapchain::PresentMode, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -51,12 +51,13 @@ fn main() {
 
     let device_index: usize = if let Some(num) = env::args().nth(1) { num.parse().unwrap() } else { 0 };
 
-    let app = App::new("Rayz", [RENDER_SIZE.x, RENDER_SIZE.y], device_index);
+    let mut app = App::new("Rayz", [RENDER_SIZE.x, RENDER_SIZE.y], device_index);
 
     let cmd_buffer_allocator = StandardCommandBufferAllocator::new(app.renderer.device.clone(), Default::default());
     let mut upload_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
 
-    let mut font = FixedFont::new(FixedFontData::from_file("data/font_10x20.png", &app.renderer, app.swapchain_image_views[0].format(), &mut upload_builder));
+    let swapchain_format = app.swapchain_image_views[0].format();
+    let mut font = FixedFont::new(FixedFontData::from_file("data/font_10x20.png", &app.renderer, swapchain_format, &mut upload_builder));
 
     let mut camera = Camera{
         transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
@@ -119,9 +120,8 @@ fn main() {
     ).unwrap();
 
 
-
     let compute_pipeline = app.renderer.load_compute_pipeline(cs::load(app.renderer.device.clone()).unwrap());
-    let solid_pipeline = font.data.pipeline.clone();
+    let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
 
     let mut viewport = Viewport {
         offset: [0.0, 0.0],
@@ -229,18 +229,36 @@ fn main() {
     let upload_buffer = upload_builder.build().unwrap();
 
     let mut poll_time = SystemTime::now();
+    let start_time = Arc::new(poll_time);
+    let frames = Arc::new(Mutex::new(0u64));
+
+    let frames_clone = frames.clone();
+    app.on_exit = Box::new(move || {
+        let run_time = SystemTime::now().duration_since(*start_time).unwrap().as_secs_f64();
+        let frames = *frames_clone.lock().unwrap();
+        let fps = frames as f64 / run_time;
+        println!("{fps:.2} fps - {frames} frames in {run_time:.2} seconds");
+    });
 
     app.run(upload_buffer, move |app, swapchain_image_view| {
-        process_camera_input(&mut app.input, &mut camera, &mut poll_time);
+        *frames.lock().unwrap() += 1;
+        let now = SystemTime::now();
+        let delta = now.duration_since(poll_time).unwrap();
+        poll_time = now;
+
+        process_camera_input(&mut app.input, &mut camera, delta);
+        if app.input.key_released(VirtualKeyCode::V) {
+            app.present_mode = if app.present_mode.is_none() { Some(PresentMode::Immediate) } else { None };
+        }
 
         let window_extent = swapchain_image_view.image().extent();
         if window_extent[0] as f32 != viewport.extent[0] || window_extent[1] as f32 != viewport.extent[1] {
             setup_for_window_size(window_extent, &mut viewport, &mut camera)
         }
 
+        let fps = 1.0 / delta.as_secs_f32();
         font.clear();
-        font.add_str_pix(uvec2(200, 200), UVec2::from_slice(&window_extent) / 2, "Hello, hi, 123??!".into(), solid::WHITE);
-        font.add_str_pix(uvec2(200, 250), UVec2::from_slice(&window_extent), " !\"#$%&'()*+,-./0123456789".into(), solid::WHITE);
+        font.add_str_pix(font.data.char_size * 2, UVec2::from_slice(&window_extent) / 2, format!("{fps:.2}").into(), solid::WHITE);
 
         let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
@@ -288,12 +306,7 @@ fn setup_for_window_size(extent: [u32; 3], viewport: &mut Viewport, camera: &mut
     camera.projection = Mat4::perspective_lh(PI / 3.0, viewport.extent[0] / viewport.extent[1], 0.1, 100.0);
 }
 
-fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, time: &mut SystemTime) {
-
-    let now = SystemTime::now();
-    let delta = now.duration_since(*time).unwrap();
-    *time = now;
-
+fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, delta: Duration) {
     let mut dpos = 12 as f32 * delta.as_secs_f32();
     let mut drot = PI / 1.5 * delta.as_secs_f32();
 

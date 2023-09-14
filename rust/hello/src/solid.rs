@@ -44,6 +44,11 @@ pub const FULLSCREEN_QUAD_VERTICES: [SolidVertex; 4] = [
 
 pub const QUAD_INDICES: [u32; 6] = [0, 1, 2, 2, 1, 3];
 
-pub fn load_pipeline(renderer: &Renderer, attachment_format: Format) -> Arc<GraphicsPipeline> {
-    renderer.load_graphics_pipeline::<SolidVertex>(vs::load(renderer.device.clone()).unwrap(), fs::load(renderer.device.clone()).unwrap(), &[attachment_format])
+pub fn load_pipeline(renderer: &Renderer, alpha_blend: bool, attachment_format: Format) -> Arc<GraphicsPipeline> {
+    renderer.load_graphics_pipeline::<SolidVertex>(
+        vs::load(renderer.device.clone()).unwrap(), 
+        fs::load(renderer.device.clone()).unwrap(), 
+        [(0, alpha_blend.into())].into_iter().collect(),
+        alpha_blend,
+        &[attachment_format])
 }

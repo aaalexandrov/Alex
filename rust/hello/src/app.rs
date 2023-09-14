@@ -4,12 +4,13 @@ use vulkano::{
     image::{view::ImageView, ImageUsage, Image}, 
     instance::{InstanceExtensions, Instance, InstanceCreateInfo, InstanceCreateFlags}, 
     memory::allocator::{MemoryAllocator, StandardMemoryAllocator, MemoryTypeFilter, AllocationCreateInfo}, 
-    VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError, shader::ShaderModule, 
+    VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError, shader::{ShaderModule, SpecializationConstant}, 
     pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, 
         graphics::{subpass::PipelineRenderingCreateInfo, GraphicsPipelineCreateInfo, vertex_input::{VertexInputState, Vertex, VertexDefinition}, input_assembly::{InputAssemblyState, PrimitiveTopology}, 
         viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState}, PartialStateMode}, format::Format, 
         descriptor_set::allocator::{StandardDescriptorSetAllocator}, buffer::{Buffer, BufferContents, Subbuffer, BufferCreateInfo, BufferUsage}, DeviceSize};
-use std::sync::Arc;
+use std::{sync::Arc};
+use ahash::HashMap;
 
 use winit::{
     event_loop::EventLoop,
@@ -74,12 +75,26 @@ impl Renderer {
         ComputePipeline::new(self.device.clone(), None, ComputePipelineCreateInfo::stage_layout(stage, layout)).unwrap()
     }
     
-    pub fn load_graphics_pipeline_vertex(&self, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, vertex_input_state: Option<VertexInputState>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> {
+    pub fn load_graphics_pipeline_vertex(
+        &self, 
+        vs_module: Arc<ShaderModule>, 
+        fs_module: Arc<ShaderModule>, 
+        specialization_info: HashMap<u32, SpecializationConstant>, 
+        vertex_input_state: Option<VertexInputState>, 
+        color_blend_state: Option<ColorBlendState>, 
+        attachment_formats: &[Format]
+    ) -> Arc<GraphicsPipeline> {
         let vs = vs_module.entry_point("main").unwrap();
         let fs = fs_module.entry_point("main").unwrap();
         let stages = [
-            PipelineShaderStageCreateInfo::new(vs),
-            PipelineShaderStageCreateInfo::new(fs),
+            PipelineShaderStageCreateInfo {
+                specialization_info: specialization_info.clone().into(),
+                ..PipelineShaderStageCreateInfo::new(vs)
+            },
+            PipelineShaderStageCreateInfo {
+                specialization_info,
+                ..PipelineShaderStageCreateInfo::new(fs)
+            },
         ];
         let layout = PipelineLayout::new(
             self.device.clone(),
@@ -106,19 +121,28 @@ impl Renderer {
                 viewport_state: Some(ViewportState::viewport_dynamic_scissor_irrelevant()),
                 rasterization_state: Some(RasterizationState::default()),
                 multisample_state: Some(MultisampleState::default()),
-                color_blend_state: Some(ColorBlendState::new(attachment_formats.len() as u32)),
+                color_blend_state,
                 subpass: Some(subpass.into()),
                 ..GraphicsPipelineCreateInfo::layout(layout)
             },
         ).unwrap()
     }
     
-    pub fn load_graphics_pipeline<VertexStruct>(&self, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> 
+    pub fn load_graphics_pipeline<VertexStruct>(&self, vs_module: Arc<ShaderModule>, fs_module: Arc<ShaderModule>, specialization_info: HashMap<u32, SpecializationConstant>, alpha_blend : bool, attachment_formats: &[Format]) -> Arc<GraphicsPipeline> 
         where VertexStruct: Vertex {
         let vertex_input_state = [VertexStruct::per_vertex()]
             .definition(&vs_module.entry_point("main").unwrap().info().input_interface)
             .unwrap();
-        self.load_graphics_pipeline_vertex(vs_module, fs_module, Some(vertex_input_state), attachment_formats)
+        let color_blend_state = ColorBlendState::new(attachment_formats.len() as u32);
+        let color_blend_state = if alpha_blend { color_blend_state.blend_alpha() } else { color_blend_state };
+
+        self.load_graphics_pipeline_vertex(
+            vs_module, 
+            fs_module, 
+            specialization_info, 
+            Some(vertex_input_state), 
+            Some(color_blend_state),
+            attachment_formats)
     }
 
     fn get_memory_preference(usage: BufferUsage) -> MemoryTypeFilter {
@@ -221,6 +245,7 @@ pub struct App {
     pub swapchain: Arc<Swapchain>,
     pub swapchain_image_views: Vec<Arc<ImageView>>,
     pub present_mode: Option<PresentMode>,
+    pub on_exit: Box<dyn Fn()>,
 }
 
 impl App {
@@ -280,6 +305,7 @@ impl App {
             swapchain,
             swapchain_image_views,
             present_mode: None,
+            on_exit: Box::new(||{}),
         }
     }
 
@@ -301,6 +327,7 @@ impl App {
     
             if self.input.close_requested() || self.input.destroyed() {
                 control_flow.set_exit();
+                (*self.on_exit)();
                 return;
             }
     
@@ -311,9 +338,16 @@ impl App {
                 return;
             }
             previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+            let desired_present_mode = self.present_mode.unwrap_or(PresentMode::Fifo);
+            recreate_swapchain |= self.swapchain.create_info().present_mode != desired_present_mode;
+
             if recreate_swapchain {
-                let (new_swapchain, new_images) = self.swapchain.recreate(SwapchainCreateInfo { image_extent: window_extent, ..self.swapchain.create_info() })
-                    .expect("Failed to recreate swapchain");
+                let (new_swapchain, new_images) = self.swapchain.recreate(SwapchainCreateInfo { 
+                    image_extent: window_extent, 
+                    present_mode: desired_present_mode,
+                    ..self.swapchain.create_info() 
+                }).expect("Failed to recreate swapchain");
                 self.swapchain = new_swapchain;
                 self.swapchain_image_views = App::create_image_views(&new_images);
                 recreate_swapchain = false;
@@ -341,7 +375,6 @@ impl App {
                     .then_swapchain_present(
                         self.renderer.queue.clone(), 
                         SwapchainPresentInfo {
-                            present_mode: self.present_mode,
                             ..SwapchainPresentInfo::swapchain_image_index(self.swapchain.clone(), image_index)
                         }
                     )

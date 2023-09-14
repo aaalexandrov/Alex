@@ -1,5 +1,7 @@
 #version 450
 
+layout (constant_id = 0) const bool alpha_mode = false;
+
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec2 tc;
 layout (location = 2) in vec4 color;
