@@ -66,8 +66,8 @@ fn main() {
     };
 
     //let model_path = "data/cessna.obj";
-    let model_path = "data/B-17/B17GREEN.obj";
-    //let model_path = "data/B-17/B17SILVER.obj";
+    let model_path = "data/b17green.obj";
+    //let model_path = "data/b17silver.obj";
     let mut model = Model::load_obj(model_path, usize::MAX);
     model.invert_triangle_order();
 
