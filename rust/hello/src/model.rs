@@ -2,8 +2,13 @@ use tobj;
 
 use std::{vec::Vec, cmp::Ordering};
 
-use glam::{Vec3, vec3, UVec3};
+use glam::{Vec3, vec3, UVec4, uvec4};
 use super::geom::{Box3, max_elem_index};
+
+pub struct Material {
+    pub albedo: [f32; 3],
+    pub shininess: f32,
+}
 
 pub struct BoundNode {
     pub bound: Box3,
@@ -13,27 +18,47 @@ pub struct BoundNode {
 }
 
 pub struct Model {
-    pub vertices: Vec::<f32>,
+    pub positions: Vec::<f32>,
+    pub normals: Vec::<f32>,
     pub triangles: Vec::<u32>,
     pub bvh: Vec::<BoundNode>,
+    pub materials: Vec::<Material>,
+    pub triangle_material_indices: Vec<u32>,
 }
 
 impl Model {
     pub fn load_obj(path: &str, model_index: usize) -> Model {
-        let (obj, _) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap();
+        let (obj, Ok(mat)) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap() else {
+            panic!("Failed loading model");
+        };
 
         let mut model = Model { 
-            vertices: Vec::<f32>::new(), 
+            positions: Vec::<f32>::new(), 
+            normals: Vec::<f32>::new(), 
             triangles: Vec::<u32>::new(), 
             bvh: Vec::<BoundNode>::new(),
+            materials: Vec::<Material>::new(),
+            triangle_material_indices: Vec::<u32>::new(),
         };
 
         let indices = if model_index == usize::MAX { 0..obj.len() } else { model_index..(model_index + 1) };
         for i in indices {
             let mesh = &obj[i].mesh;
-            let base_triangle = (model.vertices.len() / 3) as u32;
+            let base_triangle = (model.positions.len() / 3) as u32;
             model.triangles.extend(mesh.indices.iter().map(|x| x + base_triangle));
-            model.vertices.extend_from_slice(&mesh.positions);
+            assert_eq!(mesh.positions.len(), mesh.normals.len());
+            model.positions.extend_from_slice(&mesh.positions);
+            model.normals.extend_from_slice(&mesh.normals);
+            model.triangle_material_indices.extend(std::iter::repeat(
+                mesh.material_id.unwrap_or(0) as u32
+            ).take(mesh.indices.len() / 3));
+        }
+
+        for m in mat.iter() {
+            model.materials.push(Material {
+                albedo: m.diffuse.unwrap(),
+                shininess: m.shininess.unwrap_or(30.0),
+            });
         }
 
         model.build_bvh();
@@ -45,17 +70,17 @@ impl Model {
         self.triangles = self.triangles.chunks_exact(3).map(|t| [t[1], t[0], t[2]]).flatten().collect();
     }
 
-    fn vertex(&self, index: u32) -> Vec3 {
+    fn position(&self, index: u32) -> Vec3 {
         vec3(
-            self.vertices[(index * 3 + 0) as usize], 
-            self.vertices[(index * 3 + 1) as usize], 
-            self.vertices[(index * 3 + 2) as usize])
+            self.positions[(index * 3 + 0) as usize], 
+            self.positions[(index * 3 + 1) as usize], 
+            self.positions[(index * 3 + 2) as usize])
     }
 
-    fn triangle_bound(&self, tri: &UVec3) -> Box3 {
-        Box3::from_min_and_size(self.vertex(tri[0]), Vec3::ZERO)
-            .union_point(self.vertex(tri[1]))
-            .union_point(self.vertex(tri[2]))
+    fn triangle_bound(&self, tri: &UVec4) -> Box3 {
+        Box3::from_min_and_size(self.position(tri[0]), Vec3::ZERO)
+            .union_point(self.position(tri[1]))
+            .union_point(self.position(tri[2]))
     }
 
     fn build_bvh(&mut self) {
@@ -63,18 +88,24 @@ impl Model {
 
         let mut tris = self.triangles
             .chunks_exact(3)
-            .map(|t| UVec3::from_slice(t))
+            .zip(self.triangle_material_indices.iter().cloned())
+            .map(|t| uvec4(t.0[0], t.0[1], t.0[2], t.1))
             .collect::<Vec<_>>();
 
-        self.create_bvh_node(&mut tris, 0, 8);
+        self.create_bvh_node(&mut tris, 0, 1);
 
         self.triangles = tris
             .iter()
-            .flat_map(|t| t.to_array())
+            .flat_map(|t| [t[0], t[1], t[2]])
+            .collect();
+
+        self.triangle_material_indices = tris
+            .iter()
+            .map(|t| t[3])
             .collect();
     }
 
-    fn create_bvh_node(&mut self, tris: &mut [UVec3], tri_start: u32, num_leaf_tris: u32) -> Option<u32> {
+    fn create_bvh_node(&mut self, tris: &mut [UVec4], tri_start: u32, num_leaf_tris: u32) -> Option<u32> {
         if tris.is_empty() {
             return None;
         }

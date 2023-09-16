@@ -15,7 +15,7 @@ use vulkano::{
             viewport::{Viewport, }, 
         }, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, padded::Padded, swapchain::PresentMode, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, swapchain::PresentMode, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -59,12 +59,16 @@ fn main() {
     let swapchain_format = app.swapchain_image_views[0].format();
     let mut font = FixedFont::new(FixedFontData::from_file("data/font_10x20.png", &app.renderer, swapchain_format, &mut upload_builder));
 
+    let cam_transform_default = Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI);
     let mut camera = Camera{
-        transform: Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI), 
+        transform: cam_transform_default, 
         projection: Mat4::IDENTITY,
     };
 
-    let mut model = Model::load_obj("data/cessna.obj", usize::MAX);
+    //let model_path = "data/cessna.obj";
+    let model_path = "data/B-17/B17GREEN.obj";
+    //let model_path = "data/B-17/B17SILVER.obj";
+    let mut model = Model::load_obj(model_path, usize::MAX);
     model.invert_triangle_order();
 
     let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
@@ -80,45 +84,32 @@ fn main() {
         1
     ).unwrap();
 
-    let vertices_buffer = Buffer::new_slice::<f32>(
-        &*app.renderer.allocator,
-        BufferCreateInfo{
-            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
-            ..Default::default()
-        },
-        model.vertices.len() as DeviceSize
-    ).unwrap();
-
-    let triangles_buffer = Buffer::new_slice::<u32>(
-        &*app.renderer.allocator,
-        BufferCreateInfo{
-            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
-            ..Default::default()
-        },
-        model.triangles.len() as DeviceSize
-    ).unwrap();
-
-    let bvh_buffer = Buffer::new_slice::<cs::BvhNode>(
-        &*app.renderer.allocator,
-        BufferCreateInfo{
-            usage: BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
-            ..Default::default()
-        },
-        model.bvh.len() as DeviceSize
-    ).unwrap();
-
+    let positions_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.positions.as_slice());
+    let normals_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.normals.as_slice());
+    let triangles_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangles.as_slice());
+    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [cs::BvhNode]| {
+        for i in 0..bvh.len() {
+            let b = &model.bvh[i];
+            bvh[i] = cs::BvhNode {
+                box_min: b.bound.min.to_array(), 
+                tri_start: b.tri_start,
+                box_max: b.bound.max.to_array(),
+                tri_end: b.tri_end,
+                child: b.child_ind,
+                _pad: [0; 2],
+            }
+        }
+    });
+    let material_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.materials.len() as DeviceSize, |mat: &mut [cs::MaterialData]| {
+        for i in 0..mat.len() {
+            let m = &model.materials[i];
+            mat[i] = cs::MaterialData {
+                albedo: m.albedo,
+                power: m.shininess,
+            };
+        }
+    });
+    let tri_material_indices_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangle_material_indices.as_slice());
 
     let compute_pipeline = app.renderer.load_compute_pipeline(cs::load(app.renderer.device.clone()).unwrap());
     let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
@@ -159,9 +150,12 @@ fn main() {
         [
             WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
             WriteDescriptorSet::image_view(1, storage_image_view),
-            WriteDescriptorSet::buffer(2, vertices_buffer.clone()),
-            WriteDescriptorSet::buffer(3, triangles_buffer.clone()),
-            WriteDescriptorSet::buffer(4, bvh_buffer.clone()),],
+            WriteDescriptorSet::buffer(2, positions_buffer.clone()),
+            WriteDescriptorSet::buffer(3, normals_buffer.clone()),
+            WriteDescriptorSet::buffer(4, triangles_buffer.clone()),
+            WriteDescriptorSet::buffer(5, bvh_buffer.clone()),
+            WriteDescriptorSet::buffer(6, material_buffer.clone()),
+            WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),],
         []
     ).unwrap();
 
@@ -206,26 +200,6 @@ fn main() {
         []
     ).unwrap();
 
-    upload_builder
-        .copy_buffer(CopyBufferInfo::buffers(
-            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.vertices.as_slice()), 
-            vertices_buffer.clone())).unwrap()
-        .copy_buffer(CopyBufferInfo::buffers(
-            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.triangles.as_slice()), 
-            triangles_buffer.clone())).unwrap()
-        .copy_buffer(CopyBufferInfo::buffers(
-            app.renderer.get_buffer_slice(BufferUsage::TRANSFER_SRC, model.bvh.iter().map(|b| 
-                cs::BvhNode {
-                    box_min: b.bound.min.to_array(), 
-                    tri_start: b.tri_start,
-                    box_max: b.bound.max.to_array(),
-                    tri_end: b.tri_end,
-                    child: b.child_ind,
-                    _pad: [0; 2],
-                }
-            ).collect::<Vec<_>>().as_slice()), 
-            bvh_buffer.clone())).unwrap();
-
     let upload_buffer = upload_builder.build().unwrap();
 
     let mut poll_time = SystemTime::now();
@@ -247,6 +221,9 @@ fn main() {
         poll_time = now;
 
         process_camera_input(&mut app.input, &mut camera, delta);
+        if app.input.key_released(VirtualKeyCode::X) {
+            camera.transform = cam_transform_default;
+        }
         if app.input.key_released(VirtualKeyCode::V) {
             app.present_mode = if app.present_mode.is_none() { Some(PresentMode::Immediate) } else { None };
         }
@@ -258,7 +235,7 @@ fn main() {
 
         let fps = 1.0 / delta.as_secs_f32();
         font.clear();
-        font.add_str_pix(font.data.char_size * 2, UVec2::from_slice(&window_extent) / 2, format!("{fps:.2}").into(), solid::WHITE);
+        font.add_str_pix(font.data.char_size * 2, UVec2::from_slice(&window_extent) * 2 / 3, format!("{fps:.2}").into(), solid::WHITE);
 
         let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
@@ -357,7 +334,6 @@ fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, delta
     }
 
     camera.modify_transform(camera.transform.transform_vector3(delta_pos), delta_rot);
-
 }
 
 fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u32; 3]) -> Arc<Image> {
@@ -379,10 +355,10 @@ fn get_uniform_contents(camera: &Camera, model: &Model) -> cs::UniformData {
         background_color: [0.0, 0.0, 1.0, 1.0],
         camera_pos: camera.transform.w_axis.xyz().to_array(),
         num_tri_indices: model.triangles.len() as u32,
-        num_vertices: model.vertices.len() as u32,
-        num_bvh_nodes: Padded(model.bvh.len() as u32),
-        material: cs::MaterialData { albedo: [0.8; 3], refraction_index: 1.5, power: 30.0 },
-        sun: Padded(cs::DirectionalLight { dir: Padded([1.0 / f32::sqrt(3.0); 3]), color: Padded([252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0]), ambient: [0.2; 3] }),
+        num_vertices: model.positions.len() as u32,
+        num_bvh_nodes: model.bvh.len() as u32,
+        num_materials: (model.materials.len() as u32).into(),
+        sun: cs::DirectionalLight { dir: [1.0 / f32::sqrt(3.0); 3].into(), color: [252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0].into(), ambient: [0.2; 3] },
     }
 }
 
