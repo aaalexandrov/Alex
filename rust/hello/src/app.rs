@@ -23,7 +23,7 @@ use winit_input_helper::WinitInputHelper;
 pub struct Renderer {
     pub device: Arc<Device>,
     pub queue: Arc<Queue>,
-    pub allocator: Box<dyn MemoryAllocator>,
+    pub allocator: Arc<dyn MemoryAllocator>,
     pub descriptor_set_allocator: StandardDescriptorSetAllocator,
 }
 
@@ -53,7 +53,7 @@ impl Renderer {
     
         let queue = queues.next().unwrap();
     
-        let allocator = Box::new(StandardMemoryAllocator::new_default(device.clone()));
+        let allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
 
         let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
 
@@ -84,17 +84,11 @@ impl Renderer {
         color_blend_state: Option<ColorBlendState>, 
         attachment_formats: &[Format]
     ) -> Arc<GraphicsPipeline> {
-        let vs = vs_module.entry_point("main").unwrap();
-        let fs = fs_module.entry_point("main").unwrap();
+        let vs = vs_module.specialize(specialization_info.clone()).unwrap().entry_point("main").unwrap();
+        let fs = fs_module.specialize(specialization_info).unwrap().entry_point("main").unwrap();
         let stages = [
-            PipelineShaderStageCreateInfo {
-                specialization_info: specialization_info.clone().into(),
-                ..PipelineShaderStageCreateInfo::new(vs)
-            },
-            PipelineShaderStageCreateInfo {
-                specialization_info,
-                ..PipelineShaderStageCreateInfo::new(fs)
-            },
+            PipelineShaderStageCreateInfo::new(vs),
+            PipelineShaderStageCreateInfo::new(fs),
         ];
         let layout = PipelineLayout::new(
             self.device.clone(),
@@ -155,7 +149,7 @@ impl Renderer {
 
     pub fn get_buffer_data<T: BufferContents>(&self, usage: BufferUsage, data: T) -> Subbuffer<T> {
         Buffer::from_data(
-            self.allocator.as_ref(),
+            self.allocator.clone(),
             BufferCreateInfo{
                 usage,
                 ..Default::default()
@@ -171,7 +165,7 @@ impl Renderer {
     pub fn get_buffer_write<T, WriteFunc>(&self, usage: BufferUsage, elements: DeviceSize, write_fn: WriteFunc) -> Subbuffer<[T]>
         where T: BufferContents + Sized, WriteFunc: Fn(&mut [T]) {
             let buffer = Buffer::new_slice(
-                self.allocator.as_ref(),
+                self.allocator.clone(),
                 BufferCreateInfo{
                     usage,
                     ..Default::default()

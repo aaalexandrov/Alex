@@ -65,14 +65,22 @@ fn main() {
         projection: Mat4::IDENTITY,
     };
 
-    //let model_path = "data/cessna.obj";
-    let model_path = "data/b17green.obj";
-    //let model_path = "data/b17silver.obj";
+    //let (model_path, invert) = ("data/cessna.obj", true);
+    //let (model_path, invert) = ("data/diamond.obj", false);
+    //let (model_path, invert) = ("data/magnolia.obj", true);
+    //let (model_path, invert) = ("data/airboat.obj", true);
+    let (model_path, invert) = ("data/b17green.obj", true);
+    //let (model_path, invert) = ("data/b17silver.obj", true);
     let mut model = Model::load_obj(model_path, usize::MAX);
-    model.invert_triangle_order();
+    if invert {
+        model.invert_triangle_order();
+    }
+    if model.normals.len() != model.positions.len() {
+        model.generate_normals();
+    }
 
     let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
-        app.renderer.allocator.as_ref(),
+        app.renderer.allocator.clone(),
         BufferCreateInfo{
             usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
             ..Default::default()
@@ -131,7 +139,7 @@ fn main() {
             ..SamplerCreateInfo::default()
         }
     ).unwrap();
-    let storage_image = create_storage_image(&*app.renderer.allocator, [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
+    let storage_image = create_storage_image(app.renderer.allocator.clone(), [RENDER_SIZE.x, RENDER_SIZE.y, 1]);
     let storage_image_view = ImageView::new(
         storage_image.clone(), 
         ImageViewCreateInfo {
@@ -160,7 +168,7 @@ fn main() {
     ).unwrap();
 
     let fullscreen_vertex_buffer = Buffer::from_iter(
-        app.renderer.allocator.as_ref(),
+        app.renderer.allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::VERTEX_BUFFER,
             ..Default::default()
@@ -173,7 +181,7 @@ fn main() {
         solid::FULLSCREEN_QUAD_VERTICES,
     ).unwrap();
     let fullscreen_index_buffer = Buffer::from_iter(
-        app.renderer.allocator.as_ref(),
+        app.renderer.allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::INDEX_BUFFER,
             ..Default::default()
@@ -336,7 +344,7 @@ fn process_camera_input(input: &mut WinitInputHelper, camera: &mut Camera, delta
     camera.modify_transform(camera.transform.transform_vector3(delta_pos), delta_rot);
 }
 
-fn create_storage_image(mem_alloc: &(impl MemoryAllocator + ?Sized), extent: [u32; 3]) -> Arc<Image> {
+fn create_storage_image(mem_alloc: Arc<dyn MemoryAllocator>, extent: [u32; 3]) -> Arc<Image> {
     Image::new(
         mem_alloc,
         ImageCreateInfo {

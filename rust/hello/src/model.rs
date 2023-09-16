@@ -5,6 +5,8 @@ use std::{vec::Vec, cmp::Ordering};
 use glam::{Vec3, vec3, UVec4, uvec4};
 use super::geom::{Box3, max_elem_index};
 
+use ahash::{HashMap, HashMapExt};
+
 pub struct Material {
     pub albedo: [f32; 3],
     pub shininess: f32,
@@ -28,9 +30,7 @@ pub struct Model {
 
 impl Model {
     pub fn load_obj(path: &str, model_index: usize) -> Model {
-        let (obj, Ok(mat)) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap() else {
-            panic!("Failed loading model");
-        };
+        let (obj, mat) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap();
 
         let mut model = Model { 
             positions: Vec::<f32>::new(), 
@@ -46,7 +46,6 @@ impl Model {
             let mesh = &obj[i].mesh;
             let base_triangle = (model.positions.len() / 3) as u32;
             model.triangles.extend(mesh.indices.iter().map(|x| x + base_triangle));
-            assert_eq!(mesh.positions.len(), mesh.normals.len());
             model.positions.extend_from_slice(&mesh.positions);
             model.normals.extend_from_slice(&mesh.normals);
             model.triangle_material_indices.extend(std::iter::repeat(
@@ -54,10 +53,23 @@ impl Model {
             ).take(mesh.indices.len() / 3));
         }
 
-        for m in mat.iter() {
-            model.materials.push(Material {
-                albedo: m.diffuse.unwrap(),
-                shininess: m.shininess.unwrap_or(30.0),
+        if model.normals.len() != model.positions.len() {
+            model.generate_normals();
+        }
+
+        if let Ok(materials) = mat {
+            for m in materials.iter() {
+                model.materials.push(Material {
+                    albedo: m.diffuse.unwrap(),
+                    shininess: m.shininess.unwrap_or(30.0),
+                });
+            }
+        }
+
+        if model.materials.is_empty() {
+            model.materials.push(Material { 
+                albedo: [0.8; 3], 
+                shininess: 30.0,
             });
         }
 
@@ -75,6 +87,41 @@ impl Model {
             self.positions[(index * 3 + 0) as usize], 
             self.positions[(index * 3 + 1) as usize], 
             self.positions[(index * 3 + 2) as usize])
+    }
+
+    fn triangle_normal(&self, tri_index: u32) -> Vec3 {
+        let i = (tri_index * 3) as usize;
+        let v0 = self.position(self.triangles[i + 0]);
+        let v1 = self.position(self.triangles[i + 1]);
+        let v2 = self.position(self.triangles[i + 2]);
+        let norm = (v0 - v1).cross(v2 - v0).normalize();
+        norm
+    }
+
+    pub fn generate_normals(&mut self) {
+        let mut vertex_triangles = HashMap::<u32, Vec<u32>>::new();
+        for (pos_i, vert_i) in self.triangles.iter().enumerate() {
+            if !vertex_triangles.contains_key(vert_i) {
+                vertex_triangles.insert(*vert_i, Vec::new());
+            }
+            let tris = vertex_triangles.get_mut(vert_i).unwrap();
+            tris.push((pos_i / 3) as u32);
+        }
+
+        self.normals.clear();
+
+        for i in 0..self.positions.len() as u32 {
+            let mut norm = Vec3::Z;
+            if let Some(tris) = vertex_triangles.get(&i) {
+                // todo: instead of average, calculate the containing cone & get its axis
+                norm = tris.iter()
+                    .map(|t| self.triangle_normal(*t))
+                    .sum();
+                norm = (norm / (tris.len() as f32)).normalize(); 
+            }
+            self.normals.extend_from_slice(&norm.to_array());
+
+        }
     }
 
     fn triangle_bound(&self, tri: &UVec4) -> Box3 {

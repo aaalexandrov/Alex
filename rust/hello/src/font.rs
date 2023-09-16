@@ -42,7 +42,7 @@ impl FixedFontData {
 
         let img_size = char_cells * (char_size + 1);
         let texture = Image::new(
-            renderer.allocator.as_ref(),
+            renderer.allocator.clone(),
             ImageCreateInfo{
                 format: Format::R8_UNORM,
                 extent: [img_size.x, img_size.y, 1],
