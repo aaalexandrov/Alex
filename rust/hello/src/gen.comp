@@ -71,6 +71,20 @@ struct Box {
     vec3 max;
 };
 
+uint max_elem_index(vec3 v) {
+    uint ind = 2;
+    if (v.x >= v.y) {
+        if (v.x >= v.z) {
+            ind = 0;
+        } 
+    } else {
+        if (v.y >= v.z) {
+            ind = 1;
+        } 
+    }
+    return ind;
+}
+
 vec2 intersect_box(Box box, Ray r) {
     float t0 = -inf, t1 = inf;
     for (uint dim = 0; dim < 3; ++dim) {
@@ -193,12 +207,11 @@ bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind) {
         uint b = node_indices[--num_node_indices];
 
         BvhNode node = bvh_nodes[b];
-        Box box;
-        box.min = node.box_min;
-        box.max = node.box_max;
-        vec2 ray_int = intersect_box(box, r);
-        if (ray_int[0] > ray_int[1])
-            continue;
+        {
+            vec2 ray_int = intersect_box(Box(node.box_min, node.box_max), r);
+            if (ray_int[0] > ray_int[1] || ray_int[1] < 0 || ray_int[0] >= bc.w)
+                continue;
+        }
 
         for (uint t = node.tri_start; t < node.tri_end; ++t) {
             vec4 bc_tri = intersect_tri(t, r);
@@ -208,10 +221,22 @@ bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind) {
             }
         }
 
+        uint valid_children = 0;
         for (uint c = 0; c < 2; ++c) {
             if (node.child[c] > num_bvh_nodes)
                 continue;
             node_indices[num_node_indices++] = node.child[c];
+            ++valid_children;
+        }
+
+        if (valid_children == 2) {
+            // the child that is closer to the ray origin should be last on the stack so it's processed before the more distant one
+            uint split_dim = max_elem_index(node.box_max - node.box_min);
+            if (r.d[split_dim] > 0) {
+                uint t = node_indices[num_node_indices - 2];
+                node_indices[num_node_indices - 2] = node_indices[num_node_indices - 1];
+                node_indices[num_node_indices - 1] = t;
+            }
         }
     }
 
