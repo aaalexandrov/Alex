@@ -1,4 +1,4 @@
-use glam::{Vec3};
+use glam::{Vec3, Mat4};
 
 #[allow(dead_code)]
 #[repr(C)]
@@ -78,6 +78,25 @@ impl Box3 {
         self.min.cmple(p).all() && p.cmple(self.max).all()
     }
 
+    pub fn get_point(&self, ind: u8) -> Vec3 {
+        let mut v = Vec3::ZERO;
+        for i in 0..3 {
+            v[i] = if (ind & (1 << i)) == 0 {
+                self.min[i]
+            } else {
+                self.max[i]
+            }
+        }
+        return v;
+    }
+
+    pub fn get_transformed(&self, affine: Mat4) -> Box3 {
+        let mut b = *self;
+        for i in 0..8 {
+            b = b.union_point((affine * self.get_point(i).extend(1.0)).truncate());
+        }
+        b
+    }
 }
 
 #[allow(dead_code)]

@@ -60,7 +60,7 @@ fn main() {
     let mut font = FixedFont::new(FixedFontData::from_file("data/font_10x20.png", &app.renderer, swapchain_format, &mut upload_builder));
 
     let cam_transform_default = Mat4::from_translation(Vec3::new(0.0, 0.0, -10.0)) * Mat4::from_rotation_z(PI);
-    let mut camera = Camera{
+    let mut camera = Camera {
         transform: cam_transform_default, 
         projection: Mat4::IDENTITY,
     };
@@ -95,14 +95,14 @@ fn main() {
     let positions_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.positions.as_slice());
     let normals_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.normals.as_slice());
     let triangles_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangles.as_slice());
-    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [cs::BvhNode]| {
+    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [cs::TreeNode]| {
         for i in 0..bvh.len() {
             let b = &model.bvh[i];
-            bvh[i] = cs::BvhNode {
+            bvh[i] = cs::TreeNode {
                 box_min: b.bound.min.to_array(), 
-                tri_start: b.tri_start,
+                content_start: b.tri_start,
                 box_max: b.bound.max.to_array(),
-                tri_end: b.tri_end,
+                content_end: b.tri_end,
                 child: b.child_ind,
                 _pad: [0; 2],
             }
