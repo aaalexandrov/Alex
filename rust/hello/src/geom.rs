@@ -11,6 +11,7 @@ pub struct Box3 {
 #[allow(dead_code)]
 impl Box3 {
     pub const EMPTY: Self  = Box3 { min: Vec3::INFINITY, max: Vec3::NEG_INFINITY, };
+    pub const MAXIMUM: Self = Box3 { min: Vec3::NEG_INFINITY, max: Vec3::INFINITY };
 
     #[inline]
     pub fn new(min: Vec3, max: Vec3) -> Box3 {

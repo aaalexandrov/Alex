@@ -24,6 +24,7 @@ mod app;
 use app::{App};
 
 mod geom;
+use geom::Box3;
 
 mod cam;
 use cam::Camera;
@@ -31,20 +32,17 @@ use cam::Camera;
 mod model;
 use model::Model;
 
+mod scene;
+use scene::Scene;
+
 mod solid;
 
 mod font;
 use font::{FixedFontData, FixedFont};
 
+mod gen;
+
 use std::f32::consts::PI;
-
-mod cs {
-    vulkano_shaders::shader! {
-        ty: "compute",
-        path: "src/gen.comp",
-    }
-}
-
 
 fn main() {
     const RENDER_SIZE: UVec2 = uvec2(1024, 768);
@@ -79,7 +77,7 @@ fn main() {
         model.generate_normals();
     }
 
-    let uniform_buffer = Buffer::new_slice::<cs::UniformData>(
+    let uniform_buffer = Buffer::new_slice::<gen::UniformData>(
         app.renderer.allocator.clone(),
         BufferCreateInfo{
             usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
@@ -95,10 +93,10 @@ fn main() {
     let positions_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.positions.as_slice());
     let normals_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.normals.as_slice());
     let triangles_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangles.as_slice());
-    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [cs::TreeNode]| {
+    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [gen::TreeNode]| {
         for i in 0..bvh.len() {
             let b = &model.bvh[i];
-            bvh[i] = cs::TreeNode {
+            bvh[i] = gen::TreeNode {
                 box_min: b.bound.min.to_array(), 
                 content_start: b.tri_start,
                 box_max: b.bound.max.to_array(),
@@ -108,10 +106,10 @@ fn main() {
             }
         }
     });
-    let material_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.materials.len() as DeviceSize, |mat: &mut [cs::MaterialData]| {
+    let material_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.materials.len() as DeviceSize, |mat: &mut [gen::MaterialData]| {
         for i in 0..mat.len() {
             let m = &model.materials[i];
-            mat[i] = cs::MaterialData {
+            mat[i] = gen::MaterialData {
                 albedo: m.albedo,
                 power: m.shininess,
             };
@@ -119,7 +117,11 @@ fn main() {
     });
     let tri_material_indices_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangle_material_indices.as_slice());
 
-    let compute_pipeline = app.renderer.load_compute_pipeline(cs::load(app.renderer.device.clone()).unwrap());
+    const SCENE_SIZE: f32 = 1000.0;
+    const MIN_SCENE_SIZE: f32 = 1.0;
+    let scene = Scene::new(Box3::new(Vec3::splat(-SCENE_SIZE), Vec3::splat(SCENE_SIZE)), MIN_SCENE_SIZE);
+
+    let compute_pipeline = app.renderer.load_compute_pipeline(gen::load(app.renderer.device.clone()).unwrap());
     let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
 
     let mut viewport = Viewport {
@@ -357,8 +359,8 @@ fn create_storage_image(mem_alloc: Arc<dyn MemoryAllocator>, extent: [u32; 3]) -
     ).unwrap()
 }
 
-fn get_uniform_contents(camera: &Camera, model: &Model) -> cs::UniformData {
-    cs::UniformData {
+fn get_uniform_contents(camera: &Camera, model: &Model) -> gen::UniformData {
+    gen::UniformData {
         view_proj: camera.view_proj().to_cols_array_2d(),
         background_color: [0.0, 0.0, 1.0, 1.0],
         camera_pos: camera.transform.w_axis.xyz().to_array(),
@@ -366,7 +368,7 @@ fn get_uniform_contents(camera: &Camera, model: &Model) -> cs::UniformData {
         num_vertices: model.positions.len() as u32,
         num_bvh_nodes: model.bvh.len() as u32,
         num_materials: (model.materials.len() as u32).into(),
-        sun: cs::DirectionalLight { dir: [1.0 / f32::sqrt(3.0); 3].into(), color: [252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0].into(), ambient: [0.2; 3] },
+        sun: gen::DirectionalLight { dir: [1.0 / f32::sqrt(3.0); 3].into(), color: [252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0].into(), ambient: [0.2; 3] },
     }
 }
 
