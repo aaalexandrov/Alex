@@ -24,6 +24,7 @@ pub struct Model {
     pub normals: Vec::<f32>,
     pub triangles: Vec::<u32>,
     pub bvh: Vec::<BoundNode>,
+    pub bvh_start_index: u32,
     pub materials: Vec::<Material>,
     pub triangle_material_indices: Vec<u32>,
 }
@@ -37,6 +38,7 @@ impl Model {
             normals: Vec::<f32>::new(), 
             triangles: Vec::<u32>::new(), 
             bvh: Vec::<BoundNode>::new(),
+            bvh_start_index: 0,
             materials: Vec::<Material>::new(),
             triangle_material_indices: Vec::<u32>::new(),
         };

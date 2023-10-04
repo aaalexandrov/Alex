@@ -4,6 +4,7 @@ use std::sync::{Arc, RwLock};
 use glam::*;
 use super::geom::*;
 use super::model::*;
+use super::gen;
 
 pub struct SceneObject {
     pub model: Arc<Model>,
@@ -18,6 +19,16 @@ impl SceneObject {
             transform: Mat4::IDENTITY, 
             bound: Box3::EMPTY,
         }))
+    }
+
+    fn get_model_instance(&self) -> gen::ModelInstance {
+        gen::ModelInstance {
+            box_min: self.bound.min.to_array(),
+            bvh_start: self.model.bvh_start_index,
+            box_max: self.bound.max.to_array(),
+            bvh_end: self.model.bvh_start_index + self.model.bvh.len() as u32,
+            inv_transform: self.transform.inverse().to_cols_array_2d(),
+        }
     }
 }
 
@@ -52,6 +63,45 @@ impl SceneNode {
     fn remove_object(&mut self, obj: &Arc<RwLock<SceneObject>>) {
         let pos = self.objects.iter().position(|o| Arc::ptr_eq(o, &obj)).unwrap();
         self.objects.swap_remove(pos);
+    }
+
+    fn count_nodes_objects(&self) -> (usize, usize) {
+        let (mut nodes, mut objects) = (1, self.objects.len());
+
+        for child in self.children.iter()
+            .map(|o| o.iter())
+            .flatten() {
+            let (child_nodes, child_objects) = child.count_nodes_objects();
+            nodes += child_nodes;
+            objects += child_objects;
+        }
+        (nodes, objects)
+    }
+
+    fn get_nodes_objects(&self, nodes: &mut [gen::TreeNode], mut next_node: usize, objects: &mut [gen::ModelInstance], mut next_object: usize) -> (usize, usize) {
+        let node_index = next_node;
+        nodes[node_index] = gen::TreeNode {
+            box_min: self.bound.min.to_array(),
+            content_start: next_object as u32,
+            box_max: self.bound.max.to_array(),
+            content_end: (next_object + self.objects.len()) as u32,
+            child: array::from_fn(|_| u32::MAX),
+            _pad: array::from_fn(|_| 0),
+        };
+        for i in 0..self.children.len() {
+            objects[next_object + i] = self.objects[i].read().unwrap().get_model_instance();
+        }
+
+        next_node += 1;
+        next_object += self.children.len();
+
+        for i in 0..self.children.len() {
+            if let Some(child) = &self.children[i] {
+                nodes[node_index].child[i] = next_node as u32;
+                (next_node, next_object) = child.get_nodes_objects(nodes, next_node, objects, next_object);
+            }
+        }
+        (next_node, next_object)
     }
 }
 
@@ -113,5 +163,11 @@ impl Scene {
         }
     }
 
-    
+    pub fn count_nodes_objects(&self) -> (usize, usize) {
+        self.root.count_nodes_objects()
+    }
+
+    pub fn get_nodes_objects(&self, nodes: &mut [gen::TreeNode], objects: &mut [gen::ModelInstance]) -> (usize, usize) {
+        self.root.get_nodes_objects(nodes, 0, objects, 0)
+    }
 }
