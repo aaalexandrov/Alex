@@ -21,6 +21,8 @@ layout (set = 0, binding = 0, std140) uniform UniformData {
     uint num_vertices;
     uint num_bvh_nodes;
     uint num_materials;
+    uint num_model_instances;
+    uint num_model_nodes;
     DirectionalLight sun;
 };
 
@@ -64,6 +66,7 @@ struct ModelInstance {
     uint bvh_start;
     vec3 box_max;
     uint bvh_end;
+    mat4 transform;
     mat4 inv_transform;
 };
 
@@ -153,17 +156,11 @@ vec3 bary(vec3 v0, vec3 v1, vec3 v2, vec3 p) {
 }
 
 vec4 intersect(vec3 v0, vec3 v1, vec3 v2, Ray r) {
-    // vec3 tri[3] = {v0, v1, v2};
-    // Box box = box_from_tri(tri);
-    // vec2 ray_int = intersect_box(box, r);
-    // if (ray_int[0] > ray_int[1])
-    //     return vec4(-2);
-
     vec3 e1 = v1 - v0;
     vec3 e2 = v2 - v0;
     vec3 n = cross(e1, e2);
     float nd = dot(n, r.d);
-    if (nd < 1e-5)
+    if (abs(nd) < 1e-5)
         return vec4(-1);
     float t = dot(n, v0 - r.o) / nd;
 
@@ -217,13 +214,14 @@ vec4 intersect_tri(uint tri_index_index, Ray r) {
     return bc_tri;    
 }
 
-bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind) {
+bool get_bvh_intersection(uint start_node_index, Ray r, out vec4 bc, out uint tri_ind)
+{
     bc = vec4(-1, -1, -1, inf);
     tri_ind = ~0;
     
     uint num_node_indices = 1;
     uint node_indices[32];
-    node_indices[0] = 0;
+    node_indices[0] = start_node_index;
 
     while (num_node_indices > 0) {
         uint b = node_indices[--num_node_indices];
@@ -265,17 +263,80 @@ bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind) {
     return all(greaterThanEqual(bc, vec4(0.0)));
 }
 
+bool intersect_model_instance(Ray r, uint model_instance_index, float min_int, out vec4 bc, out uint tri_ind) {
+    ModelInstance model = model_instances[model_instance_index];
+    vec2 ray_int = intersect_box(Box(model.box_min, model.box_max), r);
+    if (ray_int[0] > ray_int[1] || ray_int[1] < 0 || ray_int[0] >= min_int)
+        return false;
+
+    Ray model_ray = transform_ray(r, model.inv_transform);
+    if (!get_bvh_intersection(model.bvh_start, model_ray, bc, tri_ind))
+        return false;
+    return bc.w < min_int;
+}
+
+bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind, out uint model_instance_index) {
+    bc = vec4(-1, -1, -1, inf);
+    tri_ind = ~0;
+    model_instance_index = ~0;
+    
+    uint num_node_indices = 1;
+    uint node_indices[32];
+    node_indices[0] = 0;
+
+    while (num_node_indices > 0) {
+        uint b = node_indices[--num_node_indices];
+
+        TreeNode node = model_nodes[b];
+        {
+            vec2 ray_int = intersect_box(Box(node.box_min, node.box_max), r);
+            if (ray_int[0] > ray_int[1] || ray_int[1] < 0 || ray_int[0] >= bc.w)
+                continue;
+        }
+
+        for (uint m = node.content_start; m < node.content_end; ++m) {
+            vec4 bc_model;
+            uint tri_ind_model;
+            if (intersect_model_instance(r, m, bc.w, bc_model, tri_ind_model)) {
+                bc = bc_model;
+                tri_ind = tri_ind_model;
+                model_instance_index = m;
+            }
+        }
+
+        uint valid_children = 0;
+        for (uint c = 0; c < 2; ++c) {
+            if (node.child[c] > num_model_nodes)
+                continue;
+            node_indices[num_node_indices++] = node.child[c];
+            ++valid_children;
+        }
+
+        if (valid_children == 2) {
+            // the child that is closer to the ray origin should be last on the stack so it's processed before the more distant one
+            uint split_dim = max_elem_index(node.box_max - node.box_min);
+            if (r.d[split_dim] > 0) {
+                uint t = node_indices[num_node_indices - 2];
+                node_indices[num_node_indices - 2] = node_indices[num_node_indices - 1];
+                node_indices[num_node_indices - 1] = t;
+            }
+        }
+    }
+
+    return all(greaterThanEqual(bc, vec4(0.0)));
+}
+
 vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, DirectionalLight dir_light, MaterialData material) {
     vec3 V = normalize(cam_pos - pos);
     float NdotL = max(0, dot(normal, dir_light.dir));
 
     if (NdotL > 0) {
-        uint tri_ind;
+        uint tri_ind, model_inst_ind;
         vec4 bc;
         Ray rShadow;
         rShadow.o = pos + dir_light.dir * 0.001;
         rShadow.d = dir_light.dir;
-        bool shadow = get_tri_intersection(rShadow, bc, tri_ind);
+        bool shadow = get_tri_intersection(rShadow, bc, tri_ind, model_inst_ind);
         if (shadow)
             NdotL = 0;
     }
@@ -303,14 +364,16 @@ void main() {
     r.d = normalize((p - o).xyz);
 
     vec4 bc;
-    uint tri_ind;
+    uint tri_ind, model_inst_ind;
 
     vec4 color = background_color;
-    if (get_tri_intersection(r, bc, tri_ind)) {
+    if (get_tri_intersection(r, bc, tri_ind, model_inst_ind)) {
         vec3 pos = r.o + bc.w * r.d;
         vec3 tri[3] = get_tri(tri_ind);
         //vec3 norm = normalize(cross(tri[0] - tri[1], tri[2] - tri[0]));
         vec3 norm = normalize(get_interpolated_normal(tri_ind, bc.xyz));
+        ModelInstance model_inst = model_instances[model_inst_ind];
+        norm = (model_inst.transform * vec4(norm, 0)).xyz;
         MaterialData mat = materials[tri_material_indices[tri_ind]];
         color.xyz = GetLighting(camera_pos, pos, norm, sun, mat);
     }

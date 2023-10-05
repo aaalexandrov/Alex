@@ -122,7 +122,7 @@ checksum = "965ab7eb5f8f97d2a083c799f3a1b994fc397b2fe2da5d1da1626ce15a39f2b1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -710,7 +710,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -809,7 +809,7 @@ checksum = "4359fd9c9171ec6e8c62926d6faaf553a8dc3f64e1507e76da7911b4f6a04405"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -970,7 +970,7 @@ checksum = "4eca7ac642d82aa35b60049a6eccb4be6be75e599bd2e9adb5f875a737654af2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -1039,9 +1039,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.37"
+version = "2.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7303ef2c05cd654186cb250d29049a24840ca25d2747c25c0381c8d9e2f582e8"
+checksum = "e96b79aaa137db8f61e26363a0c9b47d8b4ec75da28b7d1d614c2303e232408b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1065,7 +1065,7 @@ checksum = "10712f02019e9288794769fba95cd6847df9874d49d871d062172f9dd41bc4cc"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
 ]
 
 [[package]]
@@ -1139,7 +1139,7 @@ dependencies = [
 [[package]]
 name = "vulkano"
 version = "0.33.0"
-source = "git+https://github.com/vulkano-rs/vulkano#c24c7ad1556a08dc6463bd8e810926bc01e725be"
+source = "git+https://github.com/vulkano-rs/vulkano#9d988440df731e439ebf4d9b4071a864ece5b95b"
 dependencies = [
  "ahash",
  "ash",
@@ -1168,7 +1168,7 @@ dependencies = [
 [[package]]
 name = "vulkano-macros"
 version = "0.33.0"
-source = "git+https://github.com/vulkano-rs/vulkano#c24c7ad1556a08dc6463bd8e810926bc01e725be"
+source = "git+https://github.com/vulkano-rs/vulkano#9d988440df731e439ebf4d9b4071a864ece5b95b"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -1179,14 +1179,14 @@ dependencies = [
 [[package]]
 name = "vulkano-shaders"
 version = "0.33.0"
-source = "git+https://github.com/vulkano-rs/vulkano#c24c7ad1556a08dc6463bd8e810926bc01e725be"
+source = "git+https://github.com/vulkano-rs/vulkano#9d988440df731e439ebf4d9b4071a864ece5b95b"
 dependencies = [
  "ahash",
  "heck",
  "proc-macro2",
  "quote",
  "shaderc",
- "syn 2.0.37",
+ "syn 2.0.38",
  "vulkano",
 ]
 
@@ -1217,7 +1217,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
  "wasm-bindgen-shared",
 ]
 
@@ -1239,7 +1239,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.37",
+ "syn 2.0.38",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]

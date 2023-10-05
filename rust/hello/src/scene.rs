@@ -27,6 +27,7 @@ impl SceneObject {
             bvh_start: self.model.bvh_start_index,
             box_max: self.bound.max.to_array(),
             bvh_end: self.model.bvh_start_index + self.model.bvh.len() as u32,
+            transform: self.transform.to_cols_array_2d(),
             inv_transform: self.transform.inverse().to_cols_array_2d(),
         }
     }
@@ -68,9 +69,7 @@ impl SceneNode {
     fn count_nodes_objects(&self) -> (usize, usize) {
         let (mut nodes, mut objects) = (1, self.objects.len());
 
-        for child in self.children.iter()
-            .map(|o| o.iter())
-            .flatten() {
+        for child in self.children.iter().filter_map(|o| o.as_ref()) {
             let (child_nodes, child_objects) = child.count_nodes_objects();
             nodes += child_nodes;
             objects += child_objects;
@@ -88,12 +87,12 @@ impl SceneNode {
             child: array::from_fn(|_| u32::MAX),
             _pad: array::from_fn(|_| 0),
         };
-        for i in 0..self.children.len() {
+        for i in 0..self.objects.len() {
             objects[next_object + i] = self.objects[i].read().unwrap().get_model_instance();
         }
 
         next_node += 1;
-        next_object += self.children.len();
+        next_object += self.objects.len();
 
         for i in 0..self.children.len() {
             if let Some(child) = &self.children[i] {

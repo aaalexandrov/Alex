@@ -33,7 +33,7 @@ mod model;
 use model::Model;
 
 mod scene;
-use scene::Scene;
+use scene::{Scene, SceneObject};
 
 mod solid;
 
@@ -76,6 +76,9 @@ fn main() {
     if model.normals.len() != model.positions.len() {
         model.generate_normals();
     }
+    let model = Arc::new(model);
+    println!("Loaded model {model_path} ({} triangles)", model.triangles.len() / 3);
+
 
     let uniform_buffer = Buffer::new_slice::<gen::UniformData>(
         app.renderer.allocator.clone(),
@@ -116,10 +119,21 @@ fn main() {
         }
     });
     let tri_material_indices_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangle_material_indices.as_slice());
-
+    
     const SCENE_SIZE: f32 = 1000.0;
     const MIN_SCENE_SIZE: f32 = 1.0;
-    let scene = Scene::new(Box3::new(Vec3::splat(-SCENE_SIZE), Vec3::splat(SCENE_SIZE)), MIN_SCENE_SIZE);
+    let mut scene = Scene::new(Box3::new(Vec3::splat(-SCENE_SIZE), Vec3::splat(SCENE_SIZE)), MIN_SCENE_SIZE);
+    let obj = SceneObject::new(model.clone());
+    scene.set_transform(obj.clone(), Some(Mat4::from_rotation_y(PI/2.0)));
+
+    let (scene_nodes, scene_objects) = scene.count_nodes_objects();
+    let model_inst_buffer = app.renderer.get_buffer::<gen::ModelInstance>(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, scene_objects as DeviceSize);
+    let model_nodes_buffer = app.renderer.get_buffer::<gen::TreeNode>(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, scene_nodes as DeviceSize);
+    {
+        let mut write_model_inst = model_inst_buffer.write().unwrap();
+        let mut write_model_nodes = model_nodes_buffer.write().unwrap();
+        scene.get_nodes_objects(&mut write_model_nodes, &mut write_model_inst);
+    }
 
     let compute_pipeline = app.renderer.load_compute_pipeline(gen::load(app.renderer.device.clone()).unwrap());
     let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
@@ -165,7 +179,9 @@ fn main() {
             WriteDescriptorSet::buffer(4, triangles_buffer.clone()),
             WriteDescriptorSet::buffer(5, bvh_buffer.clone()),
             WriteDescriptorSet::buffer(6, material_buffer.clone()),
-            WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),],
+            WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),
+            WriteDescriptorSet::buffer(8, model_inst_buffer.clone()),
+            WriteDescriptorSet::buffer(9, model_nodes_buffer.clone())],
         []
     ).unwrap();
 
@@ -249,7 +265,10 @@ fn main() {
 
         let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
-            .copy_buffer(CopyBufferInfo::buffers(app.renderer.get_buffer_data(BufferUsage::TRANSFER_SRC, get_uniform_contents(&camera, &model)), uniform_buffer.clone())).unwrap()
+            .copy_buffer(CopyBufferInfo::buffers(app.renderer.get_buffer_data(
+                BufferUsage::TRANSFER_SRC, 
+                get_uniform_contents(&camera, &model, model_inst_buffer.len() as u32, model_nodes_buffer.len() as u32)),
+                uniform_buffer.clone())).unwrap()
             .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
             .dispatch([div_ceil(storage_image.extent()[0], 8), div_ceil(storage_image.extent()[1], 8), 1]).unwrap()
@@ -359,7 +378,7 @@ fn create_storage_image(mem_alloc: Arc<dyn MemoryAllocator>, extent: [u32; 3]) -
     ).unwrap()
 }
 
-fn get_uniform_contents(camera: &Camera, model: &Model) -> gen::UniformData {
+fn get_uniform_contents(camera: &Camera, model: &Model, num_model_instances: u32, num_model_nodes: u32) -> gen::UniformData {
     gen::UniformData {
         view_proj: camera.view_proj().to_cols_array_2d(),
         background_color: [0.0, 0.0, 1.0, 1.0],
@@ -367,7 +386,9 @@ fn get_uniform_contents(camera: &Camera, model: &Model) -> gen::UniformData {
         num_tri_indices: model.triangles.len() as u32,
         num_vertices: model.positions.len() as u32,
         num_bvh_nodes: model.bvh.len() as u32,
-        num_materials: (model.materials.len() as u32).into(),
+        num_materials: model.materials.len() as u32,
+        num_model_instances,
+        num_model_nodes: num_model_nodes.into(),
         sun: gen::DirectionalLight { dir: [1.0 / f32::sqrt(3.0); 3].into(), color: [252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0].into(), ambient: [0.2; 3] },
     }
 }

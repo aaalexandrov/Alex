@@ -162,9 +162,9 @@ impl Renderer {
         ).unwrap()
     }
     
-    pub fn get_buffer_write<T, WriteFunc>(&self, usage: BufferUsage, elements: DeviceSize, write_fn: WriteFunc) -> Subbuffer<[T]>
-        where T: BufferContents + Sized, WriteFunc: Fn(&mut [T]) {
-            let buffer = Buffer::new_slice(
+    pub fn get_buffer<T>(&self, usage: BufferUsage, elements: DeviceSize) -> Subbuffer<[T]>
+        where T: BufferContents + Sized {
+            Buffer::new_slice(
                 self.allocator.clone(),
                 BufferCreateInfo{
                     usage,
@@ -175,7 +175,12 @@ impl Renderer {
                     ..Default::default()
                 },
                 elements,
-            ).unwrap();
+            ).unwrap()
+    }
+
+    pub fn get_buffer_write<T, WriteFunc>(&self, usage: BufferUsage, elements: DeviceSize, write_fn: WriteFunc) -> Subbuffer<[T]>
+        where T: BufferContents + Sized, WriteFunc: Fn(&mut [T]) {
+            let buffer = self.get_buffer::<T>(usage, elements);
         
             {
                 let mut writer = buffer.write().unwrap();
