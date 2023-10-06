@@ -15,7 +15,7 @@ use vulkano::{
             viewport::{Viewport, }, 
         }, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, }, format::Format, DeviceSize, swapchain::PresentMode, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, }, format::Format, DeviceSize, swapchain::PresentMode, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -126,15 +126,6 @@ fn main() {
     let obj = SceneObject::new(model.clone());
     scene.set_transform(obj.clone(), Some(Mat4::from_rotation_y(PI/2.0)));
 
-    let (scene_nodes, scene_objects) = scene.count_nodes_objects();
-    let model_inst_buffer = app.renderer.get_buffer::<gen::ModelInstance>(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, scene_objects as DeviceSize);
-    let model_nodes_buffer = app.renderer.get_buffer::<gen::TreeNode>(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, scene_nodes as DeviceSize);
-    {
-        let mut write_model_inst = model_inst_buffer.write().unwrap();
-        let mut write_model_nodes = model_nodes_buffer.write().unwrap();
-        scene.get_nodes_objects(&mut write_model_nodes, &mut write_model_inst);
-    }
-
     let compute_pipeline = app.renderer.load_compute_pipeline(gen::load(app.renderer.device.clone()).unwrap());
     let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
 
@@ -168,51 +159,10 @@ fn main() {
             usage: ImageUsage::SAMPLED,
             ..ImageViewCreateInfo::from_image(&storage_image)
         }).unwrap();
-    let compute_descriptor_set = PersistentDescriptorSet::new(
-        &app.renderer.descriptor_set_allocator,
-        compute_pipeline.layout().set_layouts()[0].clone(),
-        [
-            WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
-            WriteDescriptorSet::image_view(1, storage_image_view),
-            WriteDescriptorSet::buffer(2, positions_buffer.clone()),
-            WriteDescriptorSet::buffer(3, normals_buffer.clone()),
-            WriteDescriptorSet::buffer(4, triangles_buffer.clone()),
-            WriteDescriptorSet::buffer(5, bvh_buffer.clone()),
-            WriteDescriptorSet::buffer(6, material_buffer.clone()),
-            WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),
-            WriteDescriptorSet::buffer(8, model_inst_buffer.clone()),
-            WriteDescriptorSet::buffer(9, model_nodes_buffer.clone())],
-        []
-    ).unwrap();
 
-    let fullscreen_vertex_buffer = Buffer::from_iter(
-        app.renderer.allocator.clone(),
-        BufferCreateInfo {
-            usage: BufferUsage::VERTEX_BUFFER,
-            ..Default::default()
-        },
-        AllocationCreateInfo {
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-            ..Default::default()
-        },
-        solid::FULLSCREEN_QUAD_VERTICES,
-    ).unwrap();
-    let fullscreen_index_buffer = Buffer::from_iter(
-        app.renderer.allocator.clone(),
-        BufferCreateInfo {
-            usage: BufferUsage::INDEX_BUFFER,
-            ..Default::default()
-        },
-        AllocationCreateInfo {
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
-                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
-            ..Default::default()
-        },
-        solid::QUAD_INDICES,
-    ).unwrap();
+    let fullscreen_vertex_buffer = app.renderer.get_buffer_slice(BufferUsage::VERTEX_BUFFER, &solid::FULLSCREEN_QUAD_VERTICES);
+    let fullscreen_index_buffer = app.renderer.get_buffer_slice(BufferUsage::INDEX_BUFFER, &solid::QUAD_INDICES);
     let fullscreen_uniform_buffer = font.data.uniform_buffer.clone();
-
 
     let solid_descriptor_set = PersistentDescriptorSet::new(
         &app.renderer.descriptor_set_allocator,
@@ -228,6 +178,7 @@ fn main() {
 
     let upload_buffer = upload_builder.build().unwrap();
 
+    let mut do_update = true;
     let mut poll_time = SystemTime::now();
     let start_time = Arc::new(poll_time);
     let frames = Arc::new(Mutex::new(0u64));
@@ -253,6 +204,9 @@ fn main() {
         if app.input.key_released(VirtualKeyCode::V) {
             app.present_mode = if app.present_mode.is_none() { Some(PresentMode::Immediate) } else { None };
         }
+        if app.input.key_released(VirtualKeyCode::P) {
+            do_update = !do_update;
+        }
 
         let window_extent = swapchain_image_view.image().extent();
         if window_extent[0] as f32 != viewport.extent[0] || window_extent[1] as f32 != viewport.extent[1] {
@@ -262,6 +216,28 @@ fn main() {
         let fps = 1.0 / delta.as_secs_f32();
         font.clear();
         font.add_str_pix(font.data.char_size * 2, UVec2::from_slice(&window_extent) * 2 / 3, format!("{fps:.2}").into(), solid::WHITE);
+
+        if do_update {
+            update_scene(&mut scene, delta);
+        }
+        let (model_inst_buffer, model_nodes_buffer) = get_scene_buffers(&app, &scene, BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST);
+
+        let compute_descriptor_set = PersistentDescriptorSet::new(
+            &app.renderer.descriptor_set_allocator,
+            compute_pipeline.layout().set_layouts()[0].clone(),
+            [
+                WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
+                WriteDescriptorSet::image_view(1, storage_image_view.clone()),
+                WriteDescriptorSet::buffer(2, positions_buffer.clone()),
+                WriteDescriptorSet::buffer(3, normals_buffer.clone()),
+                WriteDescriptorSet::buffer(4, triangles_buffer.clone()),
+                WriteDescriptorSet::buffer(5, bvh_buffer.clone()),
+                WriteDescriptorSet::buffer(6, material_buffer.clone()),
+                WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),
+                WriteDescriptorSet::buffer(8, model_inst_buffer.clone()),
+                WriteDescriptorSet::buffer(9, model_nodes_buffer.clone())],
+            []
+        ).unwrap();
 
         let mut cmd_builder = AutoCommandBufferBuilder::primary(&cmd_buffer_allocator, app.renderer.queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit).unwrap();
         cmd_builder
@@ -393,3 +369,26 @@ fn get_uniform_contents(camera: &Camera, model: &Model, num_model_instances: u32
     }
 }
 
+fn get_scene_buffers(app: &App, scene: &Scene, usage: BufferUsage) -> (Subbuffer<[gen::ModelInstance]>, Subbuffer<[gen::TreeNode]>) {
+    let (scene_nodes, scene_objects) = scene.count_nodes_objects();
+    let model_inst_buffer = app.renderer.get_buffer::<gen::ModelInstance>(usage, scene_objects as DeviceSize);
+    let model_nodes_buffer = app.renderer.get_buffer::<gen::TreeNode>(usage, scene_nodes as DeviceSize);
+    {
+        let mut write_model_inst = model_inst_buffer.write().unwrap();
+        let mut write_model_nodes = model_nodes_buffer.write().unwrap();
+        scene.get_nodes_objects(&mut write_model_nodes, &mut write_model_inst);
+    }
+
+    (model_inst_buffer, model_nodes_buffer)
+}
+
+fn update_scene(scene: &mut Scene, delta: Duration) {
+
+    let rot = Mat4::from_rotation_y(PI / 8.0 * delta.as_secs_f32());
+
+    let objs = scene.collect_objects();
+    for obj in objs.into_iter() {
+        let trans = obj.read().unwrap().transform;
+        scene.set_transform(obj, Some(trans * rot));
+    }
+}

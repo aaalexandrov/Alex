@@ -326,7 +326,7 @@ bool get_tri_intersection(Ray r, out vec4 bc, out uint tri_ind, out uint model_i
     return all(greaterThanEqual(bc, vec4(0.0)));
 }
 
-vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, DirectionalLight dir_light, MaterialData material) {
+vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, float hit_dist, DirectionalLight dir_light, MaterialData material) {
     vec3 V = normalize(cam_pos - pos);
     float NdotL = max(0, dot(normal, dir_light.dir));
 
@@ -334,7 +334,7 @@ vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, DirectionalLight dir_light
         uint tri_ind, model_inst_ind;
         vec4 bc;
         Ray rShadow;
-        rShadow.o = pos + dir_light.dir * 0.001;
+        rShadow.o = pos + dir_light.dir * hit_dist * 1e-5;
         rShadow.d = dir_light.dir;
         bool shadow = get_tri_intersection(rShadow, bc, tri_ind, model_inst_ind);
         if (shadow)
@@ -375,7 +375,7 @@ void main() {
         ModelInstance model_inst = model_instances[model_inst_ind];
         norm = (model_inst.transform * vec4(norm, 0)).xyz;
         MaterialData mat = materials[tri_material_indices[tri_ind]];
-        color.xyz = GetLighting(camera_pos, pos, norm, sun, mat);
+        color.xyz = GetLighting(camera_pos, pos, norm, bc.w, sun, mat);
     }
 
     imageStore(Output, pixCoord, color);

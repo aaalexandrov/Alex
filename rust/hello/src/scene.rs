@@ -66,6 +66,17 @@ impl SceneNode {
         self.objects.swap_remove(pos);
     }
 
+    fn for_objects<EnumFn>(&self, func: &mut EnumFn)
+        where EnumFn: FnMut(&Arc<RwLock<SceneObject>>) {
+        for o in self.objects.iter() {
+            func(o);
+        }
+
+        for child in self.children.iter().filter_map(|o| o.as_ref()) {
+            child.for_objects(func);
+        }
+    }
+
     fn count_nodes_objects(&self) -> (usize, usize) {
         let (mut nodes, mut objects) = (1, self.objects.len());
 
@@ -109,6 +120,7 @@ pub struct Scene {
     pub min_size: f32,
 }
 
+#[allow(dead_code)]
 impl Scene {
     pub fn new(bound: Box3, min_size: f32) -> Scene {
         Scene {
@@ -129,13 +141,13 @@ impl Scene {
             let split_val = node.get_bound_middle(split_dim);
             if bound.max[split_dim as usize] <= split_val {
                 node = node.children[0].get_or_insert_with(|| {
-                    let mut min_bound = *bound;
+                    let mut min_bound = node.bound;
                     min_bound.max[split_dim as usize] = split_val;
                     Box::new(SceneNode::new(min_bound))
                 });
             } else if split_val <= bound.min[split_dim as usize] {
                 node = node.children[1].get_or_insert_with(|| {
-                    let mut max_bound = *bound;
+                    let mut max_bound = node.bound;
                     max_bound.min[split_dim as usize] = split_val;
                     Box::new(SceneNode::new(max_bound))
                 });
@@ -168,5 +180,16 @@ impl Scene {
 
     pub fn get_nodes_objects(&self, nodes: &mut [gen::TreeNode], objects: &mut [gen::ModelInstance]) -> (usize, usize) {
         self.root.get_nodes_objects(nodes, 0, objects, 0)
+    }
+
+    pub fn for_objects<EnumFn>(&self, mut func: EnumFn)
+        where EnumFn: FnMut(&Arc<RwLock<SceneObject>>) {
+        self.root.for_objects(&mut func);
+    }
+
+    pub fn collect_objects(&self) -> Vec<Arc<RwLock<SceneObject>>> {
+        let mut objs = Vec::new();
+        self.root.for_objects(&mut |o: &Arc<RwLock<SceneObject>>| objs.push(o.clone()));
+        return objs;
     }
 }
