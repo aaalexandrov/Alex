@@ -1,6 +1,4 @@
-use winit::{
-    event::{VirtualKeyCode},
-};
+use winit::event::VirtualKeyCode;
 
 use winit_input_helper::WinitInputHelper;
 
@@ -8,12 +6,10 @@ use std::{sync::{Arc, Mutex}, env, time::{SystemTime, Duration}};
 
 use vulkano::{
     memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
-    command_buffer::{allocator::{StandardCommandBufferAllocator}, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
+    command_buffer::{allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
-        graphics::{
-            viewport::{Viewport, }, 
-        }, Pipeline, PipelineBindPoint, 
+        graphics::viewport::Viewport, Pipeline, PipelineBindPoint, 
     }, 
     render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, }, format::Format, DeviceSize, swapchain::PresentMode, 
 };
@@ -21,7 +17,7 @@ use vulkano::{
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
 
 mod app;
-use app::{App};
+use app::App;
 
 mod geom;
 use geom::Box3;
