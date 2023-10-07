@@ -1,3 +1,4 @@
+use gen::ModelsBuffers;
 use winit::event::VirtualKeyCode;
 
 use winit_input_helper::WinitInputHelper;
@@ -5,13 +6,13 @@ use winit_input_helper::WinitInputHelper;
 use std::{sync::{Arc, Mutex}, env, time::{SystemTime, Duration}};
 
 use vulkano::{
-    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, MemoryAllocator},
+    memory::allocator::{AllocationCreateInfo, MemoryAllocator},
     command_buffer::{allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage, RenderingAttachmentInfo, CopyBufferInfo},
     image::{ImageUsage, Image, view::{ImageView, ImageViewCreateInfo}, ImageCreateInfo, sampler::{Sampler, SamplerCreateInfo, SamplerMipmapMode, Filter}},
     pipeline::{
         graphics::viewport::Viewport, Pipeline, PipelineBindPoint, 
     }, 
-    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer, }, format::Format, DeviceSize, swapchain::PresentMode, 
+    render_pass::{AttachmentLoadOp, AttachmentStoreOp}, descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet}, buffer::{BufferUsage, Subbuffer, }, format::Format, DeviceSize, swapchain::PresentMode, 
 };
 
 use glam::{Mat4, Vec3, Quat, uvec2, UVec2, Vec4Swizzles};
@@ -63,65 +64,26 @@ fn main() {
     //let (model_path, invert) = ("data/diamond.obj", false);
     //let (model_path, invert) = ("data/magnolia.obj", true);
     //let (model_path, invert) = ("data/airboat.obj", true);
-    let (model_path, invert) = ("data/b17green.obj", true);
+    //let (model_path, invert) = ("data/b17green.obj", true);
     //let (model_path, invert) = ("data/b17silver.obj", true);
-    let mut model = Model::load_obj(model_path, usize::MAX);
-    if invert {
-        model.invert_triangle_order();
-    }
-    if model.normals.len() != model.positions.len() {
-        model.generate_normals();
-    }
-    let model = Arc::new(model);
-    println!("Loaded model {model_path} ({} triangles)", model.triangles.len() / 3);
-
-
-    let uniform_buffer = Buffer::new_slice::<gen::UniformData>(
-        app.renderer.allocator.clone(),
-        BufferCreateInfo{
-            usage: BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST,
-            ..Default::default()
-        },
-        AllocationCreateInfo{
-            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
-            ..Default::default()
-        },
-        1
-    ).unwrap();
-
-    let positions_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.positions.as_slice());
-    let normals_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.normals.as_slice());
-    let triangles_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangles.as_slice());
-    let bvh_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.bvh.len() as DeviceSize, |bvh: &mut [gen::TreeNode]| {
-        for i in 0..bvh.len() {
-            let b = &model.bvh[i];
-            bvh[i] = gen::TreeNode {
-                box_min: b.bound.min.to_array(), 
-                content_start: b.tri_start,
-                box_max: b.bound.max.to_array(),
-                content_end: b.tri_end,
-                child: b.child_ind,
-                _pad: [0; 2],
-            }
-        }
-    });
-    let material_buffer = app.renderer.get_buffer_write(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.materials.len() as DeviceSize, |mat: &mut [gen::MaterialData]| {
-        for i in 0..mat.len() {
-            let m = &model.materials[i];
-            mat[i] = gen::MaterialData {
-                albedo: m.albedo,
-                power: m.shininess,
-            };
-        }
-    });
-    let tri_material_indices_buffer = app.renderer.get_buffer_slice(BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST, model.triangle_material_indices.as_slice());
     
     const SCENE_SIZE: f32 = 1000.0;
     const MIN_SCENE_SIZE: f32 = 1.0;
     let mut scene = Scene::new(Box3::new(Vec3::splat(-SCENE_SIZE), Vec3::splat(SCENE_SIZE)), MIN_SCENE_SIZE);
-    let obj = SceneObject::new(model.clone());
-    scene.set_transform(obj.clone(), Some(Mat4::from_rotation_y(PI/2.0)));
+    {
+        let model = load_model("data/b17green.obj", true);
+        let obj = SceneObject::new(model.clone());
+        scene.set_transform(obj.clone(), Some(Mat4::from_rotation_y(PI/2.0)));
 
+        let model = load_model("data/b17silver.obj", true);
+        let obj = SceneObject::new(model.clone());
+        scene.set_transform(obj.clone(), Some(Mat4::from_scale_rotation_translation(Vec3::splat(1.0), Quat::IDENTITY, Vec3::new(0.0, -20.0, 0.0))));
+    }
+
+    let models_buffers = get_models_buffers(&app, &scene, BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST);
+
+    let uniform_buffer = app.renderer.get_buffer::<gen::UniformData>(BufferUsage::UNIFORM_BUFFER | BufferUsage::TRANSFER_DST, 1);
+    
     let compute_pipeline = app.renderer.load_compute_pipeline(gen::load(app.renderer.device.clone()).unwrap());
     let solid_pipeline = solid::load_pipeline(&app.renderer, false, swapchain_format);
 
@@ -224,12 +186,12 @@ fn main() {
             [
                 WriteDescriptorSet::buffer(0, uniform_buffer.clone()),
                 WriteDescriptorSet::image_view(1, storage_image_view.clone()),
-                WriteDescriptorSet::buffer(2, positions_buffer.clone()),
-                WriteDescriptorSet::buffer(3, normals_buffer.clone()),
-                WriteDescriptorSet::buffer(4, triangles_buffer.clone()),
-                WriteDescriptorSet::buffer(5, bvh_buffer.clone()),
-                WriteDescriptorSet::buffer(6, material_buffer.clone()),
-                WriteDescriptorSet::buffer(7, tri_material_indices_buffer.clone()),
+                WriteDescriptorSet::buffer(2, models_buffers.positions.clone()),
+                WriteDescriptorSet::buffer(3, models_buffers.normals.clone()),
+                WriteDescriptorSet::buffer(4, models_buffers.triangles.clone()),
+                WriteDescriptorSet::buffer(5, models_buffers.bvh.clone()),
+                WriteDescriptorSet::buffer(6, models_buffers.materials.clone()),
+                WriteDescriptorSet::buffer(7, models_buffers.tri_material_indices.clone()),
                 WriteDescriptorSet::buffer(8, model_inst_buffer.clone()),
                 WriteDescriptorSet::buffer(9, model_nodes_buffer.clone())],
             []
@@ -239,7 +201,7 @@ fn main() {
         cmd_builder
             .copy_buffer(CopyBufferInfo::buffers(app.renderer.get_buffer_data(
                 BufferUsage::TRANSFER_SRC, 
-                get_uniform_contents(&camera, &model, model_inst_buffer.len() as u32, model_nodes_buffer.len() as u32)),
+                get_uniform_contents(&camera, &models_buffers, model_inst_buffer.len() as u32, model_nodes_buffer.len() as u32)),
                 uniform_buffer.clone())).unwrap()
             .bind_pipeline_compute(compute_pipeline.clone()).unwrap()
             .bind_descriptor_sets(PipelineBindPoint::Compute, compute_pipeline.layout().clone(), 0, compute_descriptor_set.clone()).unwrap()
@@ -272,6 +234,17 @@ fn main() {
         
         cmd_buffer
     })
+}
+
+fn load_model(path: &str, invert: bool) -> Arc<Model> {
+    let mut model = Model::load_obj(path, usize::MAX);
+    if invert {
+        model.invert_triangle_order();
+    }
+    if model.normals.len() != model.positions.len() {
+        model.generate_normals();
+    }
+    Arc::new(model)
 }
 
 fn div_ceil(num: u32, denom: u32) -> u32 {
@@ -350,19 +323,38 @@ fn create_storage_image(mem_alloc: Arc<dyn MemoryAllocator>, extent: [u32; 3]) -
     ).unwrap()
 }
 
-fn get_uniform_contents(camera: &Camera, model: &Model, num_model_instances: u32, num_model_nodes: u32) -> gen::UniformData {
+fn get_uniform_contents(camera: &Camera, models_buffers: &ModelsBuffers, num_model_instances: u32, num_model_nodes: u32) -> gen::UniformData {
     gen::UniformData {
         view_proj: camera.view_proj().to_cols_array_2d(),
         background_color: [0.0, 0.0, 1.0, 1.0],
         camera_pos: camera.transform.w_axis.xyz().to_array(),
-        num_tri_indices: model.triangles.len() as u32,
-        num_vertices: model.positions.len() as u32,
-        num_bvh_nodes: model.bvh.len() as u32,
-        num_materials: model.materials.len() as u32,
+        num_tri_indices: models_buffers.triangles.len() as u32,
+        num_vertices: models_buffers.positions.len() as u32,
+        num_bvh_nodes: models_buffers.bvh.len() as u32,
+        num_materials: models_buffers.materials.len() as u32,
         num_model_instances,
         num_model_nodes: num_model_nodes.into(),
         sun: gen::DirectionalLight { dir: [1.0 / f32::sqrt(3.0); 3].into(), color: [252.0 / 255.0, 229.0 / 255.0, 112.0 / 255.0].into(), ambient: [0.2; 3] },
     }
+}
+
+fn get_models_buffers(app: &App, scene: &Scene, usage: BufferUsage) -> gen::ModelsBuffers {
+    let buffers = gen::ModelsBuffers {
+        positions: app.renderer.get_buffer(usage, scene.model_last_data.vert_start_index as DeviceSize),
+        normals: app.renderer.get_buffer(usage, scene.model_last_data.vert_start_index as DeviceSize),
+        triangles: app.renderer.get_buffer(usage, scene.model_last_data.tri_start_index as DeviceSize),
+        bvh: app.renderer.get_buffer(usage, scene.model_last_data.bvh_start_index as DeviceSize),
+        tri_material_indices: app.renderer.get_buffer(usage, scene.model_last_data.tri_mat_indices_start_index as DeviceSize),
+        materials: app.renderer.get_buffer(usage, scene.model_last_data.mat_start_index as DeviceSize),
+    };
+    scene.get_models_data(
+        &mut buffers.positions.write().unwrap(), 
+        &mut buffers.normals.write().unwrap(),
+        &mut buffers.triangles.write().unwrap(),
+        &mut buffers.bvh.write().unwrap(),
+        &mut buffers.tri_material_indices.write().unwrap(), 
+        &mut buffers.materials.write().unwrap());
+    buffers
 }
 
 fn get_scene_buffers(app: &App, scene: &Scene, usage: BufferUsage) -> (Subbuffer<[gen::ModelInstance]>, Subbuffer<[gen::TreeNode]>) {

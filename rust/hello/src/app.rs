@@ -5,9 +5,9 @@ use vulkano::{
     instance::{InstanceExtensions, Instance, InstanceCreateInfo, InstanceCreateFlags}, 
     memory::allocator::{MemoryAllocator, StandardMemoryAllocator, MemoryTypeFilter, AllocationCreateInfo}, 
     VulkanLibrary, Version, command_buffer::PrimaryAutoCommandBuffer, sync::{GpuFuture, self}, Validated, VulkanError, shader::{ShaderModule, SpecializationConstant}, 
-    pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, 
+    pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, DynamicState,
         graphics::{subpass::PipelineRenderingCreateInfo, GraphicsPipelineCreateInfo, vertex_input::{VertexInputState, Vertex, VertexDefinition}, input_assembly::{InputAssemblyState, PrimitiveTopology}, 
-        viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::ColorBlendState}, PartialStateMode}, format::Format, 
+        viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::{ColorBlendState, ColorBlendAttachmentState, AttachmentBlend}}}, format::Format, 
         descriptor_set::allocator::{StandardDescriptorSetAllocator}, buffer::{Buffer, BufferContents, Subbuffer, BufferCreateInfo, BufferUsage}, DeviceSize};
 use std::{sync::Arc};
 use ahash::HashMap;
@@ -109,13 +109,14 @@ impl Renderer {
                 stages: stages.into_iter().collect(),
                 vertex_input_state,
                 input_assembly_state: Some(InputAssemblyState {
-                    topology: PartialStateMode::Fixed(PrimitiveTopology::TriangleList),
+                    topology: PrimitiveTopology::TriangleList,
                     ..InputAssemblyState::default()
                 }),
-                viewport_state: Some(ViewportState::viewport_dynamic_scissor_irrelevant()),
+                viewport_state: Some(ViewportState::default()),
                 rasterization_state: Some(RasterizationState::default()),
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state,
+                dynamic_state: [DynamicState::Viewport].into_iter().collect(),
                 subpass: Some(subpass.into()),
                 ..GraphicsPipelineCreateInfo::layout(layout)
             },
@@ -127,8 +128,11 @@ impl Renderer {
         let vertex_input_state = [VertexStruct::per_vertex()]
             .definition(&vs_module.entry_point("main").unwrap().info().input_interface)
             .unwrap();
-        let color_blend_state = ColorBlendState::new(attachment_formats.len() as u32);
-        let color_blend_state = if alpha_blend { color_blend_state.blend_alpha() } else { color_blend_state };
+        let color_blend_state = ColorBlendState::with_attachment_states(attachment_formats.len() as u32, 
+            ColorBlendAttachmentState { 
+                blend: Some(if alpha_blend { AttachmentBlend::alpha() } else { AttachmentBlend::default() }),
+                ..ColorBlendAttachmentState::default()
+            });
 
         self.load_graphics_pipeline_vertex(
             vs_module, 

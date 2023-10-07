@@ -334,7 +334,7 @@ vec3 GetLighting(vec3 cam_pos, vec3 pos, vec3 normal, float hit_dist, Directiona
         uint tri_ind, model_inst_ind;
         vec4 bc;
         Ray rShadow;
-        rShadow.o = pos + dir_light.dir * hit_dist * 1e-5;
+        rShadow.o = pos + dir_light.dir * hit_dist * 1e-4;
         rShadow.d = dir_light.dir;
         bool shadow = get_tri_intersection(rShadow, bc, tri_ind, model_inst_ind);
         if (shadow)
