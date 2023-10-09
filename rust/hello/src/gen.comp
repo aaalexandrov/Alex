@@ -173,7 +173,7 @@ vec4 intersect(vec3 v0, vec3 v1, vec3 v2, Ray r) {
 Ray transform_ray(Ray r, mat4 affine) {
     return Ray(
         (affine * vec4(r.o, 1)).xyz, 
-        normalize((affine * vec4(r.d, 0)).xyz));
+        (affine * vec4(r.d, 0)).xyz);
 }
 
 vec3 get_position(uint index) {
@@ -373,7 +373,7 @@ void main() {
         //vec3 norm = normalize(cross(tri[0] - tri[1], tri[2] - tri[0]));
         vec3 norm = normalize(get_interpolated_normal(tri_ind, bc.xyz));
         ModelInstance model_inst = model_instances[model_inst_ind];
-        norm = (model_inst.transform * vec4(norm, 0)).xyz;
+        norm = normalize((model_inst.transform * vec4(norm, 0)).xyz);
         MaterialData mat = materials[tri_material_indices[tri_ind]];
         color.xyz = GetLighting(camera_pos, pos, norm, bc.w, sun, mat);
     }
