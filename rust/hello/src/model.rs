@@ -1,6 +1,8 @@
+use by_address::ByAddress;
 use tobj;
+use easy_gltf;
 
-use std::{vec::Vec, cmp::Ordering};
+use std::{vec::Vec, cmp::Ordering, sync::Arc};
 
 use glam::{Vec3, vec3, UVec4, uvec4};
 use super::geom::{Box3, max_elem_index};
@@ -29,17 +31,60 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load_obj(path: &str, model_index: usize) -> Model {
-        let (obj, mat) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap();
-
-        let mut model = Model { 
+    fn new() -> Self {
+        Model { 
             positions: Vec::<f32>::new(), 
             normals: Vec::<f32>::new(), 
             triangles: Vec::<u32>::new(), 
             bvh: Vec::<BoundNode>::new(),
             materials: Vec::<Material>::new(),
             triangle_material_indices: Vec::<u32>::new(),
-        };
+        }
+    }
+
+    pub fn load_gltf(path: &str) -> Model {
+        let scenes = easy_gltf::load(path).unwrap();
+
+        let mut model = Self::new();
+
+        let mut mat_indices = HashMap::<ByAddress<Arc<easy_gltf::Material>>, usize>::new();
+        for scene in scenes.iter() {
+            for mdl in scene.models.iter() {
+                if mdl.mode() != easy_gltf::model::Mode::Triangles || !mdl.has_normals() {
+                    continue;
+                }
+
+                let mdl_indices = mdl.indices().unwrap();
+                assert_eq!(mdl_indices.len() % 3, 0);
+                let base_triangle = (model.positions.len() / 3) as u32;
+                model.triangles.extend(mdl_indices.iter().map(|x| x + base_triangle));
+
+                for vert in mdl.vertices().iter() {
+                    model.positions.extend_from_slice(&Into::<[f32; 3]>::into(vert.position));
+                    model.normals.extend_from_slice(&Into::<[f32; 3]>::into(vert.normal));
+                }
+    
+                let mat_ind = mat_indices.entry(mdl.material().clone().into()).or_insert_with(|| {
+                    model.materials.push(Material {
+                        albedo: Into::<[f32; 4]>::into(mdl.material().pbr.base_color_factor)[0..3].try_into().unwrap(),
+                        shininess: 2.0 / f32::powi(mdl.material().pbr.roughness_factor, 4) - 2.0,
+                    });
+                    model.materials.len() - 1
+                });
+
+                model.triangle_material_indices.extend(std::iter::repeat(*mat_ind as u32).take(mdl_indices.len() / 3));
+            }
+        } 
+
+        model.build_bvh();
+
+        model
+    }
+
+    pub fn load_obj(path: &str, model_index: usize) -> Model {
+        let (obj, mat) = tobj::load_obj(path, &tobj::GPU_LOAD_OPTIONS).unwrap();
+
+        let mut model = Self::new();
 
         let indices = if model_index == usize::MAX { 0..obj.len() } else { model_index..(model_index + 1) };
         for i in indices {

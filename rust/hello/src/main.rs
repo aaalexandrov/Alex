@@ -78,6 +78,10 @@ fn main() {
         let model = load_model("data/b17silver.obj", true);
         let obj = SceneObject::new(model.clone());
         scene.set_transform(obj.clone(), Some(Mat4::from_scale_rotation_translation(Vec3::splat(10.0), Quat::IDENTITY, Vec3::new(0.0, -50.0, 0.0))));
+
+        let model = Arc::new(Model::load_gltf("data/an225.glb"));
+        let obj = SceneObject::new(model.clone());
+        scene.set_transform(obj.clone(), Some(Mat4::from_scale_rotation_translation(Vec3::splat(1.0), Quat::IDENTITY, Vec3::new(0.0, 50.0, 0.0))));
     }
 
     let models_buffers = get_models_buffers(&app, &scene, BufferUsage::STORAGE_BUFFER | BufferUsage::TRANSFER_DST);
