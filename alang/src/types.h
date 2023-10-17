@@ -1,7 +1,6 @@
 #pragma once
 
-#include "common.h"
-#include <variant>
+#include "definitions.h"
 
 namespace alang {
 
@@ -44,7 +43,9 @@ struct TypeDesc : public Definition {
 	std::vector<Member> _members;
 
 	TypeDesc(String name, size_t size, size_t align);
-	TypeDesc(ParseNode const *node);
+	TypeDesc() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 

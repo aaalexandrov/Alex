@@ -8,9 +8,13 @@ FuncData::FuncData(String name, TypeDesc *signature)
 {
 }
 
-FuncData::FuncData(ParseNode const *node)
-	: Definition(node)
+Error FuncData::Init(ParseNode const *node)
 {
+	Error err = Definition::Init(node);
+	if (err)
+		return err;
+
+	return Error();
 }
 
 rtti::TypeInfo const *FuncData::GetTypeInfo() const
@@ -24,9 +28,14 @@ Func::Func(String name, TypeDesc *signature)
 {
 }
 
-Func::Func(ParseNode const *node)
-	: FuncData(node)
+Error Func::Init(ParseNode const *node)
 {
+	Error err = FuncData::Init(node);
+	if (err)
+		return err;
+
+	return Error();
+
 }
 
 rtti::TypeInfo const *Func::GetTypeInfo() const
@@ -45,9 +54,13 @@ FuncExternal::FuncExternal(String name, TypeDesc *signature, FuncType externalFu
 {
 }
 
-FuncExternal::FuncExternal(ParseNode const *node)
-	: FuncData(node)
+Error FuncExternal::Init(ParseNode const *node)
 {
+	Error err = FuncData::Init(node);
+	if (err)
+		return err;
+
+	return Error();
 }
 
 rtti::TypeInfo const *FuncExternal::GetTypeInfo() const

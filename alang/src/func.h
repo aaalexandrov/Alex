@@ -8,7 +8,9 @@ struct FuncData : public Definition {
 	TypeDesc *_signature = nullptr;
 
 	FuncData(String name, TypeDesc *signature);
-	FuncData(ParseNode const *node);
+	FuncData() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 };
@@ -18,7 +20,9 @@ struct Func : public FuncData {
 	// code
 
 	Func(String name, TypeDesc *signature);
-	Func(ParseNode const *node);
+	Func() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 
@@ -30,7 +34,9 @@ struct FuncExternal : public FuncData {
 	FuncType _externalFunc;
 
 	FuncExternal(String name, TypeDesc *signature, FuncType externalFunc);
-	FuncExternal(ParseNode const *node);
+	FuncExternal() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 

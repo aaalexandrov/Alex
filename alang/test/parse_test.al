@@ -6,8 +6,12 @@ func one() : I32
 	return 1
 end
 
+const inc_by : I32 = 33
+var last_inc : i32 = 0
+
 func inc(x : Ref{I32})
-	x = x + 1
+	x = x + inc_by
+	last_inc = x
 end
 
 func add1(x : I32) : I32

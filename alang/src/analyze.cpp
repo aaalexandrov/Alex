@@ -66,7 +66,10 @@ Error Analyzer::ScanFunction(ParseNode const *func, Module *parent)
 
 Error Analyzer::ScanValue(ParseNode const *val, Module *parent)
 {
-	ASSERT(val->_label == "const" || val->_label == "var");
+	VarDef *defVar = new VarDef();
+	Error err = defVar->Init(val);
+	if (err)
+		return err;
 
 	return Error();
 }

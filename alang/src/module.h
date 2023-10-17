@@ -15,7 +15,9 @@ struct Module : public Definition {
 	std::vector<Module *> _imports;
 
 	Module(String name);
-	Module(ParseNode const *node);
+	Module() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 

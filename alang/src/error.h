@@ -19,6 +19,9 @@ struct Err {
 	static inline String ExpectedQualifiedName = "Expected qualified name";
 	static inline String ExpectedFunc = "Expected 'func'";
 	static inline String DefinitionNotModule = "Definition is not a module";
+	static inline String ExpectedVarOrConst = "Expected 'var' or 'const'";
+	static inline String ExpectedAssign = "Expected assignment";
+	static inline String ExpectedOfType = "Expected typed value";
 };
 
 }

@@ -70,9 +70,13 @@ TypeDesc::TypeDesc(String name, size_t size, size_t align)
 {
 }
 
-TypeDesc::TypeDesc(ParseNode const *node)
-	: Definition(node)
+Error TypeDesc::Init(ParseNode const *node)
 {
+	Error err = Definition::Init(node);
+	if (err)
+		return err;
+
+	return Error();
 }
 
 rtti::TypeInfo const *TypeDesc::GetTypeInfo() const

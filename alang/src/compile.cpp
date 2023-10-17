@@ -64,7 +64,7 @@ Error Compiler::ScanModule(ParseNode const *mod, Module *parent)
 	Error err = GetOrCreateModule(modName, module);
 	if (err)
 		return err;
-	ASSERT(module->_parentModule == parent);
+	ASSERT(module->_parentDefinition == parent);
 	module->_node = mod;
 
 	err = analyzer.ScanModule(module);

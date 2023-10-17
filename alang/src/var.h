@@ -4,18 +4,20 @@
 
 namespace alang {
 
+struct TypeDesc;
 struct VarDef : public Definition {
 	TypeDesc *_type = nullptr;
 	Value _value;
 	bool _const = false;
 
-	VarDef(ParseNode const *node);
+	VarDef() = default;
+
+	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 
 	Error Analyze() override;
 };
-
 
 }
 

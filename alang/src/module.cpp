@@ -1,5 +1,6 @@
 #include "module.h"
 #include "core.h"
+#include "parse.h"
 
 namespace alang {
 
@@ -8,10 +9,16 @@ Module::Module(String name)
 {
 }
 
-Module::Module(ParseNode const *node)
-	: Definition{ node }
+Error Module::Init(ParseNode const *node)
 {
+	Error err = Definition::Init(node);
+	if (err)
+		return err;
+
+	_name = _node->GetToken(0)->_str;
 	_imports.emplace_back(CoreModule.get());
+
+	return Error();
 }
 
 rtti::TypeInfo const *Module::GetTypeInfo() const
@@ -28,7 +35,7 @@ Error Module::Analyze()
 void Module::RegisterDefinition(std::unique_ptr<Definition> &&def)
 {
 	auto name = def->_name;
-	def->_parentModule = this;
+	def->_parentDefinition = this;
 	_definitions.insert({ name, std::move(def) });
 }
 
