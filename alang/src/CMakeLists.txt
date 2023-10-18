@@ -21,6 +21,8 @@ set(SOURCES
 	"error.cpp"
 	"func.h" 
 	"func.cpp" 
+	"ir.h"
+	"ir.cpp"
 	"module.h" 
 	"module.cpp" 
 	"parse.h" 
