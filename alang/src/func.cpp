@@ -43,11 +43,6 @@ rtti::TypeInfo const *Func::GetTypeInfo() const
 	return rtti::Get<Func>();
 }
 
-Error Func::Analyze()
-{
-	return Error();
-}
-
 FuncExternal::FuncExternal(String name, TypeDesc *signature, FuncType externalFunc)
 	: FuncData(name, signature)
 	, _externalFunc(externalFunc)
@@ -66,11 +61,6 @@ Error FuncExternal::Init(ParseNode const *node)
 rtti::TypeInfo const *FuncExternal::GetTypeInfo() const
 { 
 	return rtti::Get<FuncExternal>(); 
-}
-
-Error FuncExternal::Analyze()
-{
-	return Error();
 }
 
 }

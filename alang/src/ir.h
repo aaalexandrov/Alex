@@ -21,6 +21,7 @@ namespace alang {
 
 enum class Op : uint8_t {
 	Move,
+	Convert,
 
 	Neg,
 	Add,
@@ -44,25 +45,43 @@ enum class Op : uint8_t {
 
 enum class OpAddressingMode : uint8_t {
 	Immediate,
-	Local,     // register
-	Indirect,  // 
+	Local,     
+	Indirect, 
 
 	Last
 };
 
-struct OpData {
-	uint8_t _size : 4;
-	uint8_t _sign : 1;
-	uint8_t _fp : 1;
-	OpAddressingMode _addrModeDst : 2;
+enum OperandType : uint8_t {
+	U8,
+	U16,
+	U32,
+	U64,
+
+	S8,
+	S16,
+	S32,
+	S64,
+
+	F32,
+	F64,
+
+	Addr, // ??
+
+	Last
+};
+
+enum OpDirection : uint8_t {
+	ToLocal,
+	ToModal,
 };
 
 struct OpCode {
 	Op _op : 6;
-	OpAddressingMode _addrModeSrc : 2;
-	OpData _data;
+	OpAddressingMode _addrMode : 2;
+	OperandType _operType : 4;
+	OpDirection _opDirection : 1;
+	uint16_t _localOper;
+	uint16_t _modalOper;
 };
-
-
 
 }

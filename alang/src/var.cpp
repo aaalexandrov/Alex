@@ -32,10 +32,5 @@ rtti::TypeInfo const *VarDef::GetTypeInfo() const
 	return rtti::Get<VarDef>();
 }
 
-Error VarDef::Analyze()
-{
-	return Error();
-}
-
 }
 

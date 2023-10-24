@@ -25,8 +25,6 @@ struct Func : public FuncData {
 	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
-
-	Error Analyze() override;
 };
 
 struct FuncExternal : public FuncData {
@@ -39,8 +37,6 @@ struct FuncExternal : public FuncData {
 	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
-
-	Error Analyze() override;
 };
 
 }

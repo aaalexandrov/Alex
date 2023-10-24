@@ -31,5 +31,12 @@ struct Error {
 	String ToString() const;
 };
 
+template<typename D>
+struct ScopeGuard {
+	D _onDelete;
+	ScopeGuard(D &&onDelete) : _onDelete(onDelete) {}
+	~ScopeGuard() { _onDelete(); }
+};
+
 }
 

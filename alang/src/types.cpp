@@ -84,11 +84,6 @@ rtti::TypeInfo const *TypeDesc::GetTypeInfo() const
 	return rtti::Get<TypeDesc>();
 }
 
-Error TypeDesc::Analyze()
-{
-	return Error();
-}
-
 String TypeDesc::GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params)
 {
 	String name = genericDef->GetQualifiedName() + "{";

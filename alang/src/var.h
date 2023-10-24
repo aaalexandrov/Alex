@@ -15,8 +15,6 @@ struct VarDef : public Definition {
 	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
-
-	Error Analyze() override;
 };
 
 }

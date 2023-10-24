@@ -49,8 +49,6 @@ struct TypeDesc : public Definition {
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 
-	Error Analyze() override;
-
 	static String GetGenericName(TypeDesc *genericDef, std::vector<Value> const &params);
 };
 

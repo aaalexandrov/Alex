@@ -1,6 +1,6 @@
-module HelloWorld
+module parse_test
 
-import std.io
+import std.io, std
 
 func one() : I32
 	return 1

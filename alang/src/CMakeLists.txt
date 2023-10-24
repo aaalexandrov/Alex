@@ -5,8 +5,8 @@ set(TARGET_NAME alang)
 set(SOURCES 
 	"alang.cpp" 
 	"alang.h" 
-	"analyze.h"
-	"analyze.cpp"
+	 "ast2ir.h" 
+	 "ast2ir.cpp"
 	"common.h" 
 	"common.cpp"
 	"compile.h"

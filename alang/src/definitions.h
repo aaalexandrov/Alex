@@ -21,8 +21,6 @@ struct Definition : public rtti::Any {
 	void GetQualifiedName(std::vector<String> &name) const;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
-
-	virtual Error Analyze() = 0;
 };
 
 }

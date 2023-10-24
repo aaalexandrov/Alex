@@ -7,16 +7,22 @@
 
 namespace alang {
 
+struct Ast2Ir;
 struct Compiler {
 	String GetFilePathForModule(std::vector<String> const &qualifiedName);
 
 	Error ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed);
 
-	Error ScanModule(ParseNode const *mod, Module *parent);
-
 	Error CompileFile(String filePath);
 
 	Error GetOrCreateModule(std::vector<String> const &qualifiedName, Module *&mod);
+	Definition *GetRegisteredDefinition(std::vector<String> const &qualifiedName);
+	template<typename T>
+	T *GetRegisteredDefinition(std::vector<String> const &qualifiedName) 
+	{
+		Definition *def = GetRegisteredDefinition(qualifiedName);
+		return rtti::Cast<T>(def);
+	}
 
 	String GetAlangExtension() const { return ".al"; }
 

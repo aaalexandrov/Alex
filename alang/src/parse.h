@@ -105,6 +105,7 @@ struct ParseNode {
 	int32_t GetContentSize() const { return int32_t(_content.size()); }
 	Token const *GetToken(int32_t i) const { return _content[i].GetToken(); }
 	ParseNode const *GetSubnode(int32_t i) const { return _content[i].GetNode(); }
+	PosInFile const &GetContentFilePos(int32_t i) const { return GetToken(i) ? GetToken(i)->_filePos : GetSubnode(i)->_filePos; }
 };
 
 struct Parser {

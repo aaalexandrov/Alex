@@ -14,6 +14,7 @@ struct Err {
 
 	// semantic analyzer errors
 	static inline String ExpectedModule = "Expected 'module'";
+	static inline String ImportNotFound = "Import not found";
 	static inline String UnexpectedDefinition = "Unexpected definition";
 	static inline String ExpectedImport = "Expected 'import'";
 	static inline String ExpectedQualifiedName = "Expected qualified name";

@@ -1,7 +1,8 @@
 #include "compile.h"
 #include "module.h"
-#include "analyze.h"
 #include "error.h"
+#include "ast2ir.h"
+#include "core.h"
 #include <filesystem>
 
 namespace alang {
@@ -49,51 +50,21 @@ Error Compiler::ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed)
 	return Error();
 }
 
-Error Compiler::ScanModule(ParseNode const *mod, Module *parent)
-{
-	if (mod->_label != "module")
-		return Error(Err::ExpectedModule, mod->_filePos);
-
-	Analyzer analyzer(this);
-
-	std::vector<String> modName;
-	if (parent)
-		parent->GetQualifiedName(modName);
-	modName.push_back(mod->GetToken(0)->_str);
-	Module *module;
-	Error err = GetOrCreateModule(modName, module);
-	if (err)
-		return err;
-	ASSERT(module->_parentDefinition == parent);
-	module->_node = mod;
-
-	err = analyzer.ScanModule(module);
-
-	return err;
-}
-
 Error Compiler::CompileFile(String filePath)
 {
 	std::filesystem::path path(filePath);
 	path.remove_filename();
 	_sourceFolders.push_back(path.string());
+	ScopeGuard popFolder([&] { _sourceFolders.pop_back(); });
 
-	std::unique_ptr<ParseNode> mod;
-	Error err = ParseFile(filePath, mod);
+	Ast2Ir compileIr(this);
+
+	Module *mod = nullptr;
+	Error err = compileIr.LoadModuleDefinitions(filePath, mod);
 	if (err)
 		return err;
 
-	err = ScanModule(mod.get(), nullptr);
-	if (err)
-		return err;
-
-	for (auto &[n, m] : _modules) {
-		err = m->Analyze();
-		if (err)
-			return err;
-	}
-
-	_sourceFolders.pop_back();
+	// compile definitions
 
 	return Error();
 }
@@ -122,6 +93,18 @@ Error Compiler::GetOrCreateModule(std::vector<String> const &qualifiedName, Modu
 
 	mod = parent;
 	return Error();
+}
+
+Definition *Compiler::GetRegisteredDefinition(std::vector<String> const &qualifiedName)
+{
+	Module *parent = _modules[qualifiedName[0]].get();
+	for (int i = 1; parent && i < qualifiedName.size(); ++i) {
+		Definition *def = parent->GetDefinition(qualifiedName[i]);
+		if (!def || i == qualifiedName.size() - 1)
+			return def;
+		parent = rtti::Cast<Module>(def);
+	}
+	return nullptr;
 }
 
 }
