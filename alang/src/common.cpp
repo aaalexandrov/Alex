@@ -1,6 +1,8 @@
 #include "common.h"
 #include "module.h"
 #include "parse.h"
+#include <sstream>
+#include <iostream>
 
 namespace alang {
 
@@ -14,6 +16,17 @@ String Error::ToString() const
 	if (_error.empty())
 		return "No error";
 	return _location.ToString() + " - " + _error;
+}
+
+std::vector<String> SplitString(String str, char delimiter)
+{
+	std::vector<String> split;
+	std::istringstream f(str);
+	String s;
+	while (getline(f, s, delimiter)) {
+		split.push_back(s);
+	}
+	return split;
 }
 
 }

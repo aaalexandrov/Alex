@@ -46,7 +46,14 @@ Error Ast2Ir::LoadModuleDefinitions(String filepath, Module *&mod)
 	if (err)
 		return err;
 
-	err = AnnotateModule(std::move(modNode), mod);
+	// when loading a module from a file, we empty the definition stack, then restore it
+	std::vector<Definition *> tempDefs;
+	std::swap(_currentDef, tempDefs);
+
+	err = AnnotateModule(std::move(modNode), filepath, mod);
+
+	std::swap(_currentDef, tempDefs);
+
 	if (err)
 		return err;
 
@@ -58,31 +65,40 @@ bool Ast2Ir::ModuleDefinitionsLoaded(Module *mod)
 	return mod->_node;
 }
 
-Error Ast2Ir::AnnotateModule(ParseNode const *node, Module *&mod)
+Error Ast2Ir::AnnotateModule(ParseNode const *node, String filepath, Module *&mod)
 {
-	return AnnotateModuleImpl(node, false, mod);
+	return AnnotateModuleImpl(node, false, filepath, mod);
 }
 
-Error Ast2Ir::AnnotateModule(std::unique_ptr<ParseNode const> &&node, Module *&mod)
+Error Ast2Ir::AnnotateModule(std::unique_ptr<ParseNode const> &&node, String filepath, Module *&mod)
 {
-	return AnnotateModuleImpl(node.release(), true, mod);
+	return AnnotateModuleImpl(node.release(), true, filepath, mod);
 }
 
-Error Ast2Ir::AnnotateModuleImpl(ParseNode const *node, bool ownNode, Module *&mod)
+Error Ast2Ir::AnnotateModuleImpl(ParseNode const *node, bool ownNode, String filepath, Module *&mod)
 {
 	ASSERT(mod == nullptr);
 	ASSERT(node->_label == "module");
-	ScopeGuard deleteNode([&] { if (ownNode && node) delete node; });
+	std::unique_ptr<ParseNode const> uniqueNode(ownNode ? node : nullptr);
 
-	std::vector<String> qualifiedName = GetCurrentDefQualifiedName();
-	qualifiedName.push_back(node->GetToken(0)->_str);
+	std::vector<String> qualifiedName;
+	if (filepath.empty()) {
+		qualifiedName = GetCurrentDefQualifiedName();
+		qualifiedName.push_back(node->GetToken(0)->_str);
+	} else {
+		qualifiedName = _compiler->GetQualifiedNameForFilePath(filepath);
+		ASSERT(!qualifiedName.empty());
+		if (qualifiedName.back() != node->GetToken(0)->_str)
+			return Error(Err::ModuleNameMismatch, node->_filePos);
+	}
+
 	Error err = _compiler->GetOrCreateModule(qualifiedName, mod);
 	if (err)
 		return err;
 
 	ASSERT(!ModuleDefinitionsLoaded(mod));
 
-	mod->_moduleNode = std::unique_ptr<ParseNode const>(node);
+	mod->_moduleNode = std::move(uniqueNode);
 
 	err = mod->Init(node);
 	if (err)
@@ -115,7 +131,7 @@ Error Ast2Ir::AnnotateDefinition(ParseNode const *node)
 		err = AnnotateFunc(node);
 	} else if (node->_label == "module") {
 		Module *mod = nullptr;
-		err = AnnotateModule(node, mod);
+		err = AnnotateModule(node, "", mod);
 	} else if (node->_label == "import") {
 		err = AnnotateImport(node);
 	} else {

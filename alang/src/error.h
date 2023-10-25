@@ -23,6 +23,7 @@ struct Err {
 	static inline String ExpectedVarOrConst = "Expected 'var' or 'const'";
 	static inline String ExpectedAssign = "Expected assignment";
 	static inline String ExpectedOfType = "Expected typed value";
+	static inline String ModuleNameMismatch = "Module name not matching the file name of the containing file";
 };
 
 }

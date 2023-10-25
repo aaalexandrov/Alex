@@ -38,5 +38,7 @@ struct ScopeGuard {
 	~ScopeGuard() { _onDelete(); }
 };
 
+std::vector<String> SplitString(String s, char delimiter);
+
 }
 

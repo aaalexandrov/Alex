@@ -23,10 +23,10 @@ struct Ast2Ir {
 
 	Error AnnotateDefinition(ParseNode const *node);
 
-	Error AnnotateModule(ParseNode const *node, Module *&mod);
-	Error AnnotateModule(std::unique_ptr<ParseNode const> &&node, Module *&mod);
+	Error AnnotateModule(ParseNode const *node, String filepath, Module *&mod);
+	Error AnnotateModule(std::unique_ptr<ParseNode const> &&node, String filepath, Module *&mod);
 
-	Error AnnotateModuleImpl(ParseNode const *node, bool ownNode, Module *&mod);
+	Error AnnotateModuleImpl(ParseNode const *node, bool ownNode, String filepath, Module *&mod);
 	Error AnnotateImport(ParseNode const *node);
 	Error AnnotateVar(ParseNode const *node);
 	Error AnnotateFunc(ParseNode const *node);

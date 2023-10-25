@@ -26,13 +26,16 @@ String Compiler::GetFilePathForModule(std::vector<String> const &qualifiedName)
 		return String();
 	};
 
-	String modPath;
-	for (int numNames = (int)qualifiedName.size(); numNames > 0; --numNames) {
-		String path = checkPath(numNames);
-		if (!path.empty())
-			return path;
-	}
-	return String();
+	return checkPath((int)qualifiedName.size());
+}
+
+std::vector<String> Compiler::GetQualifiedNameForFilePath(String filePath)
+{
+	std::filesystem::path filepath(filePath);
+	ASSERT(filepath.extension() == GetAlangExtension());
+	filepath.replace_extension();
+	std::vector<String> qualifiedName = SplitString(filepath.filename().string(), '.');
+	return qualifiedName;
 }
 
 Error Compiler::ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed)
@@ -98,6 +101,8 @@ Error Compiler::GetOrCreateModule(std::vector<String> const &qualifiedName, Modu
 Definition *Compiler::GetRegisteredDefinition(std::vector<String> const &qualifiedName)
 {
 	Module *parent = _modules[qualifiedName[0]].get();
+	if (qualifiedName.size() == 1)
+		return parent;
 	for (int i = 1; parent && i < qualifiedName.size(); ++i) {
 		Definition *def = parent->GetDefinition(qualifiedName[i]);
 		if (!def || i == qualifiedName.size() - 1)

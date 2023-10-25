@@ -10,6 +10,7 @@ namespace alang {
 struct Ast2Ir;
 struct Compiler {
 	String GetFilePathForModule(std::vector<String> const &qualifiedName);
+	std::vector<String> GetQualifiedNameForFilePath(String filePath);
 
 	Error ParseFile(String filePath, std::unique_ptr<ParseNode> &parsed);
 
