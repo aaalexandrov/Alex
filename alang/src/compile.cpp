@@ -7,17 +7,18 @@
 
 namespace alang {
 
+Compiler::Compiler()
+{
+	_modules[CoreModule->GetQualifiedName()] = CoreModule.get();
+}
+
 String Compiler::GetFilePathForModule(std::vector<String> const &qualifiedName)
 {
 	auto checkPath = [&](int numNames) -> String {
 		ASSERT(numNames > 0);
 		for (auto &folder : _sourceFolders) {
 			std::filesystem::path path(folder);
-			String name = qualifiedName[0];
-			for (int i = 1; i < numNames; ++i) {
-				name += ".";
-				name += qualifiedName[i];
-			}
+			String name = ConcatString(qualifiedName, '.');
 			name += GetAlangExtension();
 			path.append(name);
 			if (std::filesystem::exists(path))
@@ -76,9 +77,11 @@ Error Compiler::GetOrCreateModule(std::vector<String> const &qualifiedName, Modu
 {
 	mod = nullptr;
 	auto &top = _modules[qualifiedName[0]];
-	if (!top)
-		top = std::make_unique<Module>(qualifiedName[0]);
-	Module *parent = top.get();
+	if (!top) {
+		_ownedModules.push_back(std::make_unique<Module>(qualifiedName[0]));
+		top = _ownedModules.back().get();
+	}
+	Module *parent = top;
 	for (int i = 1; i < qualifiedName.size(); ++i) {
 		Definition *def = parent->GetDefinition(qualifiedName[i]);
 		Module *defMod;
@@ -100,7 +103,7 @@ Error Compiler::GetOrCreateModule(std::vector<String> const &qualifiedName, Modu
 
 Definition *Compiler::GetRegisteredDefinition(std::vector<String> const &qualifiedName)
 {
-	Module *parent = _modules[qualifiedName[0]].get();
+	Module *parent = _modules[qualifiedName[0]];
 	if (qualifiedName.size() == 1)
 		return parent;
 	for (int i = 1; parent && i < qualifiedName.size(); ++i) {

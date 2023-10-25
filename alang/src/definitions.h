@@ -17,6 +17,8 @@ struct Definition : public rtti::Any {
 
 	virtual Error Init(ParseNode const *node);
 
+	virtual void NotifyImport(Definition *def);
+
 	String GetQualifiedName() const;
 	void GetQualifiedName(std::vector<String> &name) const;
 

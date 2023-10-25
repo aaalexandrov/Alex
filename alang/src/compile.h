@@ -9,6 +9,8 @@ namespace alang {
 
 struct Ast2Ir;
 struct Compiler {
+	Compiler();
+
 	String GetFilePathForModule(std::vector<String> const &qualifiedName);
 	std::vector<String> GetQualifiedNameForFilePath(String filePath);
 
@@ -28,7 +30,8 @@ struct Compiler {
 	String GetAlangExtension() const { return ".al"; }
 
 	ParseRulesHolder const &_alangRules = AlangRules();
-	std::unordered_map<String, std::unique_ptr<Module>> _modules;
+	std::vector<std::unique_ptr<Module>> _ownedModules;
+	std::unordered_map<String, Module*> _modules;
 	std::vector<String> _sourceFolders;
 };
 

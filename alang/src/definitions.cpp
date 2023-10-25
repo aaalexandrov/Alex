@@ -17,6 +17,10 @@ Error Definition::Init(ParseNode const *node)
 	return Error();
 }
 
+void Definition::NotifyImport(Definition *def)
+{
+}
+
 String Definition::GetQualifiedName() const
 {
 	String qualified = _name;

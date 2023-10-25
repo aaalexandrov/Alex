@@ -19,6 +19,11 @@ Error Module::Init(ParseNode const *node)
 	return Error();
 }
 
+void Module::NotifyImport(Definition *def)
+{
+	_imports.insert(def);
+}
+
 rtti::TypeInfo const *Module::GetTypeInfo() const
 {
 	return rtti::Get<Module>();

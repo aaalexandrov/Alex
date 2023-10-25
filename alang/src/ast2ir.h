@@ -11,7 +11,6 @@ struct Module;
 struct Ast2Ir {
 	Compiler *_compiler;
 	std::unordered_map<ParseNode const *, Definition *> _nodeDefs;
-	std::unordered_map<String, Definition *> _importedDefs;
 	std::vector<ParseNode const *> _importsToResolve;
 
 	std::vector<Definition *> _currentDef;
@@ -51,7 +50,6 @@ struct Ast2Ir {
 
 
 	void AddNodeDef(ParseNode const *node, Definition *def);
-	void AddImportDef(Definition *def);
 	std::vector<String> GetCurrentDefQualifiedName();
 
 	static std::vector<String> ReadQualifiedName(ParseNode const *parent, int contentIndex);

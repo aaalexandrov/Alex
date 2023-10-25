@@ -1,6 +1,5 @@
 #include "ast2ir.h"
 #include "definitions.h"
-#include "core.h"
 #include "compile.h"
 #include "error.h"
 
@@ -9,24 +8,12 @@ namespace alang {
 Ast2Ir::Ast2Ir(Compiler *compiler)
 	:_compiler(compiler)
 {
-	AddImportDef(CoreModule.get());
 }
 
 void Ast2Ir::AddNodeDef(ParseNode const *node, Definition *def)
 {
 	ASSERT(_nodeDefs.find(node) == _nodeDefs.end());
 	_nodeDefs.insert({ node, def });
-}
-
-void Ast2Ir::AddImportDef(Definition *def)
-{
-	String name = def->GetQualifiedName();
-	auto it = _importedDefs.find(name);
-	if (it != _importedDefs.end()) {
-		ASSERT(it->second == def);
-		return;
-	}
-	_importedDefs.insert({ name, def });
 }
 
 std::vector<String> Ast2Ir::GetCurrentDefQualifiedName()
@@ -194,7 +181,10 @@ Error Ast2Ir::ResolveName(std::vector<String> &qualifiedName, Definition *&def, 
 			}
 			if (!def)
 				return Error(Err::ImportNotFound, filePos);
+
 			qualifiedName.insert(qualifiedName.end(), suffixes.begin(), suffixes.end());
+			_currentDef.back()->NotifyImport(def);
+
 			return Error();
 		}
 

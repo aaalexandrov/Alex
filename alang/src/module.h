@@ -4,6 +4,7 @@
 #include "definitions.h"
 #include "ir.h"
 #include <unordered_map>
+#include <unordered_set>
 
 namespace alang {
 
@@ -12,7 +13,7 @@ struct Module : public Definition {
 
 	std::unique_ptr<ParseNode const> _moduleNode;
 	std::unordered_map<String, std::unique_ptr<Definition>> _definitions;
-	std::vector<Definition*> _imports;
+	std::unordered_set<Definition*> _imports;
 
 	std::vector<uint8_t> _statics;
 	std::vector<OpCode> _code;
@@ -21,6 +22,8 @@ struct Module : public Definition {
 	Module() = default;
 
 	Error Init(ParseNode const *node) override;
+
+	void NotifyImport(Definition *def) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 
