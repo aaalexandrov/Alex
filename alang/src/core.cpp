@@ -8,6 +8,7 @@ static std::unique_ptr<Module> CreateCore()
 	auto core = std::make_unique<Module>("Core");
 
 	core->RegisterDefinition(std::make_unique<TypeDesc>("TypeDesc", sizeof(TypeDesc), alignof(TypeDesc)));
+	core->RegisterDefinition(std::make_unique<TypeDesc>("None", 0, 0));
 
 	core->RegisterDefinition(std::make_unique<TypeDesc>("Storage", 0, 0));
 

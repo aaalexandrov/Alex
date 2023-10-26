@@ -8,7 +8,7 @@ use vulkano::{
     pipeline::{ComputePipeline, GraphicsPipeline, PipelineShaderStageCreateInfo, layout::PipelineDescriptorSetLayoutCreateInfo, compute::ComputePipelineCreateInfo, PipelineLayout, DynamicState,
         graphics::{subpass::PipelineRenderingCreateInfo, GraphicsPipelineCreateInfo, vertex_input::{VertexInputState, Vertex, VertexDefinition}, input_assembly::{InputAssemblyState, PrimitiveTopology}, 
         viewport::ViewportState, rasterization::RasterizationState, multisample::MultisampleState, color_blend::{ColorBlendState, ColorBlendAttachmentState, AttachmentBlend}}}, format::Format, 
-        descriptor_set::allocator::{StandardDescriptorSetAllocator}, buffer::{Buffer, BufferContents, Subbuffer, BufferCreateInfo, BufferUsage}, DeviceSize};
+        buffer::{Buffer, BufferContents, Subbuffer, BufferCreateInfo, BufferUsage}, DeviceSize, descriptor_set::allocator::{StandardDescriptorSetAllocator, StandardDescriptorSetAllocatorCreateInfo}};
 use std::{sync::Arc};
 use ahash::HashMap;
 
@@ -55,7 +55,10 @@ impl Renderer {
     
         let allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
 
-        let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
+        let descriptor_set_allocator = StandardDescriptorSetAllocator::new(
+            device.clone(), 
+            StandardDescriptorSetAllocatorCreateInfo::default()
+        );
 
         Renderer {
             device,

@@ -13,6 +13,8 @@ struct FuncData : public Definition {
 	Error Init(ParseNode const *node) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
+
+	static std::unique_ptr<TypeDesc> GetSignatrueTypeDesc(ParseNode const *node);
 };
 
 struct Func : public FuncData {

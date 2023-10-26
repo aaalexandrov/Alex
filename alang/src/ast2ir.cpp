@@ -1,5 +1,7 @@
 #include "ast2ir.h"
 #include "definitions.h"
+#include "var.h"
+#include "types.h"
 #include "compile.h"
 #include "error.h"
 
@@ -142,6 +144,20 @@ Error Ast2Ir::AnnotateImport(ParseNode const *node)
 
 Error Ast2Ir::AnnotateVar(ParseNode const *node)
 {
+	auto var = std::unique_ptr<Definition>(new VarDef());
+
+	Error err = var->Init(node);
+	if (err)
+		return err;
+
+	AddNodeDef(node, var.get());
+
+	Module *mod = rtti::Cast<Module>(_currentDef.back());
+	ASSERT(mod);
+	if (mod) {
+		mod->RegisterDefinition(std::move(var));
+	}
+
 	return Error();
 }
 

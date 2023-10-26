@@ -5,7 +5,7 @@
 namespace dbg {
 
 #if defined(NDEBUG)
-#define ASSERT(expression) ((void)sizeof(!(expression)))
+#define ASSERT(expression) (void) sizeof(!(expression))
 #else
 #define ASSERT(expression) (void) ((!!(expression)) || (dbg::AssertFailed(#expression, __FILE__, (unsigned)__LINE__), 0))
 #endif

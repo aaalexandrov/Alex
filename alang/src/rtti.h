@@ -92,7 +92,8 @@ TypeInfo const **GetTypeInfos()
 template <typename T, typename... Bases>
 TypeInfo const *GetBases()
 {
-	return SetBasesConstructor(GetDefault<T>(), GetTypeInfos<Bases...>());
+	static TypeInfo const *typeInfo = SetBasesConstructor(GetDefault<T>(), GetTypeInfos<Bases...>());
+	return typeInfo;
 }
 
 template <typename R, typename... Tn>
