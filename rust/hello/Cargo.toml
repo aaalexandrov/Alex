@@ -13,7 +13,7 @@ easy-gltf = { version = "1.1.0", features = ["names", "extras"] }
 glam = { version = "0.24.1", features = ["bytemuck"] }
 image = "0.24.7"
 tobj = "4.0.0"
-vulkano = {git = "https://github.com/vulkano-rs/vulkano"}
-vulkano-shaders = {git = "https://github.com/vulkano-rs/vulkano"}
+vulkano = "0.34.0"
+vulkano-shaders = "0.34.0"
 winit = {version = "0.28.6", default-features = false, features = ["x11"] }
 winit_input_helper = "0.14.1"
