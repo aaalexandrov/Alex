@@ -1,0 +1,6 @@
+[general]
+library_name = "spirv_cross_c_shared"
+output_file_path = "./SpirvCross.jl"
+module_name = "SpirvCross"
+#jll_pkg_name = "Clang_jll"
+#export_symbol_prefixes = ["spv"]
