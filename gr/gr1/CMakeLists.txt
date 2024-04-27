@@ -174,7 +174,6 @@ if(gr_implementation STREQUAL VK)
 	target_include_directories(${BINARY} PRIVATE ${VK_SDK_PATH}/include)
 
 	set(vk_LIBS_static
-		VkLayer_utils
 		spirv-cross-glsl
 		spirv-cross-reflect
 		spirv-cross-core
