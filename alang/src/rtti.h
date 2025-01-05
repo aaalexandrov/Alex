@@ -37,6 +37,7 @@ struct Func {
 	template <typename R, typename... Tn>
 	R Invoke(Tn... args) const;
 
+	virtual ~Func() {}
 	virtual TypeInfo const **GetSignatureTypes() const = 0;
 };
 

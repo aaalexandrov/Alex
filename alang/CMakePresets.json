@@ -19,6 +19,23 @@
       }
     },
     {
+      "name": "linux-base",
+      "description": "Target Linux with the clang compiler.",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "win32-x64-debug",
       "displayName": "Win32 x64 Debug",
       "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
@@ -32,6 +49,19 @@
       }
     },
     {
+      "name": "linux-x64-debug",
+      "displayName": "Linux x64 Debug",
+      "description": "Target Linux (64-bit) with the clang compiler. (Debug)",
+      "inherits": "linux-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },    
+    {
       "name": "win32-x64-release",
       "displayName": "Win32 x64 Release",
       "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
@@ -39,6 +69,16 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "linux-x64-release",
+      "displayName": "Linux x64 Release",
+      "description": "Target Linux (64-bit) with the clang compiler. (RelWithDebInfo)",
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
+
   ]
 }
