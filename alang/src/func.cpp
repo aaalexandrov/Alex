@@ -30,7 +30,7 @@ rtti::TypeInfo const *FuncData::GetTypeInfo() const
 	return rtti::Get<FuncData>();
 }
 
-std::unique_ptr<TypeDesc> FuncData::GetSignatrueTypeDesc(ParseNode const *node)
+std::unique_ptr<TypeDesc> FuncData::GetSignatureTypeDesc(ParseNode const *node)
 {
 	ASSERT(node->_label == "func");
 	auto type = std::unique_ptr<TypeDesc>(new TypeDesc());

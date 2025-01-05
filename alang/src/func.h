@@ -14,7 +14,7 @@ struct FuncData : public Definition {
 
 	rtti::TypeInfo const *GetTypeInfo() const override;
 
-	static std::unique_ptr<TypeDesc> GetSignatrueTypeDesc(ParseNode const *node);
+	static std::unique_ptr<TypeDesc> GetSignatureTypeDesc(ParseNode const *node);
 };
 
 struct Func : public FuncData {

@@ -5,6 +5,8 @@
 #include "compile.h"
 #include "error.h"
 
+#include <algorithm>
+
 namespace alang {
 
 Ast2Ir::Ast2Ir(Compiler *compiler)

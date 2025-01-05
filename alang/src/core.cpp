@@ -1,5 +1,6 @@
 #include "core.h"
 #include "types.h"
+#include "parse.h"
 
 namespace alang {
 
