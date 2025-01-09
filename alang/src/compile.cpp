@@ -41,7 +41,7 @@ Error Compiler::ParseFile(String filePath, ParseNode const *&parsed)
 	}
 
 	parsed = ownParsed.get();
-	String canonicalPath = std::filesystem::weakly_canonical(filePath);
+	String canonicalPath = std::filesystem::weakly_canonical(filePath).string();
 	_parsedFiles.insert(std::pair(canonicalPath, std::move(ownParsed)));
 
 	parser->Dump(parsed);
@@ -62,18 +62,26 @@ Error Compiler::CompileFile(String filePath)
 		return err;
 
 	ModuleDef *module;
-	err = ScanModule(parsed, module);
+	err = ScanModule(nullptr, parsed, module);
 
 	return err;
 }
 
-std::vector<String> GetQualifiedName(ParseNode::Content const *content)
+String GetNodeName(ParseNode::Content const *content)
+{
+	if (Token const *token = content->GetToken(); token && token->GetClass() == Token::Class::Identifier)
+		return token->_str;
+	ASSERT(0);
+	return String();
+}
+
+std::vector<String> GetNodeQualifiedName(ParseNode::Content const *content)
 {
 	std::vector<String> name;
 	if (content) {
-		if (auto *token = content->GetToken(); token && token->GetClass() == Token::Class::Identifier) {
+		if (Token const *token = content->GetToken(); token && token->GetClass() == Token::Class::Identifier) {
 			name.push_back(token->_str);
-		} else if (auto *sub = content->GetNode(); sub && sub->_label == ".") {
+		} else if (ParseNode const *sub = content->GetNode(); sub && sub->_label == ".") {
 			for (int i = 0; i < sub->GetContentSize(); ++i) {
 				auto *ident = sub->GetToken(i);
 				ASSERT(ident && ident->GetClass() == Token::Class::Identifier);
@@ -84,25 +92,24 @@ std::vector<String> GetQualifiedName(ParseNode::Content const *content)
 	return name;
 }
 
-Error Compiler::ScanModule(ParseNode const *node, ModuleDef *&module)
+Error Compiler::ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDef *&module)
 {
 	module = nullptr;
 	ASSERT(node->GetContentSize() > 0);
-	std::vector<String> modName = GetQualifiedName(&node->_content[0]);
-	ModuleDef *parent = nullptr;
+	std::vector<String> modName = GetNodeQualifiedName(&node->_content[0]);
 	for (auto &ident : modName) {
-		auto &modPtr = parent ? parent->_definitions[ident] : _modules[ident];
+		std::unique_ptr<Def> &modPtr = parentDef ? parentDef->_definitions[ident] : _modules[ident];
 		if (!modPtr) {
-			modPtr = std::make_unique<ModuleDef>(ident, parent);
+			modPtr = std::make_unique<ModuleDef>(ident, parentDef);
 		}
-		parent = rtti::Cast<ModuleDef>(modPtr.get());
-		if (!parent)
+		parentDef = rtti::Cast<ModuleDef>(modPtr.get());
+		if (!parentDef)
 			return Error(Err::ExpectedModule, modPtr->_node->_filePos);
 	}
-	module = parent;
+	module = parentDef;
 	ASSERT(module);
 
-	Error err = module->Init(node);
+	Error err = module->Scan(this, node);
 	if (err)
 		return err;
 

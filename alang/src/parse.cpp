@@ -185,10 +185,10 @@ ParseRulesHolder const &AlangRules()
 		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}, NodeOutput::Parent},
 
 		{"DEF_VALUE", {{"DEF_CONST"}, {"DEF_VAR"}}, {Combine::Alternative, Rename::Disable}},
-		{"DEF_CONST", {{Token::Class::Key, "const"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"ASSIGN"}}},
-		{"DEF_VAR", {{Token::Class::Key, "var"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"ASSIGN", Repeat::ZeroOne}}},
-		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}, NodeOutput::ReplaceInParent},
-		{"ASSIGN", {{Token::Class::Key, "="}, {"EXPRESSION"}}, NodeOutput::ReplaceInParent},
+		{"DEF_CONST", {{Token::Class::Key, "const"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"INITIALIZE"}}},
+		{"DEF_VAR", {{Token::Class::Key, "var"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"INITIALIZE", Repeat::ZeroOne}}},
+		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}/*, NodeOutput::ReplaceInParent*/},
+		{"INITIALIZE", {{Token::Class::Key, "="}, {"EXPRESSION"}}/*, NodeOutput::ReplaceInParent*/},
 
 		{"TYPE", {{"QUALIFIED_NAME"}, {"GENERIC_PARAMS", Repeat::ZeroOne}}, NodeOutput::Parent},
 		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"EXPRESSION_LIST"}, {Token::Class::Key, "}"}}},
@@ -208,6 +208,7 @@ ParseRulesHolder const &AlangRules()
 
 		{"RETURN", {{Token::Class::Key, "return"}, {"EXPRESSION", Repeat::ZeroOne}}},
 
+		{"ASSIGN", {{Token::Class::Key, "="}, {"EXPRESSION"}}, NodeOutput::ReplaceInParent},
 		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}, Rename::Disable},
 		{"ASSIGN_OR_CALL_TAIL", {{"ASSIGN"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPTS"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},

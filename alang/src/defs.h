@@ -1,18 +1,27 @@
 #pragma once
 
 #include "common.h"
+#include "parse.h"
 
 namespace alang {
 
-struct ParseNode;
+struct Compiler;
 struct Def : rtti::Any {
+	enum State {
+		Created,
+		Scanned,
+		Resolved,
+		Compiled,
+	};
+
 	String _name;
 	Def *_parentDef = nullptr;
 	ParseNode const *_node = nullptr;
+	State _state = Created;
 
 	Def(String name = String(), Def *parentDef = nullptr) : _name(name), _parentDef(parentDef) {}
 	virtual ~Def() {}
-	virtual Error Init(ParseNode const *node);
+	virtual Error Scan(Compiler *compiler, ParseNode const *node);
 
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<Def, rtti::Any>(); }
 };
@@ -28,30 +37,35 @@ struct TypeDef : Def {
 	std::vector<Member> _members;
 
 	TypeDef(String name = String(), size_t size = 0, size_t align = 0) : Def(name), _size(size), _align(align) {}
+	TypeDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
-	Error Init(ParseNode const *node) override;
+	Error Scan(Compiler *compiler, ParseNode const *node) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<TypeDef, Def>(); }
 };
 
 struct FuncDef : Def {
 	TypeDef const *_funcDef = nullptr;
 
-	Error Init(ParseNode const *node) override;
+	FuncDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
+
+	Error Scan(Compiler *compiler, ParseNode const *node) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<FuncDef, Def>(); }
 };
 
 struct ValueDef : Def {
-	Error Init(ParseNode const *node) override;
+	ValueDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
+
+	Error Scan(Compiler *compiler, ParseNode const *node) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<ValueDef, Def>(); }
 };
 
 struct ModuleDef : Def {
-	ParseNode const *_parsed;
 	std::unordered_map<String, std::unique_ptr<Def>> _definitions;
+	std::vector<ParseNode::Content const *> _imports;
 
 	ModuleDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
-	Error Init(ParseNode const *node) override;
+	Error Scan(Compiler *compiler, ParseNode const *node) override;
 
 	Error RegisterDef(std::unique_ptr<Def> &&def);
 

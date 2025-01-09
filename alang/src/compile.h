@@ -16,7 +16,7 @@ struct Compiler {
 
 	Error CompileFile(String filePath);
 
-	Error ScanModule(ParseNode const *node, ModuleDef *&module);
+	Error ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDef *&module);
 
 	String GetAlangExtension() const { return ".al"; }
 
@@ -25,5 +25,8 @@ struct Compiler {
 	std::unordered_map<String, std::unique_ptr<ParseNode>> _parsedFiles;
 	std::vector<String> _sourceFolders;
 };
+
+String GetNodeName(ParseNode::Content const *content);
+std::vector<String> GetNodeQualifiedName(ParseNode::Content const *content);
 
 }
