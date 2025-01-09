@@ -1,9 +1,9 @@
 #pragma once
 
-#include "module.h"
+#include "defs.h"
 
 namespace alang {
 
-extern std::unique_ptr<Module> CoreModule;
+std::unique_ptr<ModuleDef> CreateCore();
 
 }

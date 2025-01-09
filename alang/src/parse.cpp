@@ -173,7 +173,7 @@ std::vector<String> ParseRulesHolder::GetKeyStrings() const
 ParseRulesHolder const &AlangRules()
 {
 	static ParseRulesHolder s_langRules{
-		{"MODULE", {{Token::Class::Key, "module"}, {Token::Class::Identifier}, {"DEFINITION", Repeat::ZeroMany}, {Token::Class::Key, "end"}} },
+		{"MODULE", {{Token::Class::Key, "module"}, {"QUALIFIED_NAME"}, {"DEFINITION", Repeat::ZeroMany}, {Token::Class::Key, "end"}} },
 
 		{"DEFINITION", {{"DEF_VALUE"}, {"DEF_FUNC"}, {"IMPORT"}, {"MODULE"}}, {Combine::Alternative, Rename::Disable}},
 

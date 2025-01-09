@@ -3,8 +3,6 @@
 set(SOURCES 
 	"alang.cpp" 
 	"alang.h" 
-	 "ast2ir.h" 
-	 "ast2ir.cpp"
 	"common.h" 
 	"common.cpp"
 	"compile.h"
@@ -13,29 +11,19 @@ set(SOURCES
 	"core.cpp" 
 	"dbg.h" 
 	"dbg.cpp" 
-	"definitions.h"
-	"definitions.cpp"
+	"defs.h" 
+	"defs.cpp"
 	"error.h"
 	"error.cpp"
-	"func.h" 
-	"func.cpp" 
-	"ir.h"
-	"ir.cpp"
-	"module.h" 
-	"module.cpp" 
 	"parse.h" 
 	"parse.cpp" 
 	"rtti.h" 
 	"rtti.cpp"
 	"token.h" 
 	"token.cpp" 
-	"types.h" 
-	"types.cpp" 
 	"utf8.h" 
 	"utf8.cpp" 
-	"var.h" 
-	"var.cpp" 
-	)
+)
 
 set(LIBRARIES 
 	)	

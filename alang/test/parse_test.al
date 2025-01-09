@@ -1,6 +1,10 @@
-module parse_test
+module parse.test
 
 import std.io, std
+
+module nested
+	const pi : F32 = 3.14
+end
 
 func one() : I32
 	return 1
