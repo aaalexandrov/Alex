@@ -28,13 +28,13 @@ std::vector<String> SplitString(String str, char delimiter)
 	return split;
 }
 
-String ConcatString(std::vector<String> parts, char delimiter)
+String ConcatString(std::vector<String>::const_iterator partsStart, std::vector<String>::const_iterator partsEnd, char delimiter)
 {
 	std::ostringstream f;
-	if (parts.size()) {
-		f << parts[0];
-		for (int i = 1; i < parts.size(); ++i) {
-			f << delimiter << parts[i];
+	if (partsStart != partsEnd) {
+		f << *partsStart;
+		while (++partsStart != partsEnd) {
+			f << delimiter << *partsStart;
 		}
 	}
 	return f.str();

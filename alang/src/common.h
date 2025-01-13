@@ -39,7 +39,7 @@ struct ScopeGuard {
 };
 
 std::vector<String> SplitString(String s, char delimiter);
-String ConcatString(std::vector<String> parts, char delimiter);
+String ConcatString(std::vector<String>::const_iterator partsStart, std::vector<String>::const_iterator partsEnd, char delimiter);
 
 }
 

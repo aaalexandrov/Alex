@@ -24,6 +24,10 @@ struct Err {
 	static inline String ExpectedAssign = "Expected assignment";
 	static inline String ExpectedOfType = "Expected typed value";
 	static inline String ModuleNameMismatch = "Module name not matching the file name of the containing file";
+	static inline String DuplicateDefinition = "Definition with that name already exists in this scope";
+	static inline String UndefinedSymbol = "Symbol not defined";
+	static inline String AmbiguousSymbolNotFound = "Symbol not found, possibly ambiguous imports";
+	static inline String PathForModuleNotFound = "Path for imported module not found";
 };
 
 }

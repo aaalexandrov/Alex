@@ -93,6 +93,7 @@ struct ParseNode {
 		Content() = default;
 		Content(Token const &token) : _tokenOrNode(token) {}
 		Content(std::unique_ptr<ParseNode> &&node) : _tokenOrNode(std::move(node)) {}
+		PosInFile GetFilePos() const { return GetToken() ? GetToken()->_filePos : GetNode()->_filePos; }
 	};
 
 	ParseRule const *_rule;
@@ -106,7 +107,7 @@ struct ParseNode {
 	Content const *GetContent(int32_t i) const { return i < GetContentSize() ? &_content[i] : nullptr; }
 	Token const *GetToken(int32_t i) const { return _content[i].GetToken(); }
 	ParseNode const *GetSubnode(int32_t i) const { return _content[i].GetNode(); }
-	PosInFile const &GetContentFilePos(int32_t i) const { return GetToken(i) ? GetToken(i)->_filePos : GetSubnode(i)->_filePos; }
+	PosInFile GetContentFilePos(int32_t i) const { return GetContent(i)->GetFilePos(); }
 };
 
 struct Parser {

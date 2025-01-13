@@ -54,9 +54,19 @@ void ParseFile(std::string path)
 	cout << "Compiling " << path << endl;
 
 	alang::Compiler compiler;
-	alang::Error err = compiler.CompileFile(path);
+	alang::ModuleDef *mod;
 
-	cout << "Result: " << err.ToString() << endl;
+	std::filesystem::path filePath(path);
+	filePath.remove_filename();
+	compiler.AddSourceFolder(filePath.string());
+
+	alang::Error err = compiler.CompileFile(path, mod);
+	cout << "Compile result: " << err.ToString() << endl;
+	if (err)
+		return;
+
+	err = compiler.ProcessImports(mod);
+	cout << "Process imports result: " << err.ToString() << endl;
 }
 
 int main()

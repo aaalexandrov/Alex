@@ -30,7 +30,7 @@ set(LIBRARIES
 
 add_executable(${TARGET_NAME} ${SOURCES})
 
-target_compile_features(${TARGET_NAME} PRIVATE cxx_std_17)
+target_compile_features(${TARGET_NAME} PRIVATE cxx_std_20)
 
 target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 

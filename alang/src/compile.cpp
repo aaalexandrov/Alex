@@ -6,28 +6,24 @@
 namespace alang {
 
 Compiler::Compiler()
+	: _rootModule(std::make_unique<ModuleDef>("#root"))
 {
-	auto core = CreateCore();
-	auto corePtr = core.get();
-	_modules.insert(std::pair(corePtr->_name, std::move(core)));
+	_rootModule->RegisterDef(CreateCore());
 }
 
-String Compiler::GetFilePathForModule(std::vector<String> const &qualifiedName)
+Error Compiler::AddSourceFolder(String folder)
 {
-	auto checkPath = [&](int numNames) -> String {
-		ASSERT(numNames > 0);
-		for (auto &folder : _sourceFolders) {
-			std::filesystem::path path(folder);
-			String name = ConcatString(qualifiedName, '.');
-			name += GetAlangExtension();
-			path.append(name);
-			if (std::filesystem::exists(path))
-				return path.string();
-		}
-		return String();
-	};
+	ASSERT(std::find(_sourceFolders.begin(), _sourceFolders.end(), folder) == _sourceFolders.end());
+	_sourceFolders.push_back(folder);
+	return Error();
+}
 
-	return checkPath((int)qualifiedName.size());
+Error Compiler::RemoveSourceFolder(String folder)
+{
+	auto it = std::find(_sourceFolders.begin(), _sourceFolders.end(), folder);
+	ASSERT(it != _sourceFolders.end());
+	_sourceFolders.erase(it);
+	return Error();
 }
 
 Error Compiler::ParseFile(String filePath, ParseNode const *&parsed)
@@ -49,22 +45,112 @@ Error Compiler::ParseFile(String filePath, ParseNode const *&parsed)
 	return Error();
 }
 
-Error Compiler::CompileFile(String filePath)
+Error Compiler::CompileFile(String filePath, ModuleDef *&module)
 {
-	std::filesystem::path path(filePath);
-	path.remove_filename();
-	_sourceFolders.push_back(path.string());
-	ScopeGuard popFolder([&] { _sourceFolders.pop_back(); });
-
+	module = nullptr;
 	ParseNode const *parsed;
 	Error err = ParseFile(filePath, parsed);
 	if (err)
 		return err;
 
-	ModuleDef *module;
-	err = ScanModule(nullptr, parsed, module);
+	err = ScanModule(_rootModule.get(), parsed, module);
 
 	return err;
+}
+
+String Compiler::GetFilePathForModule(ParseNode::Content const *symbol)
+{
+	std::vector<String> qualifiedName;
+	ForQualifiedNameIdentifiers(symbol, [&](String const &ident) {
+		qualifiedName.push_back(ident);
+		return true;
+	});
+
+	for (int i = (int)qualifiedName.size(); i > 0; --i) {
+		String name = ConcatString(qualifiedName.begin(), qualifiedName.begin() + i, '.');
+		name += GetAlangExtension();
+		for (auto &folder : _sourceFolders) {
+			std::filesystem::path path(folder);
+			path.append(name);
+			if (std::filesystem::exists(path))
+				return path.string();
+		}
+	}
+	return String();
+}
+
+Error Compiler::ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDef *&module)
+{
+	ASSERT(parentDef);
+	module = nullptr;
+	ASSERT(node->GetContentSize() > 0);
+	Error err;
+	bool res = ForQualifiedNameIdentifiers(&node->_content[0], [&](String const &ident) {
+		std::unique_ptr<Def> &modPtr = parentDef->_definitions[ident];
+		if (!modPtr) {
+			modPtr = std::make_unique<ModuleDef>(ident, parentDef);
+		}
+		parentDef = rtti::Cast<ModuleDef>(modPtr.get());
+		if (!parentDef) {
+			err = Error(Err::ExpectedModule, modPtr->_node->_filePos);;
+			return false;
+		}
+		return true;
+	});
+	if (!res)
+		return err;
+
+	module = parentDef;
+	ASSERT(module);
+
+	err = module->Scan(this, node);
+	if (err)
+		return err;
+
+    return Error();
+}
+
+Error Compiler::ProcessImports(ModuleDef *module)
+{
+	ASSERT(module->_state == Def::Scanned);
+	Def *coreModule = _rootModule->_definitions["Core"].get();
+	Error err = module->RegisterImportedDef(coreModule);
+	if (err)
+		return err;
+	for (ParseNode::Content const *sym : module->_importSymbolNodes) {
+		Def *foundDef = nullptr;
+		err = module->FindDefForSymbol(sym, foundDef);
+		ASSERT(bool(err) == !foundDef);
+		if (!foundDef || foundDef->_state < Def::Scanned) {
+			String modPath = GetFilePathForModule(sym);
+			if (modPath.empty()) 
+				return Error(Err::PathForModuleNotFound, sym->GetFilePos());
+			ModuleDef *mod; 
+			err = CompileFile(modPath, mod);
+			ASSERT(bool(err) == !mod);
+			if (err)
+				return err;
+			// search for the def again because we might have loaded a parent module
+			err = module->FindDefForSymbol(sym, foundDef);
+			if (err)
+				return err;
+		}
+		ASSERT(foundDef);
+		ModuleDef *foundMod = rtti::Cast<ModuleDef>(foundDef);
+		if (foundMod) {
+			for (auto &[name, def] : foundMod->_definitions) {
+				err = module->RegisterImportedDef(def.get());
+				if (err)
+					return err;
+			}
+		} else {
+			err = module->RegisterImportedDef(foundDef);
+			if (err)
+				return err;
+		}
+	}
+
+	return Error();
 }
 
 String GetNodeName(ParseNode::Content const *content)
@@ -75,45 +161,20 @@ String GetNodeName(ParseNode::Content const *content)
 	return String();
 }
 
-std::vector<String> GetNodeQualifiedName(ParseNode::Content const *content)
+bool ForQualifiedNameIdentifiers(ParseNode::Content const *content, std::function<bool(String const &ident)> enumFn)
 {
-	std::vector<String> name;
-	if (content) {
-		if (Token const *token = content->GetToken(); token && token->GetClass() == Token::Class::Identifier) {
-			name.push_back(token->_str);
-		} else if (ParseNode const *sub = content->GetNode(); sub && sub->_label == ".") {
-			for (int i = 0; i < sub->GetContentSize(); ++i) {
-				auto *ident = sub->GetToken(i);
-				ASSERT(ident && ident->GetClass() == Token::Class::Identifier);
-				name.push_back(ident->_str);
-			}
+	if (Token const *token = content->GetToken(); token && token->GetClass() == Token::Class::Identifier) {
+		if (!enumFn(token->_str))
+			return false;
+	} else if (ParseNode const *sub = content->GetNode(); sub && sub->_label == ".") {
+		for (int i = 0; i < sub->GetContentSize(); ++i) {
+			auto *ident = sub->GetToken(i);
+			ASSERT(ident && ident->GetClass() == Token::Class::Identifier);
+			if (!enumFn(ident->_str))
+				return false;
 		}
 	}
-	return name;
-}
-
-Error Compiler::ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDef *&module)
-{
-	module = nullptr;
-	ASSERT(node->GetContentSize() > 0);
-	std::vector<String> modName = GetNodeQualifiedName(&node->_content[0]);
-	for (auto &ident : modName) {
-		std::unique_ptr<Def> &modPtr = parentDef ? parentDef->_definitions[ident] : _modules[ident];
-		if (!modPtr) {
-			modPtr = std::make_unique<ModuleDef>(ident, parentDef);
-		}
-		parentDef = rtti::Cast<ModuleDef>(modPtr.get());
-		if (!parentDef)
-			return Error(Err::ExpectedModule, modPtr->_node->_filePos);
-	}
-	module = parentDef;
-	ASSERT(module);
-
-	Error err = module->Scan(this, node);
-	if (err)
-		return err;
-
-    return Error();
+	return true;
 }
 
 }
