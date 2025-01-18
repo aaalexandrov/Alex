@@ -26,12 +26,12 @@ std::unique_ptr<ModuleDef> CreateCore()
 
 	core->RegisterDef(std::make_unique<TypeDef>("Bool", sizeof(bool), alignof(bool)));
 
-	core->RegisterDef(std::make_unique<TypeDef>("Address", sizeof(uintptr_t), alignof(uintptr_t)));
-	core->RegisterDef(std::make_unique<TypeDef>("Ref", sizeof(void*), alignof(void*)));
+	core->RegisterDef(std::unique_ptr<TypeDef>((new TypeDef("Address", sizeof(uintptr_t), alignof(uintptr_t)))->SetGeneric()));
+	core->RegisterDef(std::unique_ptr<TypeDef>((new TypeDef("Ref", sizeof(void*), alignof(void*)))->SetGeneric()));
 	
-	core->RegisterDef(std::make_unique<TypeDef>("Array", 0, 0));
+	core->RegisterDef(std::unique_ptr<TypeDef>((new TypeDef("Array", 0, 0))->SetGeneric()));
 
-	core->RegisterDef(std::make_unique<TypeDef>("Func", sizeof(void*), alignof(void*)));
+	core->RegisterDef(std::unique_ptr<TypeDef>((new TypeDef("Func", sizeof(void*), alignof(void*)))->SetGeneric()));
 
 	return core;
 }

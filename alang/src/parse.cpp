@@ -173,16 +173,20 @@ std::vector<String> ParseRulesHolder::GetKeyStrings() const
 ParseRulesHolder const &AlangRules()
 {
 	static ParseRulesHolder s_langRules{
-		{"MODULE", {{Token::Class::Key, "module"}, {"QUALIFIED_NAME"}, {"DEFINITION", Repeat::ZeroMany}, {Token::Class::Key, "end"}} },
+		{"MODULE", {{Token::Class::Key, "module"}, {"QUALIFIED_NAME"}, {"DEFINITION", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
+
+		{"GENERIC_PARAM", {{Token::Class::Literal}, {"QUALIFIED_NAME"}}, {Combine::Alternative, NodeOutput::Parent, Rename::Disable}},
+		{"GENERIC_PARAM_TAIL", {{Token::Class::Key, ","}, {"GENERIC_PARAM"}}, NodeOutput::Parent},
+		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"GENERIC_PARAM"}, {"GENERIC_PARAM_TAIL", Repeat::ZeroMany}, {Token::Class::Key, "}"}}, NodeOutput::ReplaceInParent},
+		{"UNQUALIFIED_NAME", {{Token::Class::Identifier}, {"GENERIC_PARAMS", Repeat::ZeroOne}}, NodeOutput::Parent},
+		{"UNQUALIFIED_NAME_TAIL", {{Token::Class::Key, "."}, {"UNQUALIFIED_NAME"}}, NodeOutput::Parent},
+		{"UNQUALIFIED_NAME_SUBSCRIPTS", {{"UNQUALIFIED_NAME_TAIL", Repeat::ZeroMany}}, NodeOutput::ReplaceInParent},
+		{"QUALIFIED_NAME", {{"UNQUALIFIED_NAME"}, {"UNQUALIFIED_NAME_SUBSCRIPTS", Repeat::ZeroOne}}, NodeOutput::Parent},
+		{"QUALIFIED_NAME_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}, NodeOutput::Parent},
 
 		{"DEFINITION", {{"DEF_VALUE"}, {"DEF_FUNC"}, {"IMPORT"}, {"MODULE"}}, {Combine::Alternative, Rename::Disable}},
 
-		{"QUALIFIED_NAME", {{Token::Class::Identifier}, {"SUBSCRIPTS", Repeat::ZeroOne}}, NodeOutput::Parent},
-		{"SUBSCRIPTS", {{"SUBSCRIPT", Repeat::ZeroMany}}, NodeOutput::ReplaceInParent},
-		{"SUBSCRIPT", {{Token::Class::Key, "."}, {Token::Class::Identifier}}, NodeOutput::Parent},
-
-		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"IMPORT_TAIL", Repeat::ZeroMany}}},
-		{"IMPORT_TAIL", {{Token::Class::Key, ","}, {"QUALIFIED_NAME"}}, NodeOutput::Parent},
+		{"IMPORT", {{Token::Class::Key, "import"},  {"QUALIFIED_NAME"}, {"QUALIFIED_NAME_TAIL", Repeat::ZeroMany}}},
 
 		{"DEF_VALUE", {{"DEF_CONST"}, {"DEF_VAR"}}, {Combine::Alternative, Rename::Disable}},
 		{"DEF_CONST", {{Token::Class::Key, "const"}, {Token::Class::Identifier}, {"OF_TYPE"}, {"INITIALIZE"}}},
@@ -190,8 +194,7 @@ ParseRulesHolder const &AlangRules()
 		{"OF_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}/*, NodeOutput::ReplaceInParent*/},
 		{"INITIALIZE", {{Token::Class::Key, "="}, {"EXPRESSION"}}/*, NodeOutput::ReplaceInParent*/},
 
-		{"TYPE", {{"QUALIFIED_NAME"}, {"GENERIC_PARAMS", Repeat::ZeroOne}}, NodeOutput::Parent},
-		{"GENERIC_PARAMS", {{Token::Class::Key, "{"}, {"EXPRESSION_LIST"}, {Token::Class::Key, "}"}}},
+		{"TYPE", {{"QUALIFIED_NAME"}}, NodeOutput::Parent},
 
 		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"RETURN_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
 		{"RETURN_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}},
@@ -211,7 +214,7 @@ ParseRulesHolder const &AlangRules()
 		{"ASSIGN", {{Token::Class::Key, "="}, {"EXPRESSION"}}, NodeOutput::ReplaceInParent},
 		{"ASSIGN_OR_CALL", {{"VALUE_BASE"}, {"ASSIGN_OR_CALL_TAIL"}}, Rename::Disable},
 		{"ASSIGN_OR_CALL_TAIL", {{"ASSIGN"}, {"DOT_IDENT_ASSGN_TAIL"}, {"INDEX_ASSGN_TAIL"}, {"CALL_ASSGN_TAIL"}}, {Combine::Alternative, NodeOutput::Parent}},
-		{"DOT_IDENT_ASSGN_TAIL", {{"SUBSCRIPTS"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
+		{"DOT_IDENT_ASSGN_TAIL", {{"UNQUALIFIED_NAME_SUBSCRIPTS"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"INDEX_ASSGN_TAIL", {{"INDEX"}, {"ASSIGN_OR_CALL_TAIL"}}, NodeOutput::Parent},
 		{"CALL_ASSGN_TAIL", {{"CALL"}, {"ASSIGN_OR_CALL_TAIL", Repeat::ZeroOne}}, NodeOutput::Parent},
 
@@ -264,10 +267,10 @@ ParseRulesHolder const &AlangRules()
 		{"VALUE", {{Token::Class::Literal}, {"VAR_CALL_INDEXED"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"VALUE_BASE", {{"ADDR"}, {"SUBEXPR_OR_IDENT"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"ADDR", {{Token::Class::Key, "&"}, {"VALUE_BASE"}}},
-		{"SUBEXPR_OR_IDENT", {{"EXPR_IN_PAREN"}, {Token::Class::Identifier}}, {Combine::Alternative, NodeOutput::Parent}},
+		{"SUBEXPR_OR_IDENT", {{"EXPR_IN_PAREN"}, {"UNQUALIFIED_NAME"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"EXPR_IN_PAREN", {{Token::Class::Key, "("}, {"EXPRESSION"}, {Token::Class::Key, ")"}}, NodeOutput::Parent},
 		{"VAR_CALL_INDEXED", {{"VALUE_BASE"}, {"VALUE_QUALIFIERS", Repeat::ZeroMany}}, NodeOutput::Parent},
-		{"VALUE_QUALIFIERS", {{"SUBSCRIPT"}, {"INDEX"}, {"CALL"}}, {Combine::Alternative, NodeOutput::Parent}},
+		{"VALUE_QUALIFIERS", {{"UNQUALIFIED_NAME_TAIL"}, {"INDEX"}, {"CALL"}}, {Combine::Alternative, NodeOutput::Parent}},
 		{"INDEX", {{Token::Class::Key, "["}, {"EXPRESSION_LIST"}, {Token::Class::Key, "]"}}, NodeOutput::ReplaceInParent},
 		{"CALL", {{Token::Class::Key, "("}, {"EXPRESSION_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}}, NodeOutput::ReplaceInParent},
 

@@ -65,6 +65,8 @@ void ParseFile(std::string path)
 	if (err)
 		return;
 
+	cout << "Processing imports for " << mod->GetQualifiedName() << endl;
+
 	err = compiler.ProcessImports(mod);
 	cout << "Process imports result: " << err.ToString() << endl;
 }

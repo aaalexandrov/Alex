@@ -23,7 +23,7 @@ set(SOURCES
 	"token.cpp" 
 	"utf8.h" 
 	"utf8.cpp" 
-)
+	)
 
 set(LIBRARIES 
 	)	

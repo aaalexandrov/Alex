@@ -28,6 +28,9 @@ struct Err {
 	static inline String UndefinedSymbol = "Symbol not defined";
 	static inline String AmbiguousSymbolNotFound = "Symbol not found, possibly ambiguous imports";
 	static inline String PathForModuleNotFound = "Path for imported module not found";
+	static inline String UnexpectedDefinitionKind = "Definition exists but is not the expected kind";
+	static inline String ExpectedTypeParameters = "Missing type parameters";
+	static inline String UnexpectedTypeParameters = "Type parameters applied to a type that's parametric";
 };
 
 }

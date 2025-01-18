@@ -92,7 +92,7 @@ Error Compiler::ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDe
 		}
 		parentDef = rtti::Cast<ModuleDef>(modPtr.get());
 		if (!parentDef) {
-			err = Error(Err::ExpectedModule, modPtr->_node->_filePos);;
+			err = Error(Err::ExpectedModule, modPtr->_node->_filePos);
 			return false;
 		}
 		return true;

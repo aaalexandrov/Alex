@@ -23,9 +23,13 @@ Error Def::Resolve(Compiler *compiler)
 	return ResolveImpl(compiler);
 }
 
-Error Def::ResolveImpl(Compiler *compiler)
+String Def::GetQualifiedName() const
 {
-	return Error();
+	String name = _name;
+	for (Def *parent = _parentDef; parent && parent->_name != "#root"; parent = parent->_parentDef) {
+		name = parent->_name + "." + name;
+	}
+	return name;
 }
 
 Error TypeDef::ScanImpl(Compiler *compiler)
@@ -35,9 +39,6 @@ Error TypeDef::ScanImpl(Compiler *compiler)
 
 Error TypeDef::ResolveImpl(Compiler *compiler)
 {
-	Error err = Def::ResolveImpl(compiler);
-	if (err)
-		return err;
 	return Error();
 }
 
@@ -58,6 +59,7 @@ Error ValueDef::ScanImpl(Compiler *compiler)
 
 Error ValueDef::ResolveImpl(Compiler *compiler)
 {
+
 	return Error();
 }
 
@@ -98,6 +100,11 @@ Error ModuleDef::ScanImpl(Compiler *compiler)
 
 Error ModuleDef::ResolveImpl(Compiler *compiler)
 {
+	for (auto &[name, def] : _definitions) {
+		Error err = def->Resolve(compiler);
+		if (err)
+			return err;
+	}
 	return Error();
 }
 
@@ -144,6 +151,45 @@ Error ModuleDef::FindDefForSymbol(ParseNode::Content const *symbol, Def *&foundD
 	}
 
 	return Error(hasMultipleMatches ? Err::AmbiguousSymbolNotFound : Err::UndefinedSymbol, symbol->GetFilePos());
+}
+
+Error ModuleDef::Resolve(Compiler *compiler, ParseNode::Content const *symbol, Def *&resolvedDef)
+{
+	resolvedDef = nullptr;
+	Def *def;
+	Error err = FindDefForSymbol(symbol, def);
+	if (err) 
+		return err;
+	err = def->Resolve(compiler);
+	if (err)
+		return err;
+	resolvedDef = def;
+	return Error();
+}
+
+Error ModuleDef::GetTypeDef(Compiler *compiler, ParseNode::Content const *symbol, ParseNode const *paramsNode, TypeDef *&typeDef)
+{
+	ASSERT(!paramsNode || paramsNode->_label == "{");
+	TypeDef *baseType;
+	Error err = Resolve(compiler, symbol, baseType);
+	if (err)
+		return err;
+	if (paramsNode) {
+		// construct the instantiation name, search for it in the generic base module's definitions, and create an instantiation there if it's missing
+		if (!baseType->IsGenericDef())
+			return Error(Err::UnexpectedTypeParameters, paramsNode->_filePos);
+		String name = baseType->_name + "{";
+		for (int i = 0; i < paramsNode->GetContentSize(); ++i) {
+			//err = GetTypeDef(compiler, )
+		}
+
+
+	} else {
+		if (baseType->IsGenericDef())
+			return Error(Err::ExpectedTypeParameters, symbol->GetFilePos());
+		typeDef = baseType;
+	}
+	return Error();
 }
 
 Error ModuleDef::RegisterDef(std::unique_ptr<Def> &&def)

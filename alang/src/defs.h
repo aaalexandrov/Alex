@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "parse.h"
+#include "error.h"
 
 namespace alang {
 
@@ -24,6 +25,8 @@ struct Def : rtti::Any {
 	virtual Error Scan(Compiler *compiler, ParseNode const *node);
 	Error Resolve(Compiler *compiler);
 
+	String GetQualifiedName() const;
+
 	virtual Error ScanImpl(Compiler *compiler) = 0;
 	virtual Error ResolveImpl(Compiler *compiler) = 0;
 
@@ -40,8 +43,11 @@ struct TypeDef : Def {
 	TypeDef const *_genericDef = nullptr;
 	std::vector<Member> _members;
 
-	TypeDef(String name = String(), size_t size = 0, size_t align = 0) : Def(name), _size(size), _align(align) {}
+	TypeDef(String name = String(), size_t size = 0, size_t align = 0, bool generic = false) : Def(name), _size(size), _align(align), _genericDef(generic ? this : nullptr) {}
 	TypeDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
+
+	bool IsGenericDef() const { return _genericDef == this; }
+	TypeDef *SetGeneric() { ASSERT(!_genericDef); _genericDef = this; return this; }
 
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;
@@ -78,10 +84,28 @@ struct ModuleDef : Def {
 
 	Error FindDefForSymbol(ParseNode::Content const *symbol, Def *&foundDef);
 
+	Error Resolve(Compiler *compiler, ParseNode::Content const *symbol, Def *&resolvedDef);
+	template <typename DefType>
+	Error Resolve(Compiler *compiler, ParseNode::Content const *symbol, DefType *&resolvedDef);
+
+	Error GetTypeDef(Compiler *compiler, ParseNode::Content const *symbol, ParseNode const *paramsNode, TypeDef *&typeDef);
+
 	Error RegisterDef(std::unique_ptr<Def> &&def);
 	Error RegisterImportedDef(Def *def, String name = "");
 
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<ModuleDef, Def>(); }
 };
+
+template<typename DefType>
+inline Error ModuleDef::Resolve(Compiler *compiler, ParseNode::Content const *symbol, DefType *&resolvedDef)
+{
+	resolvedDef = nullptr;
+	Def *def;
+	Error err = Resolve(compiler, symbol, def);
+	if (err)
+		return err;
+	resolvedDef = rtti::Cast<DefType>(def);
+	return resolvedDef ? Error() : Error(Err::UnexpectedDefinitionKind, symbol->GetFilePos());
+}
 
 }
