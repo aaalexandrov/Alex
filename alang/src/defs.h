@@ -7,16 +7,39 @@
 namespace alang {
 
 struct Compiler;
+struct TypeDef;
+
+struct ConstValue {
+	TypeDef const *_type = nullptr;
+	void *_value = nullptr;
+};
+
+struct NamedParameter {
+	String _name;
+	TypeDef const *_type;
+};
+
+using Parameters = std::vector<NamedParameter>;
+using ParameterConsts = std::vector<ConstValue>;
+
+struct GenericInstantiation {
+	TypeDef const *_parentDef;
+	ParameterConsts _paramValues;
+};
+
 struct Def : rtti::Any {
 	enum State {
 		Created,
 		Scanned,
+		Resolving,
 		Resolved,
 		Compiled,
 	};
 
 	String _name;
 	Def *_parentDef = nullptr;
+	Parameters _genericParams;
+	GenericInstantiation _instantiation;
 	ParseNode const *_node = nullptr;
 	State _state = Created;
 
@@ -24,6 +47,9 @@ struct Def : rtti::Any {
 	virtual ~Def() {}
 	virtual Error Scan(Compiler *compiler, ParseNode const *node);
 	Error Resolve(Compiler *compiler);
+
+	bool IsGenericDef() const { return _genericParams.size() > 0; }
+	Def *SetGenericParams(Parameters &&genericParams);
 
 	String GetQualifiedName() const;
 
@@ -40,14 +66,10 @@ struct TypeDef : Def {
 	};
 
 	size_t _size = 0, _align = 0, _arraySize = 0;
-	TypeDef const *_genericDef = nullptr;
 	std::vector<Member> _members;
 
-	TypeDef(String name = String(), size_t size = 0, size_t align = 0, bool generic = false) : Def(name), _size(size), _align(align), _genericDef(generic ? this : nullptr) {}
+	TypeDef(String name = String(), size_t size = 0, size_t align = 0) : Def(name), _size(size), _align(align) {}
 	TypeDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
-
-	bool IsGenericDef() const { return _genericDef == this; }
-	TypeDef *SetGeneric() { ASSERT(!_genericDef); _genericDef = this; return this; }
 
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;

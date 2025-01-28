@@ -19,8 +19,19 @@ Error Def::Resolve(Compiler *compiler)
 	if (_state >= Resolved)
 		return Error();
 	ASSERT(_state == Scanned);
-	_state = Resolved;
-	return ResolveImpl(compiler);
+	_state = Resolving;
+	Error err = ResolveImpl(compiler);
+	if (!err)
+		_state = Resolved;
+	return err;
+}
+
+Def *Def::SetGenericParams(Parameters &&genericParams)
+{
+	ASSERT(_genericParams.empty());
+	ASSERT(genericParams.size() > 0);
+	_genericParams = std::move(genericParams);
+	return this;
 }
 
 String Def::GetQualifiedName() const
