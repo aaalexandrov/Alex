@@ -12,19 +12,29 @@ struct TypeDef;
 struct ConstValue {
 	TypeDef const *_type = nullptr;
 	void *_value = nullptr;
+
+	~ConstValue();
+
+	void *SetType(TypeDef const *type);
+	void *GetValue();
+	void const *GetValue() const { return const_cast<ConstValue *>(this)->GetValue(); }
+
+	bool operator==(ConstValue const &rhs) const;
 };
 
 struct NamedParameter {
 	String _name;
-	TypeDef const *_type;
+	TypeDef const *_type = nullptr;
 };
 
 using Parameters = std::vector<NamedParameter>;
 using ParameterConsts = std::vector<ConstValue>;
 
 struct GenericInstantiation {
-	TypeDef const *_parentDef;
+	TypeDef const *_genericDef = nullptr;
 	ParameterConsts _paramValues;
+
+	bool operator==(GenericInstantiation &rhs) const;
 };
 
 struct Def : rtti::Any {

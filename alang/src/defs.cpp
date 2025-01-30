@@ -6,6 +6,58 @@
 
 namespace alang {
 
+ConstValue::~ConstValue()
+{
+	SetType(nullptr);
+}
+
+void *ConstValue::SetType(TypeDef const *type)
+{
+	if (_type && _type->_size <= sizeof(_value))
+		delete _value;
+	_type = type;
+	if (_type) {
+		void *val;
+		if (_type->_size <= sizeof(_value)) {
+			_value = new uint8_t[_type->_size];
+			val = _value;
+		} else {
+			val = &_value;
+		}
+		memset(val, 0, _type->_size);
+		return val;
+	} else {
+		_value = nullptr;
+		return nullptr;
+	}
+}
+
+void *ConstValue::GetValue()
+{
+	if (!_type)
+		return nullptr;
+	return _type->_size <= sizeof(_value) ? &_value : _value;
+}
+
+bool ConstValue::operator==(ConstValue const &rhs) const
+{
+	if (_type != rhs._type)
+		return false;
+	if (!_type)
+		return true;
+	return memcmp(GetValue(), rhs.GetValue(), _type->_size) == 0;
+}
+
+bool GenericInstantiation::operator==(GenericInstantiation &rhs) const
+{
+	ASSERT(_genericDef);
+	ASSERT(rhs._genericDef);
+	if (_genericDef != rhs._genericDef)
+		return false;
+	return _paramValues != rhs._paramValues;
+}
+
+
 Error Def::Scan(Compiler *compiler, ParseNode const *node)
 {
 	ASSERT(_state < Scanned);
