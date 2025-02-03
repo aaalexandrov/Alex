@@ -6,7 +6,7 @@ std::unique_ptr<ModuleDef> CreateCore()
 {
 	auto core = std::make_unique<ModuleDef>("Core");
 
-	core->RegisterDef(std::make_unique<TypeDef>("TypeDef", sizeof(TypeDef), alignof(TypeDef)));
+	core->RegisterDef(std::make_unique<TypeDef>("TypeDef", sizeof(TypeDef*), alignof(TypeDef*)));
 	core->RegisterDef(std::make_unique<TypeDef>("None", 0, 0));
 
 	core->RegisterDef(std::make_unique<TypeDef>("I8", sizeof(int8_t), alignof(int8_t)));

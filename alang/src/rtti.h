@@ -64,7 +64,7 @@ TypeInfo const *GetDefault()
 	return &typeInfo;
 }
 
-inline TypeInfo const *SetBasesConstructor(TypeInfo const *typeInfo, TypeInfo const **baseInfos, std::unique_ptr<Func> &&constructor = std::unique_ptr<Func>())
+inline TypeInfo const *SetBasesConstructor(TypeInfo const *typeInfo, TypeInfo const **baseInfos, std::unique_ptr<Func> &&constructor)
 {
 	TypeInfo *info = const_cast<TypeInfo *>(typeInfo);
 	ASSERT(info->_bases.empty());
@@ -90,16 +90,10 @@ TypeInfo const **GetTypeInfos()
 	return typeInfos;
 }
 
-template <typename T, typename... Bases>
-TypeInfo const *GetBases()
-{
-	static TypeInfo const *typeInfo = SetBasesConstructor(GetDefault<T>(), GetTypeInfos<Bases...>());
-	return typeInfo;
-}
-
 template <typename R, typename... Tn>
 struct FuncImpl final : public Func {
 	std::function<R(Tn...)> _func;
+	FuncImpl(std::function<R(Tn...)> &&func = nullptr): _func(func) {}
 	TypeInfo const **GetSignatureTypes() const override { return GetTypeInfos<R, Tn...>(); }
 };
 
@@ -122,10 +116,23 @@ R Func::Invoke(Tn... args) const
 	return impl->_func(args...);
 }
 
-
 struct Any {
 	virtual TypeInfo const *GetTypeInfo() const = 0;
 };
+
+template <typename T, typename... Bases>
+TypeInfo const *GetBases(std::unique_ptr<Func> &&constructor = std::unique_ptr<Func>())
+{
+	if constexpr (std::is_default_constructible_v<T>) {
+		if (!constructor) {
+			constructor =  std::is_base_of_v<Any, T> 
+				? std::unique_ptr<Func>(new FuncImpl<Any*>([]{ return new T(); }))
+				: std::unique_ptr<Func>(new FuncImpl<T*>([]{ return new T(); }));
+		}
+	}
+	static TypeInfo const *typeInfo = SetBasesConstructor(GetDefault<T>(), GetTypeInfos<Bases...>(), std::move(constructor));
+	return typeInfo;
+}
 
 template <typename T>
 bool IsType(Any *obj)

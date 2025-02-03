@@ -3,17 +3,26 @@
 #include "common.h"
 #include "parse.h"
 #include "error.h"
+#include <span>
 
 namespace alang {
 
 struct Compiler;
+struct Def;
 struct TypeDef;
+struct ModuleDef;
 
 struct ConstValue {
 	TypeDef const *_type = nullptr;
 	void *_value = nullptr;
 
+	ConstValue() = default;
+	ConstValue(ConstValue const &c);
+	ConstValue(ConstValue &&c);
 	~ConstValue();
+
+	ConstValue &operator=(ConstValue const &c);
+	ConstValue &operator=(ConstValue &&c);
 
 	void *SetType(TypeDef const *type);
 	void *GetValue();
@@ -30,11 +39,16 @@ struct NamedParameter {
 using Parameters = std::vector<NamedParameter>;
 using ParameterConsts = std::vector<ConstValue>;
 
+struct GenericPrototype {
+	Parameters _params;
+	std::vector<Def *> _instantiations;
+};
+
 struct GenericInstantiation {
-	TypeDef const *_genericDef = nullptr;
+	TypeDef *_genericDef = nullptr;
 	ParameterConsts _paramValues;
 
-	bool operator==(GenericInstantiation &rhs) const;
+	bool operator==(GenericInstantiation const &rhs) const;
 };
 
 struct Def : rtti::Any {
@@ -48,7 +62,7 @@ struct Def : rtti::Any {
 
 	String _name;
 	Def *_parentDef = nullptr;
-	Parameters _genericParams;
+	GenericPrototype _generic;
 	GenericInstantiation _instantiation;
 	ParseNode const *_node = nullptr;
 	State _state = Created;
@@ -58,10 +72,14 @@ struct Def : rtti::Any {
 	virtual Error Scan(Compiler *compiler, ParseNode const *node);
 	Error Resolve(Compiler *compiler);
 
-	bool IsGenericDef() const { return _genericParams.size() > 0; }
+	bool IsGenericDef() const { return _generic._params.size() > 0; }
 	Def *SetGenericParams(Parameters &&genericParams);
 
+	Error GetGenericInstantiation(Compiler *compiler, GenericInstantiation const &instantiation, ParseNode const *instNode, Def *&def);
+	virtual Error GetConstValue(Compiler *compiler, ConstValue &constVal) = 0;
+
 	String GetQualifiedName() const;
+	ModuleDef *GetParentModule() const;
 
 	virtual Error ScanImpl(Compiler *compiler) = 0;
 	virtual Error ResolveImpl(Compiler *compiler) = 0;
@@ -81,6 +99,7 @@ struct TypeDef : Def {
 	TypeDef(String name = String(), size_t size = 0, size_t align = 0) : Def(name), _size(size), _align(align) {}
 	TypeDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
+	Error GetConstValue(Compiler *compiler, ConstValue &constVal) override;
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<TypeDef, Def>(); }
@@ -91,14 +110,21 @@ struct FuncDef : Def {
 
 	FuncDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
+	Error GetConstValue(Compiler *compiler, ConstValue &constVal) override;
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<FuncDef, Def>(); }
 };
 
 struct ValueDef : Def {
+	TypeDef const *_valueType = nullptr;
+	ConstValue _initValue;
+
 	ValueDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
+	bool IsConst() const;
+
+	Error GetConstValue(Compiler *compiler, ConstValue &constVal) override;
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<ValueDef, Def>(); }
@@ -111,10 +137,12 @@ struct ModuleDef : Def {
 
 	ModuleDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
 
+	Error GetConstValue(Compiler *compiler, ConstValue &constVal) override;
 	Error ScanImpl(Compiler *compiler) override;
 	Error ResolveImpl(Compiler *compiler) override;
 
-	Error FindDefForSymbol(ParseNode::Content const *symbol, Def *&foundDef);
+	Error FindDefForSymbol(Compiler *compiler, ParseNode::Content const *symbol, Def *&foundDef);
+	Error ReadGenericInstantiation(Compiler *compiler, ParseNode const *node, GenericInstantiation &instantiation);
 
 	Error Resolve(Compiler *compiler, ParseNode::Content const *symbol, Def *&resolvedDef);
 	template <typename DefType>

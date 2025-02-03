@@ -2,6 +2,7 @@
 #include "error.h"
 #include "core.h"
 #include <filesystem>
+#include <algorithm>
 
 namespace alang {
 
@@ -119,7 +120,7 @@ Error Compiler::ProcessImports(ModuleDef *module)
 		return err;
 	for (ParseNode::Content const *sym : module->_importSymbolNodes) {
 		Def *foundDef = nullptr;
-		err = module->FindDefForSymbol(sym, foundDef);
+		err = module->FindDefForSymbol(this, sym, foundDef);
 		ASSERT(bool(err) == !foundDef);
 		if (!foundDef || foundDef->_state < Def::Scanned) {
 			String modPath = GetFilePathForModule(sym);
@@ -131,7 +132,7 @@ Error Compiler::ProcessImports(ModuleDef *module)
 			if (err)
 				return err;
 			// search for the def again because we might have loaded a parent module
-			err = module->FindDefForSymbol(sym, foundDef);
+			err = module->FindDefForSymbol(this, sym, foundDef);
 			if (err)
 				return err;
 		}
@@ -151,6 +152,91 @@ Error Compiler::ProcessImports(ModuleDef *module)
 	}
 
 	return Error();
+}
+
+Error Compiler::ReadLiteralConst(ParseNode::Content const *content, ConstValue &val)
+{
+	ASSERT(val._type);
+	Def *coreModule = _rootModule->_definitions["Core"].get();
+	ASSERT(val._type->_parentDef == coreModule);
+	Token const *token = content->GetToken();
+	void *valPtr = val.GetValue();
+	switch (token->_type) {
+		case Token::Type::Integer:
+			if (val._type->_name == "U8") {
+				*(uint8_t *)valPtr = (uint8_t)token->_integer;
+			} else if (val._type->_name == "U16") {
+				*(uint16_t *)valPtr = (uint16_t)token->_integer;
+			} else if (val._type->_name == "U32") {
+				*(uint32_t *)valPtr = (uint32_t)token->_integer;
+			} else if (val._type->_name == "U64") {
+				*(uint64_t *)valPtr = (uint64_t)token->_integer;
+			} else if (val._type->_name == "I8") {
+				*(int8_t *)valPtr = (int8_t)token->_integer;
+			} else if (val._type->_name == "I16") {
+				*(int16_t *)valPtr = (int16_t)token->_integer;
+			} else if (val._type->_name == "I32") {
+				*(int32_t *)valPtr = (int32_t)token->_integer;
+			} else if (val._type->_name == "I64") {
+				*(int64_t *)valPtr = (int64_t)token->_integer;
+			} else {
+				return Error(Err::MismatchingTypeForLiteral, token->_filePos);
+			}
+			break;
+		case Token::Type::Double:
+			if (val._type->_name == "F32") {
+				*(float *)valPtr = (float)token->_double;
+			} else if (val._type->_name == "I64") {
+				*(double *)valPtr = (double)token->_double;
+			} else {
+				return Error(Err::MismatchingTypeForLiteral, token->_filePos);
+			}
+			break;
+		default:
+			return Error(Err::UnexpectedLiteral, token->_filePos);
+	}
+
+	return Error();
+}
+
+String Compiler::ConstToString(ConstValue const &val) const
+{
+	ASSERT(val._type);
+	Def *coreModule = _rootModule->_definitions["Core"].get();
+	ASSERT(val._type->_parentDef == coreModule);
+	void const *valPtr = val.GetValue();
+	if (val._type->_name == "U8") {
+		return std::to_string(*(uint8_t*)valPtr);
+	} else if (val._type->_name == "U16") {
+		return std::to_string(*(uint16_t*)valPtr);
+	} else if (val._type->_name == "U32") {
+		return std::to_string(*(uint32_t*)valPtr);
+	} else if (val._type->_name == "U64") {
+		return std::to_string(*(uint64_t*)valPtr);
+	} else if (val._type->_name == "I8") {
+		return std::to_string(*(int8_t*)valPtr);
+	} else if (val._type->_name == "I16") {
+		return std::to_string(*(int16_t*)valPtr);
+	} else if (val._type->_name == "I32") {
+		return std::to_string(*(int32_t*)valPtr);
+	} else if (val._type->_name == "I64") {
+		return std::to_string(*(int64_t*)valPtr);
+	} else if (val._type->_name == "F32") {
+		return std::to_string(*(float*)valPtr);
+	} else if (val._type->_name == "F64") {
+		return std::to_string(*(double*)valPtr);
+	} else if (val._type->_name == "Bool") {
+		return std::to_string(*(bool*)valPtr);
+	} else if (val._type->_name == "None") {
+		return String("#None");
+	} else if (val._type->_name == "TypeDef") {
+		return (*(TypeDef**)valPtr)->GetQualifiedName();
+	} else {
+		ASSERT(0);
+		return String("#Unknown");
+	}
+
+    return String();
 }
 
 String GetNodeName(ParseNode::Content const *content)

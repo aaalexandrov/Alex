@@ -31,6 +31,14 @@ struct Err {
 	static inline String UnexpectedDefinitionKind = "Definition exists but is not the expected kind";
 	static inline String ExpectedTypeParameters = "Missing type parameters";
 	static inline String UnexpectedTypeParameters = "Type parameters applied to a type that's parametric";
+	static inline String ExpectedGenericDefinition = "Expected generic definition name";
+	static inline String NumberOfParametersMismatch = "Mismatch in number of expected parameters";
+	static inline String Unimplemented = "Unimplemented!";
+	static inline String NotConst = "Not a constant value";
+	static inline String UnexpectedLiteral = "Unexpected literal";
+	static inline String MismatchingTypeForLiteral = "Mismatching type for literal value";
+	static inline String ExpectedType = "Expected type name";
+	static inline String MismatchingGenericArguments = "Mismatching generic arguments";
 };
 
 }

@@ -20,6 +20,9 @@ struct Compiler {
 	Error ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDef *&module);
 	Error ProcessImports(ModuleDef *module);
 
+	Error ReadLiteralConst(ParseNode::Content const *content, ConstValue &val);
+	String ConstToString(ConstValue const &val) const;
+
 	String GetAlangExtension() const { return ".al"; }
 	String GetFilePathForModule(ParseNode::Content const *symbol);
 
