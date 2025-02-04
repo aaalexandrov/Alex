@@ -435,6 +435,8 @@ Error ModuleDef::GetTypeDef(Compiler *compiler, ParseNode::Content const *symbol
 Error ModuleDef::RegisterDef(std::unique_ptr<Def> &&def)
 {
 	ASSERT(def);
+	if (!def->_parentDef)
+		def->_parentDef = this;
 	auto &registered = _definitions[def->_name];
 	if (registered)
 		return Error(Err::DuplicateDefinition, def->_node->_filePos);

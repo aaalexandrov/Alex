@@ -114,8 +114,25 @@ Error Compiler::ScanModule(ModuleDef *parentDef, ParseNode const *node, ModuleDe
 Error Compiler::ProcessImports(ModuleDef *module)
 {
 	ASSERT(module->_state == Def::Scanned);
+	auto registerDef = [this, module](Def *def) -> Error {
+		ASSERT(def);
+		Error err;
+		ModuleDef *mod = rtti::Cast<ModuleDef>(def);
+		if (mod) {
+			for (auto &[name, def] : mod->_definitions) {
+				err = module->RegisterImportedDef(def.get());
+				if (err)
+					return err;
+			}
+		} else {
+			err = module->RegisterImportedDef(mod);
+			if (err)
+				return err;
+		}
+		return Error();
+	};
 	Def *coreModule = _rootModule->_definitions["Core"].get();
-	Error err = module->RegisterImportedDef(coreModule);
+	Error err = registerDef(coreModule);
 	if (err)
 		return err;
 	for (ParseNode::Content const *sym : module->_importSymbolNodes) {
@@ -136,21 +153,21 @@ Error Compiler::ProcessImports(ModuleDef *module)
 			if (err)
 				return err;
 		}
-		ASSERT(foundDef);
-		ModuleDef *foundMod = rtti::Cast<ModuleDef>(foundDef);
-		if (foundMod) {
-			for (auto &[name, def] : foundMod->_definitions) {
-				err = module->RegisterImportedDef(def.get());
-				if (err)
-					return err;
-			}
-		} else {
-			err = module->RegisterImportedDef(foundDef);
-			if (err)
-				return err;
-		}
+		err = registerDef(foundDef);
+		if (err)
+			return err;
 	}
 
+	return Error();
+}
+
+Error Compiler::ResolveDefinitions(ModuleDef *module)
+{
+	for (auto &[name, def] : module->_definitions) {
+		Error err = def->Resolve(this);
+		if (err)
+			return err;
+	}
 	return Error();
 }
 

@@ -66,9 +66,12 @@ void ParseFile(std::string path)
 		return;
 
 	cout << "Processing imports for " << mod->GetQualifiedName() << endl;
-
 	err = compiler.ProcessImports(mod);
 	cout << "Process imports result: " << err.ToString() << endl;
+
+	cout << "Resolving definitions for " << mod->GetQualifiedName() << endl;
+	err = compiler.ResolveDefinitions(mod);
+	cout << "Definitions resolve result: " << err.ToString() << endl;
 }
 
 int main()

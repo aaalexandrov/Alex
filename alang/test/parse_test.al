@@ -11,7 +11,7 @@ func one() : I32
 end
 
 const inc_by : I32 = 33
-var last_inc : i32 = 0
+var last_inc : I32 = 0
 
 func inc(x : Ref{I32})
 	x = x + inc_by
