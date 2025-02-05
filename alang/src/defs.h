@@ -45,7 +45,7 @@ struct GenericPrototype {
 };
 
 struct GenericInstantiation {
-	TypeDef *_genericDef = nullptr;
+	Def *_genericDef = nullptr;
 	ParameterConsts _paramValues;
 
 	bool operator==(GenericInstantiation const &rhs) const;
@@ -75,7 +75,7 @@ struct Def : rtti::Any {
 	bool IsGenericDef() const { return _generic._params.size() > 0; }
 	Def *SetGenericParams(Parameters &&genericParams);
 
-	Error GetGenericInstantiation(Compiler *compiler, GenericInstantiation const &instantiation, ParseNode const *instNode, Def *&def);
+	Error GetGenericInstantiation(Compiler *compiler, GenericInstantiation const &instantiation, ParseNode const *instNode, Def *&def, bool checkParams = true);
 	virtual Error GetConstValue(Compiler *compiler, ConstValue &constVal) = 0;
 
 	String GetQualifiedName() const;

@@ -117,17 +117,19 @@ Def *Def::SetGenericParams(Parameters &&genericParams)
 	return this;
 }
 
-Error Def::GetGenericInstantiation(Compiler *compiler, GenericInstantiation const &instantiation, ParseNode const *instNode, Def *&def)
+Error Def::GetGenericInstantiation(Compiler *compiler, GenericInstantiation const &instantiation, ParseNode const *instNode, Def *&def, bool checkParams)
 {
 	ASSERT(instantiation._genericDef == this);
 	ASSERT(instNode->_label == "{");
 	def = nullptr;
-	if (instantiation._paramValues.size() != _generic._params.size()) {
-		return Error(Err::MismatchingGenericArguments, instNode->_filePos);
-	}
-	for (int i = 0; i < instantiation._paramValues.size(); ++i) {
-		if (instantiation._paramValues[i]._type != _generic._params[i]._type) {
-			return Error(Err::MismatchingGenericArguments, instNode->GetContentFilePos(i + 1));
+	if (checkParams) {
+		if (instantiation._paramValues.size() != _generic._params.size()) {
+			return Error(Err::MismatchingGenericArguments, instNode->_filePos);
+		}
+		for (int i = 0; i < instantiation._paramValues.size(); ++i) {
+			if (instantiation._paramValues[i]._type != _generic._params[i]._type) {
+				return Error(Err::MismatchingGenericArguments, instNode->GetContentFilePos(i + 1));
+			}
 		}
 	}
 	for (Def *inst : _generic._instantiations) {
@@ -148,6 +150,12 @@ Error Def::GetGenericInstantiation(Compiler *compiler, GenericInstantiation cons
 	def->_instantiation = instantiation;
 	def->_node = instNode;
 	def->_state = Resolved; // ???
+
+	ModuleDef *mod = GetParentModule();
+	Error err = mod->RegisterDef(std::unique_ptr<Def>(def));
+	if (err)
+		return err;
+
 	return Error();
 }
 
@@ -202,6 +210,61 @@ Error FuncDef::ScanImpl(Compiler *compiler)
 
 Error FuncDef::ResolveImpl(Compiler *compiler)
 {
+	ASSERT(_node->GetContentSize() > 0);
+	int resultIdx = _node->GetContentSize() - 1;
+	if (ParseNode const *node = _node->GetSubnode(resultIdx); node && node->_rule->_id == "OPERATOR_LIST") {
+		--resultIdx;
+	}
+	ModuleDef *mod = GetParentModule();
+	Error err;
+	auto findType = [&](ParseNode::Content const *content) -> TypeDef* {
+		Def *def;
+		err = mod->FindDefForSymbol(compiler, content, def);
+		if (err)
+			return nullptr;
+		TypeDef *typeDef = rtti::Cast<TypeDef>(def);
+		if (!typeDef)
+			err = Error(Err::ExpectedType, content->GetFilePos());
+		return typeDef;
+	};
+	ModuleDef *core = rtti::Cast<ModuleDef>(compiler->_rootModule->_definitions["Core"].get());
+	TypeDef *typeDefDef = rtti::Cast<TypeDef>(core->_definitions["TypeDef"].get());
+	TypeDef *funcDef = rtti::Cast<TypeDef>(core->_definitions["Func"].get());
+	TypeDef *returnType;
+	if (ParseNode const *node = _node->GetSubnode(resultIdx); node && node->_rule->_id == "RETURN_TYPE") {
+		returnType = findType(node->GetContent(0));
+		if (err)
+			return err;
+	} else {
+		returnType = rtti::Cast<TypeDef>(core->_definitions["None"].get());
+	}
+	ASSERT(returnType);
+
+	GenericInstantiation params;
+	auto addParamType = [&](TypeDef *type) {
+		params._genericDef = funcDef;
+		params._paramValues.emplace_back();
+		params._paramValues.back().SetType(typeDefDef);
+		*(TypeDef **)params._paramValues.back().GetValue() = type;
+	};
+
+	addParamType(returnType);
+	for (int idx = 1; idx < resultIdx; ++idx) {
+		ParseNode const *node = _node->GetSubnode(idx);
+		ASSERT(node && node->_rule->_id == "OF_TYPE");
+		TypeDef *type = findType(node->GetContent(0));
+		if (err)
+			return err;
+		addParamType(type);
+	}
+
+	Def *def;
+	err = GetGenericInstantiation(compiler, params, _node, def, false);
+	if (err)
+		return err;
+	_funcDef = rtti::Cast<TypeDef>(def);
+	ASSERT(_funcDef);
+
 	return Error();
 }
 

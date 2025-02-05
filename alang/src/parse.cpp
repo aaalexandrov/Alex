@@ -196,13 +196,14 @@ ParseRulesHolder const &AlangRules()
 
 		{"TYPE", {{"QUALIFIED_NAME"}}, NodeOutput::Parent},
 
-		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"RETURN_TYPE", Repeat::ZeroOne}, {"OPERATOR", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
+		{"DEF_FUNC", {{Token::Class::Key, "func"}, {Token::Class::Identifier}, {Token::Class::Key, "("}, {"DEF_PARAM_LIST", Repeat::ZeroOne}, {Token::Class::Key, ")"}, {"RETURN_TYPE", Repeat::ZeroOne}, {"OPERATOR_LIST", Repeat::ZeroMany}, {Token::Class::Key, "end"}}},
 		{"RETURN_TYPE", {{Token::Class::Key, ":"}, {"TYPE"}}},
 		{"DEF_PARAM_LIST", {{"DEF_PARAM"}, {"DEF_PARAM_TAIL", Repeat::ZeroMany}}, NodeOutput::Parent},
 		{"DEF_PARAM", {{Token::Class::Identifier}, {"OF_TYPE"}}, NodeOutput::Parent},
 		{"DEF_PARAM_TAIL", {{Token::Class::Key, ","}, {"DEF_PARAM"}}, NodeOutput::Parent},
 
 		{"OPERATOR", {{"DEF_VALUE"}, {"IF"}, {"WHILE"}, {"RETURN"}, {"ASSIGN_OR_CALL"}}, {Combine::Alternative, Rename::Disable}},
+		{"OPERATOR_LIST", {{"OPERATOR", Repeat::ZeroMany}}},
 
 		{"IF", {{Token::Class::Key, "if"}, {"EXPRESSION"}, {"OPERATOR", Repeat::ZeroMany}, {"ELSE", Repeat::ZeroOne}, {Token::Class::Key, "end"}}},
 		{"ELSE", {{Token::Class::Key, "if"}, {"OPERATOR", Repeat::ZeroMany}}},
