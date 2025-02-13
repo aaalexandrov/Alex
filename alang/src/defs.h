@@ -97,7 +97,7 @@ struct TypeDef : Def {
 	std::vector<Member> _members;
 
 	TypeDef(String name = String(), size_t size = 0, size_t align = 0) : Def(name), _size(size), _align(align) {}
-	TypeDef(String name = String(), Def *parentDef = nullptr) : Def(name, parentDef) {}
+	TypeDef(String name, Def *parentDef = nullptr) : Def(name, parentDef) {}
 
 	Error GetConstValue(Compiler *compiler, ConstValue &constVal) override;
 	Error ScanImpl(Compiler *compiler) override;

@@ -44,12 +44,12 @@ ConstValue &ConstValue::operator=(ConstValue &&c)
 
 void *ConstValue::SetType(TypeDef const *type)
 {
-	if (_type && _type->_size <= sizeof(_value))
+	if (_type && _type->_size > sizeof(_value))
 		delete [] (uint8_t*)_value;
 	_type = type;
 	if (_type) {
 		void *val;
-		if (_type->_size <= sizeof(_value)) {
+		if (_type->_size > sizeof(_value)) {
 			_value = new uint8_t[_type->_size];
 			val = _value;
 		} else {
@@ -138,8 +138,9 @@ Error Def::GetGenericInstantiation(Compiler *compiler, GenericInstantiation cons
 			return Error();
 		}
 	}
-	def = rtti::Cast<Def>(def->GetTypeInfo()->_constructor->Invoke<Any*>());
-	def->_name = _name + "{";
+
+	def = rtti::Cast<Def>(instantiation._genericDef->GetTypeInfo()->_constructor->Invoke<Any*>());
+	def->_name = instantiation._genericDef->_name + "{";
 	for (auto &paramVal : instantiation._paramValues) {
 		if (def->_name.back() != '{')
 			def->_name += ", ";
@@ -222,6 +223,9 @@ Error FuncDef::ResolveImpl(Compiler *compiler)
 		err = mod->FindDefForSymbol(compiler, content, def);
 		if (err)
 			return nullptr;
+		err = def->Resolve(compiler);
+		if (err)
+			return nullptr;
 		TypeDef *typeDef = rtti::Cast<TypeDef>(def);
 		if (!typeDef)
 			err = Error(Err::ExpectedType, content->GetFilePos());
@@ -251,7 +255,10 @@ Error FuncDef::ResolveImpl(Compiler *compiler)
 	addParamType(returnType);
 	for (int idx = 1; idx < resultIdx; ++idx) {
 		ParseNode const *node = _node->GetSubnode(idx);
-		ASSERT(node && node->_rule->_id == "OF_TYPE");
+		if (!node) {
+			continue;
+		}
+		ASSERT(node->_rule->_id == "OF_TYPE");
 		TypeDef *type = findType(node->GetContent(0));
 		if (err)
 			return err;
