@@ -1,5 +1,8 @@
+module WGPUTry
+
 using GLFW
 using WGPUNative
+using CEnum
 
 zero_ref!(ref::Ref{T}) where T = Base.unsafe_securezero!(Base.unsafe_convert(Ptr{T}, ref))
 ptr_from_ref(ref::Ref{T}) where T = Base.unsafe_convert(Ptr{T}, ref)
@@ -136,28 +139,37 @@ function CreateSurfaceCurrentTextureView(surface::WGPUSurface)
 end
 
 const shaderName = "#tri.wgsl"
-const entryVs = "vs_main"
-const entryFs = "fs_main"
 const shaderSrc = 
     """
+    struct VSOut {
+        @builtin(position) pos: vec4f,
+        @location(0) color: vec4f,
+    };
+
     @vertex
-    fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
-        var p = vec2f(0.0, 0.0);
-        if (in_vertex_index == 0u) {
-            p = vec2f(-0.5, -0.5);
-        } else if (in_vertex_index == 1u) {
-            p = vec2f(0.5, -0.5);
-        } else {
-            p = vec2f(0.0, 0.5);
-        }
-        return vec4f(p, 0.0, 1.0);
+    fn vs_main(@location(0) pos: vec3f, @location(1) color: vec3f) -> VSOut {
+        var vsOut: VSOut;
+        vsOut.pos = vec4f(pos, 1.0);
+        vsOut.color = vec4f(color, 1.0);
+        return vsOut;
     }
 
     @fragment
-    fn fs_main() -> @location(0) vec4f {
-        return vec4f(0.8, 0.8, 0.0, 1.0);
+    fn fs_main(vsOut: VSOut) -> @location(0) vec4f {
+        return vsOut.color;
     }
-     """
+    """
+
+struct VertexPos
+    pos::NTuple{3, Float32}
+    color::NTuple{3, Float32}
+end
+
+const triVertices = [
+    VertexPos((-0.5, -0.5, 0), (1, 0, 0)),
+    VertexPos(( 0.5, -0.5, 0), (0, 1, 0)),
+    VertexPos(( 0.0,  0.5, 0), (0, 0, 1)),
+]
 
 function CreateWGSLShaderModule(device::WGPUDevice, label::String, source::String)::WGPUShaderModule
     sourceDesc = Ref(WGPUShaderModuleWGSLDescriptor(
@@ -171,6 +183,139 @@ function CreateWGSLShaderModule(device::WGPUDevice, label::String, source::Strin
         C_NULL
     ))
     GC.@preserve label source sourceDesc wgpuDeviceCreateShaderModule(device, shaderDesc)
+end
+
+function GetVertexFormat(::Type{T}, unorm::Bool = false)::WGPUVertexFormat where T
+    local baseType
+    dim = fieldcount(T)
+    elemType = eltype(T)
+    if elemType == Float32
+        baseType = "Float32"
+    elseif elemType == UInt8
+        baseType = unorm ? "Unorm8" : "Uint8"
+    elseif elemType == Int8
+        baseType = unorm ? "Snorm8" : "Sint8"
+    elseif elemType == UInt16
+        baseType = unorm ? "Unorm16" : "Uint16"
+    elseif elemType == Int16
+        baseType = unorm ? "Snorm16" : "Sint16"
+    elseif elemType == UInt32
+        baseType = "Uint32"
+    elseif elemType == Int32
+        baseType = "Sint32"
+    else
+        error("Unrecognized type")
+    end
+    valName = "WGPUVertexFormat_$baseType"
+    if dim > 1
+        valName = "$(valName)x$dim"
+    end
+    valName = Symbol(valName)
+    ind = findfirst(x->x[1] == valName, CEnum.name_value_pairs(WGPUVertexFormat))
+    isnothing(ind) ? WGPUVertexFormat_Undefined : WGPUVertexFormat(CEnum.name_value_pairs(WGPUVertexFormat)[ind][2]) 
+end
+
+function FillVertexAttributes(::Type{T}, attrs::Vector{WGPUVertexAttribute}) where T
+    for i in 1:fieldcount(T)
+        vertexFormat = GetVertexFormat(fieldtype(T, i))
+        @assert(vertexFormat != WGPUVertexFormat_Undefined)
+        push!(attrs, WGPUVertexAttribute(
+            vertexFormat,
+            fieldoffset(T, i),
+            length(attrs)
+        ))
+    end
+end
+
+function GetVertexLayout(::Type{T}, attrs::Vector{WGPUVertexAttribute})::WGPUVertexBufferLayout where T
+    FillVertexAttributes(T, attrs)
+    WGPUVertexBufferLayout(
+        sizeof(T),
+        WGPUVertexStepMode_Vertex,
+        length(attrs),
+        pointer(attrs, 1)
+    )
+end
+
+const entryVs = "vs_main"
+const entryFs = "fs_main"
+
+function CreateWGSLPipeline(device::WGPUDevice, name::String, source::String, vertexType::Type, surfFormat::WGPUTextureFormat)
+    shader = CreateWGSLShaderModule(device, name, source)
+
+    layoutDesc = Ref(WGPUPipelineLayoutDescriptor(
+        C_NULL,
+        pointer(name),
+        0,
+        C_NULL
+    ))
+    pipelineLayout = GC.@preserve name wgpuDeviceCreatePipelineLayout(device, layoutDesc)
+
+    colorTargets = [WGPUColorTargetState(
+        C_NULL,
+        surfFormat,
+        C_NULL,
+        WGPUColorWriteMask_All
+    )]
+    fragmentState = Ref(WGPUFragmentState(
+        C_NULL,
+        shader,
+        pointer(entryFs),
+        0,
+        C_NULL,
+        length(colorTargets),
+        pointer(colorTargets, 1)
+    ))
+    vertexAttrs = WGPUVertexAttribute[]
+    vertexLayout = [GetVertexLayout(vertexType, vertexAttrs)]
+    pipelineDesc = Ref(WGPURenderPipelineDescriptor(
+        C_NULL,
+        pointer(name),
+        pipelineLayout,
+        WGPUVertexState(
+            C_NULL,
+            shader,
+            pointer(entryVs),
+            0,
+            C_NULL,
+            length(vertexLayout),
+            pointer(vertexLayout, 1)
+        ),
+        WGPUPrimitiveState(
+            C_NULL,
+            WGPUPrimitiveTopology_TriangleList,
+            WGPUIndexFormat_Undefined,
+            WGPUFrontFace_CCW,
+            WGPUCullMode_None
+        ),
+        C_NULL,
+        WGPUMultisampleState(
+            C_NULL,
+            1,
+            typemax(UInt32),
+            false
+        ),
+        ptr_from_ref(fragmentState)
+    ))
+    pipeline = GC.@preserve name entryVs entryFs colorTargets vertexAttrs vertexLayout fragmentState wgpuDeviceCreateRenderPipeline(device, pipelineDesc)
+
+    wgpuPipelineLayoutRelease(pipelineLayout)
+    wgpuShaderModuleRelease(shader)
+
+    pipeline
+end
+
+function CreateBuffer(device::WGPUDevice, queue::WGPUQueue, name::String, usage::WGPUBufferUsageFlags, content)
+    bufferDesc = Ref(WGPUBufferDescriptor(
+        C_NULL,
+        pointer(name),
+        usage | WGPUBufferUsage_CopyDst,
+        sizeof(content),
+        false
+    ))
+    buffer = GC.@preserve name wgpuDeviceCreateBuffer(device, bufferDesc)
+    GC.@preserve content wgpuQueueWriteBuffer(queue, buffer, 0, pointer(content, 1), bufferDesc[].size)
+    buffer
 end
 
 function main()
@@ -192,65 +337,12 @@ function main()
     surfFormat = wgpuSurfaceGetPreferredFormat(surface, adapter)
     @info "Surface format $surfFormat"
 
-    shader = CreateWGSLShaderModule(device, shaderName, shaderSrc)
+    pipeline = CreateWGSLPipeline(device, shaderName, shaderSrc, eltype(triVertices), surfFormat)
 
-    layoutDesc = Ref(WGPUPipelineLayoutDescriptor(
-        C_NULL,
-        pointer(shaderName),
-        0,
-        C_NULL
-    ))
-    pipelineLayout = GC.@preserve shaderName wgpuDeviceCreatePipelineLayout(device, layoutDesc)
+    vertexBuffer = CreateBuffer(device, queue, "triVerts", WGPUBufferUsageFlags(WGPUBufferUsage_Vertex), triVertices)
 
-    colorTargets = [WGPUColorTargetState(
-        C_NULL,
-        surfFormat,
-        C_NULL,
-        WGPUColorWriteMask_All
-    )]
-    fragmentState = Ref(WGPUFragmentState(
-        C_NULL,
-        shader,
-        pointer(entryFs),
-        0,
-        C_NULL,
-        length(colorTargets),
-        pointer(colorTargets, 1)
-    ))
-    pipelineDesc = Ref(WGPURenderPipelineDescriptor(
-        C_NULL,
-        pointer(shaderName),
-        pipelineLayout,
-        WGPUVertexState(
-            C_NULL,
-            shader,
-            pointer(entryVs),
-            0,
-            C_NULL,
-            0,
-            C_NULL
-        ),
-        WGPUPrimitiveState(
-            C_NULL,
-            WGPUPrimitiveTopology_TriangleList,
-            WGPUIndexFormat_Undefined,
-            WGPUFrontFace_CCW,
-            WGPUCullMode_None
-        ),
-        C_NULL,
-        WGPUMultisampleState(
-            C_NULL,
-            1,
-            typemax(UInt32),
-            false
-        ),
-        ptr_from_ref(fragmentState)
-    ))
-    pipeline = GC.@preserve shaderName entryVs entryFs colorTargets fragmentState wgpuDeviceCreateRenderPipeline(device, pipelineDesc)
-
-    wgpuPipelineLayoutRelease(pipelineLayout)
-    wgpuShaderModuleRelease(shader)
-
+    startTime = time()
+    frames = 0
     (winWidth, winHeight) = (-1, -1)    
     while !GLFW.WindowShouldClose(window)
         (newWidth, newHeight) = GLFW.GetWindowSize(window)
@@ -273,8 +365,8 @@ function main()
                 C_NULL,
                 WGPULoadOp_Clear,
                 WGPUStoreOp_Store,
-                WGPUColor(0, 0, 1, 1)
-            )]
+                WGPUColor(0.3, 0.3, 0.3, 1)
+            )] 
             renderPassDesc = Ref(WGPURenderPassDescriptor(
                 C_NULL,
                 pointer(label),
@@ -288,6 +380,7 @@ function main()
 
             #rendering goes here
             wgpuRenderPassEncoderSetPipeline(renderPass, pipeline)
+            wgpuRenderPassEncoderSetVertexBuffer(renderPass, 0, vertexBuffer, 0, wgpuBufferGetSize(vertexBuffer))
             wgpuRenderPassEncoderDraw(renderPass, 3, 1, 0, 0)
 
             wgpuRenderPassEncoderEnd(renderPass)
@@ -302,12 +395,17 @@ function main()
             wgpuCommandBufferRelease(cmdBuffer)
 
             wgpuTextureViewRelease(texView)
+            wgpuSurfacePresent(surface)
+            
+            frames += 1
         end
-        wgpuSurfacePresent(surface)
         wgpuDevicePoll(device, false, C_NULL)
-        GLFW.PollEvents()    
+        GLFW.PollEvents()
     end
+    runTime = time() - startTime
+    @info "Frames: $frames, run time: $(round(runTime; digits = 3)), fps: $(round(frames / runTime; digits = 3))"
 
+    wgpuBufferRelease(vertexBuffer)
     wgpuRenderPipelineRelease(pipeline)
     wgpuQueueRelease(queue)
     wgpuDeviceRelease(device)
@@ -320,3 +418,5 @@ function main()
 end
 
 main()
+
+end
