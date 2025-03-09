@@ -78,11 +78,6 @@ function CreateOSSurface(wgpuInst::WGPUInstance, window::GLFW.Window, label::Str
     GC.@preserve osDesc label wgpuInstanceCreateSurface(wgpuInst, surfDesc)
 end
 
-function LogCallback(logLevel::WGPULogLevel, msg::Ptr{Cchar})
-    @info logLevel unsafe_string(msg)
-end
-const CLogCallback = @cfunction(LogCallback, Cvoid, (WGPULogLevel, Ptr{Cchar}))
-
 function GetWGPUAdapterCallback(status::WGPURequestAdapterStatus, adapter::WGPUAdapter, msg::Ptr{Cchar}, userData::Ptr{Cvoid})
     @assert(status == WGPURequestAdapterStatus_Success)
     adapterOut = Base.unsafe_pointer_to_objref(Ptr{WGPUAdapter}(userData))
@@ -201,7 +196,7 @@ const shaderSrc =
     @group(0) @binding(0) var<uniform> uni: Uniforms;
     @group(0) @binding(1) var texSampler: sampler;
     @group(0) @binding(2) var tex0: texture_2d<f32>;
-
+   
     struct VSOut {
         @builtin(position) pos: vec4f,
         @location(0) color: vec4f,
@@ -505,16 +500,21 @@ function CreateTexture(device::WGPUDevice, queue::WGPUQueue, name::String, usage
     texture
 end
 
-function main()
-    GLFW.Init()
+function LogCallback(logLevel::WGPULogLevel, msg::Ptr{Cchar})
+    @info logLevel unsafe_string(msg)
+end
 
+function main()
     GLFW.WindowHint(GLFW.CLIENT_API, GLFW.NO_API)
     window = GLFW.CreateWindow(800, 800, "Win32 Kek")
 
+    # the @cfunction value needs to stay local because otherwise the Julia debugger breaks
+    CLogCallback = @cfunction(LogCallback, Cvoid, (WGPULogLevel, Ptr{Cchar}))
     wgpuSetLogCallback(CLogCallback, C_NULL)
     wgpuSetLogLevel(WGPULogLevel_Warn)
 
     inst = wgpuCreateInstance(Ref(WGPUInstanceDescriptor(C_NULL)))
+
     surface = CreateOSSurface(inst, window, "Keke")
     adapter = GetWGPUAdapter(inst, surface)
 
@@ -528,12 +528,7 @@ function main()
     @info "Surface format $surfFormat"
 
     bindGroupLayout = CreateBindGroupLayout(device, shaderName, WGPUShaderStageFlags(WGPUShaderStage_Vertex | WGPUShaderStage_Fragment), Any[
-        WGPUBufferBindingLayout(
-            C_NULL,
-            WGPUBufferBindingType_Uniform,
-            false,
-            0
-        ),
+        WGPUBufferBindingLayout(C_NULL, WGPUBufferBindingType_Uniform, false, 0),
         WGPUSamplerBindingLayout(C_NULL, WGPUSamplerBindingType_Filtering),
         WGPUTextureBindingLayout(C_NULL, WGPUTextureSampleType_Float, WGPUTextureViewDimension_2D, false),
     ])
@@ -546,7 +541,7 @@ function main()
     uniformBuffer = CreateBuffer(device, queue, "uniforms", WGPUBufferUsageFlags(WGPUBufferUsage_Uniform), uniforms)
     vertexBuffer = CreateBuffer(device, queue, "triVerts", WGPUBufferUsageFlags(WGPUBufferUsage_Vertex), triVertices)
 
-    samplerLinearRepeat = CreateSampler(device, "linearWrap", WGPUAddressMode_Repeat, WGPUFilterMode_Linear)
+    samplerLinearRepeat = CreateSampler(device, "linearRepeat", WGPUAddressMode_Repeat, WGPUFilterMode_Linear)
     texture = CreateTexture(device, queue, "tex2D", WGPUTextureUsage_TextureBinding, [ntuple(i->UInt8((isodd(x+y) || i > 3) * 255), 4) for x=1:4, y=1:4])
     textureView = wgpuTextureCreateView(texture, C_NULL)
 
@@ -637,9 +632,14 @@ function main()
     wgpuSetLogCallback(C_NULL, C_NULL)
 
     GLFW.DestroyWindow(window)
-    GLFW.Terminate()
 end
 
-main()
+try
+    GLFW.Init()
+    main()
+finally
+    # so that windows close in case of an runtime error
+    GLFW.Terminate()
+end
 
 end
