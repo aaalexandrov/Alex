@@ -78,6 +78,11 @@ function CreateOSSurface(wgpuInst::WGPUInstance, window::GLFW.Window, label::Str
     GC.@preserve osDesc label wgpuInstanceCreateSurface(wgpuInst, surfDesc)
 end
 
+function LogCallback(logLevel::WGPULogLevel, msg::Ptr{Cchar})
+    @info logLevel unsafe_string(msg)
+end
+const CLogCallback = @cfunction(LogCallback, Cvoid, (WGPULogLevel, Ptr{Cchar}))
+
 function GetWGPUAdapterCallback(status::WGPURequestAdapterStatus, adapter::WGPUAdapter, msg::Ptr{Cchar}, userData::Ptr{Cvoid})
     @assert(status == WGPURequestAdapterStatus_Success)
     adapterOut = Base.unsafe_pointer_to_objref(Ptr{WGPUAdapter}(userData))
@@ -506,6 +511,9 @@ function main()
     GLFW.WindowHint(GLFW.CLIENT_API, GLFW.NO_API)
     window = GLFW.CreateWindow(800, 800, "Win32 Kek")
 
+    wgpuSetLogCallback(CLogCallback, C_NULL)
+    wgpuSetLogLevel(WGPULogLevel_Warn)
+
     inst = wgpuCreateInstance(Ref(WGPUInstanceDescriptor(C_NULL)))
     surface = CreateOSSurface(inst, window, "Keke")
     adapter = GetWGPUAdapter(inst, surface)
@@ -625,6 +633,8 @@ function main()
     wgpuAdapterRelease(adapter)
     wgpuSurfaceRelease(surface)
     wgpuInstanceRelease(inst)
+
+    wgpuSetLogCallback(C_NULL, C_NULL)
 
     GLFW.DestroyWindow(window)
     GLFW.Terminate()
