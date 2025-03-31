@@ -84,6 +84,8 @@ struct Def : rtti::Any {
 	virtual Error ScanImpl(Compiler *compiler) = 0;
 	virtual Error ResolveImpl(Compiler *compiler) = 0;
 
+	virtual Error ForNestedDefs(std::function<Error(Def *def)> fn) { return fn(this); }
+
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<Def, rtti::Any>(); }
 };
 
@@ -152,6 +154,8 @@ struct ModuleDef : Def {
 
 	Error RegisterDef(std::unique_ptr<Def> &&def);
 	Error RegisterImportedDef(Def *def, String name = "");
+
+	Error ForNestedDefs(std::function<Error(Def *def)> fn) override;
 
 	rtti::TypeInfo const *GetTypeInfo() const override { return rtti::GetBases<ModuleDef, Def>(); }
 };

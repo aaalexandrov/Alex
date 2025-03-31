@@ -42,6 +42,12 @@ std::unique_ptr<ModuleDef> CreateCore()
 		NamedParameter{ "Return", rtti::Cast<TypeDef>(core->_definitions["TypeDef"].get()) },
 	})));
 
+	core->ForNestedDefs([](Def *def) {
+		ASSERT(def->_state == Def::Created);
+		def->_state = Def::Scanned;
+		return Error();
+	});
+
 	return core;
 }
 

@@ -91,10 +91,14 @@ bool GenericInstantiation::operator==(GenericInstantiation const &rhs) const
 
 Error Def::Scan(Compiler *compiler, ParseNode const *node)
 {
-	ASSERT(_state < Scanned);
-	_state = Scanned;
+	ASSERT(!_node);
+	if (_state >= Scanned)
+		return Error();
 	_node = node;
-	return ScanImpl(compiler);
+	Error err = ScanImpl(compiler);
+	if (!err)
+		_state = Scanned;
+	return err;
 }
 
 Error Def::Resolve(Compiler *compiler)
@@ -523,6 +527,19 @@ Error ModuleDef::RegisterImportedDef(Def *def, String name)
 			return Error();
 	}
 	_importedDefs.emplace(name, def);
+	return Error();
+}
+
+Error ModuleDef::ForNestedDefs(std::function<Error(Def *def)> fn)
+{
+	Error err = Def::ForNestedDefs(fn);
+	if (err)
+		return err;
+	for (auto &[name, def] : _definitions) {
+		Error err = def->ForNestedDefs(fn);
+		if (err)
+			return err;
+	}
 	return Error();
 }
 
