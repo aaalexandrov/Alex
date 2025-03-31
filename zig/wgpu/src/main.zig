@@ -1,16 +1,16 @@
 const std = @import("std");
 const glfw = @import("zglfw");
 const wgpu = @import("wgpu");
-const zm = @import("zm");
+const zm = @import("zmath");
 
-const PlainUniforms = packed struct {
-    worldViewProj: @Vector(4 * 4, f32) = .{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
+const PlainUniforms = extern struct {
+    worldViewProj: zm.Mat = zm.identity(),
 };
 
-const PlainVertexPosColorUv = packed struct {
-    pos: zm.Vec3f,
-    color: zm.Vec3f,
-    uv: zm.Vec2f,
+const PlainVertexPosColorUv = extern struct {
+    pos: [3]f32,
+    color: [3]f32,
+    uv: [2]f32,
 };
 
 const PlainVertices = [_]PlainVertexPosColorUv{
@@ -226,6 +226,8 @@ pub fn main() !void {
     defer plainBindGroup.release();
 
     var surfConfigured = false;
+    const timeStart = std.time.microTimestamp();
+    var frames: i64 = 0;
     while (!window.shouldClose()) {
         var surfaceTex: wgpu.SurfaceTexture = undefined;
         if (surfConfigured) {
@@ -240,11 +242,22 @@ pub fn main() !void {
                 .format = surfaceFormat,
                 .width = @intCast(width),
                 .height = @intCast(height),
+                .present_mode = .immediate,
             });
             surfConfigured = true;
         } else if (surfaceTex.status != .success) {
             break;
         } else {
+            {
+                const timeNow = std.time.microTimestamp();
+                const rot = zm.matFromAxisAngle(.{ 0, 0, 1, 0 }, @floatCast(@as(f64, @floatFromInt(timeNow - timeStart)) / 1e6));
+                const width, const height = window.getSize();
+                const wtoh = @as(f32, @floatFromInt(width)) / @as(f32, @floatFromInt(height));
+                const ortho = zm.orthographicOffCenterLh(-1 * wtoh, 1 * wtoh, -1, 1, 0, 1);
+                plainUniforms.worldViewProj = zm.mul(rot, ortho);
+                queue.writeBuffer(plainUniformsBuffer, 0, &plainUniforms, @sizeOf(PlainUniforms));
+            }
+
             const surfTexView = surfaceTex.texture.createView(null);
             defer surfTexView.?.release();
 
@@ -278,11 +291,16 @@ pub fn main() !void {
             commands.release();
 
             surface.present();
+            frames += 1;
         }
 
         _ = device.poll(false, null);
         glfw.pollEvents();
     }
+
+    const timeNow = std.time.microTimestamp();
+    const durationSecs: f64 = @as(f64, @floatFromInt(timeNow - timeStart)) / 1e6;
+    std.debug.print("Frames: {d}, seconds: {d:.3}, FPS: {d:.3}\n", .{ frames, durationSecs, @as(f64, @floatFromInt(frames)) / durationSecs });
 }
 
 fn logCallback(level: wgpu.LogLevel, message: ?[*:0]const u8, userdata: ?*anyopaque) callconv(.C) void {

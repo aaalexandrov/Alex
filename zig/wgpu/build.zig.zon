@@ -44,9 +44,9 @@
             .url = "git+https://github.com/bronter/wgpu_native_zig/?ref=HEAD#072933717ae606362e6adf08a75b4445280cfd61",
             .hash = "wgpu_native_zig-4.0.0-B9jeDOSZAgA1TqZrr-swvZf9kyAssF0FsEmrQkF0A495",
         },
-        .zm = .{
-            .url = "git+https://github.com/griush/zm#7f2e35111df25127c210bead31175eddaf5b5f4e",
-            .hash = "zm-0.3.0-cLX-WT7NAACRq36jVhX1SsiDuJ2gJ_lpYv4IWmD4-AXR",
+        .zmath = .{
+            .url = "git+https://github.com/zig-gamedev/zmath#ccf7297ef6c01e21b2d51ad81b5b6ce929e86a00",
+            .hash = "zmath-0.11.0-dev-wjwivZY1AwDO7yxNmZ5HWoU03f9mFBet8LN9-oYc3i29",
         },
     },
     .paths = .{
