@@ -258,8 +258,8 @@ pub fn main() !void {
                 queue.writeBuffer(plainUniformsBuffer, 0, &plainUniforms, @sizeOf(PlainUniforms));
             }
 
-            const surfTexView = surfaceTex.texture.createView(null);
-            defer surfTexView.?.release();
+            const surfTexView = surfaceTex.texture.createView(null).?;
+            defer surfTexView.release();
 
             const encoder = device.createCommandEncoder(&wgpu.CommandEncoderDescriptor{ .label = "Commands" }).?;
 
