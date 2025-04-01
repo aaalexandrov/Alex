@@ -4,7 +4,7 @@ const wgpu = @import("wgpu");
 const zm = @import("zmath");
 
 const PlainUniforms = extern struct {
-    worldViewProj: zm.Mat = zm.identity(),
+    worldViewProj: [4][4]f32 = zm.identity(),
 };
 
 const PlainVertexPosColorUv = extern struct {
