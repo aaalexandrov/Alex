@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -12,9 +12,8 @@ function for_elem(predicate, root)
     end
 end
 
-function scrape_table(url, targetId)
-    resp = HTTP.get(url)
-    resp_parsed = Gumbo.parsehtml(String(resp.body))
+function parse_table(http_resp, targetId)
+    resp_parsed = Gumbo.parsehtml(String(http_resp.body))
     table = for_elem(resp_parsed.root) do elem
         getattr(elem, "id") == targetId
     end
@@ -35,7 +34,14 @@ function scrape_table(url, targetId)
                     if columnindex(data, col) <= 0
                         data[!, col] = fill("", nrow(data))
                     end
-                    data[nrow(data), col] = text(ch)
+                    txt = text(ch)
+                    if isnothing(tryparse(Float64, txt))
+                        noComma = replace(txt, ","=>".")
+                        if !isnothing(tryparse(Float64, noComma))
+                            txt = noComma
+                        end
+                    end
+                    data[nrow(data), col] = txt
                 end
                 false
             end
@@ -45,4 +51,30 @@ function scrape_table(url, targetId)
     select(data, Not("#row"))
 end
 
-scrape_table("https://ibex.bg/dam-history.php", "dam-history")
+#currently history is limited to 3 months back
+function scrape_history(endDate = Dates.today() + Dates.Day(1), fromDate = endDate - Dates.Month(3) - Dates.Day(1))
+    resp = HTTP.post(
+        "https://ibex.bg/dam-history.php"; 
+        headers=Dict(
+            "Content-Type"=>"application/x-www-form-urlencoded",
+        ),
+        body=string(HTTP.URI(;query=Dict(
+            "fromDate"=>string(fromDate), 
+            "endDate"=>string(endDate), 
+            "but_search"=>"Search",
+        )))[2:end]
+    )
+    parse_table(resp, "dam-history")
+end
+
+function scrape_default()
+    parse_table(HTTP.get("https://ibex.bg/dam-history.php"), "dam-history")
+end
+
+function write_history(data)
+    fromDate = data[1, "column-date"]
+    endDate = data[end, "column-date"]
+    CSV.write("dam-history-$fromDate-to-$endDate.csv", data)
+end
+
+write_history(scrape_history())
