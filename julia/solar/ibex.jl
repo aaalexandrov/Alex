@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -34,7 +34,7 @@ function parse_table(http_resp, targetId)
                     if columnindex(data, col) <= 0
                         data[!, col] = fill("", nrow(data))
                     end
-                    txt = text(ch)
+                    txt = Gumbo.text(ch)
                     if isnothing(tryparse(Float64, txt))
                         noComma = replace(txt, ","=>".")
                         if !isnothing(tryparse(Float64, noComma))
@@ -78,3 +78,41 @@ function write_history(data)
 end
 
 write_history(scrape_history())
+
+movingfunc(f, g, n) = [f(g[max(1, i-n+1):i]) for i in 1:length(g)]
+movingaverage(g, n) = movingfunc(mean, g, n)
+movingmedian(g, n) = movingfunc(median, g, n)
+movingmin(g, n) = movingfunc(minimum, g, n)
+movingmax(g, n) = movingfunc(maximum, g, n)
+
+normalize_series(g) = (g.-mean(g))./std(g)
+
+function add_dayofweek!(data)
+    data[!, "column-dayofweek"] = map(data[:, "column-date"]) do d Dates.dayofweek(Date(d)) end
+end
+
+function split_weekends(data)
+    weekdays = filter(data) do r r["column-dayofweek"] in 1:5 end
+    weekends = filter(data) do r r["column-dayofweek"] in 6:7 end
+    weekdays, weekends
+end
+
+function predict_day(data)
+    price = data[:, "column-price"]
+    avg = movingaverage(price, 168)
+    day_delta = avg[end] - avg[end - 24]
+    price[end-23:end] .+ day_delta
+end
+
+function predict_days(data, days)
+    pred = Float64[]
+    for d = days-1:-1:0 
+        data_slice = data[begin:end-24d, :]
+        append!(pred, predict_day(data_slice))
+    end
+    pred
+end
+
+function diff_predicted_days(data, days)
+    predict_days(data[begin:end-24, :], days) .- data[end-24days+1:end, "column-price"]
+end    
