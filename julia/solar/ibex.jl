@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -79,6 +79,36 @@ end
 
 write_history(scrape_history())
 
+function parse_weather(json, units)
+    js = Dict{String, Any}()
+    for (k,v) in json
+        js[k] = if units[k] == "iso8601"
+            map(v) do d parse(DateTime, d) end
+        else
+            map(Float64, v)
+        end
+    end
+    DataFrame(js)
+end    
+
+function get_weather_history(endDate = Dates.today() - Dates.Day(3), fromDate = endDate - Dates.Month(3) - Dates.Day(3), lat = 42.6975, lon = 23.3241)
+    uri = HTTP.URI("https://archive-api.open-meteo.com/v1/archive"; query=Dict(
+        "latitude"=>lat,
+        "longitude"=>lon,
+        "start_date"=>string(fromDate),
+        "end_date"=>string(endDate),
+        "daily"=>"sunrise,sunset",
+        "hourly"=>"temperature_2m,precipitation,cloud_cover,wind_speed_10m,global_tilted_irradiance",
+        "timezone"=>"Europe/Berlin",
+        "tilt"=>35,
+    ))
+    resp = HTTP.get(uri)
+    json = JSON.parse(String(copy(resp.body)))
+    daily = parse_weather(json["daily"], json["daily_units"])
+    hourly = parse_weather(json["hourly"], json["hourly_units"])
+    daily, hourly
+end
+
 movingfunc(f, g, n) = [f(g[max(1, i-n+1):i]) for i in 1:length(g)]
 movingaverage(g, n) = movingfunc(mean, g, n)
 movingmedian(g, n) = movingfunc(median, g, n)
@@ -88,7 +118,9 @@ movingmax(g, n) = movingfunc(maximum, g, n)
 normalize_series(g) = (g.-mean(g))./std(g)
 
 function add_dayofweek!(data)
-    data[!, "column-dayofweek"] = map(data[:, "column-date"]) do d Dates.dayofweek(Date(d)) end
+    data[!, "column-dayofweek"] = map(data[:, "column-date"]) do d 
+        Dates.dayofweek(Date(d)) 
+    end
 end
 
 function split_weekends(data)
