@@ -51,6 +51,42 @@ function parse_table(http_resp, targetId)
     select(data, Not("#row"))
 end
 
+function replace_column!(fn, data, mapping)
+    data[!, mapping[2]] = map(fn, data[:, mapping[1]])
+    select!(data, Not(mapping[1]))
+end
+
+function convert_dam(dam)
+    dh = copy(dam)
+    if columnindex(dh, "column-date") > 0
+        replace_column!(dh, "column-date"=>"date") do d
+            if typeof(d) != Date
+                d = Date(d)
+            end
+            d
+        end
+    end
+    if columnindex(dh, "column-time_part") > 0
+        replace_column!(dh, "column-time_part"=>"hour") do h 
+            if typeof(h) == String
+                h = parse(Int, h)
+            end
+            h - 1
+        end
+    end
+    for n in names(dh)
+        if startswith(n, "column-")
+            replace_column!(dh, n=>n[length("column-")+1:end]) do s 
+                if typeof(s) <: AbstractString
+                    s = parse(Float64, s) 
+                end
+                s
+            end
+        end
+    end
+    dh
+end
+
 #currently history is limited to 3 months back
 function scrape_history(endDate = Dates.today() + Dates.Day(1), fromDate = endDate - Dates.Month(3) - Dates.Day(1))
     resp = HTTP.post(
@@ -64,20 +100,20 @@ function scrape_history(endDate = Dates.today() + Dates.Day(1), fromDate = endDa
             "but_search"=>"Search",
         )))[2:end]
     )
-    parse_table(resp, "dam-history")
+    parse_table(resp, "dam-history") |> convert_dam
 end
 
 function scrape_default()
     parse_table(HTTP.get("https://ibex.bg/dam-history.php"), "dam-history")
 end
 
-function write_history(data)
-    fromDate = data[1, "column-date"]
-    endDate = data[end, "column-date"]
-    CSV.write("dam-history-$fromDate-to-$endDate.csv", data)
+function write_history(prefix, data)
+    fromDate = data[1, "date"]
+    endDate = data[end, "date"]
+    CSV.write("$prefix-$fromDate-to-$endDate.csv", data)
 end
 
-# write_history(scrape_history())
+# write_history("dam-history", scrape_history())
 
 const weather_locations = Dict(
     "Sofia"=>(42.6975, 23.3241),
@@ -149,12 +185,12 @@ end
 function get_weather(endDate = Dates.today(), fromDate = endDate - Dates.Month(3), lat = 42.6975, lon = 23.3241)
     today = Dates.today()
     weather = nothing
-    if fromDate < today - Dates.Month(3)
+    if fromDate < today - Dates.Month(1)
         weather = get_weather_history(min(endDate, Dates.today() - Dates.Day(3)), fromDate, lat, lon)
         fromDate = weather[end, "date"] + Dates.Day(1)
     end
-    if fromDate < endDate
-        forecast = get_weather_forecast(endDate - Dates.today() + Dates.Day(1) |> Dates.days, Dates.today() - fromDate |> Dates.days, lat, lon)
+    if fromDate <= endDate
+        forecast = get_weather_forecast(max(0, endDate - Dates.today() + Dates.Day(1) |> Dates.days), Dates.today() - fromDate |> Dates.days, lat, lon)
         if !isnothing(weather)
             weather = vcat(weather, forecast)
         else
@@ -164,27 +200,49 @@ function get_weather(endDate = Dates.today(), fromDate = endDate - Dates.Month(3
     weather
 end
 
-function replace_column!(fn, data, mapping)
-    data[!, mapping[2]] = map(fn, data[:, mapping[1]])
-    select!(data, Not(mapping[1]))
-end
-
-function convert_dam(dam)
-    dh = copy(dam)
-    replace_column!(Date, dh, "column-date"=>"date")
-    replace_column!(dh, "column-time_part"=>"hour") do h parse(Int, h)-1 end
-    for n in names(dh)
-        if eltype(dh[!, n]) == String && startswith(n, "column-")
-            replace_column!(dh, n=>n[length("column-")+1:end]) do s parse(Float64, s) end
+function average_data(dataArr)
+    avg = copy(dataArr[1])
+    for i = 2:length(dataArr)
+        data = dataArr[i]
+        for colName in names(data)
+            col = data[!, colName]
+            if eltype(col) == Float64
+                avg[!, colName] += col
+            end
         end
     end
-    dh
+    for colName in names(avg)
+        col = avg[!, colName]
+        if eltype(col) == Float64
+            avg[!, colName] /= length(dataArr)
+        end
+    end
+    avg
+end
+
+function get_weather_average(endDate = Dates.today(), fromDate = endDate - Dates.Month(3))
+    dataArr = Dict{String, DataFrame}()
+    for (loc, latLon) in weather_locations
+        push!(dataArr, loc=>get_weather(endDate, fromDate, latLon[1], latLon[2]))
+    end
+    average_data(collect(values(dataArr)))
 end
 
 function join_histories(dam, weather)
-    dh = convert_dam(dam)
-    innerjoin(dh, weather, on=["date", "hour"])
+    innerjoin(dam, weather, on=["date", "hour"])
 end
+
+function get_dam_with_weather(endDate = Dates.today() + Dates.Day(1), fromDate = endDate - Dates.Month(3) - Dates.Day(1), dam = nothing)
+    if isnothing(dam)
+        dam = scrape_history(endDate, fromDate)
+    elseif typeof(dam) <: AbstractString
+        dam = CSV.read(dam, DataFrame)
+    end
+    weather = get_weather_average(dam[end, "date"], dam[begin, "date"])
+    join_histories(dam, weather)
+end
+
+write_history("dam-weather", get_dam_with_weather())
 
 movingfunc(f, g, n) = [f(g[max(1, i-n+1):i]) for i in 1:length(g)]
 movingaverage(g, n) = movingfunc(mean, g, n)
