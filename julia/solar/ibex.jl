@@ -77,7 +77,19 @@ function write_history(data)
     CSV.write("dam-history-$fromDate-to-$endDate.csv", data)
 end
 
-write_history(scrape_history())
+# write_history(scrape_history())
+
+const weather_locations = Dict(
+    "Sofia"=>(42.6975, 23.3241),
+    "Plovdiv"=>(42.15, 24.75),
+    "Varna"=>(43.2167, 27.9167),
+    "Burgas"=>(42.5061, 27.4678),
+    "Pleven"=>(43.4167, 24.6167),
+    "Ruse"=>(43.8487, 25.9534),
+    "Vidin"=>(43.9916, 22.8824),
+    "Sandanski"=>(41.5667, 23.2833),
+    "Sopot"=>(42.65, 24.75),
+)
 
 function parse_weather(json, units)
     js = Dict{String, Any}()
@@ -91,22 +103,87 @@ function parse_weather(json, units)
     DataFrame(js)
 end    
 
-function get_weather_history(endDate = Dates.today() - Dates.Day(3), fromDate = endDate - Dates.Month(3) - Dates.Day(3), lat = 42.6975, lon = 23.3241)
-    uri = HTTP.URI("https://archive-api.open-meteo.com/v1/archive"; query=Dict(
+tilt_from_lat(lat) = Int(round(lat)) - 7
+
+function weather_forecast_uri(daysAhead, daysPast, lat, lon)
+    HTTP.URI("https://api.open-meteo.com/v1/forecast"; query=Dict(
         "latitude"=>lat,
         "longitude"=>lon,
+        "timezone"=>"Europe/Berlin",
+        "hourly"=>"temperature_2m,wind_speed_10m,precipitation,cloud_cover,global_tilted_irradiance",
+        "tilt"=>tilt_from_lat(lat),
+        "past_days"=>daysPast,
+        "forecast_days"=>daysAhead,
+    ))
+end
+
+function weather_history_uri(endDate, fromDate, lat, lon)
+    HTTP.URI("https://archive-api.open-meteo.com/v1/archive"; query=Dict(
+        "latitude"=>lat,
+        "longitude"=>lon,
+        "timezone"=>"Europe/Berlin",
+        "hourly"=>"temperature_2m,wind_speed_10m,precipitation,cloud_cover,global_tilted_irradiance",
+        "tilt"=>tilt_from_lat(lat),
         "start_date"=>string(fromDate),
         "end_date"=>string(endDate),
-        "daily"=>"sunrise,sunset",
-        "hourly"=>"temperature_2m,precipitation,cloud_cover,wind_speed_10m,global_tilted_irradiance",
-        "timezone"=>"Europe/Berlin",
-        "tilt"=>35,
     ))
+end
+
+function weather_table(uri)
     resp = HTTP.get(uri)
     json = JSON.parse(String(copy(resp.body)))
-    daily = parse_weather(json["daily"], json["daily_units"])
-    hourly = parse_weather(json["hourly"], json["hourly_units"])
-    daily, hourly
+    data = parse_weather(json["hourly"], json["hourly_units"])
+    data[!, "date"] = map(Date, data[:, "time"])
+    data[!, "hour"] = map(hour, data[:, "time"])
+    select!(data, Not("time"))
+end
+
+function get_weather_forecast(daysAhead = 7, daysPast = 7, lat = 42.6975, lon = 23.3241)
+    weather_table(weather_forecast_uri(daysAhead, daysPast, lat, lon))
+end
+
+function get_weather_history(endDate = Dates.today() - Dates.Day(3), fromDate = endDate - Dates.Month(3) - Dates.Day(3), lat = 42.6975, lon = 23.3241)
+    weather_table(weather_history_uri(endDate, fromDate, lat, lon))
+end
+
+function get_weather(endDate = Dates.today(), fromDate = endDate - Dates.Month(3), lat = 42.6975, lon = 23.3241)
+    today = Dates.today()
+    weather = nothing
+    if fromDate < today - Dates.Month(3)
+        weather = get_weather_history(min(endDate, Dates.today() - Dates.Day(3)), fromDate, lat, lon)
+        fromDate = weather[end, "date"] + Dates.Day(1)
+    end
+    if fromDate < endDate
+        forecast = get_weather_forecast(endDate - Dates.today() + Dates.Day(1) |> Dates.days, Dates.today() - fromDate |> Dates.days, lat, lon)
+        if !isnothing(weather)
+            weather = vcat(weather, forecast)
+        else
+            weather = forecast
+        end
+    end
+    weather
+end
+
+function replace_column!(fn, data, mapping)
+    data[!, mapping[2]] = map(fn, data[:, mapping[1]])
+    select!(data, Not(mapping[1]))
+end
+
+function convert_dam(dam)
+    dh = copy(dam)
+    replace_column!(Date, dh, "column-date"=>"date")
+    replace_column!(dh, "column-time_part"=>"hour") do h parse(Int, h)-1 end
+    for n in names(dh)
+        if eltype(dh[!, n]) == String && startswith(n, "column-")
+            replace_column!(dh, n=>n[length("column-")+1:end]) do s parse(Float64, s) end
+        end
+    end
+    dh
+end
+
+function join_histories(dam, weather)
+    dh = convert_dam(dam)
+    innerjoin(dh, weather, on=["date", "hour"])
 end
 
 movingfunc(f, g, n) = [f(g[max(1, i-n+1):i]) for i in 1:length(g)]
