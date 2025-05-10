@@ -127,6 +127,36 @@ const weather_locations = Dict(
     "Sopot"=>(42.65, 24.75),
 )
 
+const holidays = [
+    Date("2024-01-01"),
+    Date("2024-03-03"),
+    Date("2024-05-01"),
+    Date("2024-05-05"),
+    Date("2024-05-06"),
+    Date("2024-05-24"),
+    Date("2024-09-06"),
+    Date("2024-09-22"),
+    Date("2024-12-24"),
+    Date("2024-12-25"),
+    Date("2024-12-26"),
+
+    Date("2025-01-01"),
+    Date("2025-03-03"),
+    Date("2025-04-20"),
+    Date("2025-05-01"),
+    Date("2025-05-06"),
+    Date("2025-05-24"),
+    Date("2025-09-06"),
+    Date("2025-09-22"),
+    Date("2025-12-24"),
+    Date("2025-12-25"),
+    Date("2025-12-26"),
+]
+
+function is_workday(date)
+    (dayofweek(date) in 1:5) && isempty(searchsorted(holidays, date))
+end
+
 function parse_weather(json, units)
     js = Dict{String, Any}()
     for (k,v) in json
