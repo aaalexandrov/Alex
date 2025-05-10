@@ -272,7 +272,20 @@ function get_dam_with_weather(endDate = Dates.today() + Dates.Day(1), fromDate =
     join_histories(dam, weather)
 end
 
-write_history("dam-weather", get_dam_with_weather())
+function merge_csvs(prefix = "dam-weather")
+    expr = Regex("$prefix.*\\.csv")
+    files = filter(readdir()) do f
+        !isnothing(match(expr, f))
+    end
+    frames = map(files) do f 
+        CSV.read(f, DataFrame)
+    end
+    data = vcat(frames...)
+    sort!(data, ["date", "hour"])
+    unique!(data, ["date", "hour"])
+end
+
+# write_history("dam-weather", get_dam_with_weather())
 
 movingfunc(f, g, n) = [f(g[max(1, i-n+1):i]) for i in 1:length(g)]
 movingaverage(g, n) = movingfunc(mean, g, n)
@@ -282,20 +295,35 @@ movingmax(g, n) = movingfunc(maximum, g, n)
 
 normalize_series(g) = (g.-mean(g))./std(g)
 
-function add_dayofweek!(data)
-    data[!, "column-dayofweek"] = map(data[:, "column-date"]) do d 
-        Dates.dayofweek(Date(d)) 
+function add_extra_data(data, neg_threshold = 0)
+    data[!, "negative"] = data[!, "price"] .<= neg_threshold
+    data[!, "workday"] = is_workday.(data[!, "date"])
+    data
+end
+
+distance_hour = let 
+    # coefs are divided by yearly mean for the values
+    coefs = [
+        ("workday", 10000.0),
+        ("global_tilted_irradiance", 10 / 204.2),
+        ("temperature_2m", 5 / 14.7),
+        ("wind_speed_10m", 2 / 8.6),
+        ("precipitation", 1 / 0.063),
+        ("cloud_cover", 1 / 47.6),
+    ]
+    function(h1, h2) 
+        sum(abs(h1[coef[1]] - h2[coef[1]]) * coef[2] for coef in coefs)
     end
 end
 
-function split_weekends(data)
-    weekdays = filter(data) do r r["column-dayofweek"] in 1:5 end
-    weekends = filter(data) do r r["column-dayofweek"] in 6:7 end
-    weekdays, weekends
+function distance_day(day1, day2)
+    @assert(size(day1, 1) == size(day2, 1) == 24)
+    sum(distance_hour(day1[h, :], day2[h, :]) for h = 1:24) *
+        (1 + abs(Dates.days(day1[1, "date"] - day2[1, "date"])) / 30) # 30 days difference will multiply the distance by 2
 end
 
 function predict_day(data)
-    price = data[:, "column-price"]
+    price = data[:, "price"]
     avg = movingaverage(price, 168)
     day_delta = avg[end] - avg[end - 24]
     price[end-23:end] .+ day_delta
@@ -311,5 +339,5 @@ function predict_days(data, days)
 end
 
 function diff_predicted_days(data, days)
-    predict_days(data[begin:end-24, :], days) .- data[end-24days+1:end, "column-price"]
+    predict_days(data[begin:end-24, :], days) .- data[end-24days+1:end, "price"]
 end    
