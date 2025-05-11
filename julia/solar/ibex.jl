@@ -322,11 +322,23 @@ function distance_day(day1, day2)
         (1 + abs(Dates.days(day1[1, "date"] - day2[1, "date"])) / 30) # 30 days difference will multiply the distance by 2
 end
 
-function predict_day(data)
+function similiar_days(data, day, numSimilar = 1)
+    distances = [(i, distance_day(day, data[i:i+23, :])) for i in 1:24:size(data, 1)]
+    sort!(distances, lt=(a,b)->a[2]<b[2])
+    map(distances[1:numSimilar]) do dist
+        data[dist[1]:dist[1]+23]
+    end
+end    
+
+function predict_day(data, forecastDay)
     price = data[:, "price"]
     avg = movingaverage(price, 168)
     day_delta = avg[end] - avg[end - 24]
-    price[end-23:end] .+ day_delta
+
+    similar = similar_days(data, forecastDay)[1]
+    targetAvg = mean(price[end-23:end]) + day_delta
+    similarDelta = mean(similar[:, "price"]) - targetAvg
+    similar[:, "price"] .+ similarDelta # in case similarDelta > 0, we need to correct the resulting function to extend to 0 around the interval where it crossed 0 in the original similar day
 end
 
 function predict_days(data, days)
