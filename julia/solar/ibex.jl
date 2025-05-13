@@ -283,6 +283,8 @@ function merge_csvs(prefix = "dam-weather")
     data = vcat(frames...)
     sort!(data, ["date", "hour"])
     unique!(data, ["date", "hour"])
+    @assert(size(data, 1) % 24 == 0)
+    data
 end
 
 # write_history("dam-weather", get_dam_with_weather())
@@ -301,55 +303,94 @@ function add_extra_data(data, neg_threshold = 0)
     data
 end
 
-distance_hour = let 
-    # coefs are divided by yearly mean for the values
-    coefs = [
-        ("workday", 10000.0),
-        ("global_tilted_irradiance", 10 / 204.2),
-        ("temperature_2m", 5 / 14.7),
-        ("wind_speed_10m", 2 / 8.6),
-        ("precipitation", 1 / 0.063),
-        ("cloud_cover", 1 / 47.6),
-    ]
-    function(h1, h2) 
-        sum(abs(h1[coef[1]] - h2[coef[1]]) * coef[2] for coef in coefs)
-    end
+# coefs are divided by yearly mean for the values
+distance_coefs = [
+    ("workday", 10000.0),
+    ("global_tilted_irradiance", 0.5897159647404511),
+    ("temperature_2m", 2.4401360544217683),
+    ("wind_speed_10m", 2.162790697674419),
+    ("precipitation", 24.873015873015873),
+    ("cloud_cover", 0.10504201680672232),
+]
+
+function distance_hour(h1, h2, coefs) 
+    sum(abs(h1[coef[1]] - h2[coef[1]]) * coef[2] for coef in coefs)
 end
 
-function distance_day(day1, day2)
+function distance_day(day1, day2, coefs)
     @assert(size(day1, 1) == size(day2, 1) == 24)
-    sum(distance_hour(day1[h, :], day2[h, :]) for h = 1:24) *
+    sum(distance_hour(day1[h, :], day2[h, :], coefs) for h = 1:24) *
         (1 + abs(Dates.days(day1[1, "date"] - day2[1, "date"])) / 30) # 30 days difference will multiply the distance by 2
 end
 
-function similiar_days(data, day, numSimilar = 1)
-    distances = [(i, distance_day(day, data[i:i+23, :])) for i in 1:24:size(data, 1)]
+function similar_days(data, day, numSimilar, coefs)
+    distances = [(i, distance_day(day, data[i:i+23, :], coefs)) for i in 1:24:size(data, 1)]
     sort!(distances, lt=(a,b)->a[2]<b[2])
     map(distances[1:numSimilar]) do dist
-        data[dist[1]:dist[1]+23]
+        data[dist[1]:dist[1]+23, :]
     end
 end    
 
-function predict_day(data, forecastDay)
+function predict_day(data, forecastDay, coefs)
     price = data[:, "price"]
     avg = movingaverage(price, 168)
     day_delta = avg[end] - avg[end - 24]
 
-    similar = similar_days(data, forecastDay)[1]
+    similar = average_data(similar_days(data, forecastDay, 4, coefs))
     targetAvg = mean(price[end-23:end]) + day_delta
-    similarDelta = mean(similar[:, "price"]) - targetAvg
-    similar[:, "price"] .+ similarDelta # in case similarDelta > 0, we need to correct the resulting function to extend to 0 around the interval where it crossed 0 in the original similar day
-end
-
-function predict_days(data, days)
-    pred = Float64[]
-    for d = days-1:-1:0 
-        data_slice = data[begin:end-24d, :]
-        append!(pred, predict_day(data_slice))
+    similarDelta = targetAvg - mean(similar[:, "price"])
+    pred = similar[:, "price"] .+ similarDelta 
+    @assert abs(mean(pred) - targetAvg) < 1e-6
+    # correct the resulting function to extend to at least 0 around the interval where it crossed 0 in the original similar day
+    for i = 1:length(pred)
+        if similar[i, "price"] <= 0
+            pred[i] = min(pred[i], 0)
+        end
     end
     pred
 end
 
-function diff_predicted_days(data, days)
-    predict_days(data[begin:end-24, :], days) .- data[end-24days+1:end, "price"]
-end    
+function predict_days(data, days, coefs = distance_coefs)
+    pred = Float64[]
+    for d = size(data, 1)-24days+1:24:size(data, 1)
+        data_slice = data[begin:d-1, :]
+        forecastDay = data[d:d+23, :]
+        append!(pred, predict_day(data_slice, forecastDay, coefs))
+    end
+    pred
+end
+
+function diff_predicted_days(data, days, coefs = distance_coefs)
+    predict_days(data[begin:end, :], days, coefs) .- data[end-24days+1:end, "price"]
+end
+
+function optimize_coef(data, days, i, step, coefs)
+    deviation = std(diff_predicted_days(data, days, coefs))
+    found = false
+    while true
+        coefs[i] = (coefs[i][1], coefs[i][2]+step)
+        dev = std(diff_predicted_days(data, days, coefs))
+        if dev >= deviation
+            coefs[i] = (coefs[i][1], coefs[i][2]-step)
+            break
+        end
+        deviation = dev
+        found = true
+    end
+    found
+end
+
+function optimize_coefs(data, days, step = 0.1, coefs = copy(distance_coefs))
+    while true
+        optimized = 0
+        for i = 2:length(coefs)
+            if optimize_coef(data, days, i, step, coefs) || optimize_coef(data, days, i, -step, coefs)
+                optimized += 1
+            end
+        end
+        if optimized == 0
+            break
+        end
+    end
+    coefs
+end
