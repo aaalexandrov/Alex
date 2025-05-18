@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON, Flux, CUDA
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -297,9 +297,15 @@ movingmax(g, n) = movingfunc(maximum, g, n)
 
 normalize_series(g) = (g.-mean(g))./std(g)
 
+date_to_phase(date) = 2pi * (dayofyear(date) - 1) / daysinyear(date)
+
 function add_extra_data(data, neg_threshold = 0)
     data[!, "negative"] = data[!, "price"] .<= neg_threshold
     data[!, "workday"] = is_workday.(data[!, "date"])
+    data[!, "phase_year_sin"] = sin.(date_to_phase.(data[!, "date"]))
+    data[!, "phase_year_cos"] = cos.(date_to_phase.(data[!, "date"]))
+    data[!, "phase_hour_sin"] = sin.(data[!, "hour"].*2pi./24)
+    data[!, "phase_hour_cos"] = cos.(data[!, "hour"].*2pi./24)
     data
 end
 
@@ -394,3 +400,21 @@ function optimize_coefs(data, days, step = 0.1, coefs = copy(distance_coefs))
     end
     coefs
 end
+
+function dam_training_data(data)
+    args = select(data, "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
+    labels = select(data, "price")
+    collect(zip(Vector{Float32}.(eachrow(args)), Float32.(only.(eachrow(labels)))))
+end
+
+function dam_train(data, model = Chain(Dense(10 => 10), Dense(10 => 1), only))
+    training = dam_training_data(data)
+    
+    optState = Flux.setup(Adam(), model)
+    for epoch = 1:100
+        Flux.train!(model, training, optState) do m, a, l
+            Flux.mse(m(a), l)
+        end
+    end
+    model
+end    
