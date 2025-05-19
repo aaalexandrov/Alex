@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON, Flux, CUDA
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON, Flux, CUDA, ProgressMeter
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -404,17 +404,24 @@ end
 function dam_training_data(data)
     args = select(data, "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
     labels = select(data, "price")
-    collect(zip(Vector{Float32}.(eachrow(args)), Float32.(only.(eachrow(labels)))))
+    (reduce(hcat, Vector{Float32}.(eachrow(args))), Float32.(only.(eachrow(labels))))
 end
 
-function dam_train(data, model = Chain(Dense(10 => 10), Dense(10 => 1), only))
+function dam_train(data, model = Chain(Dense(10 => 10), Dense(10 => 1)))
+    CUDA.allowscalar(false)
     training = dam_training_data(data)
-    
-    optState = Flux.setup(Adam(), model)
-    for epoch = 1:100
-        Flux.train!(model, training, optState) do m, a, l
-            Flux.mse(m(a), l)
+    loader = Flux.DataLoader(training, batchsize=64, shuffle=true)
+
+    model_cu = model #|> cu
+    optState = Flux.setup(Adam(), model_cu)
+    @showprogress for epoch = 1:100
+        for xy_cpu in loader
+            x, y = xy_cpu #|> cu
+            grads = Flux.gradient(model_cu) do m
+                Flux.mse(m(x), y')
+            end
+            Flux.update!(optState, model_cu, grads[1])
         end
     end
-    model
+    model |> cpu
 end    
