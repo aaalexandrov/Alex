@@ -295,7 +295,15 @@ movingmedian(g, n) = movingfunc(median, g, n)
 movingmin(g, n) = movingfunc(minimum, g, n)
 movingmax(g, n) = movingfunc(maximum, g, n)
 
-normalize_series(g) = (g.-mean(g))./std(g)
+function stdmean(xs)
+    m = mean(xs)
+    stdm(xs, m), m
+end    
+
+function normalize_series(g) 
+    s, m = stdmean(g)
+    (g.-m)./s
+end
 
 date_to_phase(date) = 2pi * (dayofyear(date) - 1) / daysinyear(date)
 
@@ -403,25 +411,35 @@ end
 
 function dam_training_data(data)
     args = select(data, "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
+    # for col in ["cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m"]
+    #     args[!, col] = normalize_series(args[!, col])
+    # end
     labels = select(data, "price")
     (reduce(hcat, Vector{Float32}.(eachrow(args))), Float32.(only.(eachrow(labels))))
 end
 
-function dam_train(data, model = Chain(Dense(10 => 10), Dense(10 => 1)))
-    CUDA.allowscalar(false)
+function dam_train(data, model = Chain(Dense(10 => 10, tanh), Dense(10 => 1)); epochs = 1000, use_cuda = false)
+    to_device = identity
+    if use_cuda
+        CUDA.allowscalar(false)
+        to_device = cu
+    end
     training = dam_training_data(data)
     loader = Flux.DataLoader(training, batchsize=64, shuffle=true)
 
-    model_cu = model #|> cu
+    model_cu = model |> to_device
     optState = Flux.setup(Adam(), model_cu)
-    @showprogress for epoch = 1:100
+    @showprogress for epoch = 1:epochs
         for xy_cpu in loader
-            x, y = xy_cpu #|> cu
+            x, y = xy_cpu |> to_device
             grads = Flux.gradient(model_cu) do m
                 Flux.mse(m(x), y')
             end
             Flux.update!(optState, model_cu, grads[1])
         end
     end
-    model |> cpu
+    model = model_cu |> cpu
+    @info stdmean(model(training[1])' .- training[2])
+    model
 end    
+
