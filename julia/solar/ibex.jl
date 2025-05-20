@@ -409,23 +409,33 @@ function optimize_coefs(data, days, step = 0.1, coefs = copy(distance_coefs))
     coefs
 end
 
+normalize_coefs = [
+    "cloud_cover" => (33.63174884069838, 49.25521848602989),
+    "global_tilted_irradiance" => (279.56952046078345, 197.3829637751787),
+    "precipitation" => (0.17107508931322893, 0.05927550357374919),
+    "temperature_2m" => (9.462730828618534, 12.754023513645224), 
+    "wind_speed_10m" => (3.5381542287193444, 8.198834470435347),  
+]
+
 function dam_training_data(data)
     args = select(data, "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
-    # for col in ["cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m"]
-    #     args[!, col] = normalize_series(args[!, col])
-    # end
-    labels = select(data, "price")
-    (reduce(hcat, Vector{Float32}.(eachrow(args))), Float32.(only.(eachrow(labels))))
+
+    for (col, divsub) in normalize_coefs
+        args[!, col] = (args[!, col] .- divsub[2]) ./ divsub[1]
+    end
+
+    labels = select(data, "price", "negative")
+    (reduce(hcat, Vector{Float32}.(eachrow(args))), reduce(hcat, Vector{Float32}.(eachrow(labels))))
 end
 
-function dam_train(data, model = Chain(Dense(10 => 10, tanh), Dense(10 => 1)); epochs = 1000, use_cuda = false)
+function dam_train(data, model = Chain(Dense(10=>10, tanh), Dense(10=>20, relu), Dense(20=>20, sigmoid), Dense(20=>10, softplus), Dense(10=>2)); epochs = 1000, use_cuda = false)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
         to_device = cu
     end
     training = dam_training_data(data)
-    loader = Flux.DataLoader(training, batchsize=64, shuffle=true)
+    loader = Flux.DataLoader(training, batchsize=64, shuffle=true) |> to_device
 
     model_cu = model |> to_device
     optState = Flux.setup(Adam(), model_cu)
@@ -433,13 +443,23 @@ function dam_train(data, model = Chain(Dense(10 => 10, tanh), Dense(10 => 1)); e
         for xy_cpu in loader
             x, y = xy_cpu |> to_device
             grads = Flux.gradient(model_cu) do m
-                Flux.mse(m(x), y')
+                #Flux.mse(m(x), y')
+                Flux.huber_loss(m(x), y)
             end
             Flux.update!(optState, model_cu, grads[1])
         end
     end
     model = model_cu |> cpu
-    @info stdmean(model(training[1])' .- training[2])
+    @info stdmean(model(training[1]) .- training[2])
     model
+end
+
+# mm=dam_train(data, Chain(Dense(10=>10, tanh), Dense(10=>20, tanh), Dense(20=>10, tanh), Dense(10=>1)); epochs=10000)
+# mm=dam_train(data, Chain(Dense(10=>10, tanh), Dense(10=>20, relu), Dense(20=>20, sigmoid), Dense(20=>10, softplus), Dense(10=>2)))
+
+function plot_model(model, data, row=1)
+    training = dam_training_data(data)
+    m = model(training[1])
+    plot([training[2][row,:] m[row,:]])
 end    
 
