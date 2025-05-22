@@ -307,7 +307,7 @@ end
 
 date_to_phase(date) = 2pi * (dayofyear(date) - 1) / daysinyear(date)
 
-function add_extra_data(data, neg_threshold = 0)
+function add_extra_data(data, neg_threshold = 0, prepend_days = 1)
     data[!, "negative"] = data[!, "price"] .<= neg_threshold
     data[!, "workday"] = is_workday.(data[!, "date"])
     data[!, "phase_year_sin"] = sin.(date_to_phase.(data[!, "date"]))
@@ -409,6 +409,15 @@ function optimize_coefs(data, days, step = 0.1, coefs = copy(distance_coefs))
     coefs
 end
 
+function prepend_day(data)
+    @assert data[1, "hour"] == 0
+    cycle_date = data[1, "date"] - Dates.Day(1) + Dates.Year(1)
+    cycle_rows = filter(r->r.date == cycle_date, data)
+    #@assert size(cycle_rows, 1) == 24
+    map!(d->d-Dates.Year(1), cycle_rows[!, "date"], cycle_rows[!, "date"])
+    vcat(cycle_rows, data)
+end
+
 normalize_coefs = [
     "cloud_cover" => (33.63174884069838, 49.25521848602989),
     "global_tilted_irradiance" => (279.56952046078345, 197.3829637751787),
@@ -418,33 +427,42 @@ normalize_coefs = [
 ]
 
 function dam_training_data(data)
-    args = select(data, "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
+    data = prepend_day(data)
+    args = select(data[25:end, :], "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
 
-    for (col, divsub) in normalize_coefs
-        args[!, col] = (args[!, col] .- divsub[2]) ./ divsub[1]
+    for (col, (div, sub)) in normalize_coefs
+        args[!, col] = (args[!, col] .- sub) ./ div
     end
 
-    labels = select(data, "price", "negative")
-    (reduce(hcat, Vector{Float32}.(eachrow(args))), reduce(hcat, Vector{Float32}.(eachrow(labels))))
+    price_history = reduce(hcat, data[i-24:i-1, "price"] for i=25:size(data, 1))
+
+    labels = select(data[25:end, :], 
+        #"price", 
+        "negative")
+    xs = reduce(hcat, Vector{Float32}.(eachrow(args)))
+    ys = reduce(hcat, Vector{Float32}.(eachrow(labels)))
+    vcat(xs, price_history), ys
 end
 
-function dam_train(data, model = Chain(Dense(10=>10, tanh), Dense(10=>20, relu), Dense(20=>20, sigmoid), Dense(20=>10, softplus), Dense(10=>2)); epochs = 1000, use_cuda = false)
+function dam_train(data, model = Chain(Dense(34=>34, tanh), Dense(34=>1, sigmoid)); epochs = 1000, use_cuda = false)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
         to_device = cu
     end
     training = dam_training_data(data)
-    loader = Flux.DataLoader(training, batchsize=64, shuffle=true) |> to_device
 
     model_cu = model |> to_device
     optState = Flux.setup(Adam(), model_cu)
     @showprogress for epoch = 1:epochs
+        loader = Flux.DataLoader(training, batchsize=64, shuffle=true)
         for xy_cpu in loader
             x, y = xy_cpu |> to_device
             grads = Flux.gradient(model_cu) do m
-                #Flux.mse(m(x), y')
                 Flux.huber_loss(m(x), y)
+                #Flux.msle(m(x), y)
+                #Flux.mse(m(x), y)
+                #Flux.binarycrossentropy(m(x), y)
             end
             Flux.update!(optState, model_cu, grads[1])
         end
@@ -460,6 +478,7 @@ end
 function plot_model(model, data, row=1)
     training = dam_training_data(data)
     m = model(training[1])
+    @info stdmean(m[row,:] .- training[2][row,:])
     plot([training[2][row,:] m[row,:]])
 end    
 
