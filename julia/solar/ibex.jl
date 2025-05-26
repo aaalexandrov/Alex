@@ -426,15 +426,33 @@ normalize_coefs = [
     "wind_speed_10m" => (3.5381542287193444, 8.198834470435347),  
 ]
 
+function prev_day_indices(i)
+    start = (div(i-1, 24) - 1) * 24 + 1
+    start:start+23
+end
+
 function dam_training_data(data)
     data = prepend_day(data)
-    args = select(data[25:end, :], "cloud_cover", "global_tilted_irradiance", "precipitation", "temperature_2m", "wind_speed_10m", "workday", "phase_hour_sin", "phase_hour_cos", "phase_year_sin", "phase_year_cos")
+    args = select(
+        data[25:end, :], 
+        "cloud_cover", 
+        "global_tilted_irradiance", 
+        "precipitation", 
+        "temperature_2m", 
+        "wind_speed_10m", 
+        "workday", 
+        "phase_hour_sin", 
+        "phase_hour_cos", 
+        #"hour",
+        "phase_year_sin", 
+        "phase_year_cos")
 
     for (col, (div, sub)) in normalize_coefs
         args[!, col] = (args[!, col] .- sub) ./ div
     end
 
-    price_history = reduce(hcat, data[i-24:i-1, "price"] for i=25:size(data, 1))
+    #price_history = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i=25:size(data, 1))
+    price_history = reduce(hcat, Float32.(data[prev_day_indices(i), "price"]) for i=25:size(data, 1))
 
     labels = select(data[25:end, :], 
         #"price", 
