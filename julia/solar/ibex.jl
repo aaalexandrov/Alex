@@ -1,4 +1,4 @@
-using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON, Flux, CUDA, ProgressMeter
+using HTTP, Gumbo, AbstractTrees, DataFrames, CSV, Dates, Plots, Statistics, JSON, Flux, CUDA, ProgressMeter, JLD2
 
 function for_elem(predicate, root)
     for elem in PreOrderDFS(root)
@@ -309,6 +309,7 @@ date_to_phase(date) = 2pi * (dayofyear(date) - 1) / daysinyear(date)
 
 function add_extra_data(data, neg_threshold = 0, prepend_days = 1)
     data[!, "negative"] = data[!, "price"] .<= neg_threshold
+    data[!, "positive"] = 1 .- data[!, "negative"]
     data[!, "workday"] = is_workday.(data[!, "date"])
     data[!, "phase_year_sin"] = sin.(date_to_phase.(data[!, "date"]))
     data[!, "phase_year_cos"] = cos.(date_to_phase.(data[!, "date"]))
@@ -426,6 +427,13 @@ normalize_coefs = [
     "wind_speed_10m" => (3.5381542287193444, 8.198834470435347),  
 ]
 
+function normalize_coefs!(data)
+    for (col, (div, sub)) in normalize_coefs
+        data[!, col] = (data[!, col] .- sub) ./ div
+    end
+    data
+end
+
 function prev_day_indices(i)
     start = (div(i-1, 24) - 1) * 24 + 1
     start:start+23
@@ -441,28 +449,33 @@ function dam_training_data(data)
         "temperature_2m", 
         "wind_speed_10m", 
         "workday", 
+        #"hour",
         "phase_hour_sin", 
         "phase_hour_cos", 
-        #"hour",
         "phase_year_sin", 
-        "phase_year_cos")
+        "phase_year_cos",
+    )
 
-    for (col, (div, sub)) in normalize_coefs
-        args[!, col] = (args[!, col] .- sub) ./ div
-    end
+    normalize_coefs!(args)
 
-    #price_history = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i=25:size(data, 1))
-    price_history = reduce(hcat, Float32.(data[prev_day_indices(i), "price"]) for i=25:size(data, 1))
+    price_history = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i=25:size(data, 1))
+    #price_history = reduce(hcat, Float32.(data[prev_day_indices(i), "price"]) for i=25:size(data, 1))
 
-    labels = select(data[25:end, :], 
-        #"price", 
-        "negative")
+    labels = select(
+        data[25:end, :], 
+        "price", 
+        #"positive",
+        "negative",
+    )
     xs = reduce(hcat, Vector{Float32}.(eachrow(args)))
     ys = reduce(hcat, Vector{Float32}.(eachrow(labels)))
     vcat(xs, price_history), ys
 end
 
-function dam_train(data, model = Chain(Dense(34=>34, tanh), Dense(34=>1, sigmoid)); epochs = 1000, use_cuda = false)
+model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2))
+#model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2, tanh), Dense(2=>2))
+
+function dam_train(data, model = model_def(); epochs = 1000, use_cuda = false, eta = 0.001)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
@@ -471,16 +484,24 @@ function dam_train(data, model = Chain(Dense(34=>34, tanh), Dense(34=>1, sigmoid
     training = dam_training_data(data)
 
     model_cu = model |> to_device
-    optState = Flux.setup(Adam(), model_cu)
+    optState = Flux.setup(Adam(eta), model_cu)
     @showprogress for epoch = 1:epochs
         loader = Flux.DataLoader(training, batchsize=64, shuffle=true)
         for xy_cpu in loader
             x, y = xy_cpu |> to_device
             grads = Flux.gradient(model_cu) do m
-                Flux.huber_loss(m(x), y)
+                y_hat = m(x)
+                price_loss = Flux.huber_loss(y_hat[1,:], y[1,:])
+                #neg_loss = Flux.logitbinarycrossentropy(y_hat[2:3,:], y[2:3,:])
+                #neg_loss = Flux.huber_loss(y_hat[2:3,:], y[2:3,:])
+                neg_loss = Flux.huber_loss(y_hat[2,:], y[2,:])
+                price_loss + neg_loss * 10
+                #Flux.huber_loss(m(x), y)
                 #Flux.msle(m(x), y)
                 #Flux.mse(m(x), y)
                 #Flux.binarycrossentropy(m(x), y)
+                #Flux.logitcrossentropy(m(x), y)
+                #Flux.logitbinarycrossentropy(m(x), y)
             end
             Flux.update!(optState, model_cu, grads[1])
         end
@@ -498,5 +519,53 @@ function plot_model(model, data, row=1)
     m = model(training[1])
     @info stdmean(m[row,:] .- training[2][row,:])
     plot([training[2][row,:] m[row,:]])
-end    
+end
 
+function save_model(mdl, path = "model.jld2")
+    state = Flux.state(mdl)
+    jldsave(path; state)
+end
+
+function load_model(path = "model.jld2")
+    state = JLD2.load(path, "state")
+    mdl = model_def()
+    Flux.loadmodel!(mdl, state)
+end
+
+function predict_day_nn(mdl, data, date)
+    day = filter(r->r.date==date, data)
+    weather = select(
+        day, 
+        "cloud_cover", 
+        "global_tilted_irradiance", 
+        "precipitation", 
+        "temperature_2m", 
+        "wind_speed_10m", 
+        "workday", 
+        "phase_hour_sin", 
+        "phase_hour_cos", 
+        "phase_year_sin", 
+        "phase_year_cos",
+    )
+    normalize_coefs!(weather)
+    weather = reduce(hcat, Vector{Float32}.(eachrow(weather)))
+
+    prev_date = date - Dates.Day(1)
+    prev_day = filter(r->r.date==prev_date, data)
+    prices = Vector{Float32}(prev_day[:, "price"])
+
+    recorded_prices = copy(prices)
+    pred_prices = copy(recorded_prices)
+
+    for i=1:24
+        xs = vcat(weather[:,i], prices[end-23:end])
+        price = mdl(xs)[1]
+        push!(prices, price)
+
+        xs = vcat(weather[:,i], recorded_prices[end-23:end])
+        push!(pred_prices, mdl(xs)[1])
+        push!(recorded_prices, day[i, "price"])
+    end
+
+    prices[end-23:end], Vector{Float32}(day[:, "price"]), pred_prices[end-23:end]
+end    
