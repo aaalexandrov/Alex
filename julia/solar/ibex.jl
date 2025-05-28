@@ -472,8 +472,9 @@ function dam_training_data(data)
     vcat(xs, price_history), ys
 end
 
-model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2))
-#model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2, tanh), Dense(2=>2))
+#model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2))
+model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2, tanh), Dense(2=>2))
+#model_def() = Chain(Dense(33=>33, tanh), Dense(33=>2, tanh), Dense(2=>2))
 
 function dam_train(data, model = model_def(); epochs = 1000, use_cuda = false, eta = 0.001)
     to_device = identity
@@ -569,3 +570,78 @@ function predict_day_nn(mdl, data, date)
 
     prices[end-23:end], Vector{Float32}(day[:, "price"]), pred_prices[end-23:end]
 end    
+
+function dam_training_data_24(data)
+    data = prepend_day(data)
+    args = select(
+        data, 
+        "cloud_cover", 
+        "global_tilted_irradiance", 
+        "precipitation", 
+        "temperature_2m", 
+        "wind_speed_10m", 
+        "workday", 
+    )
+    times = select(
+        data,
+        "phase_hour_sin", 
+        "phase_hour_cos", 
+        "phase_year_sin", 
+        "phase_year_cos",
+    )
+
+    normalize_coefs!(args)
+
+    indRange = 25:size(data,1)-23
+    weather = reduce(hcat, reshape(Matrix(Float32.(args[i:i+23, :])), 1, :)' for i in indRange)
+    price_hist = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i in indRange)
+    time = Matrix{Float32}(times[indRange, :])'
+    prices = reduce(hcat, Float32.(data[i:i+23, "price"]) for i in indRange)
+
+    return vcat(weather, price_hist, time), prices
+end
+
+#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172 => 24, tanh), Flux.Scale(24))
+#model_def_24() = Chain(Dense(172=>86, tanh), Dense(86 => 24))
+model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>86, tanh), Dense(86=>24))
+
+function plot_model_24_tr(model, training)
+    days = reduce(hcat, training[1][:,i] for i=1:size(training[1], 2) if (i-1)%24==0)
+    prices = reduce(hcat, training[2][:,i] for i=1:size(training[2], 2) if (i-1)%24==0)
+    m = model(days)
+    mLin = reshape(m, :)
+    pLin = reshape(prices, :)
+    @info stdmean(mLin .- pLin)
+    plot([pLin mLin])
+end
+
+function plot_model_24(model, data)
+    plot_model_24_tr(model, dam_training_data_24(data))
+end    
+
+function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = false, eta = 0.001)
+    to_device = identity
+    if use_cuda
+        CUDA.allowscalar(false)
+        to_device = cu
+    end
+    training = dam_training_data_24(data)
+
+    model_cu = model |> to_device
+    optState = Flux.setup(Adam(eta), model_cu)
+    @showprogress for epoch = 1:epochs
+        loader = Flux.DataLoader(training, batchsize=96, shuffle=true)
+        for xy_cpu in loader
+            x, y = xy_cpu |> to_device
+            grads = Flux.gradient(model_cu) do m
+                y_hat = m(x)
+                Flux.huber_loss(y_hat, y)
+            end
+            Flux.update!(optState, model_cu, grads[1])
+        end
+    end
+    model = model_cu |> cpu
+    @info stdmean(model(training[1]) .- training[2])
+    #plot_model_24_tr(model, training)
+    model
+end
