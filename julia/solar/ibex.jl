@@ -581,36 +581,43 @@ function dam_training_data_24(data)
         "temperature_2m", 
         "wind_speed_10m", 
         "workday", 
-    )
-    times = select(
-        data,
         "phase_hour_sin", 
         "phase_hour_cos", 
         "phase_year_sin", 
         "phase_year_cos",
     )
+    # times = select(
+    #     data,
+    #     "phase_hour_sin", 
+    #     "phase_hour_cos", 
+    #     "phase_year_sin", 
+    #     "phase_year_cos",
+    # )
 
     normalize_coefs!(args)
 
     indRange = 25:size(data,1)-23
     weather = reduce(hcat, reshape(Matrix(Float32.(args[i:i+23, :])), 1, :)' for i in indRange)
     price_hist = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i in indRange)
-    time = Matrix{Float32}(times[indRange, :])'
+    #time = Matrix{Float32}(times[indRange, :])'
     prices = reduce(hcat, Float32.(data[i:i+23, "price"]) for i in indRange)
+    negatives = reduce(hcat, Float32.(data[i:i+23, "negative"]) for i in indRange)
 
-    return vcat(weather, price_hist, time), prices
+    return vcat(weather, price_hist), vcat(prices, negatives)
 end
 
 #model_def_24() = Chain(Dense(172=>172, tanh), Dense(172 => 24, tanh), Flux.Scale(24))
 #model_def_24() = Chain(Dense(172=>86, tanh), Dense(86 => 24))
-model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>86, tanh), Dense(86=>24))
+#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>172, tanh), Dense(172=>24))
+#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>172, tanh), Dense(172=>48))
+model_def_24() = Chain(Dense(264=>264, tanh), Dense(264=>264, tanh), Dense(264=>48))
 
 function plot_model_24_tr(model, training)
     days = reduce(hcat, training[1][:,i] for i=1:size(training[1], 2) if (i-1)%24==0)
     prices = reduce(hcat, training[2][:,i] for i=1:size(training[2], 2) if (i-1)%24==0)
     m = model(days)
-    mLin = reshape(m, :)
-    pLin = reshape(prices, :)
+    mLin = reshape(m[1:24,:], :)
+    pLin = reshape(prices[1:24,:], :)
     @info stdmean(mLin .- pLin)
     plot([pLin mLin])
 end
@@ -619,7 +626,7 @@ function plot_model_24(model, data)
     plot_model_24_tr(model, dam_training_data_24(data))
 end    
 
-function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = false, eta = 0.001)
+function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = false, eta = 0.001, batchsize = 96)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
@@ -630,12 +637,17 @@ function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = fa
     model_cu = model |> to_device
     optState = Flux.setup(Adam(eta), model_cu)
     @showprogress for epoch = 1:epochs
-        loader = Flux.DataLoader(training, batchsize=96, shuffle=true)
+        loader = Flux.DataLoader(training, batchsize=batchsize, shuffle=true)
         for xy_cpu in loader
             x, y = xy_cpu |> to_device
             grads = Flux.gradient(model_cu) do m
                 y_hat = m(x)
-                Flux.huber_loss(y_hat, y)
+                #Flux.huber_loss(y_hat, y)
+                #divisors = map(x->max(x,0.1), minimum.(abs, eachcol(y[:,1:24])))
+                #price_loss = reduce(+, sum.(eachcol((y_hat[:,1:24]-y[:,1:24]).^2 ./24))./divisors)
+                price_loss = Flux.huber_loss(y_hat[:,1:24]./max.(0.1f0, abs.(y[:,1:24])), sign.(y[:,1:24]))
+                neg_loss = Flux.huber_loss(y_hat[:,25:48], y[:,25:48])
+                price_loss + neg_loss * 10
             end
             Flux.update!(optState, model_cu, grads[1])
         end
