@@ -672,3 +672,163 @@ function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = fa
     #plot_model_24_tr(model, training)
     model
 end
+
+min_offset(mapping) = minimum(minimum(m[2]) for m in mapping)
+max_offset(mapping) = maximum(maximum(m[2]) for m in mapping)
+num_values(mapping) = sum(length(m[2]) for m in mapping)
+
+function select_values(mapping, data; step=1, minOffs = min_offset(mapping), maxOffs = max_offset(mapping))
+    mappedValues = num_values(mapping)
+    firstElem = 1 + max(0, -minOffs)
+    vals = Float32[]
+    for row in firstElem:step:size(data, 1)-maxOffs
+        for (col, offs) in mapping
+            for o in offs
+                push!(vals, data[row+o, col])
+            end
+        end
+    end
+    reshape(vals, mappedValues, :)
+end
+
+const Mapping = Vector{Pair}
+
+mutable struct NNModel
+    paramsMapping::Mapping
+    labelsMapping::Mapping
+    dataStep::Int32
+    epochs::Int32
+    batchsize::Int64
+    eta::Float64
+    createFn::Function
+    loss::Function
+end
+
+function training_data(nn::NNModel, data; step=nn.dataStep)
+    minOffs = min(min_offset(nn.paramsMapping), min_offset(nn.labelsMapping))
+    maxOffs = max(max_offset(nn.paramsMapping), max_offset(nn.labelsMapping))
+    params = select_values(nn.paramsMapping, data; step, minOffs, maxOffs)
+    labels = select_values(nn.labelsMapping, data; step, minOffs, maxOffs)
+    params, labels
+end
+
+function train_nn(nn::NNModel, data, model = nn.createFn(nn); use_cuda=false, epochs=nn.epochs, eta=nn.eta, batchsize=nn.batchsize)
+    to_device = identity
+    if use_cuda
+        CUDA.allowscalar(false)
+        to_device = cu
+    end
+
+    training = training_data(nn, data)
+
+    model_cu = model |> to_device
+    optState = Flux.setup(Adam(eta), model_cu)
+    @showprogress for epoch = 1:epochs
+        loader = Flux.DataLoader(training, batchsize=batchsize, shuffle=true)
+        for xy_cpu in loader
+            x, y = xy_cpu |> to_device
+            grads = Flux.gradient(model_cu) do m
+                y_hat = m(x)
+                nn.loss(y_hat, y)
+            end
+            Flux.update!(optState, model_cu, grads[1])
+        end
+    end
+    model = model_cu |> cpu
+    @info stdmean(model(training[1]) .- training[2])
+    model
+end
+
+function plot_nn(model, nn::NNModel, data; step=nn.dataStep)
+    training = training_data(nn, data; step)
+    m = model(training[1])
+    @info stdmean(m .- training[2])
+    plot([reshape(training[2], :) reshape(m, :)])
+end    
+
+dam_nn() = NNModel(
+    [
+        "cloud_cover"=>0, 
+        "global_tilted_irradiance"=>0, 
+        "precipitation"=>0, 
+        "temperature_2m"=>0, 
+        "wind_speed_10m"=>0, 
+        "workday"=>(-24, 0), 
+        "phase_hour_sin"=>0, 
+        "phase_hour_cos"=>0, 
+        "phase_year_sin"=>0, 
+        "phase_year_cos"=>0,
+        "price"=>-24:-1,
+    ],
+    [
+        "price"=>0
+    ],
+    1,
+    1000,
+    64,
+    1e-3,
+    nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(Dense(p=>p, selu), Dense(p=>l))
+    end,
+    Flux.huber_loss
+)
+
+dam_1() = NNModel(
+    [
+        "cloud_cover"=>(-24, 0), 
+        "global_tilted_irradiance"=>(-24, 0), 
+        "precipitation"=>(-24, 0), 
+        "temperature_2m"=>(-24, 0), 
+        "wind_speed_10m"=>(-24, 0), 
+        "workday"=>(-24, 0), 
+        "phase_hour_sin"=>0, 
+        "phase_hour_cos"=>0, 
+        "phase_year_sin"=>0, 
+        "phase_year_cos"=>0,
+        "price"=>-24,
+    ],
+    [
+        "price"=>0
+    ],
+    1,
+    1000,
+    64,
+    1e-3,
+    nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(Dense(p=>p, selu), Dense(p=>l))
+    end,
+    Flux.huber_loss
+)
+
+dam_24() = NNModel(
+    [
+        "cloud_cover"=>0:23, 
+        "global_tilted_irradiance"=>0:23, 
+        "precipitation"=>0:23, 
+        "temperature_2m"=>0:23, 
+        "wind_speed_10m"=>0:23, 
+        "workday"=>(-24, 0), 
+        "phase_hour_sin"=>0, 
+        "phase_hour_cos"=>0, 
+        "phase_year_sin"=>0, 
+        "phase_year_cos"=>0,
+        "price"=>-24:-1,
+    ],
+    [
+        "price"=>0:23
+    ],
+    1,
+    1000,
+    64,
+    1e-3,
+    nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(Dense(p=>p, selu), Dense(p=>l))
+    end,
+    Flux.huber_loss
+)
