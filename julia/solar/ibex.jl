@@ -388,14 +388,14 @@ function training_data(nn::NNModel, data; step=nn.dataStep)
     params, labels
 end
 
-function train_nn(nn::NNModel, data, model = nn.createFn(nn); use_cuda=false, epochs=nn.epochs, eta=nn.eta, batchsize=nn.batchsize)
+function train_nn(nn::NNModel, data, model = nn.createFn(nn); step = nn.dataStep, use_cuda=false, epochs=nn.epochs, eta=nn.eta, batchsize=nn.batchsize)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
         to_device = cu
     end
 
-    training = training_data(nn, data)
+    training = training_data(nn, data; step)
 
     model_cu = model |> to_device
     optState = Flux.setup(Adam(eta), model_cu)
@@ -446,6 +446,15 @@ function predict_day(model, nn::NNModel, data, date)
     end
     [data[dayInterval, "price"] perfect_pred[1:24]  outputs[1:24]]
 end
+
+function around0_loss(ŷ, y; agg = mean, delta::Real = 1)
+    δ = Flux.Losses.ofeltype(ŷ, delta)
+    Flux.Losses._check_sizes(ŷ, y)
+    abs_error = abs.(ŷ .- y) ./ (1 .+ abs.(y) ./ 10)
+
+    agg(Flux.Losses._huber_metric.(abs_error, δ))
+ end
+
 
 dam_nn() = NNModel(
     paramsMapping = [
@@ -518,6 +527,7 @@ dam_1_offset(offs) = NNModel(
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
+    loss = around0_loss,
 )
 
 dam_24() = NNModel(
@@ -567,3 +577,20 @@ dam_24_1() = NNModel(
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
 )
+
+dam_1_series() = [dam_1_offset(o) for o=0:23]
+
+function train_series(nns, data, models = [nn.createFn(nn) for nn in nns]; step = length(nns), use_cuda=false, epochs=nns[1].epochs, eta=nns[1].eta, batchsize=nns[1].batchsize)
+    for (nn,model) in zip(nns, models)
+        train_nn(nn, data, model; step, use_cuda, epochs, eta, batchsize)
+    end
+    models
+end    
+
+function plot_series(models, nns, data)
+    training = training_data(nns[end], data; step = length(nns))
+    pred = reduce(vcat, model(params) for model in models, params in eachcol(training[1]))
+    labels = data[25:end, nns[1].labelsMapping[1][1]]
+    @info stdmean(pred .- labels)
+    plot([labels pred])
+end
