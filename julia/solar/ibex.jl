@@ -300,11 +300,6 @@ function stdmean(xs)
     stdm(xs, m), m
 end    
 
-function normalize_series(g) 
-    s, m = stdmean(g)
-    (g.-m)./s
-end
-
 date_to_phase(date) = 2pi * (dayofyear(date) - 1) / daysinyear(date)
 
 function add_extra_data(data, neg_threshold = 0, prepend_days = 1)
@@ -318,205 +313,6 @@ function add_extra_data(data, neg_threshold = 0, prepend_days = 1)
     data
 end
 
-# coefs are divided by yearly mean for the values
-distance_coefs = [
-    ("workday", 10000.0),
-    ("global_tilted_irradiance", 0.5897159647404511),
-    ("temperature_2m", 2.4401360544217683),
-    ("wind_speed_10m", 2.162790697674419),
-    ("precipitation", 24.873015873015873),
-    ("cloud_cover", 0.10504201680672232),
-]
-
-function distance_hour(h1, h2, coefs) 
-    sum(abs(h1[coef[1]] - h2[coef[1]]) * coef[2] for coef in coefs)
-end
-
-function distance_day(day1, day2, coefs)
-    @assert(size(day1, 1) == size(day2, 1) == 24)
-    sum(distance_hour(day1[h, :], day2[h, :], coefs) for h = 1:24) *
-        (1 + abs(Dates.days(day1[1, "date"] - day2[1, "date"])) / 30) # 30 days difference will multiply the distance by 2
-end
-
-function similar_days(data, day, numSimilar, coefs)
-    distances = [(i, distance_day(day, data[i:i+23, :], coefs)) for i in 1:24:size(data, 1)]
-    sort!(distances, lt=(a,b)->a[2]<b[2])
-    map(distances[1:numSimilar]) do dist
-        data[dist[1]:dist[1]+23, :]
-    end
-end    
-
-function predict_day(data, forecastDay, coefs)
-    price = data[:, "price"]
-    avg = movingaverage(price, 168)
-    day_delta = avg[end] - avg[end - 24]
-
-    similar = average_data(similar_days(data, forecastDay, 4, coefs))
-    targetAvg = mean(price[end-23:end]) + day_delta
-    similarDelta = targetAvg - mean(similar[:, "price"])
-    pred = similar[:, "price"] .+ similarDelta 
-    @assert abs(mean(pred) - targetAvg) < 1e-6
-    # correct the resulting function to extend to at least 0 around the interval where it crossed 0 in the original similar day
-    for i = 1:length(pred)
-        if similar[i, "price"] <= 0
-            pred[i] = min(pred[i], 0)
-        end
-    end
-    pred
-end
-
-function predict_days(data, days, coefs = distance_coefs)
-    pred = Float64[]
-    for d = size(data, 1)-24days+1:24:size(data, 1)
-        data_slice = data[begin:d-1, :]
-        forecastDay = data[d:d+23, :]
-        append!(pred, predict_day(data_slice, forecastDay, coefs))
-    end
-    pred
-end
-
-function diff_predicted_days(data, days, coefs = distance_coefs)
-    predict_days(data[begin:end, :], days, coefs) .- data[end-24days+1:end, "price"]
-end
-
-function optimize_coef(data, days, i, step, coefs)
-    deviation = std(diff_predicted_days(data, days, coefs))
-    found = false
-    while true
-        coefs[i] = (coefs[i][1], coefs[i][2]+step)
-        dev = std(diff_predicted_days(data, days, coefs))
-        if dev >= deviation
-            coefs[i] = (coefs[i][1], coefs[i][2]-step)
-            break
-        end
-        deviation = dev
-        found = true
-    end
-    found
-end
-
-function optimize_coefs(data, days, step = 0.1, coefs = copy(distance_coefs))
-    while true
-        optimized = 0
-        for i = 2:length(coefs)
-            if optimize_coef(data, days, i, step, coefs) || optimize_coef(data, days, i, -step, coefs)
-                optimized += 1
-            end
-        end
-        if optimized == 0
-            break
-        end
-    end
-    coefs
-end
-
-function prepend_day(data)
-    @assert data[1, "hour"] == 0
-    cycle_date = data[1, "date"] - Dates.Day(1) + Dates.Year(1)
-    cycle_rows = filter(r->r.date == cycle_date, data)
-    #@assert size(cycle_rows, 1) == 24
-    map!(d->d-Dates.Year(1), cycle_rows[!, "date"], cycle_rows[!, "date"])
-    vcat(cycle_rows, data)
-end
-
-normalize_coefs = [
-    "cloud_cover" => (33.63174884069838, 49.25521848602989),
-    "global_tilted_irradiance" => (279.56952046078345, 197.3829637751787),
-    "precipitation" => (0.17107508931322893, 0.05927550357374919),
-    "temperature_2m" => (9.462730828618534, 12.754023513645224), 
-    "wind_speed_10m" => (3.5381542287193444, 8.198834470435347),  
-]
-
-function normalize_coefs!(data)
-    for (col, (div, sub)) in normalize_coefs
-        data[!, col] = (data[!, col] .- sub) ./ div
-    end
-    data
-end
-
-function prev_day_indices(i)
-    start = (div(i-1, 24) - 1) * 24 + 1
-    start:start+23
-end
-
-function dam_training_data(data, offset)
-    data = prepend_day(data)
-    args = select(
-        data[25+offset:end, :], 
-        "cloud_cover", 
-        "global_tilted_irradiance", 
-        "precipitation", 
-        "temperature_2m", 
-        "wind_speed_10m", 
-        "workday", 
-        #"hour",
-        "phase_hour_sin", 
-        "phase_hour_cos", 
-        "phase_year_sin", 
-        "phase_year_cos",
-    )
-
-    normalize_coefs!(args)
-
-    prev_workday = reduce(hcat, Float32.(data[i-24, "workday"]) for i=25+offset:size(data, 1))
-    price_history = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i=25:size(data, 1)-offset)
-    #price_history = reduce(hcat, Float32.(data[prev_day_indices(i), "price"]) for i=25:size(data, 1))
-
-    labels = select(
-        data[25+offset:end, :], 
-        "price", 
-        #"positive",
-        #"negative",
-    )
-    xs = reduce(hcat, Vector{Float32}.(eachrow(args)))
-    ys = reduce(hcat, Vector{Float32}.(eachrow(labels)))
-    vcat(xs, prev_workday, price_history), ys
-end
-
-#model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2))
-#model_def() = Chain(Dense(35=>35, tanh), Dense(35=>2))
-#model_def() = Chain(Dense(35=>35, selu), Dense(35=>35, tanh), Dense(35=>1))
-#model_def() = Chain(Dense(35=>35, selu), Dense(35=>35, selu), Dense(35=>1))
-model_def() = Chain(Dense(35=>35, selu), Dense(35=>1))
-#model_def() = Chain(Dense(34=>34, tanh), Dense(34=>2, tanh), Dense(2=>2))
-#model_def() = Chain(Dense(33=>33, tanh), Dense(33=>2, tanh), Dense(2=>2))
-
-function dam_train(data, offset, model = model_def(); epochs = 1000, use_cuda = false, eta = 0.001, batchsize = 64)
-    to_device = identity
-    if use_cuda
-        CUDA.allowscalar(false)
-        to_device = cu
-    end
-    training = dam_training_data(data, offset)
-
-    model_cu = model |> to_device
-    optState = Flux.setup(Adam(eta), model_cu)
-    @showprogress for epoch = 1:epochs
-        loader = Flux.DataLoader(training, batchsize=batchsize, shuffle=true)
-        for xy_cpu in loader
-            x, y = xy_cpu |> to_device
-            grads = Flux.gradient(model_cu) do m
-                y_hat = m(x)
-                Flux.huber_loss(y_hat, y)
-                #Flux.mse(y_hat, y)
-                #divi = sign.(y) .* max.(0.001f0, abs.(y))
-                #mean(abs2.(y_hat ./ divi .- 1))
-            end
-            Flux.update!(optState, model_cu, grads[1])
-        end
-    end
-    model = model_cu |> cpu
-    @info stdmean(model(training[1]) .- training[2])
-    model
-end
-
-function plot_model(model, data, offset)
-    training = dam_training_data(data, offset)
-    m = model(training[1])
-    @info stdmean(m .- training[2])
-    plot([training[2]' m'])
-end
-
 function save_model(mdl, path = "model.jld2")
     state = Flux.state(mdl)
     jldsave(path; state)
@@ -527,45 +323,6 @@ function load_model(path = "model.jld2")
     mdl = model_def()
     Flux.loadmodel!(mdl, state)
 end
-
-function predict_day_nn(mdl, data, date)
-    day = filter(r->r.date==date, data)
-    weather = select(
-        day, 
-        "cloud_cover", 
-        "global_tilted_irradiance", 
-        "precipitation", 
-        "temperature_2m", 
-        "wind_speed_10m", 
-        "workday", 
-        "phase_hour_sin", 
-        "phase_hour_cos", 
-        "phase_year_sin", 
-        "phase_year_cos",
-    )
-    normalize_coefs!(weather)
-    weather = reduce(hcat, Vector{Float32}.(eachrow(weather)))
-
-    prev_date = date - Dates.Day(1)
-    prev_day = filter(r->r.date==prev_date, data)
-    prices = Vector{Float32}(prev_day[:, "price"])
-    prev_workday = Vector{Float32}(prev_day[:, "workday"])
-
-    recorded_prices = copy(prices)
-    pred_prices = copy(recorded_prices)
-
-    for i=1:24
-        xs = vcat(weather[:,i], prev_workday[i], prices[end-23:end])
-        price = mdl(xs)[1]
-        push!(prices, price)
-
-        xs = vcat(weather[:,i], prev_workday[i], recorded_prices[end-23:end])
-        push!(pred_prices, mdl(xs)[1])
-        push!(recorded_prices, day[i, "price"])
-    end
-
-    prices[end-23:end], Vector{Float32}(day[:, "price"]), pred_prices[end-23:end]
-end    
 
 function dam_train_separate(data, model = [model_def() for o=0:23]; epochs = 1000, use_cuda = false, eta = 0.001, batchsize = 64)
     models = [dam_train(data, o, model[o+1]; epochs, use_cuda, eta, batchsize) for o=0:23]
@@ -581,101 +338,20 @@ function plot_model_separate(model, data)
     plot([ys prices])
 end
 
-function dam_training_data_24(data)
-    data = prepend_day(data)
-    args = select(
-        data, 
-        "cloud_cover", 
-        "global_tilted_irradiance", 
-        "precipitation", 
-        "temperature_2m", 
-        "wind_speed_10m", 
-        # "workday", 
-        # "phase_hour_sin", 
-        # "phase_hour_cos", 
-        # "phase_year_sin", 
-        # "phase_year_cos",
-    )
-    times = select(
-        data,
-        "workday",
-        "phase_hour_sin", 
-        "phase_hour_cos", 
-        "phase_year_sin", 
-        "phase_year_cos",
-    )
-
-    normalize_coefs!(args)
-
-    indRange = 25:size(data,1)-23
-    weather = reduce(hcat, reshape(Matrix(Float32.(args[i:i+23, :])), 1, :)' for i in indRange)
-    price_hist = reduce(hcat, Float32.(data[i-24:i-1, "price"]) for i in indRange)
-    time = Matrix{Float32}(times[indRange, :])'
-    workday_prev = Float32[data[i-24, "workday"] for i in indRange]'
-    prices = reduce(hcat, Float32.(data[i:i+23, "price"]) for i in indRange)
-
-    return vcat(weather, workday_prev, time, price_hist), prices
-end
-
-#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172 => 24, tanh), Flux.Scale(24))
-#model_def_24() = Chain(Dense(172=>86, tanh), Dense(86 => 24))
-#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>172, tanh), Dense(172=>24))
-#model_def_24() = Chain(Dense(172=>172, tanh), Dense(172=>172, tanh), Dense(172=>48))
-#model_def_24() = Chain(Dense(264=>264, tanh), Dense(264=>264, tanh), Dense(264=>48))
-#model_def_24() = Chain(Dense(264=>264, tanh), Dense(264=>48, sigmoid))
-#model_def_24() = Chain(Dense(148=>148, tanh), Dense(148=>148, tanh), Dense(148=>48))
-#model_def_24() = Chain(Dense(148=>148, tanh), Dropout(0.2), Dense(148=>148, tanh), Dense(148=>148, relu), Dense(148=>48))
-#model_def_24() = Chain(Dense(148=>148, tanh), Dense(148=>48))
-#model_def_24() = Chain(Dense(150=>150, selu), Dense(150=>150, selu), Dense(150=>24))
-model_def_24() = Chain(Dense(150=>150, selu), Dense(150=>24))
-
-function plot_model_24_tr(model, training)
-    days = reduce(hcat, training[1][:,i] for i=1:size(training[1], 2) if (i-1)%24==0)
-    prices = reduce(hcat, training[2][:,i] for i=1:size(training[2], 2) if (i-1)%24==0)
-    #days = training[1]
-    #prices = training[2]
-    m = model(days)
-    mLin = reshape(m, :)
-    pLin = reshape(prices, :)
-    @info stdmean(mLin .- pLin)
-    plot([pLin mLin])
-end
-
-function plot_model_24(model, data)
-    plot_model_24_tr(model, dam_training_data_24(data))
-end    
-
-function dam_train_24(data, model = model_def_24(); epochs = 1000, use_cuda = false, eta = 0.001, batchsize = 96)
-    to_device = identity
-    if use_cuda
-        CUDA.allowscalar(false)
-        to_device = cu
-    end
-    training = dam_training_data_24(data)
-
-    model_cu = model |> to_device
-    optState = Flux.setup(Adam(eta), model_cu)
-    @showprogress for epoch = 1:epochs
-        loader = Flux.DataLoader(training, batchsize=batchsize, shuffle=true)
-        for xy_cpu in loader
-            x, y = xy_cpu |> to_device
-            grads = Flux.gradient(model_cu) do m
-                y_hat = m(x)
-                Flux.huber_loss(y_hat, y)
-                #Flux.huber_loss(y_hat ./ map(x->max(0.001f0, abs(x)), y), map(sign, y))
-            end
-            Flux.update!(optState, model_cu, grads[1])
-        end
-    end
-    model = model_cu |> cpu
-    @info stdmean(model(training[1]) .- training[2])
-    #plot_model_24_tr(model, training)
-    model
-end
-
 min_offset(mapping) = minimum(minimum(m[2]) for m in mapping)
 max_offset(mapping) = maximum(maximum(m[2]) for m in mapping)
 num_values(mapping) = sum(length(m[2]) for m in mapping)
+
+function value_range(mapping, key)
+    numBefore = 0
+    for (k, i) in mapping
+        if k == key
+            return numBefore+1:numBefore+length(i)
+        end
+        numBefore += length(i)
+    end
+    0:-1
+end    
 
 function select_values(mapping, data; step=1, minOffs = min_offset(mapping), maxOffs = max_offset(mapping))
     mappedValues = num_values(mapping)
@@ -693,15 +369,15 @@ end
 
 const Mapping = Vector{Pair}
 
-mutable struct NNModel
+@kwdef mutable struct NNModel
     paramsMapping::Mapping
     labelsMapping::Mapping
-    dataStep::Int32
-    epochs::Int32
-    batchsize::Int64
-    eta::Float64
+    dataStep::Int32 = 1
+    epochs::Int32 = 1000
+    batchsize::Int64 = 64
+    eta::Float64 = 1e-3
     createFn::Function
-    loss::Function
+    loss::Function = Flux.huber_loss
 end
 
 function training_data(nn::NNModel, data; step=nn.dataStep)
@@ -739,15 +415,40 @@ function train_nn(nn::NNModel, data, model = nn.createFn(nn); use_cuda=false, ep
     model
 end
 
-function plot_nn(model, nn::NNModel, data; step=nn.dataStep)
+function plot_nn(model, nn::NNModel, data; step=num_values(nn.labelsMapping))
     training = training_data(nn, data; step)
     m = model(training[1])
     @info stdmean(m .- training[2])
     plot([reshape(training[2], :) reshape(m, :)])
 end    
 
+function predict_day(model, nn::NNModel, data, date)
+    @assert length(nn.labelsMapping) == 1
+    @assert nn.labelsMapping[1][2] == 0
+    minOffs = min_offset(nn.paramsMapping)
+    maxOffs = max_offset(nn.paramsMapping)
+    dataPos = searchsortedfirst(data[:, "date"], date)
+    dayInterval = dataPos:dataPos+23
+    @assert all(d->d==date, data[dayInterval, "date"])
+    outputRange = value_range(nn.paramsMapping, "price")
+    @assert length(outputRange) == 24
+    outputs = Float32[]
+    perfect_pred = Float32[]
+    while length(outputs) < 24
+        params = select_values(nn.paramsMapping, data[dataPos+minOffs:dataPos+maxOffs, :]; minOffs, maxOffs)
+        pred = model(params)
+        append!(perfect_pred, pred)
+        replaceRange = outputRange.stop-length(outputs)+1:outputRange.stop
+        params[replaceRange] = outputs
+        predicted = model(params)
+        append!(outputs, predicted)
+        dataPos += length(predicted)
+    end
+    [data[dayInterval, "price"] perfect_pred[1:24]  outputs[1:24]]
+end
+
 dam_nn() = NNModel(
-    [
+    paramsMapping = [
         "cloud_cover"=>0, 
         "global_tilted_irradiance"=>0, 
         "precipitation"=>0, 
@@ -760,23 +461,18 @@ dam_nn() = NNModel(
         "phase_year_cos"=>0,
         "price"=>-24:-1,
     ],
-    [
+    labelsMapping = [
         "price"=>0
     ],
-    1,
-    1000,
-    64,
-    1e-3,
-    nn->begin 
+    createFn = nn->begin 
         p = num_values(nn.paramsMapping)
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
-    Flux.huber_loss
 )
 
 dam_1() = NNModel(
-    [
+    paramsMapping = [
         "cloud_cover"=>(-24, 0), 
         "global_tilted_irradiance"=>(-24, 0), 
         "precipitation"=>(-24, 0), 
@@ -789,23 +485,43 @@ dam_1() = NNModel(
         "phase_year_cos"=>0,
         "price"=>-24,
     ],
-    [
+    labelsMapping = [
         "price"=>0
     ],
-    1,
-    1000,
-    64,
-    1e-3,
-    nn->begin 
+    createFn = nn->begin 
         p = num_values(nn.paramsMapping)
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
-    Flux.huber_loss
+)
+
+dam_1_offset(offs) = NNModel(
+    paramsMapping = [
+        "cloud_cover"=>-24:23, 
+        "global_tilted_irradiance"=>-24:23, 
+        "precipitation"=>-24:23, 
+        "temperature_2m"=>-24:23, 
+        "wind_speed_10m"=>-24:23, 
+        "workday"=>-24:23, 
+        "phase_hour_sin"=>offs, 
+        "phase_hour_cos"=>offs, 
+        "phase_year_sin"=>offs, 
+        "phase_year_cos"=>offs,
+        "price"=>-24:-1,
+    ],
+    labelsMapping = [
+        "price"=>offs
+    ],
+    epochs = 500,
+    createFn = nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(Dense(p=>p, selu), Dense(p=>l))
+    end,
 )
 
 dam_24() = NNModel(
-    [
+    paramsMapping = [
         "cloud_cover"=>0:23, 
         "global_tilted_irradiance"=>0:23, 
         "precipitation"=>0:23, 
@@ -818,17 +534,36 @@ dam_24() = NNModel(
         "phase_year_cos"=>0,
         "price"=>-24:-1,
     ],
-    [
+    labelsMapping = [
         "price"=>0:23
     ],
-    1,
-    1000,
-    64,
-    1e-3,
-    nn->begin 
+    createFn = nn->begin 
         p = num_values(nn.paramsMapping)
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
-    Flux.huber_loss
+)
+
+dam_24_1() = NNModel(
+    paramsMapping = [
+        "cloud_cover"=>-24:23, 
+        "global_tilted_irradiance"=>-24:23, 
+        "precipitation"=>-24:23, 
+        "temperature_2m"=>-24:23, 
+        "wind_speed_10m"=>-24:23, 
+        "workday"=>-24:23, 
+        "phase_hour_sin"=>0, 
+        "phase_hour_cos"=>0, 
+        "phase_year_sin"=>0, 
+        "phase_year_cos"=>0,
+        "price"=>-24:-1,
+    ],
+    labelsMapping = [
+        "price"=>0:23
+    ],
+    createFn = nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(Dense(p=>p, selu), Dense(p=>l))
+    end,
 )
