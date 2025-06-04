@@ -324,19 +324,13 @@ function load_model(path = "model.jld2")
     Flux.loadmodel!(mdl, state)
 end
 
-function dam_train_separate(data, model = [model_def() for o=0:23]; epochs = 1000, use_cuda = false, eta = 0.001, batchsize = 64)
-    models = [dam_train(data, o, model[o+1]; epochs, use_cuda, eta, batchsize) for o=0:23]
-    models
-end
+function around0_loss(ŷ, y; agg = mean, delta::Real = 1, denom::Real = 10)
+    δ = Flux.Losses.ofeltype(ŷ, delta)
+    Flux.Losses._check_sizes(ŷ, y)
+    abs_error = abs.(ŷ .- y) ./ (1 .+ abs.(y) ./ denom)
 
-function plot_model_separate(model, data)
-    training = dam_training_data(data, 0)
-    xs = training[1][:, 1:24:end]
-    prices = reshape(reduce(vcat, model[o+1](xs) for o=0:23), :)
-    ys = reshape(training[2], :)
-    @info stdmean(prices .- ys)
-    plot([ys prices])
-end
+    agg(Flux.Losses._huber_metric.(abs_error, δ))
+ end
 
 min_offset(mapping) = minimum(minimum(m[2]) for m in mapping)
 max_offset(mapping) = maximum(maximum(m[2]) for m in mapping)
@@ -369,7 +363,9 @@ end
 
 const Mapping = Vector{Pair}
 
-@kwdef mutable struct NNModel
+abstract type Predictor end
+
+@kwdef mutable struct NNModel <: Predictor
     paramsMapping::Mapping
     labelsMapping::Mapping
     dataStep::Int32 = 1
@@ -380,15 +376,19 @@ const Mapping = Vector{Pair}
     loss::Function = Flux.huber_loss
 end
 
-function training_data(nn::NNModel, data; step=nn.dataStep)
-    minOffs = min(min_offset(nn.paramsMapping), min_offset(nn.labelsMapping))
-    maxOffs = max(max_offset(nn.paramsMapping), max_offset(nn.labelsMapping))
-    params = select_values(nn.paramsMapping, data; step, minOffs, maxOffs)
-    labels = select_values(nn.labelsMapping, data; step, minOffs, maxOffs)
+function training_data(paramsMapping, labelsMapping, step, data)
+    minOffs = min(min_offset(paramsMapping), min_offset(labelsMapping))
+    maxOffs = max(max_offset(paramsMapping), max_offset(labelsMapping))
+    params = select_values(paramsMapping, data; step, minOffs, maxOffs)
+    labels = select_values(labelsMapping, data; step, minOffs, maxOffs)
     params, labels
 end
 
-function train_nn(nn::NNModel, data, model = nn.createFn(nn); step = nn.dataStep, use_cuda=false, epochs=nn.epochs, eta=nn.eta, batchsize=nn.batchsize)
+function training_data(nn::NNModel, data; step=nn.dataStep)
+    training_data(nn.paramsMapping, nn.labelsMapping, step, data)
+end
+
+function train_nn(nn::Predictor, data, model = nn.createFn(nn); step = nn.dataStep, use_cuda=false, epochs=nn.epochs, eta=nn.eta, batchsize=nn.batchsize)
     to_device = identity
     if use_cuda
         CUDA.allowscalar(false)
@@ -415,7 +415,7 @@ function train_nn(nn::NNModel, data, model = nn.createFn(nn); step = nn.dataStep
     model
 end
 
-function plot_nn(model, nn::NNModel, data; step=num_values(nn.labelsMapping))
+function plot_nn(model, nn::Predictor, data; step=num_values(nn.labelsMapping))
     training = training_data(nn, data; step)
     m = model(training[1])
     @info stdmean(m .- training[2])
@@ -446,15 +446,6 @@ function predict_day(model, nn::NNModel, data, date)
     end
     [data[dayInterval, "price"] perfect_pred[1:24]  outputs[1:24]]
 end
-
-function around0_loss(ŷ, y; agg = mean, delta::Real = 1)
-    δ = Flux.Losses.ofeltype(ŷ, delta)
-    Flux.Losses._check_sizes(ŷ, y)
-    abs_error = abs.(ŷ .- y) ./ (1 .+ abs.(y) ./ 10)
-
-    agg(Flux.Losses._huber_metric.(abs_error, δ))
- end
-
 
 dam_nn() = NNModel(
     paramsMapping = [
@@ -502,6 +493,7 @@ dam_1() = NNModel(
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
+    loss = (y_hat, y)->around0_loss(y_hat, y, denom = 20),    
 )
 
 dam_1_offset(offs) = NNModel(
@@ -576,6 +568,7 @@ dam_24_1() = NNModel(
         l = num_values(nn.labelsMapping)
         Chain(Dense(p=>p, selu), Dense(p=>l))
     end,
+    loss = (y_hat, y)->around0_loss(y_hat, y, denom = 20),
 )
 
 dam_1_series() = [dam_1_offset(o) for o=0:23]
@@ -594,3 +587,47 @@ function plot_series(models, nns, data)
     @info stdmean(pred .- labels)
     plot([labels pred])
 end
+
+@kwdef mutable struct RNNModel <: Predictor
+    paramsMapping::Mapping
+    labelsMapping::Mapping
+    iterations = 24
+    dataStep::Int32 = 1
+    epochs::Int32 = 1000
+    batchsize::Int64 = 64
+    eta::Float64 = 1e-3
+    createFn::Function
+    loss::Function = Flux.huber_loss
+end
+
+function training_data(nn::RNNModel, data; step=nn.dataStep)
+    flat = training_data(nn.paramsMapping, nn.labelsMapping, step, data)
+    params = reshape(flat[1], num_values(nn.paramsMapping), nn.iterations, :)
+    labels = reshape(flat[2], num_values(nn.labelsMapping), nn.iterations, :)
+    params, labels
+end
+
+dam_rnn_1() = RNNModel(
+    paramsMapping = [
+        "cloud_cover"=>(-24, 0), 
+        "global_tilted_irradiance"=>(-24, 0), 
+        "precipitation"=>(-24, 0), 
+        "temperature_2m"=>(-24, 0), 
+        "wind_speed_10m"=>(-24, 0), 
+        "workday"=>(-24, 0), 
+        "phase_hour_sin"=>0, 
+        "phase_hour_cos"=>0, 
+        "phase_year_sin"=>0, 
+        "phase_year_cos"=>0,
+        "price"=>-24,
+    ],
+    labelsMapping = [
+        "price"=>0
+    ],
+    createFn = nn->begin 
+        p = num_values(nn.paramsMapping)
+        l = num_values(nn.labelsMapping)
+        Chain(RNN(p=>p, selu), Dense(p=>l))
+    end,
+    loss = (y_hat, y)->around0_loss(y_hat, y, denom = 20),
+)
