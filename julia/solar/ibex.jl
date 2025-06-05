@@ -313,17 +313,6 @@ function add_extra_data(data, neg_threshold = 0, prepend_days = 1)
     data
 end
 
-function save_model(mdl, path = "model.jld2")
-    state = Flux.state(mdl)
-    jldsave(path; state)
-end
-
-function load_model(path = "model.jld2")
-    state = JLD2.load(path, "state")
-    mdl = model_def()
-    Flux.loadmodel!(mdl, state)
-end
-
 function around0_loss(ŷ, y; agg = mean, delta::Real = 1, denom::Real = 10)
     δ = Flux.Losses.ofeltype(ŷ, delta)
     Flux.Losses._check_sizes(ŷ, y)
@@ -419,8 +408,19 @@ function plot_nn(model, nn::Predictor, data; step=num_values(nn.labelsMapping))
     training = training_data(nn, data; step)
     m = model(training[1])
     @info stdmean(m .- training[2])
-    plot([reshape(training[2], :) reshape(m, :)])
+    plot([reshape(training[2], :) reshape(m, :)], labels = ["Truth" "Predicted"])
 end    
+
+function save_model(mdl, path = "model.jld2")
+    state = Flux.state(mdl)
+    jldsave(path; state)
+end
+
+function load_model(nn::Predictor, path = "model.jld2")
+    state = JLD2.load(path, "state")
+    mdl = nn.createFn(nn)
+    Flux.loadmodel!(mdl, state)
+end
 
 function predict_day(model, nn::NNModel, data, date)
     @assert length(nn.labelsMapping) == 1
@@ -585,7 +585,7 @@ function plot_series(models, nns, data)
     pred = reduce(vcat, model(params) for model in models, params in eachcol(training[1]))
     labels = data[25:end, nns[1].labelsMapping[1][1]]
     @info stdmean(pred .- labels)
-    plot([labels pred])
+    plot([labels pred], labels = ["Truth" "Predicted"])
 end
 
 @kwdef mutable struct RNNModel <: Predictor
