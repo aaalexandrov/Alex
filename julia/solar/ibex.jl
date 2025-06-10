@@ -633,14 +633,25 @@ function plot_prediction(damData, predicted)
             predicted[end-23:end],
             labels="Predicted",
             seriescolor=2,
-            xticks=0:24
+            xticks=(1:24, 0:23),
         ),
         layout = (2, 1),
+        size = (900, 900),
     )
 end
 
 const saved_model = dam_rnn_1()
 const saved_model_name = "rnn_1.jld2"
+
+function train_saved(filename = saved_model_name)
+    data = CSV.read("ibex-weather-2024-01-01-to-2025-03-31.csv", DataFrame) |> add_extra_data
+    tst = merge_csvs() |> add_extra_data
+    mdl = train_nn(saved_model, data)
+    mdl = train_nn(saved_model, data, mdl, eta=1e-4)
+    display(plot_nn(mdl, saved_model, tst))
+    save_model(saved_model, filename)
+    mdl
+end    
 
 load_saved_model() = load_model(saved_model, saved_model_name)
 
