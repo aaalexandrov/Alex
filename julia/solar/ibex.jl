@@ -113,8 +113,6 @@ function write_history(prefix, data)
     CSV.write("$prefix-$fromDate-to-$endDate.csv", data)
 end
 
-# write_history("dam-history", scrape_history())
-
 const weather_locations = Dict(
     "Sofia"=>(42.6975, 23.3241),
     "Plovdiv"=>(42.15, 24.75),
@@ -171,20 +169,11 @@ end
 
 tilt_from_lat(lat) = Int(round(lat)) - 7
 
-function weather_forecast_uri(daysAhead, daysPast, lat, lon)
-    HTTP.URI("https://api.open-meteo.com/v1/forecast"; query=Dict(
-        "latitude"=>lat,
-        "longitude"=>lon,
-        "timezone"=>"Europe/Berlin",
-        "hourly"=>"temperature_2m,wind_speed_10m,precipitation,cloud_cover,global_tilted_irradiance",
-        "tilt"=>tilt_from_lat(lat),
-        "past_days"=>daysPast,
-        "forecast_days"=>daysAhead,
-    ))
-end
-
-function weather_history_uri(endDate, fromDate, lat, lon)
-    HTTP.URI("https://archive-api.open-meteo.com/v1/archive"; query=Dict(
+function weather_uri(forecast, endDate, fromDate, lat, lon)
+    endpoint = forecast ? 
+        "https://api.open-meteo.com/v1/forecast" : 
+        "https://archive-api.open-meteo.com/v1/archive"
+    HTTP.URI(endpoint; query=Dict(
         "latitude"=>lat,
         "longitude"=>lon,
         "timezone"=>"Europe/Berlin",
@@ -204,23 +193,25 @@ function weather_table(uri)
     select!(data, Not("time"))
 end
 
-function get_weather_forecast(daysAhead = 7, daysPast = 7, lat = 42.6975, lon = 23.3241)
-    weather_table(weather_forecast_uri(daysAhead, daysPast, lat, lon))
+const weather_history_delay = Dates.Day(5)
+
+function get_weather_forecast(endDate = Dates.today() + Dates.Day(7), fromDate = Dates.today() - weather_history_delay + Dates.Day(1), lat = 42.6975, lon = 23.3241)
+    weather_table(weather_uri(true, endDate, fromDate, lat, lon))
 end
 
-function get_weather_history(endDate = Dates.today() - Dates.Day(3), fromDate = endDate - Dates.Month(3) - Dates.Day(3), lat = 42.6975, lon = 23.3241)
-    weather_table(weather_history_uri(endDate, fromDate, lat, lon))
+function get_weather_history(endDate = Dates.today() - weather_history_delay, fromDate = endDate - Dates.Month(3) - weather_history_delay, lat = 42.6975, lon = 23.3241)
+    weather_table(weather_uri(false, endDate, fromDate, lat, lon))
 end
 
 function get_weather(endDate = Dates.today(), fromDate = endDate - Dates.Month(3), lat = 42.6975, lon = 23.3241)
     today = Dates.today()
     weather = nothing
-    if fromDate < today - Dates.Month(1)
-        weather = get_weather_history(min(endDate, Dates.today() - Dates.Day(3)), fromDate, lat, lon)
+    if fromDate < today - weather_history_delay
+        weather = get_weather_history(min(endDate, Dates.today() - weather_history_delay), fromDate, lat, lon)
         fromDate = weather[end, "date"] + Dates.Day(1)
     end
     if fromDate <= endDate
-        forecast = get_weather_forecast(max(0, endDate - Dates.today() + Dates.Day(1) |> Dates.days), Dates.today() - fromDate |> Dates.days, lat, lon)
+        forecast = get_weather_forecast(endDate, fromDate, lat, lon)
         if !isnothing(weather)
             weather = vcat(weather, forecast)
         else
@@ -258,10 +249,6 @@ function get_weather_average(endDate = Dates.today(), fromDate = endDate - Dates
     average_data(collect(values(dataArr)))
 end
 
-function join_histories(dam, weather)
-    innerjoin(dam, weather, on=["date", "hour"])
-end
-
 function get_dam_with_weather(endDate = Dates.today() + Dates.Day(1), fromDate = endDate - Dates.Month(3) - Dates.Day(1), dam = nothing)
     if isnothing(dam)
         dam = scrape_history(endDate, fromDate)
@@ -269,7 +256,7 @@ function get_dam_with_weather(endDate = Dates.today() + Dates.Day(1), fromDate =
         dam = CSV.read(dam, DataFrame)
     end
     weather = get_weather_average(dam[end, "date"], dam[begin, "date"])
-    join_histories(dam, weather)
+    innerjoin(dam, weather, on=["date", "hour"])
 end
 
 function merge_csvs(prefix = "dam-weather")
@@ -281,6 +268,7 @@ function merge_csvs(prefix = "dam-weather")
         CSV.read(f, DataFrame)
     end
     data = vcat(frames...)
+    dropmissing!(data)
     sort!(data, ["date", "hour"])
     unique!(data, ["date", "hour"])
     @assert(size(data, 1) % 24 == 0)
@@ -631,3 +619,60 @@ dam_rnn_1() = RNNModel(
     end,
     loss = (y_hat, y)->around0_loss(y_hat, y, denom = 20),
 )
+
+function plot_prediction(damData, predicted)
+    damRange = 1:24:size(damData, 1)
+    plot(
+        plot(
+            [damData[:, :price] predicted], 
+            labels=["Ibex Price" "Predicted"], 
+            xticks=(damRange, damData[i, :date] for i in damRange),
+            xrot = 45
+        ),
+        plot(
+            predicted[end-23:end],
+            labels="Predicted",
+            seriescolor=2,
+            xticks=0:24
+        ),
+        layout = (2, 1),
+    )
+end
+
+const saved_model = dam_rnn_1()
+const saved_model_name = "rnn_1.jld2"
+
+load_saved_model() = load_model(saved_model, saved_model_name)
+
+function next_day_prediction()
+    endDate = Dates.today() + Dates.Day(1)
+    fromDate = Dates.today() - Dates.Day(7)
+
+    damFilename = "dam-weather-$fromDate-to-$endDate.csv"
+    local damWeather
+    try 
+        damWeather = CSV.read(damFilename, DataFrame)
+    catch
+        dam = scrape_history(endDate, fromDate)
+        weather = get_weather_average(dam[end, "date"] + Dates.Day(1), dam[begin, "date"])
+        damWeather = rightjoin(dam, weather, on=["date", "hour"])
+        write_history("dam-weather", damWeather)
+    end
+
+    damData = damWeather |> add_extra_data
+
+    minOffs = min_offset(saved_model.paramsMapping)
+    maxOffs = max_offset(saved_model.paramsMapping)
+    params = select_values(saved_model.paramsMapping, damData; step=1, minOffs, maxOffs)
+    params = reshape(params, num_values(saved_model.paramsMapping), saved_model.iterations, :)
+
+    mdl = load_saved_model()
+    predicted = mdl(params)
+    predicted = reshape(predicted, :)
+    damForPredicted = damData[1 + max(0, -minOffs):end, :]
+    display(plot_prediction(damForPredicted, predicted))
+    prices = damForPredicted[:, :price]
+    prices, predicted
+end
+
+next_day_prediction()
